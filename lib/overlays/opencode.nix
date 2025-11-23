@@ -24,8 +24,8 @@ else
 
             # Map Nix system to GitHub release asset names
             platformAssetMap = {
-              x86_64-linux = "opencode-linux-x64.zip";
-              aarch64-linux = "opencode-linux-arm64.zip";
+              x86_64-linux = "opencode-linux-x64.tar.gz";
+              aarch64-linux = "opencode-linux-arm64.tar.gz";
               x86_64-darwin = "opencode-darwin-x64.zip";
               aarch64-darwin = "opencode-darwin-arm64.zip";
             };
@@ -45,6 +45,9 @@ else
             # Extract sha256 from "sha256:xxxxx" format
             sha256Hash = builtins.replaceStrings [ "sha256:" ] [ "" ] asset.digest;
 
+            # Determine if this is a tar.gz or zip archive
+            isTarGz = final.lib.hasSuffix ".tar.gz" assetName;
+
           in
           final.stdenv.mkDerivation {
             pname = "opencode-dev";
@@ -55,18 +58,19 @@ else
               sha256 = sha256Hash;
             };
 
-            nativeBuildInputs = [
-              final.unzip
-            ]
-            ++ final.lib.optionals final.stdenv.isLinux [
-              final.autoPatchelfHook
-            ];
+            nativeBuildInputs =
+              (if isTarGz then [ ] else [ final.unzip ])
+              ++ final.lib.optionals final.stdenv.isLinux [
+                final.autoPatchelfHook
+              ];
 
             buildInputs = final.lib.optionals final.stdenv.isLinux [
               final.stdenv.cc.cc.lib
             ];
 
-            unpackPhase = ''
+            unpackPhase = if isTarGz then ''
+              tar xzf $src
+            '' else ''
               unzip $src
             '';
 
