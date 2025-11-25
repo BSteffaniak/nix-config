@@ -351,7 +351,7 @@
     "opencode-release-info": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-uouiXEEMYzL4kJkj6YPc3gpY4qa8eqsn3PymzvYNb6c=",
+        "narHash": "sha256-bsYOiWCpcadv7bAo9R+80u6Xc3UUD6n4niyV9G/mYWA=",
         "type": "file",
         "url": "https://api.github.com/repos/sst/opencode/releases/latest"
       },
