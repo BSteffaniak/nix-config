@@ -117,6 +117,7 @@
                     "gh release view *": "allow",
                     "gh run list *": "allow",
                     "gh run view *": "allow",
+                    "gh run download *": "allow",
                     "gh label list *": "allow",
                     "gh label view *": "allow",
                     "gh project view *": "allow",
