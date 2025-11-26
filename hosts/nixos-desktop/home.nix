@@ -98,11 +98,7 @@
     development.ra-multiplex.enable = true;
 
     # DevOps tool configs
-    devops.github = {
-      enable = true;
-      username = "BSteffaniak";
-      gitProtocol = "ssh";
-    };
+    devops.github.enable = true;
 
     # Desktop utility configs
     desktop.utilities = {
