@@ -491,8 +491,8 @@ keybinding:
         markCommitAsFixup: f
         createFixupCommit: F
         squashAboveCommits: <disabled>
-        moveDownCommit: <c-t>
-        moveUpCommit: <c-n>
+        moveDownCommit: T
+        moveUpCommit: N
         amendToCommit: A
         resetCommitAuthor: a
         pickCommit: p
@@ -500,7 +500,7 @@ keybinding:
         cherryPickCopy: C
         pasteCommits: V
         markCommitAsBaseForRebase: B
-        tagCommit: T
+        tagCommit: <c-T>
         checkoutCommit: <space>
         resetCherryPick: <c-R>
         copyCommitAttributeToClipboard: "y"
