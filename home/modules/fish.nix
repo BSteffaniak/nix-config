@@ -238,16 +238,7 @@ with lib;
       '';
 
       interactiveShellInit = ''
-        # Source home-manager session variables using bass
-        # This enables home.sessionPath and home.sessionVariables to work
-        if test -e "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
-          bass source "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
-        end
 
-        # Source NixOS system environment variables
-        if test -e /etc/set-environment
-          bass source /etc/set-environment
-        end
 
         # Source extra config files specified in configuration
         ${concatMapStringsSep "\n" (file: ''
