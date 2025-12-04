@@ -128,6 +128,9 @@ in
     # Install Rust toolchains and tools via home-manager
     home.packages = rustPackages;
 
+    # Add ~/.cargo/bin to PATH for cargo-installed binaries
+    home.sessionPath = [ "$HOME/.cargo/bin" ];
+
     # Set up environment variables for Rust
     home.sessionVariables = mkMerge [
       (mkIf cfg.includeRustSrc {
