@@ -68,11 +68,15 @@ else
               final.stdenv.cc.cc.lib
             ];
 
-            unpackPhase = if isTarGz then ''
-              tar xzf $src
-            '' else ''
-              unzip $src
-            '';
+            unpackPhase =
+              if isTarGz then
+                ''
+                  tar xzf $src
+                ''
+              else
+                ''
+                  unzip $src
+                '';
 
             dontBuild = true;
             dontStrip = true;

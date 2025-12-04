@@ -16,6 +16,9 @@
     },
     "lsp": {
         "rust": {
+            "disabled": true
+        },
+        "ra-multiplex": {
             "command": ["ra-multiplex"],
             "extensions": [".rs"]
         }
