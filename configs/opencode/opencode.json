@@ -30,7 +30,7 @@
         "theme_list": "<leader>t",
         "sidebar_toggle": "<leader>b",
         "status_view": "<leader>s",
-        "session_export": "<leader>x",
+        "session_export": "none",
         "session_new": "<leader>n",
         "session_list": "<leader>l",
         "session_timeline": "<leader>g",
@@ -58,7 +58,7 @@
         "input_clear": "ctrl+c",
         "input_forward_delete": "ctrl+d",
         "input_paste": "ctrl+v",
-        "input_submit": "ctrl+return",
+        "input_submit": "ctrl+return,ctrl+linefeed,ctrl+enter,<leader>x,ctrl+alt+return,ctrl+alt+linefeed,ctrl+alt+enter,alt+j,ctrl+alt+j",
         "input_newline": "return,ctrl+j",
         "history_previous": "up",
         "history_next": "down"
