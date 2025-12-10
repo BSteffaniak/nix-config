@@ -41,6 +41,7 @@ with lib;
           8086
           8343
           8344
+          5173
         ]
         ++ config.myConfig.system.networking.allowedTCPPorts;
         allowedUDPPorts = config.myConfig.system.networking.allowedUDPPorts;
