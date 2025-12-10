@@ -38,12 +38,6 @@
       resurrect = true;
     };
 
-    # OpenCode
-    opencode = {
-      enable = true;
-      projectPath = "/hdd/GitHub/opencode";
-    };
-
     # Development Tools
     development = {
       enable = true;
@@ -124,5 +118,6 @@
   home.packages = with pkgs; [
     steam
     opencode-dev
+    unstable.gemini-cli
   ];
 }
