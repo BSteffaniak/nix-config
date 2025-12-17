@@ -56,9 +56,8 @@
         "agent_cycle": "tab",
         "agent_cycle_reverse": "shift+tab",
         "input_clear": "ctrl+c",
-        "input_forward_delete": "ctrl+d",
         "input_paste": "ctrl+v",
-        "input_submit": "ctrl+return,ctrl+linefeed,ctrl+enter,<leader>x,ctrl+alt+return,ctrl+alt+linefeed,ctrl+alt+enter,alt+j,ctrl+alt+j",
+        "input_submit": "ctrl+return,ctrl+linefeed,ctrl+enter,ctrl+alt+return,ctrl+alt+linefeed,ctrl+alt+enter,alt+j,ctrl+alt+j",
         "input_newline": "return,ctrl+j",
         "history_previous": "up",
         "history_next": "down"
@@ -94,7 +93,8 @@
                     "git stash create": "deny",
                     "git stash store": "deny",
                     "brew install *": "deny"
-                }
+                },
+                "external_directory": "allow"
             }
         },
         "plan": {
@@ -208,7 +208,8 @@
                     "date": "allow",
                     "date *": "allow",
                     "*": "deny"
-                }
+                },
+                "external_directory": "allow"
             }
         }
     }
