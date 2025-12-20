@@ -26,6 +26,12 @@ in
       description = "Install podman-compose for docker-compose compatibility";
     };
 
+    suppressComposeWarning = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Suppress the external compose provider warning message";
+    };
+
     autoUpdate = mkOption {
       type = types.bool;
       default = false;
@@ -62,6 +68,14 @@ in
       prefix = "docker.io"
       location = "docker.io"
     '';
+
+    # Podman engine configuration
+    xdg.configFile."containers/containers.conf" = mkIf cfg.suppressComposeWarning {
+      text = ''
+        [engine]
+        compose_warning_logs = false
+      '';
+    };
 
     # Docker compatibility - set DOCKER_HOST to point to podman socket
     home.sessionVariables = mkIf cfg.dockerCompatibility {
