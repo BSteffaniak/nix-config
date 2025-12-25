@@ -91,5 +91,6 @@
     opencode-dev
     httrack
     postgresql
+    tippecanoe
   ];
 }
