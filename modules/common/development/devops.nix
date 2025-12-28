@@ -15,7 +15,7 @@ with lib;
   config = mkIf config.myConfig.development.devops.enable {
     environment.systemPackages = with pkgs; [
       awscli2
-      aws-sam-cli
+      # aws-sam-cli  # TODO: broken in 25.11 - dependency version mismatches
       kubectl
       kind
       kubernetes-helm-wrapped

@@ -72,10 +72,13 @@ with lib;
   config = mkIf config.homeModules.git.enable {
     programs.git = {
       enable = true;
-      userName = config.homeModules.git.userName;
-      userEmail = config.homeModules.git.userEmail;
-      extraConfig = config.homeModules.git.extraConfig;
-      aliases = config.homeModules.git.aliases;
+      settings = {
+        user = {
+          name = config.homeModules.git.userName;
+          email = config.homeModules.git.userEmail;
+        };
+        alias = config.homeModules.git.aliases;
+      } // config.homeModules.git.extraConfig;
       signing = mkIf (config.homeModules.git.signing.key != null) {
         key = config.homeModules.git.signing.key;
         signByDefault = config.homeModules.git.signing.signByDefault;

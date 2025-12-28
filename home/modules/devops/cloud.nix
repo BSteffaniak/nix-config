@@ -45,7 +45,7 @@ in
       [ ]
       ++ (optionals cfg.includeAWS [
         awscli2
-        aws-sam-cli
+        # aws-sam-cli  # TODO: broken in 25.11 - dependency version mismatches
       ])
       ++ (optional cfg.includeDigitalOcean doctl)
       ++ (optional cfg.includeGCP google-cloud-sdk)

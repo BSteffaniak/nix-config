@@ -32,11 +32,13 @@ in
   config = mkIf cfg.enable {
     programs.ssh = {
       enable = true;
-      matchBlocks = cfg.matchBlocks;
-
-      # Sensible defaults
-      controlMaster = "auto";
-      controlPersist = "10m";
+      enableDefaultConfig = false;
+      matchBlocks = cfg.matchBlocks // {
+        "*" = {
+          controlMaster = "auto";
+          controlPersist = "10m";
+        };
+      };
     };
   };
 }
