@@ -214,6 +214,7 @@
                     "strings *": "allow",
                     "date": "allow",
                     "date *": "allow",
+                    "timeout *": "allow",
                     "*": "deny"
                 },
                 "external_directory": "allow"

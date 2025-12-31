@@ -23,7 +23,7 @@
         # Unstable packages overlay (core functionality)
         (final: prev: {
           unstable = import inputs.nixpkgs-unstable {
-            inherit (prev) system;
+            system = prev.stdenv.hostPlatform.system;
             config.allowUnfree = true;
           };
         })

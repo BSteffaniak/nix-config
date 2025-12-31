@@ -46,7 +46,7 @@ with lib;
       ydotool
       wl-clipboard
       swaynotificationcenter
-      inputs.swww.packages."${pkgs.system}".default
+      inputs.swww.packages."${pkgs.stdenv.hostPlatform.system}".default
     ];
 
     environment.sessionVariables = {

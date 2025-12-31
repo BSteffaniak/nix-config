@@ -31,7 +31,7 @@ else
             };
 
             assetName =
-              platformAssetMap.${final.stdenv.system} or (throw "Unsupported platform: ${final.stdenv.system}");
+              platformAssetMap.${final.stdenv.hostPlatform.system} or (throw "Unsupported platform: ${final.stdenv.hostPlatform.system}");
 
             # Find the matching asset in the release
             matchingAssets = builtins.filter (asset: asset.name == assetName) releaseData.assets;

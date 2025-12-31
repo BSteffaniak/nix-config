@@ -38,7 +38,7 @@ with lib;
       ++ (
         # Neovim editor (conditional: nightly or stable)
         if config.myConfig.editors.neovim.useNightly then
-          [ inputs.neovim-nightly-overlay.packages."${pkgs.system}".default ]
+          [ inputs.neovim-nightly-overlay.packages."${pkgs.stdenv.hostPlatform.system}".default ]
         else
           [ pkgs.neovim ]
       );

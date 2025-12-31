@@ -93,7 +93,7 @@ in
       ++ (
         # Neovim editor (conditional: nightly or stable)
         if cfg.useNightly && inputs ? neovim-nightly-overlay then
-          [ inputs.neovim-nightly-overlay.packages."${pkgs.system}".default ]
+          [ inputs.neovim-nightly-overlay.packages."${pkgs.stdenv.hostPlatform.system}".default ]
         else
           [ pkgs.neovim ]
       );

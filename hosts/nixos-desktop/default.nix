@@ -108,10 +108,11 @@
 
   # System packages specific to this host
   environment.systemPackages = with pkgs; [
-    inputs.home-manager.packages."${pkgs.system}".default
+    inputs.home-manager.packages."${pkgs.stdenv.hostPlatform.system}".default
     unstable.bpf-linker
     unstable.bpftools
     unstable.nftables
+    unstable.wl-clipboard
   ];
 
   # Fonts
