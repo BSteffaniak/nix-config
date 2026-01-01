@@ -78,7 +78,8 @@ with lib;
           email = config.homeModules.git.userEmail;
         };
         alias = config.homeModules.git.aliases;
-      } // config.homeModules.git.extraConfig;
+      }
+      // config.homeModules.git.extraConfig;
       signing = mkIf (config.homeModules.git.signing.key != null) {
         key = config.homeModules.git.signing.key;
         signByDefault = config.homeModules.git.signing.signByDefault;
