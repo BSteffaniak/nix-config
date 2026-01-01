@@ -41,6 +41,8 @@
     darwin.homebrew.enable = true;
     darwin.systemDefaults.enable = true;
     darwin.applications.enable = true;
+
+    services.tailscale.enable = true;
   };
 
   environment.systemPackages = [

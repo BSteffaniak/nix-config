@@ -11,6 +11,7 @@
     ./homebrew.nix
     ./ssh.nix
     ./system-defaults.nix
+    ./tailscale.nix
   ];
 
   config = {

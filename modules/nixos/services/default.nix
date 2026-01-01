@@ -11,6 +11,7 @@ with lib;
   imports = [
     ./docker.nix
     ./observability.nix
+    ./tailscale.nix
   ];
 
   options.myConfig.services = {

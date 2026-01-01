@@ -64,6 +64,7 @@
     services.docker.dataRoot = "/hdd/docker";
     services.observability.enable = true;
     services.minecraft.enable = true;
+    services.tailscale.enable = true;
 
     # System configuration
     system.enable = true;

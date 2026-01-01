@@ -10,8 +10,9 @@ with lib;
 {
   imports = [
     ./development
-    ./shell
     ./editors
+    ./services
+    ./shell
   ];
 
   # Common options available on all platforms
