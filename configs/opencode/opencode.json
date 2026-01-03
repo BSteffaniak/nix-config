@@ -76,6 +76,8 @@
                     "*": "allow",
                     "git checkout *": "deny",
                     "git add *": "deny",
+                    "git mv *": "deny",
+                    "git rm *": "deny",
                     "git reset *": "deny",
                     "git remove *": "deny",
                     "git commit *": "deny",
