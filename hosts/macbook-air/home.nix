@@ -93,5 +93,6 @@
     postgresql
     tippecanoe
     _7zz
+    age
   ];
 }
