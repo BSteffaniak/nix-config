@@ -92,5 +92,6 @@
     httrack
     postgresql
     tippecanoe
+    _7zz
   ];
 }
