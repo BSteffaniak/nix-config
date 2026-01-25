@@ -21,6 +21,7 @@
     # Development tools
     development.rust.enable = true;
     development.rust.includeNightly = true;
+    development.rust.bpfLinker = true;
     development.nodejs.enable = true;
     development.go.enable = true;
     development.python.enable = true;
@@ -43,11 +44,19 @@
     darwin.applications.enable = true;
 
     services.tailscale.enable = true;
+
+    # Tools
+    tools = {
+      archiving.enable = true;
+      mapping.enable = true;
+      encryption.enable = true;
+      web.enable = true;
+      database.postgresql.enable = true;
+    };
   };
 
   # System packages specific to this host
   environment.systemPackages = with pkgs; [
-    unstable.bpf-linker
     libiconv # Required for building chadthrottle on macOS
   ];
 

@@ -118,8 +118,5 @@
   home.packages = with pkgs; [
     steam
     opencode-dev
-    unstable.gemini-cli
-    tippecanoe
-    _7zz
   ];
 }

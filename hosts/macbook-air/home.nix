@@ -89,10 +89,5 @@
   # Personal packages
   home.packages = with pkgs; [
     opencode-dev
-    httrack
-    postgresql
-    tippecanoe
-    _7zz
-    age
   ];
 }

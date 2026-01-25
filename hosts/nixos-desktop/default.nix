@@ -43,6 +43,7 @@
     # Development tools
     development.rust.enable = true;
     development.rust.includeNightly = true;
+    development.rust.bpfLinker = true;
     development.nodejs.enable = true;
     development.go.enable = true;
     development.python.enable = true;
@@ -65,6 +66,15 @@
     services.observability.enable = true;
     services.minecraft.enable = true;
     services.tailscale.enable = true;
+
+    # Tools
+    tools = {
+      archiving.enable = true;
+      mapping.enable = true;
+      encryption.enable = true;
+      ai.gemini.enable = true;
+      ai.ollama.enable = true;
+    };
 
     # System configuration
     system.enable = true;
@@ -101,7 +111,6 @@
       usbutils
       slurm-nm
       acpi
-      ollama
     ];
   };
 
@@ -110,7 +119,6 @@
   # System packages specific to this host
   environment.systemPackages = with pkgs; [
     inputs.home-manager.packages."${pkgs.stdenv.hostPlatform.system}".default
-    unstable.bpf-linker
     unstable.bpftools
     unstable.nftables
     unstable.wl-clipboard

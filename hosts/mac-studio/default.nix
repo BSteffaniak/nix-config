@@ -43,6 +43,12 @@
     darwin.applications.enable = true;
 
     services.tailscale.enable = true;
+
+    # Tools - enable as needed
+    tools = {
+      archiving.enable = true;
+      encryption.enable = true;
+    };
   };
 
   environment.systemPackages = [

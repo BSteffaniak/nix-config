@@ -13,6 +13,7 @@ with lib;
     ./editors
     ./services
     ./shell
+    ./tools
   ];
 
   # Common options available on all platforms
