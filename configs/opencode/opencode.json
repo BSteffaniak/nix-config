@@ -67,7 +67,7 @@
     "agent": {
         "build": {
             "mode": "primary",
-            "model": "amazon-bedrock/global.anthropic.claude-opus-4-5-20251101-v1:0",
+            "model": "github-copilot/claude-opus-4.5",
             "tools": {
                 "write": true,
                 "edit": true,
@@ -103,7 +103,7 @@
         },
         "plan": {
             "mode": "primary",
-            "model": "amazon-bedrock/global.anthropic.claude-opus-4-5-20251101-v1:0",
+            "model": "github-copilot/claude-opus-4.5",
             "tools": {
                 "write": false,
                 "edit": false,
