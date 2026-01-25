@@ -84,9 +84,21 @@
       dadbod = true; # Disable database tools (not needed on laptop)
       treesitterHypr = false; # Disable Hyprland tree-sitter (macOS doesn't use Hyprland)
     };
+
+    # Rust development
+    development.rust.bpfLinker = true;
+
+    # Tools
+    tools = {
+      archiving.enable = true;
+      mapping.enable = true;
+      encryption.enable = true;
+      web.enable = true;
+      database.postgresql.enable = true;
+    };
   };
 
-  # Personal packages
+  # Personal packages (packages not managed by myConfig modules)
   home.packages = with pkgs; [
     opencode-dev
   ];

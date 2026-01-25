@@ -1,3 +1,7 @@
+# Tools module - shared utility tools installed via home-manager
+#
+# This module uses home.packages instead of environment.systemPackages
+# for better portability across standalone home-manager setups (e.g., Ubuntu).
 {
   config,
   lib,
@@ -51,7 +55,7 @@ in
   };
 
   config = {
-    environment.systemPackages =
+    home.packages =
       with pkgs;
       (optional cfg.archiving.enable _7zz)
       ++ (optional cfg.mapping.enable tippecanoe)

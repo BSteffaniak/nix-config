@@ -112,6 +112,18 @@
       dadbod = true; # Enable database tools
       treesitterHypr = true; # Enable Hyprland tree-sitter (for NixOS desktop)
     };
+
+    # Rust development
+    development.rust.bpfLinker = true;
+
+    # Tools
+    tools = {
+      archiving.enable = true;
+      mapping.enable = true;
+      encryption.enable = true;
+      ai.gemini.enable = true;
+      ai.ollama.enable = true;
+    };
   };
 
   # Personal packages

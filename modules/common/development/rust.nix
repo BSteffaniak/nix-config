@@ -124,12 +124,10 @@ in
         '';
       };
     };
-
-    bpfLinker = mkEnableOption "BPF linker for eBPF development";
   };
 
   config = mkIf cfg.enable {
-    environment.systemPackages = rustPackages ++ (optional cfg.bpfLinker pkgs.unstable.bpf-linker);
+    environment.systemPackages = rustPackages;
 
     # Warn if neither stable nor nightly is enabled
     warnings = optional (

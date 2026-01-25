@@ -71,6 +71,12 @@
         };
       };
     };
+
+    # Tools
+    tools = {
+      archiving.enable = true;
+      encryption.enable = true;
+    };
   };
 
   # Personal packages

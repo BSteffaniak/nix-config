@@ -13,5 +13,6 @@
     ./editors
     ./cli-tools
     ./desktop
+    ./tools
   ];
 }

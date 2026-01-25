@@ -122,11 +122,13 @@ in
         '';
       };
     };
+
+    bpfLinker = mkEnableOption "BPF linker for eBPF development";
   };
 
   config = mkIf cfg.enable {
     # Install Rust toolchains and tools via home-manager
-    home.packages = rustPackages;
+    home.packages = rustPackages ++ (optional cfg.bpfLinker pkgs.unstable.bpf-linker);
 
     # Add ~/.cargo/bin to PATH for cargo-installed binaries
     home.sessionPath = [ "$HOME/.cargo/bin" ];

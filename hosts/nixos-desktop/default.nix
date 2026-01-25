@@ -43,7 +43,6 @@
     # Development tools
     development.rust.enable = true;
     development.rust.includeNightly = true;
-    development.rust.bpfLinker = true;
     development.nodejs.enable = true;
     development.go.enable = true;
     development.python.enable = true;
@@ -66,15 +65,6 @@
     services.observability.enable = true;
     services.minecraft.enable = true;
     services.tailscale.enable = true;
-
-    # Tools
-    tools = {
-      archiving.enable = true;
-      mapping.enable = true;
-      encryption.enable = true;
-      ai.gemini.enable = true;
-      ai.ollama.enable = true;
-    };
 
     # System configuration
     system.enable = true;
