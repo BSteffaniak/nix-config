@@ -34,5 +34,6 @@ in
   home.sessionPath = [
     "$HOME/.local/bin"
     "$HOME/.npm-packages/bin"
+    "$HOME/.bun/bin"
   ];
 }
