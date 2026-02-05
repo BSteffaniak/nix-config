@@ -33,6 +33,9 @@ in
       direnv.enable = true;
       editor.enable = true;
       utilities.enable = true;
+
+      # Enable opencode alias if opencode development tools are enabled
+      opencode.enable = config.myConfig.development.opencode.enable or false;
     };
 
     # Install fish plugins

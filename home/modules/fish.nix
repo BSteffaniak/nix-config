@@ -226,7 +226,11 @@ with lib;
   config = mkIf config.homeModules.fish.enable {
     programs.fish = {
       enable = true;
-      shellAliases = config.homeModules.fish.aliases;
+      shellAliases =
+        config.homeModules.fish.aliases
+        // (optionalAttrs config.homeModules.fish.opencode.enable {
+          opencode-bedrock = "OPENCODE_CONFIG=$HOME/.config/nix/configs/opencode/bedrock.json opencode";
+        });
       functions = config.homeModules.fish.functions;
       plugins = map (pkg: {
         name = pkg.pname;
