@@ -26,7 +26,7 @@ hs.hotkey.bind({ "cmd", "alt" }, "2", function()
 end)
 
 --------------------------------------------------------------------------------
--- Ctrl+; -> Ctrl+s in terminal apps (for Zellij/tmux navigation)
+-- Terminal key remaps (enabled only when a terminal app is focused)
 -- Uses hs.hotkey + app watcher instead of hs.eventtap for resilience
 -- (hs.eventtap can silently die during nix rebuilds; hs.hotkey survives)
 --------------------------------------------------------------------------------
@@ -39,27 +39,40 @@ local terminalBundleIDs = {
   ["com.apple.Terminal"] = true,
 }
 
--- Create hotkey (disabled by default) - enabled only when a terminal is focused
-local ctrlSemicolonHotkey = hs.hotkey.new({ "ctrl" }, ";", function()
-  hs.eventtap.keyStroke({ "ctrl" }, "s", 0)
-end)
+-- Terminal-only hotkeys (disabled by default, enabled when a terminal is focused)
+local terminalHotkeys = {
+  -- Ctrl+; -> Ctrl+s (zellij tab navigation)
+  hs.hotkey.new({ "ctrl" }, ";", function()
+    hs.eventtap.keyStroke({ "ctrl" }, "s", 0)
+  end),
+  -- Alt+k -> Alt+t (workaround: zellij doesn't respond to Alt+k on macOS
+  -- with kitty keyboard protocol, but Alt+t with the same action works)
+  hs.hotkey.new({ "alt" }, "k", function()
+    hs.eventtap.keyStroke({ "alt" }, "t", 0)
+  end),
+}
 
--- Watch for application focus changes to enable/disable the hotkey
+-- Watch for application focus changes to enable/disable terminal hotkeys
 local appWatcher = hs.application.watcher.new(function(appName, eventType, appObject)
   if eventType == hs.application.watcher.activated then
-    if appObject and terminalBundleIDs[appObject:bundleID()] then
-      ctrlSemicolonHotkey:enable()
-    else
-      ctrlSemicolonHotkey:disable()
+    local isTerminal = appObject and terminalBundleIDs[appObject:bundleID()]
+    for _, hotkey in ipairs(terminalHotkeys) do
+      if isTerminal then
+        hotkey:enable()
+      else
+        hotkey:disable()
+      end
     end
   end
 end)
 appWatcher:start()
 
--- Enable hotkey if a terminal is already focused at load time
+-- Enable hotkeys if a terminal is already focused at load time
 local frontApp = hs.application.frontmostApplication()
 if frontApp and terminalBundleIDs[frontApp:bundleID()] then
-  ctrlSemicolonHotkey:enable()
+  for _, hotkey in ipairs(terminalHotkeys) do
+    hotkey:enable()
+  end
 end
 
 --------------------------------------------------------------------------------
