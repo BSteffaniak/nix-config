@@ -19,7 +19,8 @@ let
     "^com\\.apple\\.Terminal$"
   ];
 
-  # Karabiner configuration
+  # Karabiner configuration using native macOS input sources
+  # This approach lets macOS handle Dvorak layout, Karabiner only handles switching
   karabinerConfig = {
     global = {
       check_for_updates_on_startup = true;
@@ -70,32 +71,9 @@ let
                 }
               ];
             }
-            # Rule 2: Cmd+Alt+1 -> Switch to Default profile
+            # Rule 2: Cmd+Alt+2 -> Switch to Dvorak input source
             {
-              description = "Cmd+Alt+1 -> Switch to Default profile";
-              manipulators = [
-                {
-                  type = "basic";
-                  from = {
-                    key_code = "1";
-                    modifiers = {
-                      mandatory = [
-                        "command"
-                        "option"
-                      ];
-                    };
-                  };
-                  to = [
-                    {
-                      shell_command = "'/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli' --select-profile 'Default profile'";
-                    }
-                  ];
-                }
-              ];
-            }
-            # Rule 3: Cmd+Alt+2 -> Switch to Dvorak profile
-            {
-              description = "Cmd+Alt+2 -> Switch to Dvorak profile";
+              description = "Cmd+Alt+2 -> Switch to Dvorak input source";
               manipulators = [
                 {
                   type = "basic";
@@ -110,7 +88,36 @@ let
                   };
                   to = [
                     {
-                      shell_command = "'/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli' --select-profile 'Dvorak'";
+                      select_input_source = {
+                        input_source_id = "^com\\.apple\\.keylayout\\.Dvorak$";
+                        language = "^en$";
+                      };
+                    }
+                  ];
+                }
+              ];
+            }
+            # Rule 3: Cmd+Alt+1 -> Switch to Default profile (QWERTY)
+            {
+              description = "Cmd+Alt+1 -> Switch to Default (QWERTY) profile";
+              manipulators = [
+                {
+                  type = "basic";
+                  from = {
+                    key_code = "1";
+                    modifiers = {
+                      mandatory = [
+                        "command"
+                        "option"
+                      ];
+                    };
+                  };
+                  to = [
+                    {
+                      select_input_source = {
+                        input_source_id = "^com\\.apple\\.keylayout\\.US$";
+                        language = "^en$";
+                      };
                     }
                   ];
                 }
@@ -118,12 +125,11 @@ let
             }
           ];
         };
-        # Empty simple/fn/device modifications (can be extended later)
+        # Default profile uses QWERTY (no key remapping)
         simple_modifications = [ ];
         fn_function_keys = [ ];
         devices = [ ];
       }
-      # Dvorak profile (minimal - just a placeholder for switching)
       {
         name = "Dvorak";
         selected = false;
@@ -138,9 +144,9 @@ let
             "basic.to_if_held_down_threshold_milliseconds" = 500;
           };
           rules = [
-            # Profile switching rules
+            # Rule 1: Cmd+Alt+1 -> Switch to Default (QWERTY) input source
             {
-              description = "Cmd+Alt+1 -> Switch to Default profile";
+              description = "Cmd+Alt+1 -> Switch to Default (QWERTY) input source";
               manipulators = [
                 {
                   type = "basic";
@@ -155,29 +161,10 @@ let
                   };
                   to = [
                     {
-                      shell_command = "'/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli' --select-profile 'Default profile'";
-                    }
-                  ];
-                }
-              ];
-            }
-            {
-              description = "Cmd+Alt+2 -> Switch to Dvorak profile";
-              manipulators = [
-                {
-                  type = "basic";
-                  from = {
-                    key_code = "2";
-                    modifiers = {
-                      mandatory = [
-                        "command"
-                        "option"
-                      ];
-                    };
-                  };
-                  to = [
-                    {
-                      shell_command = "'/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli' --select-profile 'Dvorak'";
+                      select_input_source = {
+                        input_source_id = "^com\\.apple\\.keylayout\\.US$";
+                        language = "^en$";
+                      };
                     }
                   ];
                 }
@@ -185,6 +172,8 @@ let
             }
           ];
         };
+        # Dvorak profile uses macOS native Dvorak layout (no key remapping)
+        # macOS handles the actual character mapping, Karabiner just provides switching
         simple_modifications = [ ];
         fn_function_keys = [ ];
         devices = [ ];
