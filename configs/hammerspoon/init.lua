@@ -57,6 +57,20 @@ end)
 ctrlSemicolonWatcher:start()
 
 --------------------------------------------------------------------------------
+-- Auto-reload config when init.lua changes (e.g. after nix rebuild)
+--------------------------------------------------------------------------------
+
+local configWatcher = hs.pathwatcher.new(hs.configdir, function(files)
+  for _, file in pairs(files) do
+    if file:sub(-#"init.lua") == "init.lua" then
+      hs.reload()
+      return
+    end
+  end
+end)
+configWatcher:start()
+
+--------------------------------------------------------------------------------
 -- Reload config notification
 --------------------------------------------------------------------------------
 
