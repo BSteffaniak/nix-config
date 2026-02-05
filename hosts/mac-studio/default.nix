@@ -46,9 +46,8 @@
     desktop.aerospace.enable = true;
     desktop.sketchybar.enable = true;
 
-    # Keyboard customization (Hammerspoon instead of Karabiner to avoid
-    # virtual HID keyboard breaking Dvorak Ctrl key mappings)
-    darwin.karabiner.enable = false;
+    # Keyboard customization (Hammerspoon - uses CGEventTap instead of
+    # virtual HID keyboard, which avoids breaking Dvorak Ctrl key mappings)
     darwin.hammerspoon.enable = true;
 
     services.tailscale.enable = true;

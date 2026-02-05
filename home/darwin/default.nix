@@ -48,8 +48,7 @@
     editors.neovim.enable = osConfig.myConfig.editors.neovim.enable or false;
     editors.neovim.useNightly = osConfig.myConfig.editors.neovim.useNightly or false;
 
-    # Desktop (Karabiner, Hammerspoon)
-    desktop.karabiner.enable = osConfig.myConfig.darwin.karabiner.enable or false;
+    # Desktop (Hammerspoon)
     desktop.hammerspoon.enable = osConfig.myConfig.darwin.hammerspoon.enable or false;
   };
 

@@ -11,7 +11,6 @@
     ./applications.nix
     ./hammerspoon.nix
     ./homebrew.nix
-    ./karabiner.nix
     ./sketchybar.nix
     ./ssh.nix
     ./system-defaults.nix
