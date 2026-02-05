@@ -18,6 +18,10 @@
   };
 
   myConfig = {
+    # Desktop - AeroSpace tiling window manager
+    desktop.aerospace.enable = true;
+    desktop.sketchybar.enable = true;
+
     # CLI tools - now configured directly in home-manager
     cliTools = {
       terminals.zellij.enable = true;

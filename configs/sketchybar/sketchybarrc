@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# SketchyBar Configuration
+# Integrates with AeroSpace window manager
+# See: https://felixkratz.github.io/SketchyBar/
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# BAR APPEARANCE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+PLUGIN_DIR="$CONFIG_DIR/plugins"
+
+sketchybar --bar \
+  height=28 \
+  blur_radius=30 \
+  position=top \
+  sticky=on \
+  padding_left=10 \
+  padding_right=10 \
+  color=0x80000000
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# DEFAULT ITEM STYLING
+# ═══════════════════════════════════════════════════════════════════════════════
+
+sketchybar --default \
+  icon.font="SF Pro:Semibold:14.0" \
+  icon.color=0xffffffff \
+  label.font="SF Pro:Semibold:14.0" \
+  label.color=0xffffffff \
+  background.color=0x40ffffff \
+  background.corner_radius=5 \
+  background.height=24 \
+  padding_left=5 \
+  padding_right=5 \
+  label.padding_left=4 \
+  label.padding_right=4 \
+  icon.padding_left=4 \
+  icon.padding_right=4
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# AEROSPACE WORKSPACE INDICATORS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Create workspace items for workspaces 1-10
+for i in $(seq 1 10); do
+  sid=$i
+  sketchybar --add item space.$sid left \
+    --subscribe space.$sid aerospace_workspace_change \
+    --set space.$sid \
+      background.color=0x40ffffff \
+      background.corner_radius=5 \
+      background.height=20 \
+      background.drawing=off \
+      label="$sid" \
+      label.color=0x80ffffff \
+      click_script="aerospace workspace $sid" \
+      script="$PLUGIN_DIR/aerospace.sh $sid"
+done
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# LEFT SIDE - Workspaces (handled above)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CENTER - Nothing for now (can add window title later)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# RIGHT SIDE - System Info
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Clock
+sketchybar --add item clock right \
+  --set clock \
+    update_freq=10 \
+    script="$PLUGIN_DIR/clock.sh"
+
+# Battery (for laptops)
+sketchybar --add item battery right \
+  --set battery \
+    update_freq=120 \
+    script="$PLUGIN_DIR/battery.sh" \
+  --subscribe battery system_woke power_source_change
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# INITIALIZE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+sketchybar --update

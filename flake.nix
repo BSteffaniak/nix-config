@@ -35,6 +35,14 @@
       url = "github:homebrew/homebrew-cask";
       flake = false;
     };
+    homebrew-aerospace = {
+      url = "github:nikitabobko/homebrew-tap";
+      flake = false;
+    };
+    homebrew-felixkratz = {
+      url = "github:FelixKratz/homebrew-formulae";
+      flake = false;
+    };
 
     # Shared development tools and overlays
     neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
@@ -73,6 +81,8 @@
       nix-homebrew,
       homebrew-core,
       homebrew-cask,
+      homebrew-aerospace,
+      homebrew-felixkratz,
       ...
     }:
     let
@@ -172,6 +182,8 @@
                   taps = {
                     "homebrew/homebrew-core" = homebrew-core;
                     "homebrew/homebrew-cask" = homebrew-cask;
+                    "nikitabobko/homebrew-tap" = homebrew-aerospace;
+                    "FelixKratz/homebrew-formulae" = homebrew-felixkratz;
                   };
                   mutableTaps = false;
                 };
@@ -225,6 +237,8 @@
                   taps = {
                     "homebrew/homebrew-core" = homebrew-core;
                     "homebrew/homebrew-cask" = homebrew-cask;
+                    "nikitabobko/homebrew-tap" = homebrew-aerospace;
+                    "FelixKratz/homebrew-formulae" = homebrew-felixkratz;
                   };
                   mutableTaps = false;
                 };

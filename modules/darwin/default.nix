@@ -7,8 +7,10 @@
 
 {
   imports = [
+    ./aerospace.nix
     ./applications.nix
     ./homebrew.nix
+    ./sketchybar.nix
     ./ssh.nix
     ./system-defaults.nix
     ./tailscale.nix

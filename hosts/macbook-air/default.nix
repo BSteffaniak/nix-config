@@ -42,6 +42,10 @@
     darwin.systemDefaults.enable = true;
     darwin.applications.enable = true;
 
+    # Desktop environment
+    desktop.aerospace.enable = true;
+    desktop.sketchybar.enable = true;
+
     services.tailscale.enable = true;
   };
 
