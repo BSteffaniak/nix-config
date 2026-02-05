@@ -47,6 +47,9 @@
     # Editors
     editors.neovim.enable = osConfig.myConfig.editors.neovim.enable or false;
     editors.neovim.useNightly = osConfig.myConfig.editors.neovim.useNightly or false;
+
+    # Desktop (Karabiner)
+    desktop.karabiner.enable = osConfig.myConfig.darwin.karabiner.enable or false;
   };
 
   # Pass inputs to modules that need them

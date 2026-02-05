@@ -46,6 +46,9 @@
     desktop.aerospace.enable = true;
     desktop.sketchybar.enable = true;
 
+    # Keyboard customization
+    darwin.karabiner.enable = true;
+
     services.tailscale.enable = true;
   };
 
