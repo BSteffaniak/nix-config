@@ -27,6 +27,8 @@ end)
 
 --------------------------------------------------------------------------------
 -- Ctrl+; -> Ctrl+s in terminal apps (for Zellij/tmux navigation)
+-- Uses hs.hotkey + app watcher instead of hs.eventtap for resilience
+-- (hs.eventtap can silently die during nix rebuilds; hs.hotkey survives)
 --------------------------------------------------------------------------------
 
 local terminalBundleIDs = {
@@ -37,24 +39,28 @@ local terminalBundleIDs = {
   ["com.apple.Terminal"] = true,
 }
 
-local ctrlSemicolonWatcher = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(event)
-  local flags = event:getFlags()
-  local keycode = event:getKeyCode()
+-- Create hotkey (disabled by default) - enabled only when a terminal is focused
+local ctrlSemicolonHotkey = hs.hotkey.new({ "ctrl" }, ";", function()
+  hs.eventtap.keyStroke({ "ctrl" }, "s", 0)
+end)
 
-  -- Dynamically resolve semicolon keycode based on current input source
-  -- This ensures it works correctly on both QWERTY and Dvorak layouts
-  local semicolonKeycode = hs.keycodes.map[";"]
-  if flags.ctrl and semicolonKeycode and keycode == semicolonKeycode then
-    local app = hs.application.frontmostApplication()
-    if app and terminalBundleIDs[app:bundleID()] then
-      hs.eventtap.keyStroke({ "ctrl" }, "s", 0)
-      return true -- consume original event
+-- Watch for application focus changes to enable/disable the hotkey
+local appWatcher = hs.application.watcher.new(function(appName, eventType, appObject)
+  if eventType == hs.application.watcher.activated then
+    if appObject and terminalBundleIDs[appObject:bundleID()] then
+      ctrlSemicolonHotkey:enable()
+    else
+      ctrlSemicolonHotkey:disable()
     end
   end
-
-  return false
 end)
-ctrlSemicolonWatcher:start()
+appWatcher:start()
+
+-- Enable hotkey if a terminal is already focused at load time
+local frontApp = hs.application.frontmostApplication()
+if frontApp and terminalBundleIDs[frontApp:bundleID()] then
+  ctrlSemicolonHotkey:enable()
+end
 
 --------------------------------------------------------------------------------
 -- Auto-reload config when init.lua changes (e.g. after nix rebuild)

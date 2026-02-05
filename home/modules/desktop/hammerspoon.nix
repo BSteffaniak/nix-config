@@ -20,6 +20,10 @@ in
     # Hammerspoon uses ~/.hammerspoon/ (not XDG config)
     home.file.".hammerspoon/init.lua" = {
       source = ../../../configs/hammerspoon/init.lua;
+      onChange = ''
+        # Reload Hammerspoon config after nix rebuild deploys new file
+        /Applications/Hammerspoon.app/Contents/Frameworks/hs/hs -c "hs.reload()" || true
+      '';
     };
   };
 }
