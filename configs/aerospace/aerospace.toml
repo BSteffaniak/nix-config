@@ -85,7 +85,7 @@ cmd-shift-0 = 'move-node-to-workspace 10'
 # Fullscreen
 # ───────────────────────────────────────────────────────────────────────────────
 
-cmd-f = 'fullscreen'
+alt-z = 'fullscreen'
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # COMMENTED OUT BINDINGS
