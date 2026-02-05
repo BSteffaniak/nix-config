@@ -1,6 +1,7 @@
 {
   imports = [
     ./aerospace.nix
+    ./hammerspoon.nix
     ./hyprland.nix
     ./karabiner.nix
     ./sketchybar.nix
