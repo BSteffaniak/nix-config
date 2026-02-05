@@ -35,12 +35,21 @@ in
       executable = true;
     };
 
-    # Fish shell completions for aerospace CLI
-    programs.fish.interactiveShellInit = mkIf config.programs.fish.enable ''
-      # AeroSpace shell completions
-      if command -q aerospace
-        aerospace completion fish | source
-      end
-    '';
+    # Symlink workspace-monitor persistence scripts
+    xdg.configFile."aerospace/on-workspace-change.sh" = {
+      source = ../../../configs/aerospace/on-workspace-change.sh;
+      executable = true;
+    };
+    xdg.configFile."aerospace/detect-monitor-change.sh" = {
+      source = ../../../configs/aerospace/detect-monitor-change.sh;
+      executable = true;
+    };
+    xdg.configFile."aerospace/restore-workspace-monitors.sh" = {
+      source = ../../../configs/aerospace/restore-workspace-monitors.sh;
+      executable = true;
+    };
+
+    # NOTE: AeroSpace CLI does not currently support shell completions
+    # (no `aerospace completion` subcommand exists)
   };
 }

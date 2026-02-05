@@ -14,13 +14,22 @@ enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
 
 # Mouse follows focus (similar to Hyprland's follow_mouse)
-on-focus-changed = ['move-mouse window-lazy-center']
+# Also detect monitor changes for workspace persistence
+on-focus-changed = [
+  'move-mouse window-lazy-center',
+  'exec-and-forget ~/.config/aerospace/detect-monitor-change.sh',
+]
 
-# Notify SketchyBar on workspace change
+# Restore workspace-monitor assignments on startup
+after-startup-command = [
+  'exec-and-forget ~/.config/aerospace/restore-workspace-monitors.sh',
+]
+
+# Combined callback: notify SketchyBar AND save workspace-monitor state
 exec-on-workspace-change = [
   '/bin/bash',
   '-c',
-  'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE',
+  '~/.config/aerospace/on-workspace-change.sh',
 ]
 
 # ═══════════════════════════════════════════════════════════════════════════════
