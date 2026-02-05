@@ -22,6 +22,11 @@ in
     # Install choose for GUI fuzzy finding
     home.packages = [ pkgs.choose-gui ];
 
+    # Reload AeroSpace config after rebuild (if running)
+    home.activation.reloadAerospace = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run /opt/homebrew/bin/aerospace reload-config 2>/dev/null || true
+    '';
+
     # Symlink the AeroSpace configuration
     xdg.configFile."aerospace/aerospace.toml".source = ../../../configs/aerospace/aerospace.toml;
 
