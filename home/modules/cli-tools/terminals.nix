@@ -32,7 +32,15 @@ in
     zellij.enable = mkEnable "Zellij terminal workspace";
     tmux.enable = mkEnable "Tmux terminal multiplexer";
     wezterm.enable = mkEnable "WezTerm terminal emulator";
-    ghostty.enable = mkEnable "Ghostty terminal emulator";
+
+    ghostty = {
+      enable = mkEnable "Ghostty terminal emulator";
+      hideWindowDecoration = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Hide window titlebar/decoration (recommended for tiling WMs)";
+      };
+    };
   };
 
   config = {
@@ -57,9 +65,15 @@ in
       extraConfig = builtins.readFile ../../../configs/wezterm/wezterm.lua;
     };
 
-    # Ghostty
+    # Ghostty - read base config from file and append host-specific overrides
     xdg.configFile."ghostty/config" = mkIf cfg.ghostty.enable {
-      source = ../../../configs/ghostty/config;
+      text =
+        builtins.readFile ../../../configs/ghostty/config
+        + optionalString cfg.ghostty.hideWindowDecoration ''
+
+          # Host-specific: Hide window decoration for tiling WM
+          window-decoration = false
+        '';
     };
   };
 }
