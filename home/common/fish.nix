@@ -94,6 +94,7 @@ let
   utilitiesFunctions = optionalAttrs fishCfg.utilities.enable (
     (optionalAttrs fishCfg.utilities.sessionManagement {
       reload-session = ''
+        set -e __fish_home_manager_config_sourced
         source ~/.config/fish/config.fish
       '';
     })
