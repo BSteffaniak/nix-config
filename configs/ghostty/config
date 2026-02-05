@@ -4,5 +4,9 @@ background-opacity = 0.9
 
 mouse-scroll-multiplier = 0.25
 
+# Treat Option key as Alt for terminal escape sequences
+# Required for Alt+key bindings in zellij/tmux/etc to work on macOS
+macos-option-as-alt = true
+
 keybind = ctrl+slash=increase_font_size:1
 keybind = ctrl+minus=decrease_font_size:1
