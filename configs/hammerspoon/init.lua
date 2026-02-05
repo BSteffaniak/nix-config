@@ -5,6 +5,14 @@
 -- Disable animations for instant feedback
 hs.window.animationDuration = 0
 
+-- Application preferences
+hs.autoLaunch(true)                    -- Start at login
+hs.automaticallyCheckForUpdates(false) -- Managed by homebrew
+hs.uploadCrashData(false)              -- No crash reports
+hs.menuIcon(false)                     -- Hide menu bar icon
+hs.dockIcon(false)                     -- Hide dock icon
+hs.openConsoleOnDockClick(false)       -- Don't open console on dock click
+
 --------------------------------------------------------------------------------
 -- Input source switching
 --------------------------------------------------------------------------------
