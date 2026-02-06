@@ -87,6 +87,12 @@ alt-shift-0 = 'move-node-to-workspace 10'
 
 alt-z = 'fullscreen'
 
+# ───────────────────────────────────────────────────────────────────────────────
+# Move Workspace Between Monitors (cycles to next monitor, wraps around)
+# ───────────────────────────────────────────────────────────────────────────────
+
+cmd-shift-m = 'move-workspace-to-monitor --wrap-around next'
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # COMMENTED OUT BINDINGS
 # Uncomment as needed. These were disabled to avoid conflicts with Zellij/terminal
