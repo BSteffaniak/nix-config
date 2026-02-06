@@ -229,7 +229,7 @@ with lib;
       shellAliases =
         config.homeModules.fish.aliases
         // (optionalAttrs config.homeModules.fish.opencode.enable {
-          opencode-bedrock = "OPENCODE_CONFIG=$HOME/.config/nix/configs/opencode/bedrock.json opencode";
+          opencode-bedrock = "OPENCODE_CONFIG=$HOME/.config/nix/configs/opencode/bedrock.json opencode-dev";
         });
       functions = config.homeModules.fish.functions;
       plugins = map (pkg: {
