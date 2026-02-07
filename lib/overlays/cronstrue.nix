@@ -44,7 +44,7 @@ else
             # The hash of the npm dependencies
             # This will need to be updated if package-lock.json changes
             # Run `nix build` and it will tell you the correct hash if this is wrong
-            npmDepsHash = "sha256-DfCCf87CxlY58TlxKhWHjRilqplOrFgCcK4A3/Oo2YI=";
+            npmDepsHash = "sha256-jfSlHEOjU6OLB46rbbu1btwm1AJVXsq1EF6tSlvx1CA=";
 
             # Don't run npm audit during build (it requires network access)
             npmFlags = [ "--legacy-peer-deps" ];
