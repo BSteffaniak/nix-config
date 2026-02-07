@@ -44,6 +44,12 @@
       flake = false;
     };
 
+    # Firefox on darwin (nixpkgs firefox is broken on macOS)
+    nixpkgs-firefox-darwin = {
+      url = "github:bandithedoge/nixpkgs-firefox-darwin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Shared development tools and overlays
     neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
     rust-overlay = {
@@ -98,12 +104,14 @@
           opencode-release-info = inputs.opencode-release-info;
           zellij-fork = inputs.zellij-fork;
           cronstrue-src = inputs.cronstrue;
+          firefox-darwin = inputs.nixpkgs-firefox-darwin;
           # Enable all overlays by default
           enableRust = true;
           enableOpencode = true;
           enableRaMultiplex = true;
           enableZellijFork = true;
           enableCronstrue = true;
+          enableFirefoxDarwin = true;
         };
     in
     {

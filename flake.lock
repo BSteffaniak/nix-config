@@ -298,6 +298,26 @@
         "type": "github"
       }
     },
+    "nixpkgs-firefox-darwin": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1770427322,
+        "narHash": "sha256-fueBfJq4utQK40Ul/a7ngKIdBQ/Xt8V+F8Z1Fn+/YfA=",
+        "owner": "bandithedoge",
+        "repo": "nixpkgs-firefox-darwin",
+        "rev": "b0533a9d57d958fbe52423d2b6eaf231ec1846d9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "bandithedoge",
+        "repo": "nixpkgs-firefox-darwin",
+        "type": "github"
+      }
+    },
     "nixpkgs-unstable": {
       "locked": {
         "lastModified": 1770197578,
@@ -404,6 +424,7 @@
         "nix-minecraft": "nix-minecraft",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-darwin": "nixpkgs-darwin",
+        "nixpkgs-firefox-darwin": "nixpkgs-firefox-darwin",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "opencode-release-info": "opencode-release-info",
         "ra-multiplex": "ra-multiplex",

@@ -8,12 +8,14 @@
   opencode-release-info ? null,
   zellij-fork ? null,
   cronstrue-src ? null,
+  firefox-darwin ? null,
   # Optional overlay configuration
   enableRust ? true,
   enableOpencode ? true,
   enableRaMultiplex ? true,
   enableZellijFork ? false,
   enableCronstrue ? true,
+  enableFirefoxDarwin ? true,
 }:
 let
   # Bundle all inputs into a single attrset for easier passing
@@ -23,6 +25,7 @@ let
       rust-overlay
       opencode-release-info
       zellij-fork
+      firefox-darwin
       ;
     ra-multiplex = ra-multiplex-src;
     cronstrue = cronstrue-src;
@@ -39,6 +42,7 @@ let
     ra-multiplex = import ./overlays/ra-multiplex.nix;
     zellij = import ./overlays/zellij.nix;
     cronstrue = import ./overlays/cronstrue.nix;
+    firefox-darwin = import ./overlays/firefox-darwin.nix;
   };
 
   mkOverlaysLib = import ./mkOverlays.nix {
@@ -57,5 +61,6 @@ mkOverlaysLib.mkOverlays {
     enableRaMultiplex
     enableZellijFork
     enableCronstrue
+    enableFirefoxDarwin
     ;
 }

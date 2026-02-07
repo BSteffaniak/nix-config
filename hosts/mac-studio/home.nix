@@ -21,6 +21,7 @@
     # Desktop - AeroSpace tiling window manager
     desktop.aerospace.enable = true;
     desktop.sketchybar.enable = true;
+    desktop.mkalias.enable = true;
 
     # CLI tools - now configured directly in home-manager
     cliTools = {

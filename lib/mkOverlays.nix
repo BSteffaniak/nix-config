@@ -16,6 +16,7 @@
       enableRaMultiplex ? true,
       enableZellijFork ? false,
       enableCronstrue ? true,
+      enableFirefoxDarwin ? true,
     }:
     let
       # Core overlays (always enabled)
@@ -51,6 +52,10 @@
         {
           enable = enableCronstrue;
           overlay = overlayFunctions.cronstrue;
+        }
+        {
+          enable = enableFirefoxDarwin;
+          overlay = overlayFunctions.firefox-darwin;
         }
       ];
 
