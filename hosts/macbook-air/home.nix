@@ -18,9 +18,10 @@
   };
 
   myConfig = {
-    # Desktop - AeroSpace tiling window manager
+    # Desktop
     desktop.aerospace.enable = true;
     desktop.sketchybar.enable = true;
+    desktop.browsers.firefox.enable = true;
 
     # CLI tools - now configured directly in home-manager
     cliTools = {
