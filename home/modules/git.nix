@@ -28,6 +28,7 @@ with lib;
       default = {
         pull.rebase = true;
         core.autocrlf = "input";
+        push.default = "upstream";
       };
       description = "Additional git configuration";
       example = literalExpression ''
