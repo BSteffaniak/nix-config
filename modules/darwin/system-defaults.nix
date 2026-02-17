@@ -34,6 +34,12 @@ with lib;
       default = true;
       description = "Enable faster key repeat rate and shorter initial delay";
     };
+
+    mouseSpeed = mkOption {
+      type = types.nullOr types.float;
+      default = 3.0;
+      description = "Mouse tracking speed (0.0 to 3.0, or -1 to disable acceleration). Set to null to leave unmanaged.";
+    };
   };
 
   config = mkIf config.myConfig.darwin.systemDefaults.enable {
@@ -45,6 +51,10 @@ with lib;
       NSGlobalDomain.AppleInterfaceStyle = mkIf config.myConfig.darwin.systemDefaults.darkMode "Dark";
       NSGlobalDomain.KeyRepeat = mkIf config.myConfig.darwin.systemDefaults.fastKeyRepeat 1;
       NSGlobalDomain.InitialKeyRepeat = mkIf config.myConfig.darwin.systemDefaults.fastKeyRepeat 30;
+
+      CustomUserPreferences.".GlobalPreferences"."com.apple.mouse.scaling" = mkIf (
+        config.myConfig.darwin.systemDefaults.mouseSpeed != null
+      ) config.myConfig.darwin.systemDefaults.mouseSpeed;
     };
 
     power.sleep.display = mkIf config.myConfig.darwin.systemDefaults.preventSleep "never";
