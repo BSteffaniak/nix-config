@@ -28,6 +28,12 @@ with lib;
       default = true;
       description = "Prevent display from dimming/sleeping (even on battery)";
     };
+
+    fastKeyRepeat = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Enable faster key repeat rate and shorter initial delay";
+    };
   };
 
   config = mkIf config.myConfig.darwin.systemDefaults.enable {
@@ -37,6 +43,8 @@ with lib;
       finder.CreateDesktop = !config.myConfig.darwin.systemDefaults.hideDesktopIcons;
 
       NSGlobalDomain.AppleInterfaceStyle = mkIf config.myConfig.darwin.systemDefaults.darkMode "Dark";
+      NSGlobalDomain.KeyRepeat = mkIf config.myConfig.darwin.systemDefaults.fastKeyRepeat 1;
+      NSGlobalDomain.InitialKeyRepeat = mkIf config.myConfig.darwin.systemDefaults.fastKeyRepeat 30;
     };
 
     power.sleep.display = mkIf config.myConfig.darwin.systemDefaults.preventSleep "never";
