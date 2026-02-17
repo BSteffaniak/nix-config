@@ -13,6 +13,7 @@
     ./hammerspoon.nix
     ./homebrew.nix
     ./microsoft-edge.nix
+    ./signal.nix
     ./sketchybar.nix
     ./ssh.nix
     ./system-defaults.nix
