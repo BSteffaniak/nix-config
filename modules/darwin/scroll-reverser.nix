@@ -48,6 +48,7 @@ in
             "defaults write com.pilotmoon.scroll-reverser ReverseX -bool false"
             "defaults write com.pilotmoon.scroll-reverser ReverseTrackpad -bool false"
             "defaults write com.pilotmoon.scroll-reverser ReverseMouse -bool ${boolToString cfg.reverseMouse}"
+            "defaults write com.pilotmoon.scroll-reverser HideIcon -bool true"
             "open -a 'Scroll Reverser'"
           ])
         ];
