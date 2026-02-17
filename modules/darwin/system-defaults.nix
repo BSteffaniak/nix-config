@@ -22,6 +22,12 @@ with lib;
       default = true;
       description = "Hide all icons on the desktop (files remain in ~/Desktop but are not shown)";
     };
+
+    preventSleep = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Prevent display from dimming/sleeping (even on battery)";
+    };
   };
 
   config = mkIf config.myConfig.darwin.systemDefaults.enable {
@@ -32,5 +38,7 @@ with lib;
 
       NSGlobalDomain.AppleInterfaceStyle = mkIf config.myConfig.darwin.systemDefaults.darkMode "Dark";
     };
+
+    power.sleep.display = mkIf config.myConfig.darwin.systemDefaults.preventSleep "never";
   };
 }
