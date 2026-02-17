@@ -6,6 +6,7 @@
     ./gtk-theming.nix
 
     # Import new module categories
+    ./design
     ./development
     ./containers
     ./devops

@@ -9,6 +9,7 @@
   imports = [
     ./aerospace.nix
     ./applications.nix
+    ./figma.nix
     ./ghostty.nix
     ./google-chrome.nix
     ./hammerspoon.nix
