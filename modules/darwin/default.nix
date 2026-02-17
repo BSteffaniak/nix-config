@@ -12,6 +12,7 @@
     ./ghostty.nix
     ./hammerspoon.nix
     ./homebrew.nix
+    ./microsoft-edge.nix
     ./sketchybar.nix
     ./ssh.nix
     ./system-defaults.nix

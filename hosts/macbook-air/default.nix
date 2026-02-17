@@ -42,6 +42,7 @@
     darwin.systemDefaults.enable = true;
     darwin.applications.enable = true;
     darwin.ghostty.enable = true;
+    darwin.microsoftEdge.enable = true;
 
     # Desktop environment
     desktop.aerospace.enable = true;
