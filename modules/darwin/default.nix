@@ -10,6 +10,7 @@
     ./aerospace.nix
     ./applications.nix
     ./ghostty.nix
+    ./google-chrome.nix
     ./hammerspoon.nix
     ./homebrew.nix
     ./microsoft-edge.nix
