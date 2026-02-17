@@ -9,6 +9,7 @@
   imports = [
     ./aerospace.nix
     ./applications.nix
+    ./ghostty.nix
     ./hammerspoon.nix
     ./homebrew.nix
     ./sketchybar.nix

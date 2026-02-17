@@ -29,7 +29,6 @@
     ]
     ++ lib.optionals pkgs.stdenv.isLinux [
       # Linux-only packages
-      unstable.ghostty
       hyprshot
       brightnessctl
       libinput
