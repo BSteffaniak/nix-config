@@ -45,6 +45,7 @@
     darwin.ghostty.enable = true;
     darwin.googleChrome.enable = true;
     darwin.microsoftEdge.enable = true;
+    darwin.roon.enable = true;
     darwin.scrollReverser.enable = true;
 
     # Desktop environment

@@ -15,6 +15,7 @@
     ./hammerspoon.nix
     ./homebrew.nix
     ./microsoft-edge.nix
+    ./roon.nix
     ./scroll-reverser.nix
     ./signal.nix
     ./sketchybar.nix
