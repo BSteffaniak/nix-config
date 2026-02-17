@@ -40,6 +40,7 @@
     # Darwin-specific
     darwin.homebrew.enable = true;
     darwin.systemDefaults.enable = true;
+    darwin.systemDefaults.darkMode = true;
     darwin.applications.enable = true;
     darwin.googleChrome.enable = true;
     darwin.microsoftEdge.enable = true;
