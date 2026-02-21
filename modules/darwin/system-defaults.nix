@@ -55,8 +55,22 @@ with lib;
       CustomUserPreferences.".GlobalPreferences"."com.apple.mouse.scaling" = mkIf (
         config.myConfig.darwin.systemDefaults.mouseSpeed != null
       ) config.myConfig.darwin.systemDefaults.mouseSpeed;
+
+      # Disable screensaver and screen lock when preventSleep is enabled
+      screensaver.askForPassword = mkIf config.myConfig.darwin.systemDefaults.preventSleep false;
+      screensaver.askForPasswordDelay = mkIf config.myConfig.darwin.systemDefaults.preventSleep 0;
+
+      CustomUserPreferences."com.apple.screensaver".idleTime =
+        mkIf config.myConfig.darwin.systemDefaults.preventSleep 0;
     };
 
     power.sleep.display = mkIf config.myConfig.darwin.systemDefaults.preventSleep "never";
+
+    # Use pmset directly to prevent display sleep on all power sources (AC, battery, UPS)
+    # systemsetup -setDisplaySleep is unreliable on newer macOS versions
+    system.activationScripts.postActivation.text = mkIf config.myConfig.darwin.systemDefaults.preventSleep ''
+      echo "configuring display sleep prevention (all power sources)..." >&2
+      pmset -a displaysleep 0
+    '';
   };
 }
