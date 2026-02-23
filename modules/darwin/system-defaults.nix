@@ -46,6 +46,12 @@ with lib;
       default = true;
       description = "Use 24-hour clock format in the menu bar";
     };
+
+    showClockSeconds = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Show seconds in the menu bar clock";
+    };
   };
 
   config = mkIf config.myConfig.darwin.systemDefaults.enable {
@@ -56,6 +62,8 @@ with lib;
 
       NSGlobalDomain.AppleInterfaceStyle = mkIf config.myConfig.darwin.systemDefaults.darkMode "Dark";
       NSGlobalDomain.AppleICUForce24HourTime = config.myConfig.darwin.systemDefaults.use24HourClock;
+
+      menuExtraClock.ShowSeconds = config.myConfig.darwin.systemDefaults.showClockSeconds;
       NSGlobalDomain.KeyRepeat = mkIf config.myConfig.darwin.systemDefaults.fastKeyRepeat 1;
       NSGlobalDomain.InitialKeyRepeat = mkIf config.myConfig.darwin.systemDefaults.fastKeyRepeat 50;
 
