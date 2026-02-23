@@ -19,6 +19,7 @@
     ./microsoft-edge.nix
     ./roon.nix
     ./scroll-reverser.nix
+    ./security.nix
     ./signal.nix
     ./sketchybar.nix
     ./ssh.nix

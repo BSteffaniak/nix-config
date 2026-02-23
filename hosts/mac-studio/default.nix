@@ -55,6 +55,7 @@
     # Keyboard customization (Hammerspoon - uses CGEventTap instead of
     # virtual HID keyboard, which avoids breaking Dvorak Ctrl key mappings)
     darwin.hammerspoon.enable = true;
+    darwin.security.touchId.enable = true;
 
     services.tailscale.enable = true;
   };
