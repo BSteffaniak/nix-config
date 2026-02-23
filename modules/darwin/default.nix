@@ -14,6 +14,7 @@
     ./google-chrome.nix
     ./hammerspoon.nix
     ./homebrew.nix
+    ./keepingyouawake.nix
     ./microsoft-edge.nix
     ./roon.nix
     ./scroll-reverser.nix
