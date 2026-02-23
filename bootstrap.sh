@@ -102,7 +102,8 @@ detect_arch() {
 print_header "NixOS/Darwin Host Bootstrap"
 
 echo "This script will help you create a new host configuration."
-echo "It will generate the necessary files and update your flake configuration."
+echo "It will generate the necessary files. The flake and rebuild script"
+echo "auto-discover hosts from hosts/*/meta.nix -- no manual edits needed."
 echo ""
 
 # Step 1: Platform Selection
@@ -462,6 +463,36 @@ mkdir -p "$SCRIPT_DIR/hosts/$HOSTNAME"
 
 print_success "Created $SCRIPT_DIR/hosts/$HOSTNAME/default.nix"
 
+# Step 9: Generate meta.nix (for auto-discovery by flake.nix and rebuild.sh)
+print_header "Step 9: Generate Host Metadata"
+
+# Map platform name to meta.nix type
+case "$PLATFORM" in
+    darwin) META_TYPE="darwin" ;;
+    nixos)  META_TYPE="nixos" ;;
+    linux)  META_TYPE="home-manager" ;;
+esac
+
+# Determine the hostname used for rebuild.sh auto-detection
+if [ "$PLATFORM" = "darwin" ] && [ -n "${COMPUTER_NAME:-}" ]; then
+    # Darwin uses networking.hostName which we set to HOSTNAME
+    META_HOSTNAME="$HOSTNAME"
+else
+    META_HOSTNAME="$HOSTNAME"
+fi
+
+cat > "$SCRIPT_DIR/hosts/$HOSTNAME/meta.nix" << EOF
+{
+  type = "$META_TYPE";
+  system = "$ARCH";
+  hostname = "$META_HOSTNAME";
+  username = "$USERNAME";
+}
+EOF
+
+print_success "Created $SCRIPT_DIR/hosts/$HOSTNAME/meta.nix"
+print_success "The flake and rebuild.sh will auto-discover this host -- no manual edits needed."
+
 # For NixOS, handle hardware-configuration.nix
 if [ "$PLATFORM" = "nixos" ]; then
     print_header "NixOS Hardware Configuration"
@@ -485,149 +516,6 @@ if [ "$PLATFORM" = "nixos" ]; then
     fi
 fi
 
-# Step 9: Update Flake
-print_header "Step 9: Update Flake Configuration"
-
-if [ "$PLATFORM" = "darwin" ]; then
-    FLAKE_DIR="$SCRIPT_DIR/darwin"
-    FLAKE_TYPE="darwinConfigurations"
-    SYSTEM_FUNC="nix-darwin.lib.darwinSystem"
-else
-    FLAKE_DIR="$SCRIPT_DIR/nixos"
-    FLAKE_TYPE="nixosConfigurations"
-    SYSTEM_FUNC="nixpkgs.lib.nixosSystem"
-fi
-
-print_warning "You need to manually add the host to $FLAKE_DIR/flake.nix"
-echo ""
-echo "Add this to the $FLAKE_TYPE section:"
-echo ""
-echo "        $HOSTNAME = $SYSTEM_FUNC {"
-echo "          system = \"$ARCH\";"
-echo "          specialArgs = { inherit inputs; };"
-echo "          modules = ["
-echo "            ../hosts/$HOSTNAME"
-
-if [ "$PLATFORM" = "darwin" ]; then
-    echo "            home-manager.darwinModules.home-manager"
-    echo "            nix-homebrew.darwinModules.nix-homebrew"
-    echo "            {"
-    echo "              nixpkgs.overlays = import ./overlays.nix {"
-    echo "                inherit nixpkgs-unstable;"
-    echo "                ra-multiplex-src = inputs.ra-multiplex;"
-    echo "                rust-overlay = inputs.rust-overlay;"
-    echo "              };"
-    echo "            }"
-    echo "            ("
-    echo "              { config, ... }:"
-    echo "              let"
-    echo "                username = config.myConfig.username;"
-    echo "              in"
-    echo "              {"
-    echo "                nix-homebrew = {"
-    echo "                  enable = true;"
-    echo "                  enableRosetta = true;"
-    echo "                  user = username;"
-    echo "                  taps = {"
-    echo "                    \"homebrew/homebrew-core\" = homebrew-core;"
-    echo "                    \"homebrew/homebrew-cask\" = homebrew-cask;"
-    echo "                  };"
-    echo "                  mutableTaps = false;"
-    echo "                };"
-    echo ""
-    echo "                home-manager = {"
-    echo "                  useGlobalPkgs = true;"
-    echo "                  useUserPackages = true;"
-    echo "                  users.\${username} = import ../home/darwin;"
-    echo "                  extraSpecialArgs = {"
-    echo "                    inherit inputs;"
-    echo "                    osConfig = config;"
-    echo "                  };"
-    echo "                };"
-    echo ""
-    echo "                homebrew.taps = builtins.attrNames config.nix-homebrew.taps;"
-    echo "              }"
-    echo "            )"
-else
-    echo "            home-manager.nixosModules.home-manager"
-    echo "            {"
-    echo "              nixpkgs.overlays = ["
-    echo "                inputs.nix-minecraft.overlay"
-    echo "              ]"
-    echo "              ++ (import ./overlays.nix {"
-    echo "                inherit nixpkgs-unstable;"
-    echo "                ra-multiplex-src = inputs.ra-multiplex;"
-    echo "                rust-overlay = inputs.rust-overlay;"
-    echo "              });"
-    echo "            }"
-    echo "            ("
-    echo "              { config, ... }:"
-    echo "              {"
-    echo "                home-manager = {"
-    echo "                  useGlobalPkgs = true;"
-    echo "                  useUserPackages = true;"
-    echo "                  users.$USERNAME = import ../home/nixos;"
-    echo "                  extraSpecialArgs = {"
-    echo "                    inherit inputs;"
-    echo "                    osConfig = config;"
-    echo "                  };"
-    echo "                };"
-    echo "              }"
-    echo "            )"
-fi
-
-echo "          ];"
-echo "        };"
-echo ""
-
-if prompt_yes_no "Open $FLAKE_DIR/flake.nix in editor now?" "y"; then
-    ${EDITOR:-nano} "$FLAKE_DIR/flake.nix"
-fi
-
-# Step 10: Update rebuild.sh
-print_header "Step 10: Update rebuild.sh"
-
-if prompt_yes_no "Update rebuild.sh to recognize new hostname?" "y"; then
-    # Determine the display hostname
-    if [ "$PLATFORM" = "darwin" ]; then
-        DISPLAY_HOSTNAME="$HOSTNAME"
-    else
-        DISPLAY_HOSTNAME="$HOSTNAME"
-    fi
-    
-    # Backup rebuild.sh
-    cp "$SCRIPT_DIR/rebuild.sh" "$SCRIPT_DIR/rebuild.sh.bak"
-    
-    # Find the line before the *) case and insert new case
-    if [ "$PLATFORM" = "darwin" ]; then
-        FLAKE_PATH="$SCRIPT_DIR/darwin#$HOSTNAME"
-        REBUILD_CMD="darwin-rebuild"
-        PLATFORM_NAME="Darwin"
-    else
-        FLAKE_PATH="$SCRIPT_DIR/nixos#$HOSTNAME"
-        REBUILD_CMD="sudo nixos-rebuild"
-        PLATFORM_NAME="NixOS"
-    fi
-    
-    # Add new case to rebuild.sh
-    awk -v hostname="$DISPLAY_HOSTNAME" \
-        -v flake_path="$FLAKE_PATH" \
-        -v rebuild_cmd="$REBUILD_CMD" \
-        -v platform="$PLATFORM_NAME" \
-        '/^  \*\)/ {
-            print "  \"" hostname "\")"
-            print "    FLAKE_PATH=\"" flake_path "\""
-            print "    REBUILD_CMD=\"" rebuild_cmd "\""
-            print "    PLATFORM=\"" platform "\""
-            print "    ;;"
-        }
-        { print }' "$SCRIPT_DIR/rebuild.sh.bak" > "$SCRIPT_DIR/rebuild.sh"
-    
-    chmod +x "$SCRIPT_DIR/rebuild.sh"
-    print_success "Updated rebuild.sh"
-    rm "$SCRIPT_DIR/rebuild.sh.bak"
-fi
-
 # Summary
 print_header "Bootstrap Complete!"
 
@@ -636,26 +524,29 @@ echo "  Platform: $PLATFORM"
 echo "  Architecture: $ARCH"
 echo "  Hostname: $HOSTNAME"
 echo "  Username: $USERNAME"
-echo "  Configuration: $SCRIPT_DIR/hosts/$HOSTNAME/default.nix"
+echo ""
+echo "Generated files:"
+echo "  $SCRIPT_DIR/hosts/$HOSTNAME/default.nix"
+echo "  $SCRIPT_DIR/hosts/$HOSTNAME/meta.nix"
 echo ""
 
 print_success "Next steps:"
-echo "  1. Review the generated configuration in hosts/$HOSTNAME/default.nix"
-echo "  2. Add the host to $FLAKE_DIR/flake.nix (see instructions above)"
-echo "  3. Test the configuration:"
+echo "  1. Review the generated configuration in hosts/$HOSTNAME/"
+echo "  2. Test the configuration:"
 if [ "$PLATFORM" = "darwin" ]; then
-    echo "     darwin-rebuild build --flake $FLAKE_DIR#$HOSTNAME"
+    echo "     darwin-rebuild build --flake .#$HOSTNAME"
+elif [ "$PLATFORM" = "nixos" ]; then
+    echo "     sudo nixos-rebuild build --flake .#$HOSTNAME"
 else
-    echo "     sudo nixos-rebuild build --flake $FLAKE_DIR#$HOSTNAME"
+    echo "     home-manager build --flake .#$USERNAME@$HOSTNAME"
 fi
-echo "  4. Apply the configuration:"
+echo "  3. Apply the configuration:"
 echo "     ./rebuild.sh"
 echo ""
 
 if prompt_yes_no "Would you like to commit these changes?" "n"; then
     cd "$SCRIPT_DIR"
     git add "hosts/$HOSTNAME/"
-    git add "rebuild.sh" 2>/dev/null || true
     git commit -m "Add new host: $HOSTNAME ($PLATFORM)"
     print_success "Changes committed"
 fi

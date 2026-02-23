@@ -92,8 +92,31 @@
       ...
     }:
     let
-      # Helper to create overlays for any system
-      # Uses single flake.lock at root
+      # ── Host Discovery ───────────────────────────────────────────
+      # Automatically discover all hosts from hosts/*/meta.nix.
+      # Adding a new host requires only creating a directory under hosts/
+      # with meta.nix, default.nix, and home.nix -- no flake.nix edits needed.
+      hostDirs = builtins.readDir ./hosts;
+
+      hostNames = builtins.filter (
+        name: hostDirs.${name} == "directory" && builtins.pathExists (./hosts + "/${name}/meta.nix")
+      ) (builtins.attrNames hostDirs);
+
+      hostMeta = builtins.listToAttrs (
+        map (name: {
+          inherit name;
+          value = import (./hosts + "/${name}/meta.nix");
+        }) hostNames
+      );
+
+      # Partition hosts by type
+      filterByType = type: nixpkgs.lib.filterAttrs (_name: meta: meta.type == type) hostMeta;
+
+      nixosHosts = filterByType "nixos";
+      darwinHosts = filterByType "darwin";
+      hmHosts = filterByType "home-manager";
+
+      # ── Overlays ─────────────────────────────────────────────────
       mkOverlays =
         system: nixpkgsLib:
         import ./lib/overlays.nix {
@@ -105,7 +128,6 @@
           zellij-fork = inputs.zellij-fork;
           cronstrue-src = inputs.cronstrue;
           firefox-darwin = inputs.nixpkgs-firefox-darwin;
-          # Enable all overlays by default
           enableRust = true;
           enableOpencode = true;
           enableRaMultiplex = true;
@@ -113,184 +135,52 @@
           enableCronstrue = true;
           enableFirefoxDarwin = true;
         };
+
+      # ── Host Builders ────────────────────────────────────────────
+      mkDarwinHost = import ./lib/mkDarwinHost.nix;
+      mkNixosHost = import ./lib/mkNixosHost.nix;
+      mkHomeConfig = import ./lib/mkHomeConfig.nix;
     in
     {
-      # ============================================================
-      # NixOS Configurations
-      # ============================================================
-      nixosConfigurations = {
-        nixos-desktop = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          specialArgs = { inherit inputs; };
-          modules = [
-            ./hosts/nixos-desktop
-            home-manager.nixosModules.home-manager
-            {
-              nixpkgs.config = {
-                allowUnfree = true;
-                android_sdk.accept_license = true;
-              };
-              nixpkgs.overlays = [
-                inputs.nix-minecraft.overlay
-              ]
-              ++ (mkOverlays "x86_64-linux" nixpkgs);
-            }
-            (
-              { config, ... }:
-              {
-                home-manager = {
-                  useGlobalPkgs = true;
-                  useUserPackages = true;
-                  backupFileExtension = "backup";
-                  users.braden = {
-                    imports = [
-                      ./home/nixos
-                      ./hosts/nixos-desktop/home.nix
-                    ];
-                  };
-                  extraSpecialArgs = {
-                    inherit inputs;
-                    osConfig = config;
-                  };
-                };
-              }
-            )
-          ];
-        };
-      };
+      # ── NixOS Configurations ─────────────────────────────────────
+      nixosConfigurations = builtins.mapAttrs (
+        name: meta:
+        mkNixosHost {
+          inherit
+            name
+            meta
+            inputs
+            mkOverlays
+            ;
+        }
+      ) nixosHosts;
 
-      # ============================================================
-      # Darwin (macOS) Configurations
-      # ============================================================
-      darwinConfigurations = {
-        macbook-air = nix-darwin.lib.darwinSystem {
-          system = "aarch64-darwin";
-          specialArgs = { inherit inputs; };
-          modules = [
-            ./hosts/macbook-air
-            home-manager.darwinModules.home-manager
-            nix-homebrew.darwinModules.nix-homebrew
-            {
-              nixpkgs.config = {
-                allowUnfree = true;
-                android_sdk.accept_license = true;
-              };
-              nixpkgs.overlays = mkOverlays "aarch64-darwin" nixpkgs-darwin;
-            }
-            (
-              { config, ... }:
-              let
-                username = config.myConfig.username;
-              in
-              {
-                nix-homebrew = {
-                  enable = true;
-                  enableRosetta = true;
-                  user = username;
-                  taps = {
-                    "homebrew/homebrew-core" = homebrew-core;
-                    "homebrew/homebrew-cask" = homebrew-cask;
-                    "nikitabobko/homebrew-tap" = homebrew-aerospace;
-                    "FelixKratz/homebrew-formulae" = homebrew-felixkratz;
-                  };
-                  mutableTaps = false;
-                };
+      # ── Darwin (macOS) Configurations ────────────────────────────
+      darwinConfigurations = builtins.mapAttrs (
+        name: meta:
+        mkDarwinHost {
+          inherit
+            name
+            meta
+            inputs
+            mkOverlays
+            ;
+        }
+      ) darwinHosts;
 
-                home-manager = {
-                  useGlobalPkgs = true;
-                  useUserPackages = true;
-                  backupFileExtension = "backup";
-                  users.${username} = {
-                    imports = [
-                      ./home/darwin
-                      ./hosts/macbook-air/home.nix
-                    ];
-                  };
-                  extraSpecialArgs = {
-                    inherit inputs;
-                    osConfig = config;
-                  };
-                };
-
-                homebrew.taps = builtins.attrNames config.nix-homebrew.taps;
-              }
-            )
-          ];
-        };
-
-        mac-studio = nix-darwin.lib.darwinSystem {
-          system = "aarch64-darwin";
-          specialArgs = { inherit inputs; };
-          modules = [
-            ./hosts/mac-studio
-            home-manager.darwinModules.home-manager
-            nix-homebrew.darwinModules.nix-homebrew
-            {
-              nixpkgs.config = {
-                allowUnfree = true;
-                android_sdk.accept_license = true;
-              };
-              nixpkgs.overlays = mkOverlays "aarch64-darwin" nixpkgs-darwin;
-            }
-            (
-              { config, ... }:
-              let
-                username = config.myConfig.username;
-              in
-              {
-                nix-homebrew = {
-                  enable = true;
-                  enableRosetta = true;
-                  user = username;
-                  taps = {
-                    "homebrew/homebrew-core" = homebrew-core;
-                    "homebrew/homebrew-cask" = homebrew-cask;
-                    "nikitabobko/homebrew-tap" = homebrew-aerospace;
-                    "FelixKratz/homebrew-formulae" = homebrew-felixkratz;
-                  };
-                  mutableTaps = false;
-                };
-
-                home-manager = {
-                  useGlobalPkgs = true;
-                  useUserPackages = true;
-                  backupFileExtension = "backup";
-                  users.${username} = {
-                    imports = [
-                      ./home/darwin
-                      ./hosts/mac-studio/home.nix
-                    ];
-                  };
-                  extraSpecialArgs = {
-                    inherit inputs;
-                    osConfig = config;
-                  };
-                };
-
-                homebrew.taps = builtins.attrNames config.nix-homebrew.taps;
-              }
-            )
-          ];
-        };
-      };
-
-      # ============================================================
-      # Standalone Home-Manager Configurations (Ubuntu, etc.)
-      # ============================================================
-      homeConfigurations = {
-        "braden@ubuntu-laptop" = home-manager.lib.homeManagerConfiguration {
-          pkgs = import nixpkgs {
-            system = "x86_64-linux";
-            config.allowUnfree = true;
-            overlays = mkOverlays "x86_64-linux" nixpkgs;
+      # ── Standalone Home-Manager Configurations ───────────────────
+      homeConfigurations = builtins.listToAttrs (
+        nixpkgs.lib.mapAttrsToList (name: meta: {
+          name = "${meta.username}@${name}";
+          value = mkHomeConfig {
+            inherit
+              name
+              meta
+              inputs
+              mkOverlays
+              ;
           };
-          modules = [
-            ./hosts/ubuntu-laptop/home.nix
-          ];
-          extraSpecialArgs = {
-            inherit inputs;
-          };
-        };
-      };
+        }) hmHosts
+      );
     };
 }

@@ -7,8 +7,24 @@ This document provides guidance for AI agents and contributors working on this N
 This configuration manages multiple hosts across different platforms:
 
 - **NixOS** (nixos-desktop) - Full NixOS system configuration
-- **nix-darwin** (macbook-air, mac-studio) - macOS with nix-darwin
+- **nix-darwin** (macbook-air, mac-studio, bs-mbpro) - macOS with nix-darwin
 - **Standalone home-manager** (ubuntu-laptop) - Home-manager only on non-NixOS Linux
+
+### Host Auto-Discovery
+
+Hosts are **automatically discovered** from `hosts/*/meta.nix` files. The `flake.nix` scans the `hosts/` directory at evaluation time and generates the appropriate `nixosConfigurations`, `darwinConfigurations`, or `homeConfigurations` outputs based on each host's `meta.nix`. Neither `flake.nix` nor `rebuild.sh` need manual edits when adding or removing hosts.
+
+### Host Builder Helpers
+
+Platform-specific boilerplate is factored into reusable builder functions:
+
+- `lib/mkDarwinHost.nix` - Creates a nix-darwin system configuration
+- `lib/mkNixosHost.nix` - Creates a NixOS system configuration
+- `lib/mkHomeConfig.nix` - Creates a standalone home-manager configuration
+
+### Private Hosts (git-crypt)
+
+Some host directories (e.g., `hosts/bs-mbpro/`) are encrypted via **git-crypt**. On GitHub they appear as binary blobs. On machines with the git-crypt key unlocked, they are transparent. Encryption rules are defined in `.gitattributes`.
 
 ## Module Hierarchy
 
@@ -103,10 +119,24 @@ myConfig.tools.archiving.enable = true;
 
 ## Host Configuration Structure
 
-Each host has two configuration files:
+Each host has two or three configuration files:
 
+- `hosts/<hostname>/meta.nix` - Host metadata for auto-discovery (type, system, hostname, username)
 - `hosts/<hostname>/default.nix` - System-level configuration (NixOS/nix-darwin options)
 - `hosts/<hostname>/home.nix` - User-level configuration (home-manager options)
+
+**Metadata (`meta.nix`)** declares:
+
+```nix
+{
+  type = "darwin";         # "nixos" | "darwin" | "home-manager"
+  system = "aarch64-darwin";
+  hostname = "Bradens-MacBook-Air";  # As reported by `hostname` command
+  username = "braden";
+  # Optional: extra NixOS modules (e.g., ["nix-minecraft"])
+  # extraModules = [];
+}
+```
 
 **System config (`default.nix`)** should contain:
 
@@ -134,6 +164,18 @@ When adding a new package to the configuration:
    - System service → `modules/` with appropriate system options
 3. **Create feature flag**: Add `myConfig.*.enable` option
 4. **Update host configs**: Enable the feature in relevant `home.nix` files
+
+## Adding New Hosts
+
+To add a new host, create a directory under `hosts/` with three files:
+
+1. `hosts/<name>/meta.nix` - Metadata (type, system, hostname, username)
+2. `hosts/<name>/default.nix` - System configuration
+3. `hosts/<name>/home.nix` - Home-manager configuration
+
+No other files need editing. The flake auto-discovers the host from `meta.nix`, and `rebuild.sh` matches the hostname automatically.
+
+Alternatively, run `./bootstrap.sh` for an interactive setup.
 
 ## Testing Changes
 
