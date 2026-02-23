@@ -14,6 +14,7 @@
     ./google-chrome.nix
     ./hammerspoon.nix
     ./homebrew.nix
+    ./istat-menus.nix
     ./keepingyouawake.nix
     ./microsoft-edge.nix
     ./roon.nix

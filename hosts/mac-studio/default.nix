@@ -43,6 +43,7 @@
     darwin.systemDefaults.darkMode = true;
     darwin.applications.enable = true;
     darwin.googleChrome.enable = true;
+    darwin.istatMenus.enable = true;
     darwin.microsoftEdge.enable = true;
     darwin.roon.enable = true;
     darwin.scrollReverser.enable = true;
