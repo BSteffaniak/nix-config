@@ -3,7 +3,12 @@
 # On machines with the git-crypt key unlocked, files are transparent.
 # On GitHub (or any clone without the key), these appear as binary blobs.
 #
-# To add a new private host, add a line like:
-#   hosts/<hostname>/** filter=git-crypt diff=git-crypt
+# IMPORTANT: Do NOT encrypt meta.nix files -- they must remain plaintext
+# so that flake.nix can discover hosts on machines without the git-crypt key.
+#
+# To add a new private host, add lines like:
+#   hosts/<hostname>/default.nix filter=git-crypt diff=git-crypt
+#   hosts/<hostname>/home.nix filter=git-crypt diff=git-crypt
 
-hosts/bs-mbpro/** filter=git-crypt diff=git-crypt
+hosts/bs-mbpro/default.nix filter=git-crypt diff=git-crypt
+hosts/bs-mbpro/home.nix filter=git-crypt diff=git-crypt
