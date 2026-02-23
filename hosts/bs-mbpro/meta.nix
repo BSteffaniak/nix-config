@@ -4,4 +4,3 @@
   hostname = "bs-mbpro";
   username = "braden";
 }
-

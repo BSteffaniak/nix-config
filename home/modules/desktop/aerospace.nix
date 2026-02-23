@@ -54,6 +54,16 @@ in
       executable = true;
     };
 
+    # Symlink window-to-workspace persistence scripts
+    xdg.configFile."aerospace/save-window-state.sh" = {
+      source = ../../../configs/aerospace/save-window-state.sh;
+      executable = true;
+    };
+    xdg.configFile."aerospace/restore-window-workspaces.sh" = {
+      source = ../../../configs/aerospace/restore-window-workspaces.sh;
+      executable = true;
+    };
+
     # NOTE: AeroSpace CLI does not currently support shell completions
     # (no `aerospace completion` subcommand exists)
   };

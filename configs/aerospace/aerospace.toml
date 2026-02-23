@@ -20,9 +20,10 @@ on-focus-changed = [
   'exec-and-forget ~/.config/aerospace/detect-monitor-change.sh',
 ]
 
-# Restore workspace-monitor assignments on startup
+# Restore workspace-monitor assignments, then window-workspace assignments on startup
+# Monitor restore runs first (foreground), then window restore starts polling in background
 after-startup-command = [
-  'exec-and-forget ~/.config/aerospace/restore-workspace-monitors.sh',
+  'exec-and-forget ~/.config/aerospace/restore-workspace-monitors.sh && ~/.config/aerospace/restore-window-workspaces.sh',
 ]
 
 # Combined callback: notify SketchyBar AND save workspace-monitor state
