@@ -64,6 +64,12 @@ for file in "${FILES[@]}"; do
   # Get relative path for display
   rel_path="${file#$SCRIPT_DIR/}"
 
+  # Skip binary/encrypted files (e.g., git-crypt locked files)
+  if file --mime-encoding "$file" 2>/dev/null | grep -q "binary"; then
+    echo -e "${YELLOW}⊘${NC} Skipped (encrypted): $rel_path"
+    continue
+  fi
+
   if [[ "$CHECK_MODE" == true ]]; then
     # Check mode: verify if file is formatted
     if nixfmt --check "$file" &> /dev/null; then
