@@ -9,6 +9,7 @@ with lib;
 
 {
   imports = [
+    ./avahi.nix
     ./docker.nix
     ./observability.nix
     ./tailscale.nix

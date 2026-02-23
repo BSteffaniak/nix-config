@@ -60,6 +60,7 @@
     editors.neovim.useNightly = true;
 
     # Services
+    services.avahi.enable = true;
     services.docker.enable = true;
     services.docker.dataRoot = "/hdd/docker";
     services.observability.enable = true;
