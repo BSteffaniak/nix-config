@@ -40,6 +40,12 @@ with lib;
       default = 3.0;
       description = "Mouse tracking speed (0.0 to 3.0, or -1 to disable acceleration). Set to null to leave unmanaged.";
     };
+
+    use24HourClock = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Use 24-hour clock format in the menu bar";
+    };
   };
 
   config = mkIf config.myConfig.darwin.systemDefaults.enable {
@@ -49,6 +55,7 @@ with lib;
       finder.CreateDesktop = !config.myConfig.darwin.systemDefaults.hideDesktopIcons;
 
       NSGlobalDomain.AppleInterfaceStyle = mkIf config.myConfig.darwin.systemDefaults.darkMode "Dark";
+      NSGlobalDomain.AppleICUForce24HourTime = config.myConfig.darwin.systemDefaults.use24HourClock;
       NSGlobalDomain.KeyRepeat = mkIf config.myConfig.darwin.systemDefaults.fastKeyRepeat 1;
       NSGlobalDomain.InitialKeyRepeat = mkIf config.myConfig.darwin.systemDefaults.fastKeyRepeat 50;
 
