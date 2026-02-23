@@ -50,7 +50,7 @@ with lib;
 
       NSGlobalDomain.AppleInterfaceStyle = mkIf config.myConfig.darwin.systemDefaults.darkMode "Dark";
       NSGlobalDomain.KeyRepeat = mkIf config.myConfig.darwin.systemDefaults.fastKeyRepeat 1;
-      NSGlobalDomain.InitialKeyRepeat = mkIf config.myConfig.darwin.systemDefaults.fastKeyRepeat 30;
+      NSGlobalDomain.InitialKeyRepeat = mkIf config.myConfig.darwin.systemDefaults.fastKeyRepeat 50;
 
       CustomUserPreferences.".GlobalPreferences"."com.apple.mouse.scaling" = mkIf (
         config.myConfig.darwin.systemDefaults.mouseSpeed != null
