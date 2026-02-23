@@ -182,5 +182,54 @@
           };
         }) hmHosts
       );
+
+      # ── Dev Shell ────────────────────────────────────────────────
+      # Provides tools for working on this nix config repo itself.
+      # Activated automatically via .envrc + direnv.
+      devShells =
+        let
+          forSystems = [
+            "x86_64-linux"
+            "aarch64-linux"
+            "aarch64-darwin"
+            "x86_64-darwin"
+          ];
+        in
+        builtins.listToAttrs (
+          map (system: {
+            name = system;
+            value.default =
+              let
+                pkgs = import nixpkgs { inherit system; };
+              in
+              pkgs.mkShell {
+                packages = with pkgs; [
+                  # Encryption (for private host configs)
+                  git-crypt
+                  gnupg
+
+                  # Nix development
+                  nixfmt-rfc-style # ./fmt.sh
+                  nvd # ./rebuild.sh --diff
+                  nix-diff # deep derivation diffing
+
+                  # Formatting (non-nix files)
+                  nodePackages.prettier # ./fmt.sh (markdown, yaml, json, etc.)
+
+                  # Shell
+                  fish
+                ];
+
+                shellHook = ''
+                  # Only exec fish if we're in an interactive shell (not running a command)
+                  if [ -z "$IN_NIX_SHELL_FISH" ] && [ -z "$BASH_EXECUTION_STRING" ]; then
+                    case "$-" in
+                      *i*) export IN_NIX_SHELL_FISH=1; exec fish ;;
+                    esac
+                  fi
+                '';
+              };
+          }) forSystems
+        );
     };
 }
