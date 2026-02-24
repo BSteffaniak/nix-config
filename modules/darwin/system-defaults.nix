@@ -8,7 +8,47 @@
 with lib;
 
 let
-  display-ctl = import ../../packages/display-ctl { inherit pkgs lib; };
+  cfg = config.myConfig.darwin.systemDefaults;
+  display-ctl-src = ../../packages/display-ctl/main.m;
+
+  # Lazy-build script: compiles display-ctl at activation time using the
+  # system's clang/Objective-C toolchain, caching the binary so it only
+  # recompiles when the source changes. Uses Objective-C instead of Swift
+  # to avoid Swift compiler/SDK .swiftinterface version mismatches.
+  display-ctl-compile = ''
+    DISPLAY_CTL_DIR="/var/cache/display-ctl"
+    DISPLAY_CTL_SRC="${display-ctl-src}"
+    DISPLAY_CTL_BIN="$DISPLAY_CTL_DIR/display-ctl"
+    DISPLAY_CTL_HASH="$DISPLAY_CTL_DIR/.source-hash"
+
+    CURRENT_HASH=$(/usr/bin/shasum -a 256 "$DISPLAY_CTL_SRC" | /usr/bin/cut -d' ' -f1)
+
+    /bin/mkdir -p "$DISPLAY_CTL_DIR"
+
+    if [ ! -x "$DISPLAY_CTL_BIN" ] || [ ! -f "$DISPLAY_CTL_HASH" ] || [ "$(/bin/cat "$DISPLAY_CTL_HASH")" != "$CURRENT_HASH" ]; then
+      echo "compiling display-ctl..." >&2
+      SDK_PATH=$(/usr/bin/xcrun --show-sdk-path 2>/dev/null || echo "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk")
+      if /Library/Developer/CommandLineTools/usr/bin/clang \
+        -isysroot "$SDK_PATH" \
+        -O2 \
+        -fobjc-arc \
+        -o "$DISPLAY_CTL_BIN" \
+        -F /System/Library/PrivateFrameworks \
+        -framework CoreBrightness \
+        -framework DisplayServices \
+        -framework ApplicationServices \
+        -framework Foundation \
+        "$DISPLAY_CTL_SRC" 2>&1; then
+        echo "$CURRENT_HASH" > "$DISPLAY_CTL_HASH"
+      else
+        echo "warning: display-ctl compilation failed, skipping display settings" >&2
+        /bin/rm -f "$DISPLAY_CTL_BIN" "$DISPLAY_CTL_HASH"
+        DISPLAY_CTL_BIN=""
+      fi
+    fi
+  '';
+
+  needsDisplayCtl = cfg.disableAutoBrightness || cfg.disableTrueTone;
 in
 {
   options.myConfig.darwin.systemDefaults = {
@@ -69,51 +109,57 @@ in
     };
   };
 
-  config = mkIf config.myConfig.darwin.systemDefaults.enable {
+  config = mkIf cfg.enable {
     system.defaults = {
       dock.autohide = true;
 
-      finder.CreateDesktop = !config.myConfig.darwin.systemDefaults.hideDesktopIcons;
+      finder.CreateDesktop = !cfg.hideDesktopIcons;
 
-      NSGlobalDomain.AppleInterfaceStyle = mkIf config.myConfig.darwin.systemDefaults.darkMode "Dark";
-      NSGlobalDomain.AppleICUForce24HourTime = config.myConfig.darwin.systemDefaults.use24HourClock;
+      NSGlobalDomain.AppleInterfaceStyle = mkIf cfg.darkMode "Dark";
+      NSGlobalDomain.AppleICUForce24HourTime = cfg.use24HourClock;
 
-      menuExtraClock.ShowSeconds = config.myConfig.darwin.systemDefaults.showClockSeconds;
-      NSGlobalDomain.KeyRepeat = mkIf config.myConfig.darwin.systemDefaults.fastKeyRepeat 1;
-      NSGlobalDomain.InitialKeyRepeat = mkIf config.myConfig.darwin.systemDefaults.fastKeyRepeat 50;
+      menuExtraClock.ShowSeconds = cfg.showClockSeconds;
+      NSGlobalDomain.KeyRepeat = mkIf cfg.fastKeyRepeat 1;
+      NSGlobalDomain.InitialKeyRepeat = mkIf cfg.fastKeyRepeat 50;
 
       CustomUserPreferences.".GlobalPreferences"."com.apple.mouse.scaling" = mkIf (
-        config.myConfig.darwin.systemDefaults.mouseSpeed != null
-      ) config.myConfig.darwin.systemDefaults.mouseSpeed;
+        cfg.mouseSpeed != null
+      ) cfg.mouseSpeed;
 
       # Disable screensaver and screen lock when preventSleep is enabled
-      screensaver.askForPassword = mkIf config.myConfig.darwin.systemDefaults.preventSleep false;
-      screensaver.askForPasswordDelay = mkIf config.myConfig.darwin.systemDefaults.preventSleep 0;
+      screensaver.askForPassword = mkIf cfg.preventSleep false;
+      screensaver.askForPasswordDelay = mkIf cfg.preventSleep 0;
 
-      CustomUserPreferences."com.apple.screensaver".idleTime =
-        mkIf config.myConfig.darwin.systemDefaults.preventSleep 0;
+      CustomUserPreferences."com.apple.screensaver".idleTime = mkIf cfg.preventSleep 0;
 
     };
 
-    power.sleep.display = mkIf config.myConfig.darwin.systemDefaults.preventSleep "never";
+    power.sleep.display = mkIf cfg.preventSleep "never";
 
     # Use pmset directly to prevent display sleep on all power sources (AC, battery, UPS)
     # systemsetup -setDisplaySleep is unreliable on newer macOS versions
     system.activationScripts.postActivation.text = lib.concatStrings [
-      (optionalString config.myConfig.darwin.systemDefaults.preventSleep ''
+      (optionalString cfg.preventSleep ''
         echo "configuring display sleep prevention (all power sources)..." >&2
         pmset -a displaysleep 0
       '')
-      # Use display-ctl (Swift CLI) to toggle auto-brightness and True Tone via
-      # Apple's private CoreBrightness/DisplayServices framework APIs.
+      # Use display-ctl (Objective-C CLI) to toggle auto-brightness and True Tone
+      # via Apple's private CoreBrightness/DisplayServices framework APIs.
       # defaults write does NOT work for these settings on modern macOS.
-      (optionalString config.myConfig.darwin.systemDefaults.disableAutoBrightness ''
-        echo "disabling automatic display brightness..." >&2
-        ${display-ctl}/bin/display-ctl --auto-brightness off || true
+      # The binary is compiled lazily at activation time using clang to avoid
+      # Swift compiler/SDK version mismatches.
+      (optionalString needsDisplayCtl display-ctl-compile)
+      (optionalString cfg.disableAutoBrightness ''
+        if [ -x "$DISPLAY_CTL_BIN" ]; then
+          echo "disabling automatic display brightness..." >&2
+          "$DISPLAY_CTL_BIN" --auto-brightness off || true
+        fi
       '')
-      (optionalString config.myConfig.darwin.systemDefaults.disableTrueTone ''
-        echo "disabling True Tone..." >&2
-        ${display-ctl}/bin/display-ctl --true-tone off || true
+      (optionalString cfg.disableTrueTone ''
+        if [ -x "$DISPLAY_CTL_BIN" ]; then
+          echo "disabling True Tone..." >&2
+          "$DISPLAY_CTL_BIN" --true-tone off || true
+        fi
       '')
     ];
   };
