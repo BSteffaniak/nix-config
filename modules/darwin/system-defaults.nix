@@ -7,6 +7,9 @@
 
 with lib;
 
+let
+  display-ctl = import ../../packages/display-ctl { inherit pkgs lib; };
+in
 {
   options.myConfig.darwin.systemDefaults = {
     enable = mkEnableOption "macOS system defaults";
@@ -52,6 +55,18 @@ with lib;
       default = true;
       description = "Show seconds in the menu bar clock";
     };
+
+    disableAutoBrightness = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Disable automatic display brightness adjustment based on ambient light";
+    };
+
+    disableTrueTone = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Disable True Tone (automatic color temperature adjustment based on ambient light)";
+    };
   };
 
   config = mkIf config.myConfig.darwin.systemDefaults.enable {
@@ -77,15 +92,29 @@ with lib;
 
       CustomUserPreferences."com.apple.screensaver".idleTime =
         mkIf config.myConfig.darwin.systemDefaults.preventSleep 0;
+
     };
 
     power.sleep.display = mkIf config.myConfig.darwin.systemDefaults.preventSleep "never";
 
     # Use pmset directly to prevent display sleep on all power sources (AC, battery, UPS)
     # systemsetup -setDisplaySleep is unreliable on newer macOS versions
-    system.activationScripts.postActivation.text = mkIf config.myConfig.darwin.systemDefaults.preventSleep ''
-      echo "configuring display sleep prevention (all power sources)..." >&2
-      pmset -a displaysleep 0
-    '';
+    system.activationScripts.postActivation.text = lib.concatStrings [
+      (optionalString config.myConfig.darwin.systemDefaults.preventSleep ''
+        echo "configuring display sleep prevention (all power sources)..." >&2
+        pmset -a displaysleep 0
+      '')
+      # Use display-ctl (Swift CLI) to toggle auto-brightness and True Tone via
+      # Apple's private CoreBrightness/DisplayServices framework APIs.
+      # defaults write does NOT work for these settings on modern macOS.
+      (optionalString config.myConfig.darwin.systemDefaults.disableAutoBrightness ''
+        echo "disabling automatic display brightness..." >&2
+        ${display-ctl}/bin/display-ctl --auto-brightness off || true
+      '')
+      (optionalString config.myConfig.darwin.systemDefaults.disableTrueTone ''
+        echo "disabling True Tone..." >&2
+        ${display-ctl}/bin/display-ctl --true-tone off || true
+      '')
+    ];
   };
 }
