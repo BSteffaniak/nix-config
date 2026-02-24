@@ -43,6 +43,10 @@
       url = "github:FelixKratz/homebrew-formulae";
       flake = false;
     };
+    homebrew-linear = {
+      url = "github:schpet/homebrew-tap";
+      flake = false;
+    };
 
     # Firefox on darwin (nixpkgs firefox is broken on macOS)
     nixpkgs-firefox-darwin = {

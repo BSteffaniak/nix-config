@@ -21,6 +21,7 @@ let
     homebrew-cask
     homebrew-aerospace
     homebrew-felixkratz
+    homebrew-linear
     ;
 in
 nix-darwin.lib.darwinSystem {
@@ -52,6 +53,7 @@ nix-darwin.lib.darwinSystem {
             "homebrew/homebrew-cask" = homebrew-cask;
             "nikitabobko/homebrew-tap" = homebrew-aerospace;
             "FelixKratz/homebrew-formulae" = homebrew-felixkratz;
+            "schpet/homebrew-tap" = homebrew-linear;
           };
           mutableTaps = false;
         };
