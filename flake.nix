@@ -78,6 +78,10 @@
       url = "github:bradymholt/cronstrue";
       flake = false;
     };
+    linear-cli-src = {
+      url = "github:schpet/linear-cli";
+      flake = false;
+    };
   };
 
   outputs =

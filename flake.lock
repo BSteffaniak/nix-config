@@ -187,6 +187,22 @@
         "type": "github"
       }
     },
+    "linear-cli-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1771952259,
+        "narHash": "sha256-OdKkzhkEwop3/slmNsSzGAzxdQzYO82XwnQjnQSgX1c=",
+        "owner": "schpet",
+        "repo": "linear-cli",
+        "rev": "b65ba20565d5e724e3c7c9ad8108a90c38078b20",
+        "type": "github"
+      },
+      "original": {
+        "owner": "schpet",
+        "repo": "linear-cli",
+        "type": "github"
+      }
+    },
     "neovim-nightly-overlay": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -435,6 +451,7 @@
         "homebrew-core": "homebrew-core",
         "homebrew-felixkratz": "homebrew-felixkratz",
         "homebrew-linear": "homebrew-linear",
+        "linear-cli-src": "linear-cli-src",
         "neovim-nightly-overlay": "neovim-nightly-overlay",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
