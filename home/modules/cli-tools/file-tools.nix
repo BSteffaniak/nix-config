@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  myLib,
   ...
 }:
 
@@ -10,16 +11,7 @@ with lib;
 let
   cfg = config.myConfig.cliTools.fileTools;
 
-  # Helper for enable options with custom default
-  mkEnableOption' =
-    defaultValue: description:
-    mkOption {
-      type = types.bool;
-      default = defaultValue;
-      description = "Enable ${description}";
-    };
-
-  mkEnable = mkEnableOption' cfg.enableAll;
+  mkEnable = myLib.mkEnableOption' cfg.enableAll;
 in
 {
   options.myConfig.cliTools.fileTools = {

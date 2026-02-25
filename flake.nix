@@ -100,6 +100,9 @@
       ...
     }:
     let
+      # ── Custom Library ────────────────────────────────────────────
+      myLib = import ./lib { inherit (nixpkgs) lib; };
+
       # ── Host Discovery ───────────────────────────────────────────
       # Automatically discover all hosts from hosts/*/meta.nix.
       # Adding a new host requires only creating a directory under hosts/
@@ -159,6 +162,7 @@
             meta
             inputs
             mkOverlays
+            myLib
             ;
         }
       ) nixosHosts;
@@ -172,6 +176,7 @@
             meta
             inputs
             mkOverlays
+            myLib
             ;
         }
       ) darwinHosts;
@@ -186,6 +191,7 @@
               meta
               inputs
               mkOverlays
+              myLib
               ;
           };
         }) hmHosts

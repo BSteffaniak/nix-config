@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  myLib,
   ...
 }:
 
@@ -10,17 +11,8 @@ with lib;
 let
   cfg = config.myConfig.cliTools.utilities;
 
-  # Helper for enable options with custom default
-  mkEnableOption' =
-    defaultValue: description:
-    mkOption {
-      type = types.bool;
-      default = defaultValue;
-      description = "Enable ${description}";
-    };
-
-  mkEnable = mkEnableOption' cfg.enableAll;
-  mkMediaEnable = mkEnableOption' cfg.media.enableAll;
+  mkEnable = myLib.mkEnableOption' cfg.enableAll;
+  mkMediaEnable = myLib.mkEnableOption' cfg.media.enableAll;
 in
 {
   options.myConfig.cliTools.utilities = {

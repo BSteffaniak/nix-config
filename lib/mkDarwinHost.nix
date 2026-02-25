@@ -10,6 +10,7 @@
   meta,
   inputs,
   mkOverlays,
+  myLib,
 }:
 let
   inherit (inputs)
@@ -26,7 +27,7 @@ let
 in
 nix-darwin.lib.darwinSystem {
   system = meta.system;
-  specialArgs = { inherit inputs; };
+  specialArgs = { inherit inputs myLib; };
   modules = [
     ../hosts/${name}
     home-manager.darwinModules.home-manager
@@ -69,7 +70,7 @@ nix-darwin.lib.darwinSystem {
             ];
           };
           extraSpecialArgs = {
-            inherit inputs;
+            inherit inputs myLib;
             osConfig = config;
           };
         };

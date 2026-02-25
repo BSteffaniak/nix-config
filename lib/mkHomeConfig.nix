@@ -10,6 +10,7 @@
   meta,
   inputs,
   mkOverlays,
+  myLib,
 }:
 let
   inherit (inputs) nixpkgs home-manager;
@@ -24,6 +25,6 @@ home-manager.lib.homeManagerConfiguration {
     ../hosts/${name}/home.nix
   ];
   extraSpecialArgs = {
-    inherit inputs;
+    inherit inputs myLib;
   };
 }

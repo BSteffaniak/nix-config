@@ -10,6 +10,7 @@
   meta,
   inputs,
   mkOverlays,
+  myLib,
 }:
 let
   inherit (inputs) nixpkgs home-manager;
@@ -32,7 +33,7 @@ let
 in
 nixpkgs.lib.nixosSystem {
   system = meta.system;
-  specialArgs = { inherit inputs; };
+  specialArgs = { inherit inputs myLib; };
   modules = [
     ../hosts/${name}
     home-manager.nixosModules.home-manager
@@ -57,7 +58,7 @@ nixpkgs.lib.nixosSystem {
             ];
           };
           extraSpecialArgs = {
-            inherit inputs;
+            inherit inputs myLib;
             osConfig = config;
           };
         };
