@@ -32,7 +32,25 @@
                     "chmod -R *": "deny",
                     "chown -R *": "deny",
                     "killall *": "deny",
-                    "pkill *": "deny"
+                    "pkill *": "deny",
+                    "ssh *": "deny",
+                    "scp *": "deny",
+                    "security *": "deny",
+                    "defaults write *": "deny",
+                    "networksetup *": "deny",
+                    "pfctl *": "deny",
+                    "scutil *": "deny",
+                    "cargo install *": "deny",
+                    "go install *": "deny",
+                    "npm install -g *": "deny",
+                    "npm install --global *": "deny",
+                    "pnpm add -g *": "deny",
+                    "pnpm add --global *": "deny",
+                    "nix-env *": "deny",
+                    "nix profile install *": "deny",
+                    "gem install *": "deny",
+                    "gpg --delete-key *": "deny",
+                    "gpg --edit-key *": "deny"
                 }
             }
         }
