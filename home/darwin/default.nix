@@ -33,6 +33,7 @@
 
     # Containers - Podman works on macOS!
     containers.podman.enable = osConfig.myConfig.development.podman.enable or false;
+    containers.tools.enable = osConfig.myConfig.development.devops.enable or false;
 
     # DevOps tools
     devops.kubernetes.enable = osConfig.myConfig.development.devops.enable or false;

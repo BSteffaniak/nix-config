@@ -17,11 +17,15 @@ with lib;
       podman
     ];
 
-    # Set DOCKER_HOST to point to podman socket (Linux only)
-    # On macOS, podman compose connects to the machine via SSH natively
-    # and DOCKER_HOST is not needed
-    environment.variables = mkIf pkgs.stdenv.isLinux {
-      DOCKER_HOST = "unix://$HOME/.local/share/containers/podman/machine/podman.sock";
+    # Set DOCKER_HOST to point to podman socket
+    # On Linux, uses the podman machine socket under $HOME
+    # On macOS, podman machine exposes an API socket under $TMPDIR
+    environment.variables = {
+      DOCKER_HOST =
+        if pkgs.stdenv.isDarwin then
+          "unix://$TMPDIR/podman/podman-machine-default-api.sock"
+        else
+          "unix://$HOME/.local/share/containers/podman/machine/podman.sock";
     };
   };
 }

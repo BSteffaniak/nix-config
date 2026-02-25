@@ -39,6 +39,9 @@
     devops.cloud.enable = osConfig.myConfig.development.devops.enable or false;
     devops.infrastructure.enable = osConfig.myConfig.development.devops.enable or false;
 
+    # Container tools
+    containers.tools.enable = osConfig.myConfig.development.devops.enable or false;
+
     # Shell
     shell.fish.enable = osConfig.myConfig.shell.fish.enable or false;
     shell.git.enable = osConfig.myConfig.shell.git.enable or false;

@@ -22,7 +22,6 @@ with lib;
       krew
       cmctl
       doctl
-      lazydocker
       stern
       opentofu
 

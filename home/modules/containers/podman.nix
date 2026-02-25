@@ -77,11 +77,15 @@ in
       '';
     };
 
-    # Docker compatibility - set DOCKER_HOST to point to podman socket (Linux only)
-    # On macOS, podman compose connects to the machine via SSH natively
-    # and DOCKER_HOST is not needed (XDG_RUNTIME_DIR is unset on Darwin)
-    home.sessionVariables = mkIf (cfg.dockerCompatibility && pkgs.stdenv.isLinux) {
-      DOCKER_HOST = "unix://$XDG_RUNTIME_DIR/podman/podman.sock";
+    # Docker compatibility - set DOCKER_HOST to point to podman socket
+    # On Linux, the socket is managed by the systemd user service below
+    # On macOS, podman machine exposes an API socket under $TMPDIR
+    home.sessionVariables = mkIf cfg.dockerCompatibility {
+      DOCKER_HOST =
+        if pkgs.stdenv.isDarwin then
+          "unix://$TMPDIR/podman/podman-machine-default-api.sock"
+        else
+          "unix://$XDG_RUNTIME_DIR/podman/podman.sock";
     };
 
     # Enable podman socket as a user service (Linux only)
