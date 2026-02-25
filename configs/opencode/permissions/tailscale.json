@@ -1,0 +1,42 @@
+{
+    "agent": {
+        "build": {
+            "permission": {
+                "bash": {
+                    "tailscale up *": "deny",
+                    "tailscale down": "deny",
+                    "tailscale down *": "deny",
+                    "tailscale set *": "deny",
+                    "tailscale logout": "deny",
+                    "tailscale logout *": "deny",
+                    "tailscale switch *": "deny",
+                    "tailscale lock *": "deny",
+                    "tailscale file cp *": "deny",
+                    "tailscale drive *": "deny",
+                    "tailscale funnel *": "deny",
+                    "tailscale serve *": "deny"
+                }
+            }
+        },
+        "plan": {
+            "permission": {
+                "bash": {
+                    "tailscale *": "deny",
+                    "tailscale status": "allow",
+                    "tailscale status *": "allow",
+                    "tailscale ip": "allow",
+                    "tailscale ip *": "allow",
+                    "tailscale whois *": "allow",
+                    "tailscale ping *": "allow",
+                    "tailscale netcheck": "allow",
+                    "tailscale netcheck *": "allow",
+                    "tailscale version": "allow",
+                    "tailscale version *": "allow",
+                    "tailscale debug *": "allow",
+                    "tailscale --version": "allow",
+                    "tailscale help *": "allow"
+                }
+            }
+        }
+    }
+}

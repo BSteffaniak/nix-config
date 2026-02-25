@@ -1,0 +1,40 @@
+{
+    "agent": {
+        "build": {
+            "permission": {
+                "bash": {
+                    "darwin-rebuild *": "deny",
+                    "nixos-rebuild *": "deny",
+                    "home-manager switch *": "deny",
+                    "home-manager generations *": "deny",
+                    "nix-collect-garbage *": "deny",
+                    "nix-store --delete *": "deny",
+                    "nix store delete *": "deny",
+                    "nix profile remove *": "deny",
+                    "nix profile wipe-history *": "deny",
+                    "sudo *": "deny",
+                    "su *": "deny",
+                    "launchctl *": "deny",
+                    "systemctl *": "deny",
+                    "shutdown *": "deny",
+                    "reboot": "deny",
+                    "reboot *": "deny",
+                    "halt": "deny",
+                    "halt *": "deny",
+                    "poweroff": "deny",
+                    "poweroff *": "deny",
+                    "rm -rf *": "deny",
+                    "rm -r *": "deny",
+                    "rmdir *": "deny",
+                    "mkfs *": "deny",
+                    "dd *": "deny",
+                    "diskutil *": "deny",
+                    "chmod -R *": "deny",
+                    "chown -R *": "deny",
+                    "killall *": "deny",
+                    "pkill *": "deny"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,44 @@
+{
+    "agent": {
+        "build": {
+            "permission": {
+                "bash": {
+                    "pip install *": "deny",
+                    "pip uninstall *": "deny",
+                    "pip3 install *": "deny",
+                    "pip3 uninstall *": "deny",
+                    "pipx install *": "deny",
+                    "pipx uninstall *": "deny"
+                }
+            }
+        },
+        "plan": {
+            "permission": {
+                "bash": {
+                    "python --version": "allow",
+                    "python -V": "allow",
+                    "python -c *": "allow",
+                    "python -m py_compile *": "allow",
+                    "python -m json.tool *": "allow",
+                    "python3 --version": "allow",
+                    "python3 -V": "allow",
+                    "python3 -c *": "allow",
+                    "python3 -m py_compile *": "allow",
+                    "python3 -m json.tool *": "allow",
+                    "pip list": "allow",
+                    "pip list *": "allow",
+                    "pip show *": "allow",
+                    "pip freeze": "allow",
+                    "pip freeze *": "allow",
+                    "pip --version": "allow",
+                    "pip3 list": "allow",
+                    "pip3 list *": "allow",
+                    "pip3 show *": "allow",
+                    "pip3 freeze": "allow",
+                    "pip3 freeze *": "allow",
+                    "pip3 --version": "allow"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,37 @@
+{
+    "agent": {
+        "plan": {
+            "permission": {
+                "bash": {
+                    "go build": "allow",
+                    "go build *": "allow",
+                    "go test": "allow",
+                    "go test *": "allow",
+                    "go vet": "allow",
+                    "go vet *": "allow",
+                    "go doc": "allow",
+                    "go doc *": "allow",
+                    "go list": "allow",
+                    "go list *": "allow",
+                    "go env": "allow",
+                    "go env *": "allow",
+                    "go version": "allow",
+                    "go version *": "allow",
+                    "go help": "allow",
+                    "go help *": "allow",
+                    "go mod graph": "allow",
+                    "go mod graph *": "allow",
+                    "go mod verify": "allow",
+                    "go mod why *": "allow",
+                    "go tool *": "allow",
+                    "go generate *": "allow",
+                    "go run": "allow",
+                    "go run *": "allow",
+                    "go fmt *": "allow",
+                    "gofmt *": "allow",
+                    "gopls *": "allow"
+                }
+            }
+        }
+    }
+}
