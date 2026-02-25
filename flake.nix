@@ -66,10 +66,6 @@
       url = "github:pr2502/ra-multiplex";
       flake = false;
     };
-    opencode-release-info = {
-      url = "https://api.github.com/repos/sst/opencode/releases/latest";
-      flake = false;
-    };
     zellij-fork = {
       url = "github:BSteffaniak/zellij/toggle-session";
       flake = false;
@@ -135,12 +131,11 @@
           inherit nixpkgs-unstable;
           ra-multiplex-src = inputs.ra-multiplex;
           rust-overlay = inputs.rust-overlay;
-          opencode-release-info = inputs.opencode-release-info;
           zellij-fork = inputs.zellij-fork;
           cronstrue-src = inputs.cronstrue;
           firefox-darwin = inputs.nixpkgs-firefox-darwin;
           enableRust = true;
-          enableOpencode = true;
+          enableGithubReleases = true;
           enableRaMultiplex = true;
           enableZellijFork = true;
           enableCronstrue = true;

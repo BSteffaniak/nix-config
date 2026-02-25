@@ -5,13 +5,12 @@
   nixpkgs-unstable,
   ra-multiplex-src,
   rust-overlay ? null,
-  opencode-release-info ? null,
   zellij-fork ? null,
   cronstrue-src ? null,
   firefox-darwin ? null,
   # Optional overlay configuration
   enableRust ? true,
-  enableOpencode ? true,
+  enableGithubReleases ? true,
   enableRaMultiplex ? true,
   enableZellijFork ? false,
   enableCronstrue ? true,
@@ -23,7 +22,6 @@ let
     inherit
       nixpkgs-unstable
       rust-overlay
-      opencode-release-info
       zellij-fork
       firefox-darwin
       ;
@@ -38,7 +36,7 @@ let
   # Import all overlay functions (these must be imported here, not in mkOverlays.nix)
   overlayFunctions = {
     rust = import ./overlays/rust.nix;
-    opencode = import ./overlays/opencode.nix;
+    github-releases = import ./overlays/github-releases.nix;
     ra-multiplex = import ./overlays/ra-multiplex.nix;
     zellij = import ./overlays/zellij.nix;
     cronstrue = import ./overlays/cronstrue.nix;
@@ -57,7 +55,7 @@ in
 mkOverlaysLib.mkOverlays {
   inherit
     enableRust
-    enableOpencode
+    enableGithubReleases
     enableRaMultiplex
     enableZellijFork
     enableCronstrue

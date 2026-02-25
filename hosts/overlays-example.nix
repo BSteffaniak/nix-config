@@ -8,7 +8,6 @@
   nixpkgs-unstable,
   ra-multiplex-src,
   rust-overlay,
-  opencode-release-info ? null,
 }:
 
 # Example 1: Disable Rust overlay (saves build time if you don't use Rust)
@@ -17,25 +16,24 @@ import ../../lib/overlays.nix {
     nixpkgs-unstable
     ra-multiplex-src
     rust-overlay
-    opencode-release-info
     ;
   enableRust = false;
-  enableOpencode = true;
+  enableGithubReleases = true;
   enableRaMultiplex = true;
 }
 
 # Example 2: Only enable unstable packages (minimal setup)
 # import ../../lib/overlays.nix {
-#   inherit nixpkgs-unstable ra-multiplex-src rust-overlay opencode-release-info;
+#   inherit nixpkgs-unstable ra-multiplex-src rust-overlay;
 #   enableRust = false;
-#   enableOpencode = false;
+#   enableGithubReleases = false;
 #   enableRaMultiplex = false;
 # }
 
 # Example 3: Enable everything (default behavior)
 # import ../../lib/overlays.nix {
-#   inherit nixpkgs-unstable ra-multiplex-src rust-overlay opencode-release-info;
+#   inherit nixpkgs-unstable ra-multiplex-src rust-overlay;
 #   enableRust = true;
-#   enableOpencode = true;
+#   enableGithubReleases = true;
 #   enableRaMultiplex = true;
 # }

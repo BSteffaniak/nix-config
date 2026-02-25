@@ -414,18 +414,6 @@
         "type": "github"
       }
     },
-    "opencode-release-info": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-U15vGgp2bQoQAPySQA3Nx5FW86KO3n3145LLjVQI4oQ=",
-        "type": "file",
-        "url": "https://api.github.com/repos/sst/opencode/releases/latest"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://api.github.com/repos/sst/opencode/releases/latest"
-      }
-    },
     "ra-multiplex": {
       "flake": false,
       "locked": {
@@ -460,7 +448,6 @@
         "nixpkgs-darwin": "nixpkgs-darwin",
         "nixpkgs-firefox-darwin": "nixpkgs-firefox-darwin",
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "opencode-release-info": "opencode-release-info",
         "ra-multiplex": "ra-multiplex",
         "rust-overlay": "rust-overlay",
         "swww": "swww",

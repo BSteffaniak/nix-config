@@ -1,0 +1,19 @@
+{
+    "owner": "sst",
+    "repo": "opencode",
+    "pname": "opencode-dev",
+    "binaryName": "opencode",
+    "installedBinaryName": "opencode-dev",
+    "stripVersionPrefix": "v",
+    "platforms": {
+        "x86_64-linux": "opencode-linux-x64.tar.gz",
+        "aarch64-linux": "opencode-linux-arm64.tar.gz",
+        "x86_64-darwin": "opencode-darwin-x64.zip",
+        "aarch64-darwin": "opencode-darwin-arm64.zip"
+    },
+    "meta": {
+        "description": "OpenCode CLI (latest from GitHub releases)",
+        "homepage": "https://github.com/sst/opencode",
+        "license": "mit"
+    }
+}

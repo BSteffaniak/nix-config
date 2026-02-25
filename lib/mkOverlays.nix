@@ -12,7 +12,7 @@
   mkOverlays =
     {
       enableRust ? true,
-      enableOpencode ? true,
+      enableGithubReleases ? true,
       enableRaMultiplex ? true,
       enableZellijFork ? false,
       enableCronstrue ? true,
@@ -38,8 +38,8 @@
           overlay = overlayFunctions.rust;
         }
         {
-          enable = enableOpencode;
-          overlay = overlayFunctions.opencode;
+          enable = enableGithubReleases;
+          overlay = overlayFunctions.github-releases;
         }
         {
           enable = enableRaMultiplex;
