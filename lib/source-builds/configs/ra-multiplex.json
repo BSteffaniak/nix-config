@@ -1,0 +1,6 @@
+{
+    "flakeInput": "ra-multiplex",
+    "buildSystem": "rust",
+    "pname": "ra-multiplex-latest",
+    "hashField": "cargoHash"
+}

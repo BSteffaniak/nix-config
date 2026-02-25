@@ -92,6 +92,70 @@ Darwin-specific:
 - `--homebrew`, `--system-defaults`, `--applications` - true/false
 - `--computer-name` - Display name for the computer
 
+### `source-build.sh` (Source Build Hash Manager)
+
+Manages dependency hashes (`npmDepsHash`, `cargoHash`) for source-built Nix packages. Eliminates the need to manually update hashes when flake inputs change.
+
+**The problem it solves:** When you run `nix flake update cronstrue` and the upstream `package-lock.json` or `Cargo.lock` changed, the hardcoded hash in the overlay becomes stale and the build breaks. This script automates hash computation so you never have to manually copy hashes from error messages.
+
+**Safety feature:** Each overlay validates the git rev at Nix evaluation time. If you run `nix flake update` and forget to update hashes, you get a clear error:
+
+```
+error: cronstrue: hash file is stale.
+  flake.lock rev: abc1234
+  hash file rev:  def5678
+Run: ./scripts/source-build.sh update cronstrue
+```
+
+**Usage:**
+
+```bash
+# Interactive main menu
+./scripts/source-build.sh
+
+# Subcommands
+./scripts/source-build.sh update                  # Interactive: pick packages
+./scripts/source-build.sh update --all            # Non-interactive: update all
+./scripts/source-build.sh update cronstrue        # Non-interactive: update one
+./scripts/source-build.sh list                    # List packages + stale status
+./scripts/source-build.sh check                   # Check for stale hashes (dry run)
+./scripts/source-build.sh add                     # Interactive wizard
+./scripts/source-build.sh remove                  # Interactive remove
+./scripts/source-build.sh remove <name>           # Non-interactive remove
+```
+
+**Supported build systems:**
+
+- **npm** (`npmDepsHash`): Uses `prefetch-npm-deps` for fast, single-download hash computation
+- **Rust** (`cargoHash`): Uses `fetchCargoVendoredDeps` with automatic hash extraction. Downloads cargo dependencies once; they're cached for the real build
+
+**Directory structure:**
+
+```
+lib/source-builds/
+  configs/              # Per-package config (committed)
+    cronstrue.json      # { flakeInput, buildSystem, pname, hashField }
+    ra-multiplex.json
+    zellij.json
+  hashes/               # Auto-generated hash data (committed)
+    cronstrue.json      # { rev, npmDepsHash }
+    ra-multiplex.json   # { rev, cargoHash }
+    zellij.json         # { rev, cargoHash }
+```
+
+**Important:** The `hashes/` directory contains pinned dependency hashes that Nix reads at evaluation time. These files must be committed to git so all machines use the same hashes.
+
+**Typical workflow after updating flake inputs:**
+
+```bash
+nix flake update                           # Update all flake inputs
+./scripts/source-build.sh check            # See what's stale
+./scripts/source-build.sh update --all     # Fix all stale hashes
+# Commit the updated hashes/ files
+```
+
+**Network cost:** Dependencies are downloaded exactly once during hash computation. The subsequent Nix build finds them cached in the store. No double-downloads.
+
 ### `detect-hardware.sh` (Hardware Detection)
 
 NixOS-only script that detects hardware and suggests appropriate configuration options.

@@ -396,9 +396,28 @@ See `./scripts/github-release.sh --help` and `scripts/README.md` for full docume
 
 ### Source-Built Overlays (For Building from Source)
 
-For packages that need to be built from source via a flake input:
+For packages that need to be built from source via a flake input.
 
-#### Step 1: Add Input to Flake
+#### Dependency Hash Management
+
+Source-built packages using `buildNpmPackage` or `buildRustPackage` require dependency hashes (`npmDepsHash`, `cargoHash`) that go stale when upstream lock files change. Instead of manually updating these hashes, use the automated hash management system:
+
+```bash
+# After updating flake inputs
+nix flake update
+./scripts/source-build.sh check            # See which hashes are stale
+./scripts/source-build.sh update --all     # Recompute all stale hashes
+```
+
+The overlays read hashes from `lib/source-builds/hashes/<name>.json` and validate the git rev at evaluation time. If you forget to update hashes after a flake update, you get a clear error telling you exactly what to run.
+
+Currently managed packages: `cronstrue` (npm), `ra-multiplex` (Rust), `zellij` (Rust).
+
+See `./scripts/source-build.sh --help` and `scripts/README.md` for full documentation.
+
+#### Adding a New Source-Built Overlay
+
+##### Step 1: Add Input to Flake
 
 Edit `flake.nix` and add your input:
 
@@ -413,7 +432,7 @@ inputs = {
 };
 ```
 
-#### Step 2: Create Overlay File
+##### Step 2: Create Overlay File
 
 Create `lib/overlays/my-package.nix`:
 
@@ -441,7 +460,7 @@ else
   }
 ```
 
-#### Step 3: Register Overlay
+##### Step 3: Register Overlay
 
 Edit `lib/overlays.nix`:
 
@@ -471,7 +490,7 @@ mkOverlays =
   ];
 ```
 
-#### Step 4: Update Flake to Pass Input
+##### Step 4: Update Flake to Pass Input
 
 Edit `flake.nix` in the `mkOverlays` function:
 
@@ -485,7 +504,7 @@ mkOverlays = system: nixpkgsLib: import ./lib/overlays.nix {
 };
 ```
 
-#### That's It!
+##### That's It!
 
 Run `nix flake update` and your overlay is available on **all platforms** automatically!
 
