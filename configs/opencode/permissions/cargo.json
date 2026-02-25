@@ -1,0 +1,40 @@
+{
+    "agent": {
+        "plan": {
+            "permission": {
+                "bash": {
+                    "cargo tree": "allow",
+                    "cargo tree *": "allow",
+                    "cargo build": "allow",
+                    "cargo build *": "allow",
+                    "cargo check": "allow",
+                    "cargo check *": "allow",
+                    "cargo clippy": "allow",
+                    "cargo clippy *": "allow",
+                    "cargo doc": "allow",
+                    "cargo doc *": "allow",
+                    "cargo info": "allow",
+                    "cargo info *": "allow",
+                    "cargo test": "allow",
+                    "cargo test *": "allow",
+                    "cargo nextest *": "allow",
+                    "cargo metadata": "allow",
+                    "cargo metadata *": "allow",
+                    "cargo run": "allow",
+                    "cargo run *": "allow",
+                    "cargo help": "allow",
+                    "cargo help *": "allow",
+                    "cargo search *": "allow",
+                    "cargo machete": "allow",
+                    "cargo machete *": "allow",
+                    "cargo fmt --check": "allow",
+                    "cargo fmt --check *": "allow",
+                    "taplo fmt --check": "allow",
+                    "taplo fmt --check *": "allow",
+                    "rustc": "allow",
+                    "rustc *": "allow"
+                }
+            }
+        }
+    }
+}

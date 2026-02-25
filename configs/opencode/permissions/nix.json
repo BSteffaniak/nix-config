@@ -1,0 +1,12 @@
+{
+    "agent": {
+        "plan": {
+            "permission": {
+                "bash": {
+                    "nix search *": "allow",
+                    "nix derivation show *": "allow"
+                }
+            }
+        }
+    }
+}

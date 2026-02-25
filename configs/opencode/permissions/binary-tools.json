@@ -1,0 +1,13 @@
+{
+    "agent": {
+        "plan": {
+            "permission": {
+                "bash": {
+                    "readelf *": "allow",
+                    "llvm-objdump *": "allow",
+                    "bpftool *": "allow"
+                }
+            }
+        }
+    }
+}

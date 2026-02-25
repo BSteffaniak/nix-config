@@ -1,0 +1,88 @@
+{
+    "agent": {
+        "build": {
+            "permission": {
+                "bash": {
+                    "git checkout *": "deny",
+                    "git switch *": "deny",
+                    "git add *": "deny",
+                    "git mv *": "deny",
+                    "git rm *": "deny",
+                    "git reset *": "deny",
+                    "git restore *": "deny",
+                    "git remove *": "deny",
+                    "git commit *": "deny",
+                    "git push *": "deny",
+                    "git pull *": "deny",
+                    "git merge *": "deny",
+                    "git rebase *": "deny",
+                    "git revert *": "deny",
+                    "git cherry-pick *": "deny",
+                    "git am *": "deny",
+                    "git apply *": "deny",
+                    "git clean *": "deny",
+                    "git tag *": "deny",
+                    "git tag": "allow",
+                    "git tag -l": "allow",
+                    "git tag -l *": "allow",
+                    "git tag --list": "allow",
+                    "git tag --list *": "allow",
+                    "git stash": "deny",
+                    "git stash drop": "deny",
+                    "git stash pop": "deny",
+                    "git stash apply": "deny",
+                    "git stash clear": "deny",
+                    "git stash create": "deny",
+                    "git stash store": "deny",
+                    "git worktree add *": "deny",
+                    "git worktree remove *": "deny",
+                    "git submodule update *": "deny"
+                }
+            }
+        },
+        "plan": {
+            "permission": {
+                "bash": {
+                    "git *": "deny",
+                    "git status": "allow",
+                    "git status *": "allow",
+                    "git log": "allow",
+                    "git log *": "allow",
+                    "git show": "allow",
+                    "git show *": "allow",
+                    "git diff": "allow",
+                    "git diff *": "allow",
+                    "git diff-tree *": "allow",
+                    "git branch": "allow",
+                    "git branch *": "allow",
+                    "git ls-files": "allow",
+                    "git ls-files *": "allow",
+                    "git remote": "allow",
+                    "git remote -v": "allow",
+                    "git remote show *": "allow",
+                    "git remote get-url *": "allow",
+                    "git help *": "allow",
+                    "git rev-parse *": "allow",
+                    "git describe *": "allow",
+                    "git tag": "allow",
+                    "git tag -l": "allow",
+                    "git tag -l *": "allow",
+                    "git tag --list": "allow",
+                    "git tag --list *": "allow",
+                    "git shortlog *": "allow",
+                    "git blame *": "allow",
+                    "git stash list": "allow",
+                    "git stash list *": "allow",
+                    "git config *": "allow",
+                    "git rev-list *": "allow",
+                    "git cat-file *": "allow",
+                    "git name-rev *": "allow",
+                    "git for-each-ref *": "allow",
+                    "git count-objects *": "allow",
+                    "git worktree list": "allow",
+                    "git worktree list *": "allow"
+                }
+            }
+        }
+    }
+}

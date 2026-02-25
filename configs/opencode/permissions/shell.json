@@ -1,0 +1,39 @@
+{
+    "agent": {
+        "plan": {
+            "permission": {
+                "bash": {
+                    "echo *": "allow",
+                    "uniq": "allow",
+                    "uniq *": "allow",
+                    "ls": "allow",
+                    "ls *": "allow",
+                    "curl *": "allow",
+                    "jq *": "allow",
+                    "cat": "allow",
+                    "cat *": "allow",
+                    "sort": "allow",
+                    "sort *": "allow",
+                    "pwd": "allow",
+                    "find *": "allow",
+                    "grep *": "allow",
+                    "head *": "allow",
+                    "tail *": "allow",
+                    "which *": "allow",
+                    "true": "allow",
+                    "false": "allow",
+                    "uname *": "allow",
+                    "wc *": "allow",
+                    "rg *": "allow",
+                    "xargs *": "allow",
+                    "tr *": "allow",
+                    "stat *": "allow",
+                    "strings *": "allow",
+                    "date": "allow",
+                    "date *": "allow",
+                    "timeout *": "allow"
+                }
+            }
+        }
+    }
+}

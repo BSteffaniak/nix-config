@@ -1,0 +1,17 @@
+{
+    "agent": {
+        "plan": {
+            "permission": {
+                "bash": {
+                    "bun test": "allow",
+                    "bun test *": "allow",
+                    "npm test": "allow",
+                    "npm test *": "allow",
+                    "npm view *": "allow",
+                    "pnpm test": "allow",
+                    "pnpm test *": "allow"
+                }
+            }
+        }
+    }
+}

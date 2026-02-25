@@ -1,0 +1,16 @@
+{
+    "agent": {
+        "plan": {
+            "permission": {
+                "bash": {
+                    "flyctl * list": "allow",
+                    "flyctl apps list": "allow",
+                    "flyctl logs": "allow",
+                    "flyctl logs *": "allow",
+                    "flyctl status": "allow",
+                    "flyctl status *": "allow"
+                }
+            }
+        }
+    }
+}
