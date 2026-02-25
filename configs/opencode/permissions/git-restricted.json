@@ -73,6 +73,8 @@
                     "git blame *": "allow",
                     "git stash list": "allow",
                     "git stash list *": "allow",
+                    "git stash show": "allow",
+                    "git stash show *": "allow",
                     "git config *": "allow",
                     "git rev-list *": "allow",
                     "git cat-file *": "allow",
