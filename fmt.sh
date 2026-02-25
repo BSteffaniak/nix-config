@@ -21,6 +21,35 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Check if a file is binary/encrypted (e.g., git-crypt locked files)
+is_encrypted() {
+  file --mime-encoding "$1" 2>/dev/null | grep -q "binary"
+}
+
+# Run prettier with automatic exclusion of encrypted files.
+# Usage: run_prettier [--check|--write]
+# Discovers encrypted files matching prettier extensions and passes them
+# as negative globs so they are skipped on top of .prettierignore/.gitignore.
+run_prettier() {
+  local mode_flag="$1"
+  local prettier_glob="**/*.{md,yml,yaml,ts,json,css,js}"
+
+  # Find encrypted files matching prettier extensions and build negative globs
+  local excludes=()
+  while IFS= read -r f; do
+    if is_encrypted "$f"; then
+      local rel="${f#$SCRIPT_DIR/}"
+      echo -e "${YELLOW}⊘${NC} Skipped (encrypted): $rel"
+      excludes+=("!${rel}")
+    fi
+  done < <(find "$SCRIPT_DIR" -type f \
+    \( -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.ts" \
+       -o -name "*.json" -o -name "*.css" -o -name "*.js" \) \
+    -not -path "*/\.git/*" -not -path "*/node_modules/*" -not -path "*/result*" | sort)
+
+  npx prettier "$mode_flag" "$prettier_glob" "${excludes[@]}"
+}
+
 # Check if nixfmt is available
 if ! command -v nixfmt &> /dev/null; then
   echo -e "${RED}Error: nixfmt not found in PATH${NC}"
@@ -65,7 +94,7 @@ for file in "${FILES[@]}"; do
   rel_path="${file#$SCRIPT_DIR/}"
 
   # Skip binary/encrypted files (e.g., git-crypt locked files)
-  if file --mime-encoding "$file" 2>/dev/null | grep -q "binary"; then
+  if is_encrypted "$file"; then
     echo -e "${YELLOW}⊘${NC} Skipped (encrypted): $rel_path"
     continue
   fi
@@ -108,7 +137,7 @@ if [[ "$CHECK_MODE" == true ]]; then
   else
     echo ""
     echo -e "${GREEN}✓ All files are properly formatted!${NC}"
-    npx prettier "**/*.{md,yml,yaml,ts,json,css,js}"
+    run_prettier --check
     exit 0
   fi
 else
@@ -126,7 +155,7 @@ else
   else
     echo ""
     echo -e "${GREEN}✓ Successfully formatted all files!${NC}"
-    npx prettier --write "**/*.{md,yml,yaml,ts,json,css,js}"
+    run_prettier --write
     exit 0
   fi
 fi
