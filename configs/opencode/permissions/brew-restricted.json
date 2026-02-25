@@ -3,12 +3,16 @@
         "build": {
             "permission": {
                 "bash": {
+                    "brew install *": "deny",
                     "brew uninstall *": "deny",
                     "brew remove *": "deny",
+                    "brew upgrade *": "deny",
                     "brew tap *": "deny",
                     "brew untap *": "deny",
                     "brew cleanup *": "deny",
                     "brew autoremove *": "deny",
+                    "brew link *": "deny",
+                    "brew unlink *": "deny",
                     "brew pin *": "deny",
                     "brew unpin *": "deny",
                     "brew services start *": "deny",

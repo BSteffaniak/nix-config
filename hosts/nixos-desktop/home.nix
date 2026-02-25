@@ -89,6 +89,10 @@
     development.lazygit.enable = true;
     development.act.enable = true;
     development.opencode.enable = true;
+    development.opencode.permissions.restricted = [
+      "git"
+      "brew"
+    ];
     development.ra-multiplex.enable = true;
 
     # DevOps tool configs

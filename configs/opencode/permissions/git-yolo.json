@@ -1,24 +1,5 @@
 {
     "agent": {
-        "build": {
-            "permission": {
-                "bash": {
-                    "git push --force *": "deny",
-                    "git push --force-with-lease *": "deny",
-                    "git push -f *": "deny",
-                    "git reset --hard *": "deny",
-                    "git clean -f *": "deny",
-                    "git clean -fd *": "deny",
-                    "git clean -fx *": "deny",
-                    "git clean -fdx *": "deny",
-                    "git filter-branch *": "deny",
-                    "git reflog expire *": "deny",
-                    "git reflog delete *": "deny",
-                    "git gc --prune=now *": "deny",
-                    "git update-ref -d *": "deny"
-                }
-            }
-        },
         "plan": {
             "permission": {
                 "bash": {
