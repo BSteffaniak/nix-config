@@ -116,6 +116,84 @@ NixOS-only script that detects hardware and suggests appropriate configuration o
 
 Run this before bootstrapping a NixOS host to get hardware-specific recommendations.
 
+### `github-release.sh` (GitHub Release Manager)
+
+Manages pre-built binary packages from GitHub releases. Supports both interactive and non-interactive modes.
+
+This script handles the full lifecycle: adding new projects, updating versions, listing status, and removing projects. It works with the auto-discovery overlay system in `lib/overlays/github-releases.nix` — adding a new project only requires creating a config JSON file (no Nix file edits).
+
+**Usage:**
+
+```bash
+# Interactive main menu
+./scripts/github-release.sh
+
+# Subcommands
+./scripts/github-release.sh update                    # Interactive: pick projects to update
+./scripts/github-release.sh update --all              # Non-interactive: update all
+./scripts/github-release.sh update opencode           # Non-interactive: update one
+./scripts/github-release.sh add                       # Interactive: wizard to add new project
+./scripts/github-release.sh add --non-interactive \   # Non-interactive: create from args
+    --owner org --repo tool --pname tool-dev
+./scripts/github-release.sh remove                    # Interactive: pick project to remove
+./scripts/github-release.sh remove some-tool          # Non-interactive: remove by name
+./scripts/github-release.sh list                      # List all configured projects
+./scripts/github-release.sh check                     # Check all for updates (dry run)
+```
+
+**Interactive `add` wizard:**
+
+1. Prompts for GitHub `owner/repo`
+2. Fetches the latest release and displays available assets
+3. Prompts for Nix package name, binary name, installed binary name
+4. Auto-detects version prefix stripping (e.g., `v` from `v1.2.3`)
+5. Auto-detects platform-to-asset mapping from asset filenames (linux/darwin, x64/arm64)
+6. Prompts for license and description
+7. Writes the config JSON and fetches version data automatically
+
+**Non-interactive `add`:**
+
+```bash
+./scripts/github-release.sh add --non-interactive \
+    --owner junegunn \
+    --repo fzf \
+    --pname fzf-bleeding \
+    --binary-name fzf \
+    --installed-binary-name fzf-bleeding \
+    --strip-prefix v \
+    --license mit \
+    --description "Fuzzy finder (latest from GitHub releases)"
+```
+
+Platform asset names can be specified explicitly or auto-detected:
+
+```bash
+# Explicit platform mapping
+./scripts/github-release.sh add --non-interactive \
+    --owner user --repo tool --pname tool-dev \
+    --x86_64-linux "tool-linux-amd64.tar.gz" \
+    --aarch64-darwin "tool-darwin-arm64.zip"
+
+# Or omit platform flags for auto-detection from release assets
+./scripts/github-release.sh add --non-interactive \
+    --owner user --repo tool --pname tool-dev
+```
+
+**Directory structure:**
+
+```
+lib/github-releases/
+  configs/           # Per-project config (written once, committed)
+    opencode.json    # Repo, asset mapping, binary names, metadata
+  versions/          # Auto-generated version data (committed)
+    opencode.json    # URLs, sha256 hashes, version number
+  mkGitHubRelease.nix  # Shared Nix builder function
+```
+
+**Important:** The `versions/` directory contains pinned version data that Nix reads at evaluation time. These files must be committed to git so that all machines see the same versions.
+
+**Hash resolution:** The script uses the GitHub API `digest` field (sha256) when available for fast hash lookups. Falls back to `nix-prefetch-url` for repos that don't provide digests.
+
 ## Workflow Examples
 
 ### New NixOS Desktop

@@ -354,9 +354,51 @@ myConfig = {
 
 ## Adding Custom Overlays
 
-The unified flake makes adding custom package overlays simple with automatic discovery:
+### GitHub Release Binaries (Recommended for Pre-Built Tools)
 
-### Step 1: Add Input to Flake
+The simplest way to add a bleeding-edge binary from any GitHub project. No Nix file edits required — the overlay auto-discovers projects from config files.
+
+**Quick start:**
+
+```bash
+# Interactive wizard
+./scripts/github-release.sh add
+
+# Or non-interactive
+./scripts/github-release.sh add --non-interactive \
+    --owner junegunn --repo fzf --pname fzf-bleeding
+```
+
+The script will:
+
+1. Fetch the latest release from GitHub
+2. Auto-detect platform-to-asset mapping
+3. Create a config in `lib/github-releases/configs/<name>.json`
+4. Fetch version data with sha256 hashes into `lib/github-releases/versions/<name>.json`
+
+Then add `pkgs.<pname>` to your `home.nix` and rebuild. That's it.
+
+**Updating versions:**
+
+```bash
+./scripts/github-release.sh update --all    # Update all projects
+./scripts/github-release.sh update opencode # Update one project
+./scripts/github-release.sh check           # Dry-run: check for updates
+```
+
+After updating, commit the changed `versions/*.json` files so all machines get the same versions.
+
+**How it works:**
+
+The auto-discovery overlay (`lib/overlays/github-releases.nix`) scans all config files in `lib/github-releases/configs/` and creates a Nix package for each one using the shared builder `lib/github-releases/mkGitHubRelease.nix`. The builder handles archive extraction (tar.gz/zip), binary installation, and Linux `autoPatchelfHook` automatically.
+
+See `./scripts/github-release.sh --help` and `scripts/README.md` for full documentation.
+
+### Source-Built Overlays (For Building from Source)
+
+For packages that need to be built from source via a flake input:
+
+#### Step 1: Add Input to Flake
 
 Edit `flake.nix` and add your input:
 
@@ -371,7 +413,7 @@ inputs = {
 };
 ```
 
-### Step 2: Create Overlay File
+#### Step 2: Create Overlay File
 
 Create `lib/overlays/my-package.nix`:
 
@@ -399,7 +441,7 @@ else
   }
 ```
 
-### Step 3: Register Overlay
+#### Step 3: Register Overlay
 
 Edit `lib/overlays.nix`:
 
@@ -407,7 +449,7 @@ Edit `lib/overlays.nix`:
 # Import all overlay functions
 overlayFunctions = {
   rust = import ./overlays/rust.nix;
-  opencode = import ./overlays/opencode.nix;
+  github-releases = import ./overlays/github-releases.nix;
   # ... existing overlays
   myPackage = import ./overlays/my-package.nix;  # Add this line
 };
@@ -419,7 +461,7 @@ Edit `lib/mkOverlays.nix`:
 mkOverlays =
   {
     enableRust ? true,
-    enableOpencode ? true,
+    enableGithubReleases ? true,
     # ... existing enables
     enableMyPackage ? true,  # Add this line
   }:
@@ -429,7 +471,7 @@ mkOverlays =
   ];
 ```
 
-### Step 4: Update Flake to Pass Input
+#### Step 4: Update Flake to Pass Input
 
 Edit `flake.nix` in the `mkOverlays` function:
 
@@ -443,7 +485,7 @@ mkOverlays = system: nixpkgsLib: import ./lib/overlays.nix {
 };
 ```
 
-### That's It!
+#### That's It!
 
 Run `nix flake update` and your overlay is available on **all platforms** automatically!
 
