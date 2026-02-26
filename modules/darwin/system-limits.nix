@@ -11,7 +11,11 @@ let
 in
 {
   options.myConfig.darwin.systemLimits = {
-    enable = mkEnableOption "macOS system resource limits (file descriptors)";
+    enable = mkOption {
+      type = types.bool;
+      default = true;
+      description = "macOS system resource limits (file descriptors)";
+    };
 
     maxFiles = {
       soft = mkOption {

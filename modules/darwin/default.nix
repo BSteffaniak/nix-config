@@ -16,6 +16,7 @@
     ./homebrew.nix
     ./istat-menus.nix
     ./keepingyouawake.nix
+    ./minecraft.nix
     ./microsoft-edge.nix
     ./roon.nix
     ./scroll-reverser.nix

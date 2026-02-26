@@ -24,6 +24,15 @@ let
     homebrew-felixkratz
     homebrew-linear
     ;
+
+  # Build extra overlays from meta.extraModules (for packages like nix-minecraft)
+  extraOverlayMap = {
+    "nix-minecraft" = [ inputs.nix-minecraft.overlay ];
+  };
+
+  extraOverlays = builtins.concatLists (
+    map (m: extraOverlayMap.${m} or [ ]) (meta.extraModules or [ ])
+  );
 in
 nix-darwin.lib.darwinSystem {
   system = meta.system;
@@ -37,7 +46,7 @@ nix-darwin.lib.darwinSystem {
         allowUnfree = true;
         android_sdk.accept_license = true;
       };
-      nixpkgs.overlays = mkOverlays meta.system nixpkgs-darwin;
+      nixpkgs.overlays = extraOverlays ++ (mkOverlays meta.system nixpkgs-darwin);
     }
     (
       { config, ... }:
