@@ -24,6 +24,7 @@
     ./sketchybar.nix
     ./ssh.nix
     ./system-defaults.nix
+    ./system-limits.nix
     ./tailscale.nix
   ];
 
