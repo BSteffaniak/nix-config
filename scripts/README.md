@@ -12,10 +12,9 @@ Interactive bootstrap script that guides you through creating a new host configu
 
 - Auto-detects platform (NixOS/Darwin) and architecture
 - Interactive prompts for all configuration options
-- Generates complete host configuration
+- Generates complete host configuration (`meta.nix`, `default.nix`, `home.nix`)
 - Handles hardware-configuration.nix for NixOS
-- Updates flake configuration (with guidance)
-- Updates rebuild.sh automatically
+- Auto-discovered by flake and `rebuild.sh` (no manual edits needed)
 - Optional git commit
 
 **Usage:**
@@ -273,10 +272,8 @@ lib/github-releases/
 # - Enable NVIDIA if detected
 # - Enable development tools as needed
 
-# 3. Manually add to nixos/flake.nix (as instructed by bootstrap)
-
-# 4. Test and apply
-sudo nixos-rebuild build --flake ./nixos#new-hostname
+# 3. Test and apply (host is auto-discovered from meta.nix)
+sudo nixos-rebuild build --flake .#new-hostname
 ./rebuild.sh
 ```
 
@@ -290,10 +287,8 @@ sudo nixos-rebuild build --flake ./nixos#new-hostname
 # - Enable development tools
 # - Enable Homebrew and system defaults
 
-# 2. Manually add to darwin/flake.nix (as instructed by bootstrap)
-
-# 3. Test and apply
-darwin-rebuild build --flake ./darwin#new-hostname
+# 2. Test and apply (host is auto-discovered from meta.nix)
+darwin-rebuild build --flake .#new-hostname
 ./rebuild.sh
 ```
 
@@ -317,12 +312,12 @@ darwin-rebuild build --flake ./darwin#new-hostname
   --docker true \
   --state-version 24.11
 
-# Then manually add to nixos/flake.nix and update rebuild.sh
+# The host is auto-discovered from meta.nix -- no flake or rebuild.sh edits needed
 ```
 
 ## Notes
 
-- The bootstrap script will **not** automatically edit your flake.nix due to the complexity of the file structure. Instead, it provides you with the exact configuration block to add.
+- Hosts are **auto-discovered** from `hosts/*/meta.nix`. No manual edits to `flake.nix` or `rebuild.sh` are needed when adding a new host.
 - For NixOS, make sure to generate or copy `hardware-configuration.nix` - the bootstrap script will help with this.
 - Always test your configuration with `build` before applying with `switch`.
 - The scripts preserve your existing hosts and configurations - they only add new ones.
@@ -335,13 +330,8 @@ darwin-rebuild build --flake ./darwin#new-hostname
 - This command is only available on NixOS systems
 - If bootstrapping from another system, you'll need to copy hardware-configuration.nix manually after installation
 
-**"Failed to update rebuild.sh"**
-
-- The script creates a backup at `rebuild.sh.bak`
-- You can manually add the host case statement to rebuild.sh if automatic update fails
-
 **"Configuration build failed"**
 
-- Check that you've added the host to the correct flake (nixos/flake.nix or darwin/flake.nix)
+- Check that `hosts/<name>/meta.nix` exists and has correct `type`, `system`, `hostname`, and `username` values
 - Verify all referenced modules exist
 - Check syntax of generated configuration
