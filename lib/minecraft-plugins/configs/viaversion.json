@@ -1,0 +1,13 @@
+{
+    "pname": "viaversion",
+    "type": "github-release",
+    "owner": "ViaVersion",
+    "repo": "ViaVersion",
+    "assetPattern": "ViaVersion-*.jar",
+    "stripVersionPrefix": "v",
+    "meta": {
+        "description": "ViaVersion - cross-version Minecraft protocol support",
+        "homepage": "https://github.com/ViaVersion/ViaVersion",
+        "license": "gpl3"
+    }
+}

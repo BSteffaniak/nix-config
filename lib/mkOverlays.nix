@@ -17,6 +17,7 @@
       enableZellijFork ? false,
       enableCronstrue ? true,
       enableFirefoxDarwin ? true,
+      enableMinecraftPlugins ? true,
     }:
     let
       # Core overlays (always enabled)
@@ -56,6 +57,10 @@
         {
           enable = enableFirefoxDarwin;
           overlay = overlayFunctions.firefox-darwin;
+        }
+        {
+          enable = enableMinecraftPlugins;
+          overlay = overlayFunctions.minecraft-plugins;
         }
       ];
 

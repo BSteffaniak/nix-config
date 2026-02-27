@@ -15,6 +15,7 @@
   enableZellijFork ? false,
   enableCronstrue ? true,
   enableFirefoxDarwin ? true,
+  enableMinecraftPlugins ? true,
 }:
 let
   # Bundle all inputs into a single attrset for easier passing
@@ -41,6 +42,7 @@ let
     zellij = import ./overlays/zellij.nix;
     cronstrue = import ./overlays/cronstrue.nix;
     firefox-darwin = import ./overlays/firefox-darwin.nix;
+    minecraft-plugins = import ./overlays/minecraft-plugins.nix;
   };
 
   mkOverlaysLib = import ./mkOverlays.nix {
@@ -60,5 +62,6 @@ mkOverlaysLib.mkOverlays {
     enableZellijFork
     enableCronstrue
     enableFirefoxDarwin
+    enableMinecraftPlugins
     ;
 }

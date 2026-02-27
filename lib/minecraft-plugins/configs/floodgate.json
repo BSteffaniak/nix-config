@@ -1,0 +1,11 @@
+{
+    "pname": "floodgate",
+    "type": "geyser-api",
+    "project": "floodgate",
+    "variant": "spigot",
+    "meta": {
+        "description": "Floodgate - Bedrock authentication for GeyserMC",
+        "homepage": "https://geysermc.org",
+        "license": "mit"
+    }
+}

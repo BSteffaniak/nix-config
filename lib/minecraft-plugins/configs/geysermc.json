@@ -1,0 +1,11 @@
+{
+    "pname": "geysermc",
+    "type": "geyser-api",
+    "project": "geyser",
+    "variant": "spigot",
+    "meta": {
+        "description": "GeyserMC - Bedrock to Java bridge plugin",
+        "homepage": "https://geysermc.org",
+        "license": "mit"
+    }
+}

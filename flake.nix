@@ -140,6 +140,7 @@
           enableZellijFork = true;
           enableCronstrue = true;
           enableFirefoxDarwin = true;
+          enableMinecraftPlugins = true;
         };
 
       # ── Host Builders ────────────────────────────────────────────
