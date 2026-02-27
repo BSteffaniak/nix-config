@@ -73,6 +73,29 @@ with lib;
   config = mkIf config.homeModules.git.enable {
     programs.git = {
       enable = true;
+      hooks = {
+        post-commit = pkgs.writeShellScript "post-commit" ''
+          BINARY="$HOME/.config/git/hooks/post-commit/target/release/post-commit"
+          if [ -x "$BINARY" ]; then
+              "$BINARY"
+          fi
+        '';
+        prepare-commit-msg = pkgs.writeShellScript "prepare-commit-msg" ''
+          MSGFILE="$1"
+          SOURCE="$2"
+
+          # Only inject on plain `git commit` (no -m, --amend, merge, etc.)
+          if [ -z "$SOURCE" ]; then
+            GIT_DIR="$(git rev-parse --git-dir)"
+            PREPARED="$GIT_DIR/PREPARED_MSG"
+            if [ -f "$PREPARED" ]; then
+              EXISTING=$(cat "$MSGFILE")
+              printf '%s\n\n%s\n' "$(cat "$PREPARED")" "$EXISTING" > "$MSGFILE"
+              rm "$PREPARED"
+            fi
+          fi
+        '';
+      };
       settings = {
         user = {
           name = config.homeModules.git.userName;

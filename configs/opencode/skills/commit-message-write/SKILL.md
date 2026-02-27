@@ -1,12 +1,12 @@
 ---
 name: commit-message-write
-description: Generate a git commit message and write it to .git/COMMIT_MSG so you can commit with it pre-filled in your editor.
+description: Generate a git commit message and write it to .git/PREPARED_MSG so it's pre-filled in your editor when you run `git commit`.
 allowed-tools: Bash(git:*)
 ---
 
 ## Purpose
 
-Generate a commit message for the current staged or unstaged changes, write it to the repo's `.git/COMMIT_MSG` file, and provide the command to commit with it.
+Generate a commit message for the current staged or unstaged changes, write it to the repo's `.git/PREPARED_MSG` file so the `prepare-commit-msg` hook automatically pre-fills it in the editor when the user runs `git commit`.
 
 ## Steps
 
@@ -18,16 +18,15 @@ Generate a commit message for the current staged or unstaged changes, write it t
 2. Optionally run `git log --oneline -10` to see recent commit style for context
 3. Analyze the diff carefully — understand the specific, concrete changes
 4. Compose the commit message following the rules below
-5. Write the message to the git commit message file:
+5. Write the message to the prepared message file:
    ```bash
    git_dir=$(git rev-parse --git-dir)
-   # Write the commit message to $git_dir/COMMIT_MSG
+   # Write the commit message to $git_dir/PREPARED_MSG
    ```
-6. Display the message to the user AND provide the ready-to-run command:
-   ```
-   git commit -e -F "$(git rev-parse --git-dir)/COMMIT_MSG"
-   ```
-   Explain that `-e` opens their editor so they can review/edit before finalizing, and `-F` pre-fills it with the generated message.
+6. Display the message to the user and tell them:
+   - Run `git commit` — the message will be pre-filled in your editor
+   - The `prepare-commit-msg` hook reads `PREPARED_MSG` and injects it automatically
+   - The file is consumed on use (one-shot), so it won't affect future commits
 
 ## Commit Message Rules
 
