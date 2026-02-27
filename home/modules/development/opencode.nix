@@ -99,5 +99,15 @@ in
 
   config = mkIf cfg.enable {
     xdg.configFile."opencode/opencode.json".text = builtins.toJSON mergedConfig;
+
+    # Global skills (auto-discovered by OpenCode from ~/.config/opencode/skills/)
+    xdg.configFile."opencode/skills/commit-message" = {
+      source = ../../../configs/opencode/skills/commit-message;
+      recursive = true;
+    };
+    xdg.configFile."opencode/skills/commit-message-write" = {
+      source = ../../../configs/opencode/skills/commit-message-write;
+      recursive = true;
+    };
   };
 }

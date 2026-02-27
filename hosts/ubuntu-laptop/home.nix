@@ -26,6 +26,7 @@
     development.go.enable = true;
     development.python.enable = true;
     development.zig.enable = true;
+    development.opencode.enable = true;
 
     # Containers - rootless!
     containers.podman.enable = true;
