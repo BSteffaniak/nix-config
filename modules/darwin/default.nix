@@ -18,6 +18,7 @@
     ./keepingyouawake.nix
     ./minecraft.nix
     ./microsoft-edge.nix
+    ./ollama.nix
     ./roon.nix
     ./scroll-reverser.nix
     ./security.nix

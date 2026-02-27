@@ -85,6 +85,7 @@
     tools = {
       archiving.enable = true;
       encryption.enable = true;
+      ai.ollama.enable = true;
     };
   };
 
