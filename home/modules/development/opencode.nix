@@ -109,5 +109,9 @@ in
       source = ../../../configs/opencode/skills/commit-message-write;
       recursive = true;
     };
+    xdg.configFile."opencode/skills/session-history" = {
+      source = ../../../configs/opencode/skills/session-history;
+      recursive = true;
+    };
   };
 }
