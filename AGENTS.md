@@ -12,7 +12,7 @@ This configuration manages multiple hosts across different platforms:
 
 ### Host Auto-Discovery
 
-Hosts are **automatically discovered** from `hosts/*/meta.nix` files. The `flake.nix` scans the `hosts/` directory at evaluation time and generates the appropriate `nixosConfigurations`, `darwinConfigurations`, or `homeConfigurations` outputs based on each host's `meta.nix`. Neither `flake.nix` nor `rebuild.sh` need manual edits when adding or removing hosts.
+Hosts are **automatically discovered** from `hosts/*/meta.nix` files. The `flake.nix` scans the `hosts/` directory at evaluation time and generates the appropriate `nixosConfigurations`, `darwinConfigurations`, `homeConfigurations`, and `devShells` outputs based on each host's `meta.nix`. Neither `flake.nix` nor `rebuild.sh` need manual edits when adding or removing hosts.
 
 ### Host Builder Helpers
 
@@ -51,7 +51,9 @@ These modules use `environment.systemPackages` and system-level configuration op
 
 ### 2. Home-Manager Modules (`home/modules/`)
 
-Location: `home/modules/`, `home/common/`, `home/standalone/`
+Location: `home/modules/`, `home/common/`, `home/standalone/`, `home/darwin/`, `home/nixos/`
+
+The `home/darwin/` and `home/nixos/` directories are platform-specific bridge modules that wire system-level options into the home-manager configuration for their respective platforms.
 
 These modules use `home.packages` and home-manager configuration options.
 
@@ -119,11 +121,13 @@ myConfig.tools.archiving.enable = true;
 
 ## Host Configuration Structure
 
-Each host has two or three configuration files:
+Each host directory contains the following files:
 
-- `hosts/<hostname>/meta.nix` - Host metadata for auto-discovery (type, system, hostname, username)
-- `hosts/<hostname>/default.nix` - System-level configuration (NixOS/nix-darwin options)
-- `hosts/<hostname>/home.nix` - User-level configuration (home-manager options)
+- `hosts/<hostname>/meta.nix` - **(required)** Host metadata for auto-discovery (type, system, hostname, username)
+- `hosts/<hostname>/default.nix` - **(NixOS/nix-darwin only)** System-level configuration
+- `hosts/<hostname>/home.nix` - **(required)** User-level configuration (home-manager options)
+
+Standalone home-manager hosts (e.g., `ubuntu-laptop`) only need `meta.nix` and `home.nix` -- no `default.nix` is required since there is no system-level configuration to manage.
 
 **Metadata (`meta.nix`)** declares:
 
@@ -138,7 +142,7 @@ Each host has two or three configuration files:
 }
 ```
 
-**System config (`default.nix`)** should contain:
+**System config (`default.nix`)** should contain (NixOS/nix-darwin hosts only):
 
 - Hardware configuration
 - Boot settings
@@ -167,11 +171,13 @@ When adding a new package to the configuration:
 
 ## Adding New Hosts
 
-To add a new host, create a directory under `hosts/` with three files:
+To add a new host, create a directory under `hosts/` with these files:
 
 1. `hosts/<name>/meta.nix` - Metadata (type, system, hostname, username)
-2. `hosts/<name>/default.nix` - System configuration
+2. `hosts/<name>/default.nix` - System configuration (NixOS/nix-darwin hosts only)
 3. `hosts/<name>/home.nix` - Home-manager configuration
+
+For standalone home-manager hosts, `default.nix` is not needed.
 
 No other files need editing. The flake auto-discovers the host from `meta.nix`, and `rebuild.sh` matches the hostname automatically.
 
@@ -209,9 +215,10 @@ home.packages = optional cfg.encryption.enable pkgs.age;
 ### Multiple packages from one flag
 
 ```nix
-home.packages = mkIf cfg.ai.enable [
-  pkgs.unstable.gemini-cli
-  pkgs.ollama
+# home/modules/cli-tools/utilities.nix
+home.packages = mkIf cfg.opencode.enable [
+  pkgs.unstable.opencode
+  pkgs.unstable.claude-code
 ];
 ```
 
