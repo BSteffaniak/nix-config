@@ -34,38 +34,80 @@ This repository uses a **unified flake** at the root that provides:
 ├── flake.nix                # Unified flake for all platforms
 ├── flake.lock               # Single lock file for consistent versions
 ├── rebuild.sh               # Auto-detecting rebuild script
+├── bootstrap.sh             # Interactive new host setup
+├── install-config.sh        # Standalone config installer
 │
-├── hosts/                   # Per-machine configurations
-│   ├── nixos-desktop/      # NixOS desktop PC
-│   ├── macbook-air/        # MacBook Air (Apple Silicon)
-│   └── mac-studio/         # Mac Studio
+├── hosts/                   # Per-machine configurations (auto-discovered)
+│   ├── nixos-desktop/       # NixOS desktop PC
+│   ├── macbook-air/         # MacBook Air (Apple Silicon)
+│   ├── mac-studio/          # Mac Studio
+│   ├── bs-mbpro/            # Work MacBook Pro (git-crypt encrypted)
+│   └── ubuntu-laptop/       # Ubuntu with standalone home-manager
 │
-├── modules/                 # Reusable modules
-│   ├── common/             # Cross-platform modules
-│   │   ├── development/    # Dev tools (rust, node, go, python, etc.)
-│   │   ├── shell/          # Shell configuration (fish, git)
-│   │   ├── editors/        # Text editors (neovim)
-│   │   └── cli-tools/      # CLI utilities (tmux, fzf, ripgrep, etc.)
+├── modules/                 # System-level modules (NixOS/nix-darwin)
+│   ├── common/              # Cross-platform system modules
+│   │   ├── development/     # Dev toolchains (rust, node, go, python, etc.)
+│   │   ├── shell/           # Shell configuration (fish, git)
+│   │   ├── editors/         # Text editors (neovim)
+│   │   └── services/        # System services (tailscale)
 │   │
-│   ├── nixos/              # NixOS-specific modules
-│   │   ├── boot/           # Boot configuration
-│   │   ├── hardware/       # Hardware support (nvidia, graphics)
-│   │   ├── desktop/        # Desktop environment (hyprland, waybar, gtk)
-│   │   ├── services/       # System services (docker, observability, minecraft)
-│   │   └── system/         # System configuration (networking, security, audio)
+│   ├── nixos/               # NixOS-specific modules
+│   │   ├── boot/            # Boot configuration
+│   │   ├── hardware/        # Hardware support (nvidia, graphics)
+│   │   ├── desktop/         # Desktop environment (hyprland, waybar, gtk)
+│   │   ├── services/        # System services (docker, observability, minecraft)
+│   │   └── system/          # System configuration (networking, security, audio)
 │   │
-│   └── darwin/             # macOS-specific modules
-│       ├── homebrew.nix    # Homebrew integration
+│   └── darwin/              # macOS-specific modules (21 files)
+│       ├── homebrew.nix     # Homebrew integration
 │       ├── system-defaults.nix  # macOS system preferences
-│       └── applications.nix     # Application management
+│       ├── aerospace.nix    # Window manager
+│       ├── security.nix     # Security settings
+│       └── ...              # Application modules, services, etc.
 │
 ├── home/                    # Home Manager configurations
-│   ├── common/             # Cross-platform home config
-│   ├── nixos/              # NixOS-specific home config
-│   └── darwin/             # macOS-specific home config
+│   ├── common/              # Cross-platform home config
+│   ├── modules/             # Feature-flagged home-manager modules
+│   │   ├── cli-tools/       # CLI utilities (fzf, ripgrep, jq, etc.)
+│   │   ├── containers/      # Podman, distrobox
+│   │   ├── development/     # Dev tools (lazygit, act, language support)
+│   │   ├── devops/          # DevOps tools (kubectl, helm, terraform, etc.)
+│   │   ├── desktop/         # Desktop apps (hyprland, waybar, etc.)
+│   │   ├── editors/         # Editor configurations (neovim)
+│   │   ├── design/          # Design tools
+│   │   ├── shell/           # Shell utilities (bat, eza, zoxide, etc.)
+│   │   ├── tools/           # Misc tools (7zip, age, ollama, etc.)
+│   │   ├── fish.nix         # Fish shell configuration
+│   │   ├── git.nix          # Git configuration
+│   │   └── gtk-theming.nix  # GTK theming (opt-in)
+│   ├── nixos/               # NixOS-specific home bridge
+│   ├── darwin/              # macOS-specific home bridge
+│   └── standalone/          # Standalone home-manager (Ubuntu, etc.)
 │
-└── lib/                     # Helper functions
-    └── default.nix
+├── configs/                 # Portable standalone configs (usable without Nix)
+│   ├── neovim/              # Neovim editor
+│   ├── tmux/                # Tmux terminal multiplexer
+│   ├── ghostty/             # Ghostty terminal emulator
+│   └── ...                  # 19 configs total (see Standalone section)
+│
+├── lib/                     # Helper functions and overlays
+│   ├── mkDarwinHost.nix     # Darwin host builder
+│   ├── mkNixosHost.nix      # NixOS host builder
+│   ├── mkHomeConfig.nix     # Standalone home-manager builder
+│   ├── mkOverlays.nix       # Overlay orchestration
+│   ├── overlays/            # Individual overlay definitions
+│   ├── github-releases/     # GitHub release binary packages
+│   ├── source-builds/       # Source-built package hashes
+│   └── minecraft-plugins/   # Minecraft plugin packages
+│
+├── packages/                # Custom packages (display-ctl, etc.)
+│
+└── scripts/                 # Helper scripts
+    ├── github-release.sh    # Manage GitHub release overlays
+    ├── source-build.sh      # Manage source-built package hashes
+    ├── detect-hardware.sh   # NixOS hardware detection
+    ├── new-host-template.sh # Host template generator
+    └── setup-git-crypt.sh   # git-crypt setup helper
 ```
 
 ## Standalone Config Installation
@@ -118,6 +160,9 @@ cp -r configs/neovim ~/.config/nvim
 - `waypaper` - Waypaper wallpaper manager
 - `act` - GitHub Actions locally
 - `htop` - htop system monitor
+- `aerospace` - AeroSpace window manager (macOS)
+- `hammerspoon` - Hammerspoon automation (macOS)
+- `sketchybar` - SketchyBar status bar (macOS)
 
 Each config works standalone and can be cloned/used independently.
 
@@ -203,9 +248,13 @@ home-manager switch --flake .#braden@ubuntu-laptop
 - **macbook-air**: MacBook Air (Apple Silicon) with development tools
 - **mac-studio**: Mac Studio with development tools
 
+### macOS Systems (Private)
+
+- **bs-mbpro**: Work MacBook Pro (git-crypt encrypted configuration)
+
 ### Standalone Home Manager (Ubuntu, etc.)
 
-- **ubuntu-laptop**: Ubuntu laptop with home-manager only (see [UBUNTU-SETUP.md](UBUNTU-SETUP.md))
+- **ubuntu-laptop**: Ubuntu laptop with home-manager only
 
 ## Using on Ubuntu or Other Linux Distros
 
@@ -218,13 +267,11 @@ This configuration can be used on Ubuntu or any Linux distro via standalone home
 sh <(curl -L https://nixos.org/nix/install) --daemon
 
 # Clone this repo
-git clone <your-repo-url> ~/.config/nixos
+git clone <your-repo-url> ~/.config/nix
 
 # Apply the configuration
-nix run home-manager/release-25.05 -- switch --flake ~/.config/nixos#braden@ubuntu-laptop
+nix run home-manager/release-25.11 -- switch --flake ~/.config/nix#braden@ubuntu-laptop
 ```
-
-See [UBUNTU-SETUP.md](UBUNTU-SETUP.md) for detailed Ubuntu setup instructions.
 
 **What you get:**
 
@@ -237,7 +284,7 @@ See [UBUNTU-SETUP.md](UBUNTU-SETUP.md) for detailed Ubuntu setup instructions.
 
 ## Customization
 
-Each host can enable/disable features via the `myConfig` options in `hosts/*/default.nix`:
+Each host can enable/disable features via the `myConfig` options in `hosts/*/default.nix` (system-level) and `hosts/*/home.nix` (user-level):
 
 ```nix
 myConfig = {
@@ -512,39 +559,39 @@ Run `nix flake update` and your overlay is available on **all platforms** automa
 
 ## Adding Packages
 
-Understanding where to add packages based on their purpose and scope:
+This repository follows a **home-manager-first architecture**. Always prefer `home.packages` over `environment.systemPackages` for user-facing tools. This ensures packages work across all hosts, including standalone home-manager setups.
 
-### Cross-Platform Packages (All Hosts)
+### User Tools and CLI Utilities (Preferred)
 
-**System-Level CLI Tools:**
+**CLI Tools:**
 
-- **Location:** `modules/common/cli-tools/default.nix`
-- **Use for:** Command-line utilities, system tools (tmux, fzf, ripgrep, htop, etc.)
+- **Location:** `home/modules/cli-tools/` (utilities, file tools, monitoring, formatters, terminals)
+- **Use for:** Command-line utilities (fzf, ripgrep, jq, htop, etc.)
 - **Example:**
   ```nix
-  environment.systemPackages = with pkgs; [
-    # ... existing packages
-    yq  # Add new CLI tool here
-  ];
+  # home/modules/cli-tools/utilities.nix
+  home.packages = mkIf cfg.jq.enable [ pkgs.jq ];
   ```
 
 **Development Tools:**
 
-- **Location:** `modules/common/development/` (language-specific files)
-- **Use for:** Programming language toolchains, build tools, linters
-- **Example:** Add to `devops.nix` for infrastructure tools, or create new module
+- **Location:** `home/modules/development/` (language-specific files)
+- **Use for:** Dev tools, language support, build helpers
+- **Example:**
   ```nix
-  # modules/common/development/devops.nix
-  environment.systemPackages = with pkgs; [
-    # ... existing packages
-    terraform  # Add new devops tool
-  ];
+  # home/modules/development/lazygit.nix
+  home.packages = mkIf cfg.enable [ pkgs.lazygit ];
   ```
 
-**User Applications (GUI/Desktop):**
+**DevOps Tools:**
+
+- **Location:** `home/modules/devops/`
+- **Use for:** Infrastructure and cloud tools (kubectl, helm, terraform, aws-cli, etc.)
+
+**User Applications:**
 
 - **Location:** `home/common/packages.nix`
-- **Use for:** Personal applications, GUI tools, user-specific packages
+- **Use for:** Personal applications, user-specific packages
 - **Scope:** Installed for your user across all platforms
 - **Example:**
   ```nix
@@ -554,57 +601,39 @@ Understanding where to add packages based on their purpose and scope:
   ];
   ```
 
-### Platform-Specific Packages
+### System-Level Packages (When Required)
+
+Only use `environment.systemPackages` for things that genuinely need system-level access (services, drivers, boot config). These are **not available** on standalone home-manager hosts.
+
+**System services and toolchains:**
+
+- **Location:** `modules/common/development/` (language toolchains shared at system level)
+- **Location:** `modules/nixos/services/` (NixOS system services)
+- **Location:** `modules/darwin/*.nix` (macOS-specific system config)
 
 **NixOS Only:**
 
 - **Location:** Appropriate module in `modules/nixos/*/`
   - Desktop apps: `modules/nixos/desktop/*.nix`
   - System services: `modules/nixos/services/*.nix`
-- **Example:**
-  ```nix
-  # modules/nixos/desktop/hyprland.nix
-  environment.systemPackages = with pkgs; [
-    # ... existing packages
-    waybar-experimental  # Add Wayland-specific tool
-  ];
-  ```
-
-**Darwin (macOS) Only:**
-
-- **Location:** `modules/darwin/*.nix` or `home/darwin/default.nix`
-- **Example:**
-  ```nix
-  # home/darwin/default.nix
-  home.packages = with pkgs; [
-    # ... existing packages
-    rectangle  # Add macOS-specific app
-  ];
-  ```
 
 **Single Host Only:**
 
-- **Location:** `hosts/<hostname>/default.nix`
-- **Use for:** Machine-specific packages (testing, hardware-specific tools)
-- **Example:**
-  ```nix
-  # hosts/nixos-desktop/default.nix
-  environment.systemPackages = with pkgs; [
-    inputs.home-manager.packages."${pkgs.system}".default
-    specialized-tool  # Only on this machine
-  ];
-  ```
+- **Location:** `hosts/<hostname>/home.nix` (user tools) or `hosts/<hostname>/default.nix` (system-level)
+- **Use for:** Machine-specific packages
 
 ### Quick Decision Guide
 
-| I want to add...                    | Where?                                      |
-| ----------------------------------- | ------------------------------------------- |
-| CLI tool for all machines           | `modules/common/cli-tools/default.nix`      |
-| Language toolchain (rust, go, etc.) | `modules/common/development/<language>.nix` |
-| Desktop app for me (all platforms)  | `home/common/packages.nix`                  |
-| NixOS desktop tool                  | `modules/nixos/desktop/*.nix`               |
-| macOS-specific app                  | `home/darwin/default.nix`                   |
-| Testing on one machine only         | `hosts/<hostname>/default.nix`              |
+| I want to add...                   | Where?                                         |
+| ---------------------------------- | ---------------------------------------------- |
+| CLI tool for all machines          | `home/modules/cli-tools/`                      |
+| Language/dev tool                  | `home/modules/development/`                    |
+| DevOps tool (kubectl, terraform)   | `home/modules/devops/`                         |
+| Desktop app for me (all platforms) | `home/common/packages.nix`                     |
+| NixOS desktop tool                 | `modules/nixos/desktop/*.nix`                  |
+| macOS-specific app                 | `home/darwin/default.nix`                      |
+| System service (docker, tailscale) | `modules/nixos/services/` or `modules/darwin/` |
+| Testing on one machine only        | `hosts/<hostname>/home.nix`                    |
 
 ### After Adding Packages
 
@@ -648,10 +677,10 @@ This script will:
 
 - Detect your platform (NixOS or Darwin) and architecture
 - Guide you through selecting which features to enable
-- Generate a complete host configuration in `hosts/<hostname>/default.nix`
+- Generate `meta.nix`, `default.nix`, and `home.nix` in `hosts/<hostname>/`
 - For NixOS: copy or generate `hardware-configuration.nix`
-- Provide instructions for updating the appropriate flake
-- Update `rebuild.sh` to recognize the new hostname
+
+The flake and `rebuild.sh` auto-discover the new host from `meta.nix` -- no manual edits needed.
 
 The bootstrap script asks about:
 
@@ -676,12 +705,11 @@ This will detect your CPU, GPU, audio, network hardware, and provide configurati
 If you prefer to set up a host manually:
 
 1. Create a new directory in `hosts/` (e.g., `hosts/new-laptop/`)
-2. Create `hosts/new-laptop/default.nix` based on existing examples
-3. Add the host to the root `flake.nix`:
-   - For NixOS: Add to `nixosConfigurations` section
-   - For Darwin: Add to `darwinConfigurations` section
-   - For Standalone: Add to `homeConfigurations` section
-4. Update `rebuild.sh` to recognize the new hostname
+2. Create `hosts/new-laptop/meta.nix` with host metadata (type, system, hostname, username)
+3. Create `hosts/new-laptop/home.nix` with home-manager configuration
+4. For NixOS/nix-darwin hosts, also create `hosts/new-laptop/default.nix` with system configuration
+
+No other files need editing. The flake auto-discovers hosts from `meta.nix`, and `rebuild.sh` matches the hostname automatically.
 
 ## Module System
 
@@ -695,9 +723,9 @@ This allows sharing development tools, shell configurations, and CLI utilities a
 
 ### System vs User Packages
 
-- **System packages** (`environment.systemPackages`): Available to all users, included in system PATH
-- **User packages** (`home.packages`): Installed per-user via Home Manager, in user profile
-- **Rule of thumb**: System services/tools → system packages; personal apps → user packages
+- **System packages** (`environment.systemPackages`): Available to all users, requires system rebuild. Use for services, drivers, and system-level tools only.
+- **User packages** (`home.packages`): Installed per-user via Home Manager. **Preferred** for CLI tools, dev tools, and applications.
+- **Rule of thumb**: If it doesn't need root or system-level access, use `home.packages`.
 
 ## Home Manager Configuration
 
@@ -709,20 +737,34 @@ home/
 │   ├── git.nix         # Git configuration
 │   ├── shell.nix       # Shell setup
 │   └── packages.nix    # User packages
-├── modules/            # Optional home-manager modules
+├── modules/             # Feature-flagged home-manager modules
+│   ├── cli-tools/      # CLI utilities (fzf, ripgrep, jq, etc.)
+│   ├── containers/     # Podman, distrobox
+│   ├── development/    # Dev tools (lazygit, language support, etc.)
+│   ├── devops/         # DevOps tools (kubectl, helm, terraform, etc.)
+│   ├── desktop/        # Desktop apps (hyprland, waybar, etc.)
+│   ├── editors/        # Editor configurations (neovim)
+│   ├── design/         # Design tools
+│   ├── shell/          # Shell utilities (bat, eza, zoxide, etc.)
+│   ├── tools/          # Misc tools (7zip, age, ollama, etc.)
+│   ├── fish.nix        # Fish shell configuration
+│   ├── git.nix         # Git configuration
 │   └── gtk-theming.nix # GTK theming (opt-in)
-├── nixos/
-│   └── default.nix     # Generic NixOS home config
-└── darwin/
-    └── default.nix     # Generic Darwin home config
+├── nixos/               # NixOS-specific home bridge
+│   └── default.nix
+├── darwin/              # macOS-specific home bridge
+│   └── default.nix
+└── standalone/          # Standalone home-manager (Ubuntu, etc.)
+    ├── default.nix
+    └── ubuntu.nix
 ```
 
 ### Key Principles
 
 **Generic Base Configs:**
 
-- `home/nixos/default.nix` and `home/darwin/default.nix` are generic templates
-- They dynamically read username and settings from host configuration
+- `home/nixos/default.nix` and `home/darwin/default.nix` are platform-specific bridges
+- They import `home/common/` and `home/modules/` and wire system-level options into home-manager
 - No personal preferences or hardcoded values
 - Safe to use when bootstrapping new hosts
 
@@ -768,27 +810,7 @@ Enable optional GTK theming in your host-specific home config:
 }
 ```
 
-Then import it in your flake:
-
-```nix
-# nixos/flake.nix
-home-manager = {
-  useGlobalPkgs = true;
-  useUserPackages = true;
-  users.braden = {
-    imports = [
-      ../home/nixos          # Generic base config
-      ../hosts/nixos-desktop/home.nix  # Personal overrides
-    ];
-  };
-  extraSpecialArgs = {
-    inherit inputs;
-    osConfig = config;  # Pass system config to home-manager
-  };
-};
-```
-
-**Important:** Always pass `osConfig = config` in `extraSpecialArgs` so home-manager can read username and state version from the system configuration.
+Host-specific `home.nix` files are automatically imported by the host builder helpers (`lib/mkNixosHost.nix`, `lib/mkDarwinHost.nix`, `lib/mkHomeConfig.nix`) alongside the platform bridge modules.
 
 ## Updating
 
@@ -799,9 +821,9 @@ home-manager = {
 nix flake update
 
 # Update specific input
-nix flake lock --update-input nixpkgs          # NixOS packages
-nix flake lock --update-input nixpkgs-darwin  # macOS packages
-nix flake lock --update-input rust-overlay    # Rust toolchain
+nix flake update nixpkgs          # NixOS packages
+nix flake update nixpkgs-darwin   # macOS packages
+nix flake update rust-overlay     # Rust toolchain
 
 # Apply updates
 ./rebuild.sh
