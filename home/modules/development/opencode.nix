@@ -101,6 +101,10 @@ in
     xdg.configFile."opencode/opencode.json".text = builtins.toJSON mergedConfig;
 
     # Global skills (auto-discovered by OpenCode from ~/.config/opencode/skills/)
+    xdg.configFile."opencode/skills/_shared" = {
+      source = ../../../configs/opencode/skills/_shared;
+      recursive = true;
+    };
     xdg.configFile."opencode/skills/commit-message" = {
       source = ../../../configs/opencode/skills/commit-message;
       recursive = true;
