@@ -113,6 +113,14 @@ in
       source = ../../../configs/opencode/skills/commit-message-write;
       recursive = true;
     };
+    xdg.configFile."opencode/skills/commit-message-staged" = {
+      source = ../../../configs/opencode/skills/commit-message-staged;
+      recursive = true;
+    };
+    xdg.configFile."opencode/skills/commit-message-staged-write" = {
+      source = ../../../configs/opencode/skills/commit-message-staged-write;
+      recursive = true;
+    };
     xdg.configFile."opencode/skills/session-history" = {
       source = ../../../configs/opencode/skills/session-history;
       recursive = true;
