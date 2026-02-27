@@ -75,6 +75,13 @@ with lib;
       enable = true;
       hooks = {
         post-commit = pkgs.writeShellScript "post-commit" ''
+          # Clean up any leftover PREPARED_MSG after successful commit
+          # (e.g. when committing via lazygit, the prepare-commit-msg hook
+          # doesn't consume it because SOURCE="message")
+          GIT_DIR="$(git rev-parse --git-dir)"
+          rm -f "$GIT_DIR/PREPARED_MSG"
+
+          # Existing post-commit logic: work-hours commit date adjuster
           BINARY="$HOME/.config/git/hooks/post-commit/target/release/post-commit"
           if [ -x "$BINARY" ]; then
               "$BINARY"
@@ -83,16 +90,15 @@ with lib;
         prepare-commit-msg = pkgs.writeShellScript "prepare-commit-msg" ''
           MSGFILE="$1"
           SOURCE="$2"
+          GIT_DIR="$(git rev-parse --git-dir)"
+          PREPARED="$GIT_DIR/PREPARED_MSG"
 
           # Only inject on plain `git commit` (no -m, --amend, merge, etc.)
-          if [ -z "$SOURCE" ]; then
-            GIT_DIR="$(git rev-parse --git-dir)"
-            PREPARED="$GIT_DIR/PREPARED_MSG"
-            if [ -f "$PREPARED" ]; then
-              EXISTING=$(cat "$MSGFILE")
-              printf '%s\n\n%s\n' "$(cat "$PREPARED")" "$EXISTING" > "$MSGFILE"
-              rm "$PREPARED"
-            fi
+          if [ -z "$SOURCE" ] && [ -f "$PREPARED" ]; then
+            EXISTING=$(cat "$MSGFILE")
+            printf '%s\n\n%s\n' "$(cat "$PREPARED")" "$EXISTING" > "$MSGFILE"
+            rm "$PREPARED"
+            rm -f "$GIT_DIR/LAZYGIT_PENDING_COMMIT"
           fi
         '';
       };
