@@ -7,6 +7,21 @@
 
 with lib;
 
+let
+  # Auto-discover provider profiles for generating per-provider aliases
+  providersDir = ../../configs/opencode/providers;
+  allProviderFiles = builtins.attrNames (builtins.readDir providersDir);
+  jsonProviderFiles = builtins.filter (f: hasSuffix ".json" f) allProviderFiles;
+  providerNames = map (f: removeSuffix ".json" f) jsonProviderFiles;
+
+  # Generate aliases like opencode-bedrock, opencode-copilot, etc.
+  providerAliases = builtins.listToAttrs (
+    map (name: {
+      name = "opencode-${name}";
+      value = "OPENCODE_CONFIG=$HOME/.config/opencode/providers/${name}.json opencode-dev";
+    }) providerNames
+  );
+in
 {
   options.homeModules.fish = {
     enable = mkEnableOption "Fish shell configuration";
@@ -228,9 +243,7 @@ with lib;
       enable = true;
       shellAliases =
         config.homeModules.fish.aliases
-        // (optionalAttrs config.homeModules.fish.opencode.enable {
-          opencode-bedrock = "OPENCODE_CONFIG=$HOME/.config/nix/configs/opencode/bedrock.json opencode-dev";
-        });
+        // (optionalAttrs config.homeModules.fish.opencode.enable providerAliases);
       functions = config.homeModules.fish.functions;
       plugins = map (pkg: {
         name = pkg.pname;

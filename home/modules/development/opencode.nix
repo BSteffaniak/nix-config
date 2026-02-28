@@ -11,6 +11,15 @@ with lib;
 let
   cfg = config.myConfig.development.opencode;
 
+  # Auto-discover provider profiles from configs/opencode/providers/
+  providersDir = ../../../configs/opencode/providers;
+  allProviderFiles = builtins.attrNames (builtins.readDir providersDir);
+  jsonProviderFiles = builtins.filter (f: hasSuffix ".json" f) allProviderFiles;
+  providerNames = map (f: removeSuffix ".json" f) jsonProviderFiles;
+
+  # Read and parse the selected provider config
+  providerConfig = builtins.fromJSON (builtins.readFile (providersDir + "/${cfg.provider}.json"));
+
   # Auto-discover permission files from configs/opencode/permissions/
   permissionsDir = ../../../configs/opencode/permissions;
   allPermissionFiles = builtins.attrNames (builtins.readDir permissionsDir);
@@ -50,13 +59,21 @@ let
   # Read and parse host-specific overrides
   overrideConfigs = map (f: builtins.fromJSON (builtins.readFile f)) cfg.overrides;
 
-  # Merge order: base → permissions (alphabetical) → host overrides (in order)
+  # Merge order: base → provider → permissions (alphabetical) → host overrides (in order)
   baseConfig = builtins.fromJSON (builtins.readFile ../../../configs/opencode/opencode.json);
-  mergedConfig = foldl' myLib.deepMerge baseConfig (permissionConfigs ++ overrideConfigs);
+  mergedConfig = foldl' myLib.deepMerge baseConfig (
+    [ providerConfig ] ++ permissionConfigs ++ overrideConfigs
+  );
 in
 {
   options.myConfig.development.opencode = {
     enable = mkEnableOption "OpenCode AI assistant configuration";
+
+    provider = mkOption {
+      type = types.enum providerNames;
+      default = "openai";
+      description = "OpenCode provider profile to use (matches filename in configs/opencode/providers/ without .json)";
+    };
 
     overrides = mkOption {
       type = types.listOf types.path;
@@ -97,41 +114,55 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
-    xdg.configFile."opencode/opencode.json".text = builtins.toJSON mergedConfig;
+  config = mkIf cfg.enable (mkMerge [
+    {
+      xdg.configFile."opencode/opencode.json".text = builtins.toJSON mergedConfig;
 
-    # Global skills (auto-discovered by OpenCode from ~/.config/opencode/skills/)
-    xdg.configFile."opencode/skills/_shared" = {
-      source = ../../../configs/opencode/skills/_shared;
-      recursive = true;
-    };
-    xdg.configFile."opencode/skills/commit-message" = {
-      source = ../../../configs/opencode/skills/commit-message;
-      recursive = true;
-    };
-    xdg.configFile."opencode/skills/commit-message-write" = {
-      source = ../../../configs/opencode/skills/commit-message-write;
-      recursive = true;
-    };
-    xdg.configFile."opencode/skills/commit-message-staged" = {
-      source = ../../../configs/opencode/skills/commit-message-staged;
-      recursive = true;
-    };
-    xdg.configFile."opencode/skills/commit-message-staged-write" = {
-      source = ../../../configs/opencode/skills/commit-message-staged-write;
-      recursive = true;
-    };
-    xdg.configFile."opencode/skills/pr-description" = {
-      source = ../../../configs/opencode/skills/pr-description;
-      recursive = true;
-    };
-    xdg.configFile."opencode/skills/pr-description-write" = {
-      source = ../../../configs/opencode/skills/pr-description-write;
-      recursive = true;
-    };
-    xdg.configFile."opencode/skills/session-history" = {
-      source = ../../../configs/opencode/skills/session-history;
-      recursive = true;
-    };
-  };
+      # Global skills (auto-discovered by OpenCode from ~/.config/opencode/skills/)
+      xdg.configFile."opencode/skills/_shared" = {
+        source = ../../../configs/opencode/skills/_shared;
+        recursive = true;
+      };
+      xdg.configFile."opencode/skills/commit-message" = {
+        source = ../../../configs/opencode/skills/commit-message;
+        recursive = true;
+      };
+      xdg.configFile."opencode/skills/commit-message-write" = {
+        source = ../../../configs/opencode/skills/commit-message-write;
+        recursive = true;
+      };
+      xdg.configFile."opencode/skills/commit-message-staged" = {
+        source = ../../../configs/opencode/skills/commit-message-staged;
+        recursive = true;
+      };
+      xdg.configFile."opencode/skills/commit-message-staged-write" = {
+        source = ../../../configs/opencode/skills/commit-message-staged-write;
+        recursive = true;
+      };
+      xdg.configFile."opencode/skills/pr-description" = {
+        source = ../../../configs/opencode/skills/pr-description;
+        recursive = true;
+      };
+      xdg.configFile."opencode/skills/pr-description-write" = {
+        source = ../../../configs/opencode/skills/pr-description-write;
+        recursive = true;
+      };
+      xdg.configFile."opencode/skills/session-history" = {
+        source = ../../../configs/opencode/skills/session-history;
+        recursive = true;
+      };
+    }
+
+    # Deploy raw provider files for per-provider aliases (opencode-bedrock, opencode-copilot, etc.)
+    {
+      xdg.configFile = builtins.listToAttrs (
+        map (name: {
+          name = "opencode/providers/${name}.json";
+          value = {
+            source = providersDir + "/${name}.json";
+          };
+        }) providerNames
+      );
+    }
+  ]);
 }

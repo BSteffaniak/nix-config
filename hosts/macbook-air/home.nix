@@ -68,6 +68,7 @@
     development.lazygit.enable = true;
     development.act.enable = true;
     development.opencode.enable = true;
+    development.opencode.provider = "openai";
     development.opencode.permissions.restricted = [
       "git"
       "brew"
