@@ -102,7 +102,7 @@ get_locked_rev() {
 # Get the nix store path for a flake input
 get_input_store_path() {
   local input_name="$1"
-  nix eval ".#darwinConfigurations" --apply "x: \"dummy\"" 2>/dev/null || true
+  nix eval ".#darwinConfigurations" --apply "x: \"dummy\"" >/dev/null 2>&1 || true
   # Use nix flake archive to get the store path
   local path
   path=$(nix eval --raw ".inputs.$input_name.outPath" 2>/dev/null) || {
@@ -113,8 +113,8 @@ get_input_store_path() {
     rev=$(jq -r ".nodes[\"$input_name\"].locked.rev // empty" "$FLAKE_LOCK")
     local narHash
     narHash=$(jq -r ".nodes[\"$input_name\"].locked.narHash // empty" "$FLAKE_LOCK")
-    # Fetch via nix store
-    path=$(nix eval --impure --expr "builtins.fetchTree { type = \"github\"; owner = \"$owner\"; repo = \"$repo\"; rev = \"$rev\"; narHash = \"$narHash\"; }" 2>/dev/null) || {
+    # Fetch via nix store (use --raw so we get a plain path string, not a Nix attrset)
+    path=$(nix eval --raw --impure --expr "(builtins.fetchTree { type = \"github\"; owner = \"$owner\"; repo = \"$repo\"; rev = \"$rev\"; narHash = \"$narHash\"; }).outPath" 2>/dev/null) || {
       err "Could not resolve store path for input '$input_name'"
       return 1
     }
@@ -129,7 +129,7 @@ compute_npm_hash() {
   local flake_input
   flake_input=$(jq -r '.flakeInput' "$config_file")
 
-  info "Computing npmDepsHash for ${BOLD}$project${NC}..."
+  info "Computing npmDepsHash for ${BOLD}$project${NC}..." >&2
 
   local store_path
   store_path=$(get_input_store_path "$flake_input") || return 1
@@ -142,14 +142,14 @@ compute_npm_hash() {
   local hash
   # Try prefetch-npm-deps first (fast, single download)
   if command -v prefetch-npm-deps &>/dev/null; then
-    info "Using prefetch-npm-deps..."
+    info "Using prefetch-npm-deps..." >&2
     hash=$(prefetch-npm-deps "$store_path/package-lock.json" 2>/dev/null) || {
       err "prefetch-npm-deps failed"
       return 1
     }
   else
     # Fall back to running it via nix shell
-    info "Using nix shell for prefetch-npm-deps..."
+    info "Using nix shell for prefetch-npm-deps..." >&2
     hash=$(nix shell nixpkgs#prefetch-npm-deps -c prefetch-npm-deps "$store_path/package-lock.json" 2>/dev/null) || {
       err "prefetch-npm-deps via nix shell failed"
       return 1
@@ -166,8 +166,8 @@ compute_cargo_hash() {
   local flake_input
   flake_input=$(jq -r '.flakeInput' "$config_file")
 
-  info "Computing cargoHash for ${BOLD}$project${NC}..."
-  info "This downloads cargo dependencies once (they'll be cached for the real build)..."
+  info "Computing cargoHash for ${BOLD}$project${NC}..." >&2
+  info "This downloads cargo dependencies once (they'll be cached for the real build)..." >&2
 
   local store_path
   store_path=$(get_input_store_path "$flake_input") || return 1
@@ -186,7 +186,7 @@ compute_cargo_hash() {
   local nix_expr
   nix_expr="(import <nixpkgs> {}).rustPlatform.fetchCargoVendoredDeps { src = $store_path; name = \"${pname}-vendor\"; hash = \"\"; }"
 
-  info "Fetching cargo dependencies (single download)..."
+  info "Fetching cargo dependencies (single download)..." >&2
   local build_output
   build_output=$(nix build --impure --no-link --expr "$nix_expr" 2>&1) || true
 
