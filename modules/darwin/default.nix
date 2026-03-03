@@ -13,6 +13,7 @@
     ./ghostty.nix
     ./google-chrome.nix
     ./hammerspoon.nix
+    ./hex.nix
     ./homebrew.nix
     ./istat-menus.nix
     ./keepingyouawake.nix

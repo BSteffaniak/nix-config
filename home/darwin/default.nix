@@ -51,6 +51,9 @@
 
     # Desktop (Hammerspoon)
     desktop.hammerspoon.enable = osConfig.myConfig.darwin.hammerspoon.enable or false;
+    desktop.hex.enable = osConfig.myConfig.darwin.hex.enable or false;
+    desktop.hex.openOnLogin = osConfig.myConfig.darwin.hex.startAtLogin or false;
+    desktop.hex.showDockIcon = false;
   };
 
   # Pass inputs to modules that need them
