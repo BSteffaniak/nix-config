@@ -213,22 +213,59 @@ Highlight any `DISPUTED` or `INVALID` items and recommend the user consider skip
 
 Wait for the user's response before proceeding. Do NOT make any code changes without explicit confirmation.
 
-### 7. Execute changes
+### 7. Propose solutions
 
-For each comment the user selected:
+For each comment the user selected in Step 6, propose a specific solution **before making any changes**. Do this one comment at a time — do not batch proposals.
+
+For each comment:
 
 1. Read the relevant file and understand the surrounding code context
 2. Read the full comment thread to understand exactly what the reviewer is asking for
-3. Make the code change
-4. Briefly note what was changed and why
+3. Formulate a specific, concrete proposal describing exactly what will change
 
-After all selected changes are made, output a summary:
+Present the proposal in this format:
+
+```
+### Comment #<N>: `<file>:<line>` — @<reviewer>: "<comment excerpt>"
+[<VALIDITY TAG>]
+
+**Proposed solution:**
+<Describe the exact change: which lines, what gets added/removed/modified,
+and why this approach addresses the reviewer's concern. If following an
+existing pattern in the codebase, cite it.>
+
+**Alternative approaches:**
+<Only include this section if there are multiple reasonable approaches.
+Briefly list them with a recommendation.>
+
+Approve / Modify / Skip?
+```
+
+Wait for the user's response before moving to the next comment:
+
+- **Approve** — the solution will be executed as described
+- **Modify** — the user provides adjusted instructions; revise the proposal accordingly and re-present for confirmation
+- **Skip** — do not address this comment; move to the next one
+
+After all selected comments have been reviewed, proceed to Step 8 with only the approved (and modified-then-approved) solutions.
+
+### 8. Execute approved changes
+
+For each solution that was approved in Step 7:
+
+1. Make the code change exactly as proposed (or as modified by the user)
+2. Briefly note what was changed and why
+
+After all approved changes are made, output a summary:
 
 ```
 ## Changes Made
 
 1. `src/foo.ts:42` — <brief description of what was changed>
 2. `src/bar.ts:15` — <brief description of what was changed>
+
+## Skipped (by user)
+- #3 `src/baz.ts:99` — skipped during proposal review
 ```
 
 Do NOT commit the changes. The user will review and commit themselves.
@@ -236,7 +273,7 @@ Do NOT commit the changes. The user will review and commit themselves.
 ## Rules
 
 - **Never resolve threads on GitHub.** That is the reviewer's prerogative. This skill only makes local code changes.
-- **Never act without user confirmation.** Always present the plan first (Step 5-6) and wait for explicit go-ahead before making any code changes.
+- **Never act without user confirmation.** Always present the summary first (Step 5-6), get selection, then propose each solution individually (Step 7), and wait for explicit approval before making any code changes (Step 8).
 - **Fetch all pages.** Do not stop at the first page of results. Always check `hasNextPage` and paginate until all data is fetched.
 - **Preserve the reviewer's intent.** When making code changes, stay faithful to what the reviewer asked for. If the request is ambiguous, note the ambiguity to the user rather than guessing.
 - **Skip bot comments.** If a comment author is clearly a bot (e.g., `github-actions[bot]`, `codecov[bot]`), exclude it from categorization — it's noise.
@@ -247,3 +284,5 @@ Do NOT commit the changes. The user will review and commit themselves.
 - **Be honest about uncertainty.** If you cannot determine whether a comment is valid without domain knowledge, runtime testing, or information not in the codebase, use `NEEDS CONTEXT`. Do not guess.
 - **Adaptive validation depth.** Scale investigation effort to the comment's complexity. Do not waste time doing deep codebase searches for a typo fix. Do not shallow-validate a claim that something "will crash in production."
 - **Do not dismiss reviewer expertise.** A `DISPUTED` or `INVALID` tag means you found concrete evidence the reviewer is wrong. Disagreeing with a reviewer's opinion or style preference without codebase evidence is not grounds for these tags — use `NEEDS CONTEXT` instead.
+- **One proposal at a time.** Present each solution individually and wait for user feedback before moving to the next. Do not batch all proposals into a single message.
+- **Proposals must be specific.** "Fix the error handling" is not a proposal. Name the exact lines being changed, the exact modification, and cite the pattern being followed if applicable.
