@@ -28,18 +28,11 @@ in
   };
 
   config = mkIf (cfg.enable && pkgs.stdenv.isDarwin) {
-    home.activation.hexSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      settings_dir="$HOME/Library/Application Support/com.kitlangton.Hex"
-      settings_file="$settings_dir/hex_settings.json"
-
-      run mkdir -p "$settings_dir"
-
-      if [ ! -f "$settings_file" ]; then
-        run /usr/bin/plutil -create json "$settings_file"
-      fi
-
-      run /usr/bin/plutil -replace openOnLogin -bool ${boolToString cfg.openOnLogin} "$settings_file"
-      run /usr/bin/plutil -replace showDockIcon -bool ${boolToString cfg.showDockIcon} "$settings_file"
-    '';
+    home.file."Library/Application Support/com.kitlangton.Hex/hex_settings.json".text =
+      builtins.toJSON
+        {
+          openOnLogin = cfg.openOnLogin;
+          showDockIcon = cfg.showDockIcon;
+        };
   };
 }
