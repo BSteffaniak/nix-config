@@ -213,11 +213,11 @@ Highlight any `DISPUTED` or `INVALID` items and recommend the user consider skip
 
 Wait for the user's response before proceeding. Do NOT make any code changes without explicit confirmation.
 
-### 7. Propose solutions
+### 7. Propose, apply, and verify changes
 
-For each comment the user selected in Step 6, propose a specific solution **before making any changes**. Do this one comment at a time — do not batch proposals.
+Process each comment the user selected in Step 6 **one at a time**. For each comment, complete the full propose-apply-verify cycle before moving to the next.
 
-For each comment:
+#### 7a. Propose
 
 1. Read the relevant file and understand the surrounding code context
 2. Read the full comment thread to understand exactly what the reviewer is asking for
@@ -241,22 +241,44 @@ Briefly list them with a recommendation.>
 Approve / Modify / Skip?
 ```
 
-Wait for the user's response before moving to the next comment:
+Wait for the user's response:
 
-- **Approve** — the solution will be executed as described
+- **Approve** — proceed to apply the change
 - **Modify** — the user provides adjusted instructions; revise the proposal accordingly and re-present for confirmation
 - **Skip** — do not address this comment; move to the next one
 
-After all selected comments have been reviewed, proceed to Step 8 with only the approved (and modified-then-approved) solutions.
+#### 7b. Apply
 
-### 8. Execute approved changes
+If approved, make the code change exactly as proposed (or as modified by the user).
 
-For each solution that was approved in Step 7:
+#### 7c. Verify
 
-1. Make the code change exactly as proposed (or as modified by the user)
-2. Briefly note what was changed and why
+Immediately after applying the change, show the result so the user can verify it:
 
-After all approved changes are made, output a summary:
+1. Run `git diff` on the affected file(s) to show the raw diff of what changed
+2. Present a brief description alongside the diff
+
+```
+### Applied: Comment #<N> — `<file>:<line>`
+
+<brief description of what was changed and why>
+
+\`\`\`diff
+<output of git diff for the affected file(s)>
+\`\`\`
+
+Accept / Undo / Redo?
+```
+
+Wait for the user's response:
+
+- **Accept** — the change is kept; move to the next comment
+- **Undo** — revert the change (e.g., `git checkout -- <file>`), mark this comment as skipped, and move on
+- **Redo** — revert the change, then go back to Step 7a for this comment to propose a different approach
+
+#### 7d. Repeat
+
+Continue the loop for every selected comment. After all comments have been processed, output a final summary:
 
 ```
 ## Changes Made
@@ -266,14 +288,122 @@ After all approved changes are made, output a summary:
 
 ## Skipped (by user)
 - #3 `src/baz.ts:99` — skipped during proposal review
+- #5 `src/qux.ts:12` — undone during verification
 ```
 
 Do NOT commit the changes. The user will review and commit themselves.
 
+### 8. Respond to PR comments
+
+After all code changes are finalized, offer to post replies on the PR threads. This step is optional — the user may decline entirely.
+
+#### 8a. Draft replies
+
+For each comment that was processed in Step 7 (whether addressed, skipped, or disputed), draft an appropriate reply:
+
+**For comments that were addressed with a code change:**
+
+- Briefly describe what was changed and reference the specific fix (file, line)
+- Keep it concise — the reviewer can look at the updated diff for details
+- Example: _"Fixed — wrapped the `fetch()` call in a try/catch, matching the pattern in `src/api/client.ts:55`."_
+
+**For `DISPUTED`/`INVALID` comments the user chose to skip:**
+
+- Draft a respectful rebuttal explaining why the current code is correct
+- Cite the evidence found during validation (file paths, line numbers, patterns)
+- Keep it informative, not argumentative
+- Example: _"This case is already handled — the caller at `src/api/client.ts:55` wraps this in a try/catch that catches and logs `ApiError`. Adding a duplicate catch here would suppress the error before it reaches the centralized handler."_
+
+**For `question` comments:**
+
+- Draft an answer based on what was learned during validation and code reading
+- If a code change was also made in response, mention it
+- Example: _"We went with the inline approach here because the shared helper doesn't support async iteration (see `src/utils/helper.ts:28`). Refactoring the helper is tracked in #456."_
+
+**For comments that were skipped without a rebuttal:**
+
+- Do not draft a reply. Silence is fine.
+
+#### 8b. Recommend thread resolution
+
+For each drafted reply, recommend whether to also resolve the thread:
+
+| Situation                                                           | Recommendation                                                         |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Code change was made that directly and fully addresses the comment  | **Recommend resolve**                                                  |
+| Question was answered with evidence                                 | **Recommend resolve**                                                  |
+| Nit/optional comment was addressed                                  | **Recommend resolve**                                                  |
+| Posting a rebuttal for a `DISPUTED` comment                         | **Do NOT resolve** — let the reviewer evaluate the response and decide |
+| Posting a rebuttal for an `INVALID` comment                         | **Do NOT resolve** — let the reviewer evaluate the response and decide |
+| Comment had multiple concerns and only some were addressed          | **Do NOT resolve** — the thread is not fully addressed                 |
+| The fix was partial or the user modified the solution significantly | **Do NOT resolve** — let the reviewer re-evaluate                      |
+
+#### 8c. Present and confirm
+
+Present all drafted replies together for review. For each reply, show:
+
+```
+### Reply to Comment #<N>: `<file>:<line>` — @<reviewer>
+**Draft reply:**
+> <the drafted reply text>
+
+**Resolve thread?** <Yes (recommended) / No>
+
+Post / Post + Resolve / Edit / Skip?
+```
+
+Wait for the user's response on each reply:
+
+- **Post** — post the reply without resolving the thread
+- **Post + Resolve** — post the reply and resolve the thread
+- **Edit** — the user provides revised text; update and re-present for confirmation
+- **Skip** — do not post a reply for this comment
+
+#### 8d. Post replies
+
+For approved replies, use the GitHub GraphQL API:
+
+**Reply to a review thread:**
+
+```bash
+gh api graphql -f query='
+  mutation($threadId: ID!, $body: String!) {
+    addPullRequestReviewThreadReply(input: {
+      pullRequestReviewThreadId: $threadId,
+      body: $body
+    }) {
+      comment { id url }
+    }
+  }
+' -f threadId="$THREAD_ID" -f body="$REPLY_BODY"
+```
+
+**Resolve a review thread (if user approved):**
+
+```bash
+gh api graphql -f query='
+  mutation($threadId: ID!) {
+    resolveReviewThread(input: {threadId: $threadId}) {
+      thread { isResolved }
+    }
+  }
+' -f threadId="$THREAD_ID"
+```
+
+**Reply to an issue-level comment (not in a review thread):**
+
+```bash
+gh api repos/{owner}/{repo}/issues/{number}/comments -f body="$REPLY_BODY"
+```
+
+After posting, confirm each reply was posted successfully and show the URL of the posted comment.
+
 ## Rules
 
-- **Never resolve threads on GitHub.** That is the reviewer's prerogative. This skill only makes local code changes.
-- **Never act without user confirmation.** Always present the summary first (Step 5-6), get selection, then propose each solution individually (Step 7), and wait for explicit approval before making any code changes (Step 8).
+- **Never act without user confirmation.** Present the summary (Step 5-6), get selection, propose each solution individually (Step 7a), wait for approval before applying (Step 7b), wait for verification after applying (Step 7c), and get approval before posting any replies (Step 8c). Every mutation — code change, PR reply, thread resolution — requires explicit user consent.
+- **Stop after each change.** Execute one code change at a time, show the `git diff`, and wait for the user to accept/undo/redo before moving to the next comment. Never batch multiple changes.
+- **Never post PR replies without user approval.** Draft all replies and present them for review before posting. The user controls what gets posted on their behalf.
+- **Never resolve threads without user approval.** Recommend resolution when appropriate, but always let the user make the final call. Resolving a thread the reviewer should re-evaluate is worse than leaving it open.
 - **Fetch all pages.** Do not stop at the first page of results. Always check `hasNextPage` and paginate until all data is fetched.
 - **Preserve the reviewer's intent.** When making code changes, stay faithful to what the reviewer asked for. If the request is ambiguous, note the ambiguity to the user rather than guessing.
 - **Skip bot comments.** If a comment author is clearly a bot (e.g., `github-actions[bot]`, `codecov[bot]`), exclude it from categorization — it's noise.
@@ -284,5 +414,5 @@ Do NOT commit the changes. The user will review and commit themselves.
 - **Be honest about uncertainty.** If you cannot determine whether a comment is valid without domain knowledge, runtime testing, or information not in the codebase, use `NEEDS CONTEXT`. Do not guess.
 - **Adaptive validation depth.** Scale investigation effort to the comment's complexity. Do not waste time doing deep codebase searches for a typo fix. Do not shallow-validate a claim that something "will crash in production."
 - **Do not dismiss reviewer expertise.** A `DISPUTED` or `INVALID` tag means you found concrete evidence the reviewer is wrong. Disagreeing with a reviewer's opinion or style preference without codebase evidence is not grounds for these tags — use `NEEDS CONTEXT` instead.
-- **One proposal at a time.** Present each solution individually and wait for user feedback before moving to the next. Do not batch all proposals into a single message.
 - **Proposals must be specific.** "Fix the error handling" is not a proposal. Name the exact lines being changed, the exact modification, and cite the pattern being followed if applicable.
+- **Reply content must reference the actual change.** Do not post generic "Fixed" replies. Reference the specific file, line, and what was modified so the reviewer can verify without hunting through the diff.
