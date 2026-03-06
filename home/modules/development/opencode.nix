@@ -151,6 +151,10 @@ in
         source = ../../../configs/opencode/skills/session-history;
         recursive = true;
       };
+      xdg.configFile."opencode/skills/pr-review" = {
+        source = ../../../configs/opencode/skills/pr-review;
+        recursive = true;
+      };
     }
 
     # Deploy raw provider files for per-provider aliases (opencode-bedrock, opencode-copilot, etc.)
