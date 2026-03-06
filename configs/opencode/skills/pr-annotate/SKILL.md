@@ -1,7 +1,7 @@
 ---
 name: pr-annotate
 description: Analyze a PR's changes and post concise guiding comments to help reviewers understand context, decisions, and complexity.
-allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*)
+allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Question(*)
 ---
 
 ## Purpose
@@ -74,21 +74,45 @@ Analyze the diff and file context to identify locations where a reviewer comment
 
 #### Present the proposals
 
-Output a numbered list:
+First, output a summary header:
 
 ```
 ## PR #<number>: <title>
 <url>
-
-### Proposed Annotations (<count>)
-1. `src/foo.ts:42` — <one-line description of what the comment would explain>
-2. `src/bar.ts:15-20` — <one-line description>
-3. `src/config.ts:8` — <one-line description>
-
-Which annotations should I draft? (all / 1,3 / none)
 ```
 
-Wait for the user's response. Do NOT draft or post anything without selection.
+Then use the **Question tool** to let the user select which annotations to draft. Use a single question with `multiple: true` so the user can pick any combination. Each option should have:
+
+- **label**: `#<N> <file>:<line>` (short, fits in the selection UI)
+- **description**: The one-line description of what the comment would explain
+
+Example Question tool call:
+
+```json
+{
+  "questions": [
+    {
+      "header": "Select annotations",
+      "question": "Which annotations should I draft?",
+      "multiple": true,
+      "options": [
+        {
+          "label": "#1 foo.ts:42",
+          "description": "Why explore-level filters are applied as a separate step before local filters"
+        },
+        {
+          "label": "#2 bar.ts:15-20",
+          "description": "Why filtered-out IDs are sorted and compared by value rather than using Set equality"
+        }
+      ]
+    }
+  ]
+}
+```
+
+The user can select any subset, or type a custom answer. If the user selects nothing (empty response), treat it as "none" and stop.
+
+Do NOT draft or post anything without selection.
 
 ### 4. Draft comments one-by-one
 
@@ -106,19 +130,38 @@ For each annotation the user selected, draft a comment and present it for approv
 
 #### Present each draft
 
+Output the draft as text so the user can read it:
+
 ```
 ### Annotation #<N>: `<file>:<line>`
 
 **Draft:**
 > <the drafted comment text>
-
-Post / Edit / Skip?
 ```
 
-Wait for the user's response:
+Then immediately use the **Question tool** to get the user's decision:
+
+```json
+{
+  "questions": [
+    {
+      "header": "Annotation #<N>",
+      "question": "Post this comment to the PR?",
+      "options": [
+        { "label": "Post", "description": "Approve and queue for posting" },
+        { "label": "Skip", "description": "Do not post this annotation" }
+      ]
+    }
+  ]
+}
+```
+
+The Question tool's built-in custom answer option allows the user to type edited comment text instead of selecting Post/Skip. If the user types a custom answer, treat it as the revised comment text — re-present the updated draft and ask again.
+
+Wait for the user's response on each draft before moving to the next:
 
 - **Post** — queue this comment for posting
-- **Edit** — the user provides revised text; update and re-present for confirmation
+- **Custom text** — user provided revised text; update the draft and re-present for confirmation
 - **Skip** — do not post this annotation; move to the next one
 
 ### 5. Post approved comments
