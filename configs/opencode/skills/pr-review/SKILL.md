@@ -245,17 +245,20 @@ Process each comment the user selected in Step 6 **one at a time**. For each com
 2. Read the full comment thread to understand exactly what the reviewer is asking for
 3. Formulate a specific, concrete proposal describing exactly what will change
 
-Present the proposal in this format. Always include a code excerpt showing the relevant lines so the user can evaluate the proposal in context:
+Present the proposal using the [embedded ascii-art format](../_shared/code-comment-format.md). Show the relevant code with line numbers and the reviewer's comment in a box below the target line(s), using the "reviewer comment" variant.
+
+Output the header, then the ascii-art code+comment block, followed by the proposed solution as regular markdown text:
 
 ```
-### Comment #<N>: `<file>:<line>` — @<reviewer>: "<comment excerpt>"
+### Comment #<N>: `<file>:<line>` — @<reviewer>
 [<VALIDITY TAG>]
+```
 
-\`\`\`<lang>
-<code excerpt — ~5-15 lines centered on the target line(s),
- enough to understand what the reviewer is referring to>
-\`\`\`
+Then the ascii-art block showing the code and reviewer's comment (see the shared format spec for the full visual specification and examples).
 
+Then the proposed solution as regular text below the ascii-art:
+
+```
 **Proposed solution:**
 <Describe the exact change: which lines, what gets added/removed/modified,
 and why this approach addresses the reviewer's concern. If following an
@@ -265,13 +268,6 @@ existing pattern in the codebase, cite it.>
 <Only include this section if there are multiple reasonable approaches.
 Briefly list them with a recommendation.>
 ```
-
-**Code excerpt guidelines:**
-
-- Show ~5-15 lines centered on the target line — enough to understand the context, not the whole file
-- Use the diff hunk if it captures the relevant context well; otherwise read the current file
-- Include the language identifier in the fenced code block for syntax highlighting
-- If the comment spans a range, show that full range plus a few lines of surrounding context
 
 Then use the **Question tool** to get the user's decision:
 
@@ -419,17 +415,12 @@ For each drafted reply, recommend whether to also resolve the thread:
 
 #### 8c. Present and confirm
 
-Present all drafted replies together for review. For each reply, show the code the reviewer commented on and the draft reply:
+Present all drafted replies together for review. For each reply, use the [embedded ascii-art format](../_shared/code-comment-format.md) with the "reviewer comment with draft reply" variant — show the code, the reviewer's original comment in a box, and the draft reply in a second box below it.
+
+Output the header, then the ascii-art block:
 
 ```
 ### Reply to Comment #<N>: `<file>:<line>` — @<reviewer>
-
-\`\`\`<lang>
-<code excerpt — ~5-15 lines centered on the target line(s)>
-\`\`\`
-
-**Draft reply:**
-> <the drafted reply text>
 
 **Resolve thread?** <Yes (recommended) / No>
 ```
