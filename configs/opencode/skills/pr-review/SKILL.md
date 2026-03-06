@@ -245,11 +245,16 @@ Process each comment the user selected in Step 6 **one at a time**. For each com
 2. Read the full comment thread to understand exactly what the reviewer is asking for
 3. Formulate a specific, concrete proposal describing exactly what will change
 
-Present the proposal in this format:
+Present the proposal in this format. Always include a code excerpt showing the relevant lines so the user can evaluate the proposal in context:
 
 ```
 ### Comment #<N>: `<file>:<line>` — @<reviewer>: "<comment excerpt>"
 [<VALIDITY TAG>]
+
+\`\`\`<lang>
+<code excerpt — ~5-15 lines centered on the target line(s),
+ enough to understand what the reviewer is referring to>
+\`\`\`
 
 **Proposed solution:**
 <Describe the exact change: which lines, what gets added/removed/modified,
@@ -260,6 +265,13 @@ existing pattern in the codebase, cite it.>
 <Only include this section if there are multiple reasonable approaches.
 Briefly list them with a recommendation.>
 ```
+
+**Code excerpt guidelines:**
+
+- Show ~5-15 lines centered on the target line — enough to understand the context, not the whole file
+- Use the diff hunk if it captures the relevant context well; otherwise read the current file
+- Include the language identifier in the fenced code block for syntax highlighting
+- If the comment spans a range, show that full range plus a few lines of surrounding context
 
 Then use the **Question tool** to get the user's decision:
 
@@ -407,10 +419,15 @@ For each drafted reply, recommend whether to also resolve the thread:
 
 #### 8c. Present and confirm
 
-Present all drafted replies together for review. For each reply, show the draft as text:
+Present all drafted replies together for review. For each reply, show the code the reviewer commented on and the draft reply:
 
 ```
 ### Reply to Comment #<N>: `<file>:<line>` — @<reviewer>
+
+\`\`\`<lang>
+<code excerpt — ~5-15 lines centered on the target line(s)>
+\`\`\`
+
 **Draft reply:**
 > <the drafted reply text>
 

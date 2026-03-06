@@ -130,14 +130,26 @@ For each annotation the user selected, draft a comment and present it for approv
 
 #### Present each draft
 
-Output the draft as text so the user can read it:
+Output the draft as text so the user can read it. Always include a code excerpt showing the relevant lines so the user can judge the comment in context:
 
 ```
 ### Annotation #<N>: `<file>:<line>`
 
+\`\`\`<lang>
+<code excerpt — ~5-15 lines centered on the target line(s),
+ enough to understand what the comment refers to>
+\`\`\`
+
 **Draft:**
 > <the drafted comment text>
 ```
+
+**Code excerpt guidelines:**
+
+- Show ~5-15 lines centered on the target line — enough to understand the context, not the whole file
+- Use the diff hunk if it captures the relevant context well; otherwise read the current file
+- Include the language identifier in the fenced code block for syntax highlighting
+- If the annotation spans a range (e.g., lines 15-20), show that full range plus a few lines of surrounding context
 
 Then immediately use the **Question tool** to get the user's decision:
 
