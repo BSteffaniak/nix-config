@@ -293,17 +293,30 @@ Output the header, then the ascii-art code+comment block, followed by the propos
 
 Then the ascii-art block showing the code and reviewer's comment (see the shared format spec for the full visual specification and examples).
 
-Then the proposed solution as regular text below the ascii-art:
+Then the proposed solution as regular text below the ascii-art, followed by a **diff preview** showing exactly what would change:
 
 ```
-**Proposed solution:**
-<Describe the exact change: which lines, what gets added/removed/modified,
-and why this approach addresses the reviewer's concern. If following an
-existing pattern in the codebase, cite it.>
+**Proposed change:**
+<Brief prose description of what changes and why.>
+```
 
-**Alternative approaches:**
-<Only include this section if there are multiple reasonable approaches.
-Briefly list them with a recommendation.>
+Then a fenced diff block showing the unified diff of what the change would look like:
+
+````
+```diff
+@@ -<line>,<count> +<line>,<count> @@
+-<removed lines>
++<added lines>
+```
+````
+
+The diff preview must be a realistic unified diff — actual line numbers, actual removed/added content, enough context lines (1-2) to anchor the change. This is a preview of what will be applied if approved, not a vague description. If the change spans multiple hunks, show all of them.
+
+**Alternative approaches** (only include if there are multiple reasonable approaches):
+
+```
+**Alternatives:**
+<Briefly list them with a recommendation.>
 ```
 
 Then use the **Question tool** to get the user's decision:
