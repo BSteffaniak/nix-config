@@ -165,7 +165,9 @@ Assign each actionable comment one of these tags:
 
 ### 5. Present the summary
 
-Output a structured summary in this format:
+Output a structured summary. The PR header, reviews, non-actionable items, and skipped items use a flat text format. **Actionable items** (code changes and questions) use the [embedded ascii-art format](../_shared/code-comment-format.md) so the user can see the code context and judge each comment before deciding what to address.
+
+#### Header and reviews
 
 ```
 ## PR #<number>: <title>
@@ -174,20 +176,55 @@ Output a structured summary in this format:
 ### Reviews
 - **@reviewer** — `CHANGES_REQUESTED` — "<body excerpt>"
 - **@reviewer** — `APPROVED`
+```
 
+#### Actionable items
+
+For each actionable item (code changes and questions), show a numbered header with the validity tag, then the ascii-art block with the code and reviewer's comment embedded using the "reviewer comment" variant:
+
+```
 ### Actionable — Code Changes (<count>)
-1. `src/foo.ts:42` — **@reviewer**: "<comment excerpt>"
-   [VALID] — `user` can be undefined here; no null guard exists
-2. `src/bar.ts:15` — **@reviewer**: "<comment excerpt>"
-   [DISPUTED] — The shared helper at `src/utils/helper.ts:28` doesn't handle the async case needed here; current implementation is correct
-   *[nit/optional]* ← only if applicable
-3. `src/baz.ts:99` — **@reviewer**: "<comment excerpt>"
-   [INVALID] — Error handling already exists in the caller at `src/api/client.ts:55` which wraps this in a try/catch
+```
 
+Then for each item:
+
+```
+#### #1 `src/foo.ts:42` — @reviewer
+[VALID] — `user` can be undefined here; no null guard exists
+```
+
+Followed by the ascii-art code+comment block (see the shared format spec). For example:
+
+````
+```
+   40 │ async function getUser(id: string) {
+   41 │   const result = await db.query(id);
+   42 │   return result.name;
+      │
+      │  ┌─ @reviewer ─────────────────────────────────────
+      │  │ `result` can be undefined if the user doesn't
+      │  │ exist — needs a null guard before .name
+      │  └─────────────────────────────────────────────────
+      │
+   43 │ }
+```
+````
+
+Repeat for each actionable code-change item, then the questions section:
+
+```
 ### Actionable — Questions (<count>)
-4. `src/baz.ts:8` — **@reviewer**: "<question excerpt>"
-   [NEEDS CONTEXT] — Cannot determine without knowing the expected API contract
+```
 
+With the same ascii-art format per item.
+
+Flag `DISPUTED` or `INVALID` items with the tag and evidence as before. Flag nit/optional items with `*[nit/optional]*` after the validity line.
+
+#### Non-actionable and skipped items
+
+These stay as flat one-liners — no code context needed:
+
+```
 ### Non-actionable (<count>)
 - [Praise] **@reviewer**: "<excerpt>"
 - [Info] **@reviewer**: "<excerpt>"
