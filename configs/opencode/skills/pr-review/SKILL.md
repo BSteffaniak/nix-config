@@ -1,7 +1,7 @@
 ---
 name: pr-review
 description: Fetch and address PR review comments. Validates comment accuracy against the codebase, categorizes as actionable or informational, skips resolved threads, and makes code changes.
-allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*)
+allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Question(*)
 ---
 
 ## Purpose
@@ -203,15 +203,37 @@ Output a structured summary in this format:
 
 ### 6. Prompt for action
 
-After presenting the summary, ask the user what they'd like to do:
+After presenting the summary, use the **Question tool** to let the user select which items to address. Use a single question with `multiple: true` so the user can pick any combination. Each actionable item becomes an option.
 
-- **Address all** actionable code-change comments
-- **Address specific items** by number (e.g., "1, 3, 5")
-- **Skip** — they only wanted the summary
+For any `DISPUTED` or `INVALID` items, append "(recommended: skip)" to the description to signal your recommendation — but the user has final say.
 
-Highlight any `DISPUTED` or `INVALID` items and recommend the user consider skipping them. Make it clear these are recommendations, not decisions — the user has final say.
+Example Question tool call:
 
-Wait for the user's response before proceeding. Do NOT make any code changes without explicit confirmation.
+```json
+{
+  "questions": [
+    {
+      "header": "Select items to address",
+      "question": "Which review comments should I address?",
+      "multiple": true,
+      "options": [
+        {
+          "label": "#1 foo.ts:42",
+          "description": "[VALID] Add null guard for `user` — @reviewer"
+        },
+        {
+          "label": "#2 bar.ts:15",
+          "description": "[DISPUTED] Change to shared helper (recommended: skip) — @reviewer"
+        }
+      ]
+    }
+  ]
+}
+```
+
+The user can select any subset, or type a custom answer. If the user selects nothing, treat it as "skip" — they only wanted the summary.
+
+Do NOT make any code changes without explicit confirmation.
 
 ### 7. Propose, apply, and verify changes
 
@@ -237,14 +259,34 @@ existing pattern in the codebase, cite it.>
 **Alternative approaches:**
 <Only include this section if there are multiple reasonable approaches.
 Briefly list them with a recommendation.>
-
-Approve / Modify / Skip?
 ```
+
+Then use the **Question tool** to get the user's decision:
+
+```json
+{
+  "questions": [
+    {
+      "header": "Comment #<N>",
+      "question": "How should I handle this proposed change?",
+      "options": [
+        { "label": "Approve", "description": "Apply the change as proposed" },
+        {
+          "label": "Skip",
+          "description": "Do not address this comment, move to the next"
+        }
+      ]
+    }
+  ]
+}
+```
+
+The Question tool's built-in custom answer option allows the user to type modified instructions instead of selecting Approve/Skip. If the user types a custom answer, treat it as modification instructions — revise the proposal accordingly and re-present for confirmation.
 
 Wait for the user's response:
 
 - **Approve** — proceed to apply the change
-- **Modify** — the user provides adjusted instructions; revise the proposal accordingly and re-present for confirmation
+- **Custom text** — the user provides adjusted instructions; revise the proposal and re-present
 - **Skip** — do not address this comment; move to the next one
 
 #### 7b. Apply
@@ -266,11 +308,36 @@ Immediately after applying the change, show the result so the user can verify it
 \`\`\`diff
 <output of git diff for the affected file(s)>
 \`\`\`
-
-Accept / Undo / Redo?
 ```
 
-Wait for the user's response:
+Then use the **Question tool** to get the user's verdict:
+
+```json
+{
+  "questions": [
+    {
+      "header": "Comment #<N> applied",
+      "question": "Keep this change?",
+      "options": [
+        {
+          "label": "Accept",
+          "description": "Keep the change and move to the next comment"
+        },
+        {
+          "label": "Undo",
+          "description": "Revert the change and skip this comment"
+        },
+        {
+          "label": "Redo",
+          "description": "Revert and propose a different approach"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Handle the user's response:
 
 - **Accept** — the change is kept; move to the next comment
 - **Undo** — revert the change (e.g., `git checkout -- <file>`), mark this comment as skipped, and move on
@@ -340,7 +407,7 @@ For each drafted reply, recommend whether to also resolve the thread:
 
 #### 8c. Present and confirm
 
-Present all drafted replies together for review. For each reply, show:
+Present all drafted replies together for review. For each reply, show the draft as text:
 
 ```
 ### Reply to Comment #<N>: `<file>:<line>` — @<reviewer>
@@ -348,15 +415,42 @@ Present all drafted replies together for review. For each reply, show:
 > <the drafted reply text>
 
 **Resolve thread?** <Yes (recommended) / No>
-
-Post / Post + Resolve / Edit / Skip?
 ```
 
-Wait for the user's response on each reply:
+Then use the **Question tool** to get the user's decision:
+
+```json
+{
+  "questions": [
+    {
+      "header": "Reply #<N>",
+      "question": "Post this reply?",
+      "options": [
+        {
+          "label": "Post",
+          "description": "Post the reply without resolving the thread"
+        },
+        {
+          "label": "Post + Resolve",
+          "description": "Post the reply and resolve the thread"
+        },
+        {
+          "label": "Skip",
+          "description": "Do not post a reply for this comment"
+        }
+      ]
+    }
+  ]
+}
+```
+
+The Question tool's built-in custom answer option allows the user to type revised reply text. If the user types a custom answer, treat it as the edited reply — update the draft and re-present for confirmation.
+
+Handle the user's response on each reply:
 
 - **Post** — post the reply without resolving the thread
 - **Post + Resolve** — post the reply and resolve the thread
-- **Edit** — the user provides revised text; update and re-present for confirmation
+- **Custom text** — the user provides revised text; update and re-present for confirmation
 - **Skip** — do not post a reply for this comment
 
 #### 8d. Post replies
