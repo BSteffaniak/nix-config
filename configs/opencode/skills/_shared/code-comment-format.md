@@ -69,7 +69,7 @@ These are critical. The most common rendering mistakes come from violating these
 ## Example: draft annotation (pr-annotate)
 
 ````
-```
+```ts
   130 │ function filterCampsites(campsites: Campsite[]) {
   131 │   // Phase 1: server-authoritative filters
   132 │   const exploreFilters = applyExploreFilters(campsites);
@@ -91,7 +91,7 @@ Box label: `Draft comment`
 ## Example: reviewer comment (pr-review)
 
 ````
-```
+```ts
    13 │ const result = await fetch(url);
    14 │ const data = result.json();
    15 │ return data.items;
@@ -112,7 +112,7 @@ Box label: `@<reviewer username>`
 When presenting a draft reply alongside the original reviewer comment, show both boxes stacked — the reviewer's comment first, then the draft reply:
 
 ````
-```
+```ts
    13 │ const result = await fetch(url);
    14 │ const data = result.json();
    15 │ return data.items;
@@ -139,4 +139,4 @@ Box labels: `@<reviewer username>` for the original comment, `Draft reply` for t
 - **Use the diff hunk or current file.** Whichever better captures the relevant context. Prefer the current file state for accuracy.
 - **Word-wrap comment text inside the box.** Wrap text so it fits within the box borders. Pad shorter lines with trailing spaces so the right `│` stays aligned.
 - **Multi-line target ranges.** If the comment targets lines 15-20, show all of those lines, then the box below line 20.
-- **Plain fenced code block.** Wrap the entire ascii-art in a single fenced code block with no language identifier — box-drawing characters break syntax highlighting.
+- **Use the appropriate language identifier.** Tag the fenced code block with the file's language (e.g., `ts`, `py`, `go`, `nix`). The code lines get proper syntax highlighting while the box-drawing lines render as plain text — this provides natural visual contrast, making the comment box stand out from the surrounding code.
