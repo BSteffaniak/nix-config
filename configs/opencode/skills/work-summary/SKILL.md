@@ -77,7 +77,7 @@ Store both `SINCE` (ISO date string) and a human-readable label (e.g., "Mar 1-7,
 
 ### 2. Discover repositories
 
-Auto-discover git repositories from three sources:
+Auto-discover git repositories from three sources. No directory paths are hardcoded — all scan targets are derived dynamically from session history and the current working directory.
 
 #### a. OpenCode session directories
 
@@ -98,25 +98,43 @@ for r in c.fetchall():
 "
 ```
 
-#### b. Git repositories and worktrees under ~/GitHub
+Each of these directories is a candidate git repo or worktree. For each one, check if it's inside a git repo (`git -C "$DIR" rev-parse --git-common-dir`) and collect the result.
 
-The user's workflow relies heavily on **git worktrees** — a single repository (e.g., `~/GitHub/monorepo`) with many linked worktree checkouts in a sibling directory (e.g., `~/GitHub/wt-rec/rec-gov-*`). A naive `find -name .git -type d` will miss these because worktrees have a `.git` **file** (not directory) that points back to the main repo's `.git/worktrees/` folder.
+#### b. Derive base directories and scan for sibling repos/worktrees
 
-Use a two-phase discovery approach:
+The session directories from Step 2a point to repos the user actively worked in, but there may be sibling repos or worktrees in the same parent directories that the user also touched (e.g., via direct git commands without an OpenCode session).
 
-**Phase 1: Find all git roots** — Scan for both `.git` directories (normal repos) and `.git` files (worktree checkouts):
+**Derive base directories** — For each session directory that resolved to a git repo, extract its parent directory. Also extract the parent of the `--git-common-dir` result (which is the main repo root). Deduplicate these parent paths — they are the base directories to scan.
+
+For example, if sessions reference:
+
+- `/home/user/projects/wt-myapp/feature-auth` (worktree, common dir: `/home/user/projects/myapp/.git`)
+- `/home/user/projects/myapp` (main repo)
+- `/home/user/.config/nix` (standalone repo)
+
+The derived base directories would be:
+
+- `/home/user/projects/wt-myapp` (parent of worktree)
+- `/home/user/projects` (parent of main repo)
+- `/home/user/.config` (parent of standalone repo)
+
+**Scan base directories for git repos and worktrees** — Worktree checkouts have a `.git` **file** (not directory) that points back to the main repo's `.git/worktrees/` folder. A naive `find -name .git -type d` will miss these. Scan for both:
 
 ```bash
+# For each derived base directory $BASE_DIR:
+
 # Find normal repos (.git as directory)
-find ~/GitHub -maxdepth 3 -name .git -type d 2>/dev/null
+find "$BASE_DIR" -maxdepth 3 -name .git -type d 2>/dev/null
 
 # Find worktree checkouts (.git as file)
-find ~/GitHub -maxdepth 3 -name .git -type f 2>/dev/null
+find "$BASE_DIR" -maxdepth 3 -name .git -type f 2>/dev/null
 ```
 
 For each result, resolve to the directory containing it (strip the `/.git` suffix).
 
-**Phase 2: Enumerate all worktrees per repo** — For each discovered git directory, resolve its **common git directory** and run `git worktree list` from there to get the complete picture:
+#### c. Enumerate all worktrees per repo
+
+For each discovered git directory, resolve its **common git directory** and run `git worktree list` to get the complete picture. This catches worktrees that live outside the scanned base directories:
 
 ```bash
 # From any repo or worktree directory:
@@ -127,26 +145,43 @@ git -C "$DIR" worktree list --porcelain
 The porcelain output gives structured data:
 
 ```
-worktree /Users/braden/GitHub/monorepo
+worktree /home/user/projects/myapp
 HEAD b4ca51de5
 branch refs/heads/master
 
-worktree /Users/braden/GitHub/wt-rec/rec-gov-explore-campsite-filtering
+worktree /home/user/projects/wt-myapp/feature-auth
 HEAD 9782d0157
-branch refs/heads/rec-gov-explore-campsite-filtering
+branch refs/heads/feature-auth
 
-worktree /Users/braden/GitHub/wt-rec/rec-gov-better-map-clustering
+worktree /home/user/projects/wt-myapp/feature-search
 HEAD 4f2ab51b2
-branch refs/heads/rec-gov-show-map-markers-when-focused-always
+branch refs/heads/feature-search
 ```
 
 Collect from each entry: worktree path, HEAD commit, branch name.
 
-**Phase 3: Group by common repo** — Multiple worktrees that share the same `--git-common-dir` belong to the same repository. Group them together. The main worktree (the one whose path matches the common dir's parent) is the "primary" entry; the rest are linked worktrees.
+**Group by common repo** — Multiple worktrees that share the same `--git-common-dir` belong to the same repository. Group them together. The main worktree (the one whose path matches the common dir's parent) is the "primary" entry; the rest are linked worktrees.
 
-#### c. Current working directory
+#### d. Current working directory
 
-If the current directory is inside a git repo or worktree, include it. Resolve its common git directory to determine which repo group it belongs to.
+If the current directory is inside a git repo or worktree, include it. Resolve its common git directory to determine which repo group it belongs to, and run `git worktree list` to discover any sibling worktrees.
+
+#### e. Fallback: ask the user
+
+If Steps 2a-2d produce **zero** git repositories (e.g., no OpenCode sessions in the time period, and the current directory is not a git repo), use the **Question tool** to ask the user to provide one or more directories to scan:
+
+```json
+{
+  "questions": [
+    {
+      "header": "No repos found",
+      "question": "I couldn't auto-discover any repositories. Please provide a directory path containing your git repos (I'll scan it for repos and worktrees)."
+    }
+  ]
+}
+```
+
+Then apply the same scan logic (find `.git` dirs/files, enumerate worktrees, group by common dir) to the user-provided path.
 
 #### Deduplicate and present
 
@@ -165,11 +200,11 @@ Present the discovered repos using the **Question tool** with `multiple: true` s
       "multiple": true,
       "options": [
         {
-          "label": "monorepo (18 worktrees)",
-          "description": "~/GitHub/monorepo + ~/GitHub/wt-rec/* — branches: master, rec-gov-explore-campsite-filtering, rec-gov-better-map-clustering, ..."
+          "label": "myapp (12 worktrees)",
+          "description": "~/projects/myapp + ~/projects/wt-myapp/* — branches: master, feature-auth, feature-search, ..."
         },
-        { "label": "worktree-setup", "description": "~/GitHub/worktree-setup" },
-        { "label": "nix config", "description": "~/.config/nix" }
+        { "label": "infra-config", "description": "~/.config/nix" },
+        { "label": "tools", "description": "~/projects/tools" }
       ]
     }
   ]
@@ -316,7 +351,7 @@ A PR, its commits, and the Linear issue it references are **one logical unit of 
 
 1. **Match PRs to commits by branch name.** The PR's `headRefName` (e.g., `rec-gov-explore-campsite-filtering`) corresponds directly to a worktree branch name from Step 2. All commits attributed to that branch in Step 3a belong to that PR. This is the primary matching strategy and is highly reliable for worktree-based workflows where each worktree = one feature branch = one PR.
 2. **Match Linear issues to PRs/branches** by scanning PR titles, branch names, and commit messages for issue identifiers (e.g., `ENG-123`, `NDS-456`). Branch names that embed an issue slug are a strong signal.
-3. **Match OpenCode sessions to repos/branches** by working directory. A session with directory `~/GitHub/wt-rec/rec-gov-explore-campsite-filtering` maps to that worktree's branch and its associated PR/issue.
+3. **Match OpenCode sessions to repos/branches** by working directory. A session whose directory matches a worktree path maps to that worktree's branch and its associated PR/issue.
 4. **Match commits without a PR** — Commits on a worktree branch that has no associated PR are still valid work items. Group them by branch name and present as "X commits on branch Y (no PR yet)."
 
 Each merged item should have:
