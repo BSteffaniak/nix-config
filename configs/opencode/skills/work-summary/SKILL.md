@@ -66,11 +66,11 @@ If no time range is provided, use the **Question tool** to prompt:
 
 The Question tool's custom answer option allows the user to type a specific date range. Parse whatever the user provides into a concrete `SINCE` date.
 
-Compute the `SINCE` date using:
+Compute the `SINCE` date using `python3` (works on both macOS and Linux without platform-specific `date` flags):
 
 ```bash
-date -v-7d +%Y-%m-%d   # macOS: 7 days ago
-date -d '7 days ago' +%Y-%m-%d  # Linux: 7 days ago
+# 7 days ago:
+python3 -c "from datetime import datetime, timedelta; print((datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d'))"
 ```
 
 Store both `SINCE` (ISO date string) and a human-readable label (e.g., "Mar 1-7, 2025") for use in the final output header.
