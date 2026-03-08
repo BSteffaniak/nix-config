@@ -414,24 +414,70 @@ All items are pre-selected by default. The user deselects what they don't want.
 
 If there are many items (10+), break the question into multiple questions grouped by project area so the selection UI stays manageable.
 
-### 6. Draft summary
+### 6. Draft and review items individually
 
-Generate a polished, changelog-style markdown summary from the selected items.
+Process each selected item from Step 5 **one at a time**. For each item, draft a changelog-style bullet, present it with source context, and get the user's approval before moving to the next.
 
-#### Format
+#### 6a. Draft a single item
 
-```markdown
-## Work Summary — <human-readable date range>
+Write one changelog-style bullet for the item, following all the writing guidelines below. Show the raw source data above the draft so the user can verify accuracy:
 
-### <Project Area 1>
-
-- **<Action verb> <what was done>** — <brief impact or context>. (<references>)
-- **<Action verb> <what was done>** — <brief impact or context>. (<references>)
-
-### <Project Area 2>
-
-- **<Action verb> <what was done>** — <brief impact or context>. (<references>)
 ```
+### Item #<N>: <short label>
+
+**Sources:**
+- PR #42: "<PR title>" (merged 2025-03-05, +320/-45) — <url>
+- Branch: rec-gov-explore-campsite-filtering (8 commits)
+- Linear: ENG-123 "<issue title>" (Done)
+- OpenCode sessions: 3 sessions in this worktree
+
+**Draft:**
+- **Implemented campsite filtering for the explore view** — Added server-authoritative and local filter pipeline with multi-select UI for amenities, site type, and accessibility. ([PR #42](url), [ENG-123](url))
+```
+
+#### 6b. Ask for approval
+
+Use the **Question tool** to get the user's decision on this item:
+
+```json
+{
+  "questions": [
+    {
+      "header": "Item #<N>",
+      "question": "How does this item look?",
+      "options": [
+        {
+          "label": "Approve",
+          "description": "Keep this line and move to the next item"
+        },
+        {
+          "label": "Regenerate",
+          "description": "Redraft with different wording"
+        },
+        {
+          "label": "Skip",
+          "description": "Drop this item from the summary entirely"
+        }
+      ]
+    }
+  ]
+}
+```
+
+The Question tool's built-in custom answer option allows the user to type specific edit instructions (e.g., "make it shorter", "mention the performance improvement", "reword to focus on the user impact") or provide a full rewrite of the line.
+
+Handle the user's response:
+
+- **Approve** — Keep the drafted line. Move to the next item.
+- **Regenerate** — Write a fresh version of the same bullet using the same source data but with different verb choice, emphasis, detail level, or framing. Re-present with the same options. The user can regenerate multiple times.
+- **Skip** — Drop this item entirely. Move to the next item.
+- **Custom text** — Apply the user's instructions or use their rewrite. Revise the draft and re-present with the same options.
+
+**Regenerate and custom both loop back** to the same question. The cycle repeats until the user either **Approves** or **Skips** the item.
+
+#### 6c. Repeat
+
+Continue for every item selected in Step 5. Track which items were approved and which were skipped.
 
 #### Writing guidelines
 
@@ -441,44 +487,56 @@ Generate a polished, changelog-style markdown summary from the selected items.
 - **Scale language to actual scope.** A 3-line config change is "Updated" or "Fixed", not "Overhauled" or "Redesigned." A multi-week feature with 40+ commits across 15 files can be "Implemented" or "Built."
 - **No superlatives or filler.** No "significantly improved", "greatly enhanced", "major refactor" unless the data genuinely supports it. Let the specifics speak.
 - **References inline.** PR links, Linear issue IDs, and other references go in parentheses at the end of each item. Format: `(PR #42, ENG-123)` or `([PR #42](url), [ENG-123](url))`.
-- **Group logically, not chronologically.** Items within a project area should be ordered by significance, not by date. The most impactful work comes first.
 - **Merge tiny related items.** Three small bug fixes in the same area can be one bullet: "Fixed edge cases in campsite date validation — null dates, timezone offsets, and DST transitions."
 
-#### In-progress work
+### 7. Assemble, review, and finalize
 
-Items that are still in progress (open PRs, incomplete Linear issues, uncommitted branches) should be listed in a separate subsection:
+After all items have been individually reviewed, assemble the approved lines into the full summary document.
+
+#### Assembly
+
+Group the approved items by project area with clear headers. Order items within each group by significance (most impactful first). Place in-progress items (open PRs, incomplete Linear issues) in a separate subsection at the end.
+
+#### Format
 
 ```markdown
+## Work Summary — <human-readable date range>
+
+### <Project Area 1>
+
+- **<approved item>**
+- **<approved item>**
+
+### <Project Area 2>
+
+- **<approved item>**
+
 ### In Progress
 
 - **<what's being worked on>** — <current state>. (<references>)
 ```
 
-### 7. Review and finalize
+#### Present for final review
 
-Present the full draft summary to the user for review using the **Question tool**:
+Present the assembled summary and use the **Question tool**:
 
 ```json
 {
   "questions": [
     {
-      "header": "Review summary",
-      "question": "How does this summary look?",
+      "header": "Final review",
+      "question": "How does the assembled summary look?",
       "options": [
-        { "label": "Approve", "description": "Finalize and save to file" },
-        {
-          "label": "Regenerate",
-          "description": "Start the draft over with different framing"
-        }
+        { "label": "Approve", "description": "Finalize and save to file" }
       ]
     }
   ]
 }
 ```
 
-The Question tool's custom answer option allows the user to type edit instructions (e.g., "make the rec-gov section more detailed", "combine items 2 and 3", "change the tone to be more casual"). If the user types custom instructions, revise the draft and re-present for approval.
+The Question tool's custom answer option allows the user to request adjustments to the overall document — reorder sections, change grouping, add an intro, tweak a specific item's wording, merge two items together, etc. Apply the changes and re-present until the user approves.
 
-Repeat until the user approves.
+Since each item was already individually reviewed, a full "Regenerate" is not offered here. If the user wants to change a specific item, they can describe what they want via custom text.
 
 #### On approval
 
@@ -496,7 +554,7 @@ Repeat until the user approves.
 - **No overselling.** Scale the language to the actual scope. A config tweak is a config tweak. A multi-week feature is a multi-week feature. The reader should be able to look at the PR diff and think "yes, that's an accurate description", not "that's a stretch."
 - **Dedup aggressively.** A PR and its underlying commits are one unit of work, not twelve separate items. A Linear issue and the PR that closes it are one item. The summary should have roughly as many bullets as there were distinct pieces of work, not as many as there were commits.
 - **Never post or share automatically.** The output is for the user to copy, paste, and share as they see fit. Never post to Slack, Linear, GitHub, or any external service.
-- **Interactivity at every gate.** Time period selection (Step 1), repo selection (Step 2), item selection (Step 5), and draft review (Step 7) all require user input. Never skip a gate.
+- **Interactivity at every gate.** Time period selection (Step 1), repo selection (Step 2), item selection (Step 5), per-item draft review (Step 6), and final assembly review (Step 7) all require user input. Never skip a gate. Never batch multiple items into a single approval — each item gets its own review cycle.
 - **Graceful degradation.** If a data source is unavailable (no Linear CLI, no GitHub auth, empty database), skip it and note what was skipped. The skill should still produce useful output from whatever sources are available.
 - **No noise in the output.** The final summary should not mention the data-gathering process, which sources were queried, or how deduplication was done. It should read as a clean changelog authored by a human.
 - **Respect the user's edits.** If the user modifies the draft in Step 7, apply their changes faithfully. Do not re-edit their words or revert their tone choices.
