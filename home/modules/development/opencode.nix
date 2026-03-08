@@ -59,6 +59,10 @@ let
   # Read and parse host-specific overrides
   overrideConfigs = map (f: builtins.fromJSON (builtins.readFile f)) cfg.overrides;
 
+  # Auto-discover skill directories from configs/opencode/skills/
+  skillsDir = ../../../configs/opencode/skills;
+  skillEntries = builtins.attrNames (builtins.readDir skillsDir);
+
   # Merge order: base → provider → permissions (alphabetical) → host overrides (in order)
   baseConfig = builtins.fromJSON (builtins.readFile ../../../configs/opencode/opencode.json);
   mergedConfig = foldl' myLib.deepMerge baseConfig (
@@ -117,52 +121,19 @@ in
   config = mkIf cfg.enable (mkMerge [
     {
       xdg.configFile."opencode/opencode.json".text = builtins.toJSON mergedConfig;
+    }
 
-      # Global skills (auto-discovered by OpenCode from ~/.config/opencode/skills/)
-      xdg.configFile."opencode/skills/_shared" = {
-        source = ../../../configs/opencode/skills/_shared;
-        recursive = true;
-      };
-      xdg.configFile."opencode/skills/commit-message" = {
-        source = ../../../configs/opencode/skills/commit-message;
-        recursive = true;
-      };
-      xdg.configFile."opencode/skills/commit-message-write" = {
-        source = ../../../configs/opencode/skills/commit-message-write;
-        recursive = true;
-      };
-      xdg.configFile."opencode/skills/commit-message-staged" = {
-        source = ../../../configs/opencode/skills/commit-message-staged;
-        recursive = true;
-      };
-      xdg.configFile."opencode/skills/commit-message-staged-write" = {
-        source = ../../../configs/opencode/skills/commit-message-staged-write;
-        recursive = true;
-      };
-      xdg.configFile."opencode/skills/pr-description" = {
-        source = ../../../configs/opencode/skills/pr-description;
-        recursive = true;
-      };
-      xdg.configFile."opencode/skills/pr-description-write" = {
-        source = ../../../configs/opencode/skills/pr-description-write;
-        recursive = true;
-      };
-      xdg.configFile."opencode/skills/session-history" = {
-        source = ../../../configs/opencode/skills/session-history;
-        recursive = true;
-      };
-      xdg.configFile."opencode/skills/pr-review" = {
-        source = ../../../configs/opencode/skills/pr-review;
-        recursive = true;
-      };
-      xdg.configFile."opencode/skills/pr-annotate" = {
-        source = ../../../configs/opencode/skills/pr-annotate;
-        recursive = true;
-      };
-      xdg.configFile."opencode/skills/work-summary" = {
-        source = ../../../configs/opencode/skills/work-summary;
-        recursive = true;
-      };
+    # Auto-discover and deploy all skill directories from configs/opencode/skills/
+    {
+      xdg.configFile = builtins.listToAttrs (
+        map (name: {
+          name = "opencode/skills/${name}";
+          value = {
+            source = skillsDir + "/${name}";
+            recursive = true;
+          };
+        }) skillEntries
+      );
     }
 
     # Deploy raw provider files for per-provider aliases (opencode-bedrock, opencode-copilot, etc.)
