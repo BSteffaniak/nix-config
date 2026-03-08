@@ -159,6 +159,10 @@ in
         source = ../../../configs/opencode/skills/pr-annotate;
         recursive = true;
       };
+      xdg.configFile."opencode/skills/work-summary" = {
+        source = ../../../configs/opencode/skills/work-summary;
+        recursive = true;
+      };
     }
 
     # Deploy raw provider files for per-provider aliases (opencode-bedrock, opencode-copilot, etc.)
