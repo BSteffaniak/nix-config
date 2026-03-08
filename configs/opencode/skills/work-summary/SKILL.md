@@ -98,23 +98,61 @@ for r in c.fetchall():
 "
 ```
 
-#### b. Git repositories under ~/GitHub
+#### b. Git repositories and worktrees under ~/GitHub
 
-Scan for git repos up to 2 levels deep:
+The user's workflow relies heavily on **git worktrees** — a single repository (e.g., `~/GitHub/monorepo`) with many linked worktree checkouts in a sibling directory (e.g., `~/GitHub/wt-rec/rec-gov-*`). A naive `find -name .git -type d` will miss these because worktrees have a `.git` **file** (not directory) that points back to the main repo's `.git/worktrees/` folder.
+
+Use a two-phase discovery approach:
+
+**Phase 1: Find all git roots** — Scan for both `.git` directories (normal repos) and `.git` files (worktree checkouts):
 
 ```bash
-find ~/GitHub -maxdepth 3 -name .git -type d 2>/dev/null | sort -u
+# Find normal repos (.git as directory)
+find ~/GitHub -maxdepth 3 -name .git -type d 2>/dev/null
+
+# Find worktree checkouts (.git as file)
+find ~/GitHub -maxdepth 3 -name .git -type f 2>/dev/null
 ```
 
-This catches both regular repos and worktree structures.
+For each result, resolve to the directory containing it (strip the `/.git` suffix).
+
+**Phase 2: Enumerate all worktrees per repo** — For each discovered git directory, resolve its **common git directory** and run `git worktree list` from there to get the complete picture:
+
+```bash
+# From any repo or worktree directory:
+COMMON_DIR="$(git -C "$DIR" rev-parse --git-common-dir)"
+git -C "$DIR" worktree list --porcelain
+```
+
+The porcelain output gives structured data:
+
+```
+worktree /Users/braden/GitHub/monorepo
+HEAD b4ca51de5
+branch refs/heads/master
+
+worktree /Users/braden/GitHub/wt-rec/rec-gov-explore-campsite-filtering
+HEAD 9782d0157
+branch refs/heads/rec-gov-explore-campsite-filtering
+
+worktree /Users/braden/GitHub/wt-rec/rec-gov-better-map-clustering
+HEAD 4f2ab51b2
+branch refs/heads/rec-gov-show-map-markers-when-focused-always
+```
+
+Collect from each entry: worktree path, HEAD commit, branch name.
+
+**Phase 3: Group by common repo** — Multiple worktrees that share the same `--git-common-dir` belong to the same repository. Group them together. The main worktree (the one whose path matches the common dir's parent) is the "primary" entry; the rest are linked worktrees.
 
 #### c. Current working directory
 
-If the current directory is inside a git repo, include it.
+If the current directory is inside a git repo or worktree, include it. Resolve its common git directory to determine which repo group it belongs to.
 
 #### Deduplicate and present
 
-Merge all discovered paths, deduplicate by resolved git root (`git rev-parse --show-toplevel`), and strip any that are clearly not the user's work repos (e.g., dependencies, caches).
+Merge all discovered paths. Deduplicate by **common git directory** (`git rev-parse --git-common-dir`), not by `--show-toplevel` — this correctly groups worktrees that share the same repo but have different toplevel paths.
+
+Strip any directories that are clearly not the user's work repos (e.g., dependencies, caches, prunable worktrees with no recent commits).
 
 Present the discovered repos using the **Question tool** with `multiple: true` so the user can deselect repos they don't want included:
 
@@ -127,10 +165,10 @@ Present the discovered repos using the **Question tool** with `multiple: true` s
       "multiple": true,
       "options": [
         {
-          "label": "rec-gov (5 worktrees)",
-          "description": "~/GitHub/wt-rec/rec-gov-*"
+          "label": "monorepo (18 worktrees)",
+          "description": "~/GitHub/monorepo + ~/GitHub/wt-rec/* — branches: master, rec-gov-explore-campsite-filtering, rec-gov-better-map-clustering, ..."
         },
-        { "label": "monorepo", "description": "~/GitHub/monorepo" },
+        { "label": "worktree-setup", "description": "~/GitHub/worktree-setup" },
         { "label": "nix config", "description": "~/.config/nix" }
       ]
     }
@@ -138,24 +176,43 @@ Present the discovered repos using the **Question tool** with `multiple: true` s
 }
 ```
 
-**Group worktrees from the same repo.** If multiple directories resolve to branches/worktrees of the same repository, present them as a single option showing the count (e.g., "rec-gov (5 worktrees)"). When selected, all worktrees for that repo are included.
+**Group all worktrees from the same repo into a single option.** Show the total worktree count and list a few representative branch names in the description. When selected, all worktrees for that repo are included in the data-gathering phase.
 
 ### 3. Gather data
 
 Collect data from all four sources. Run independent queries in parallel where possible.
 
-#### a. Git commits
+#### a. Git commits (worktree-aware)
 
-For each selected repo (and each worktree within grouped repos), run:
+For each selected repo group (which may contain many worktrees), use a **two-pass strategy** to capture all commits efficiently while preserving branch attribution.
+
+**Pass 1: Collect all commits from the main repo** — Run a single `git log --all` from the main repo directory (or any worktree, since `--all` covers all refs). This captures every commit across all branches in one query:
 
 ```bash
-git log --author="$GIT_AUTHOR_NAME" --since="$SINCE" --no-merges \
+git -C "$MAIN_REPO_DIR" log --all --author="$GIT_AUTHOR_NAME" --since="$SINCE" --no-merges \
+  --format="%h %ad %s %D" --date=short
+```
+
+The `%D` format gives ref decorations (branch names, tags) for each commit, which helps attribute commits to branches.
+
+**Pass 2: Map commits to worktree branches** — For commits that don't have a direct ref decoration, determine which branch they belong to by checking which worktree branches contain them:
+
+```bash
+# For each worktree branch discovered in Step 2:
+git -C "$MAIN_REPO_DIR" log "$BRANCH_NAME" --author="$GIT_AUTHOR_NAME" --since="$SINCE" --no-merges \
+  --format="%h" --date=short
+```
+
+Build a mapping of commit hash -> branch name(s). If a commit appears on multiple branches (e.g., it's on master and also on a feature branch that was merged), attribute it to the **feature branch** (the more specific context).
+
+**For repos without worktrees** (simple single-directory repos like `worktree-setup` or `nix config`), a plain `git log` suffices:
+
+```bash
+git -C "$REPO_DIR" log --author="$GIT_AUTHOR_NAME" --since="$SINCE" --no-merges \
   --format="%h %ad %s" --date=short
 ```
 
-If a repo has multiple worktrees, run this in each worktree directory to capture branch-specific commits.
-
-Collect: commit hash, date, subject line, repo name, branch name.
+Collect for each commit: hash, date, subject line, repo name, branch name (from worktree mapping or ref decoration).
 
 #### b. GitHub PRs
 
@@ -257,9 +314,10 @@ Analyze all gathered data and group items into logical project areas. Determine 
 
 A PR, its commits, and the Linear issue it references are **one logical unit of work**, not separate items. Merge them:
 
-1. Match PRs to commits by branch name and repo
-2. Match Linear issues to PRs by scanning PR titles and branch names for issue identifiers (e.g., `ENG-123`)
-3. Match OpenCode sessions to repos by working directory
+1. **Match PRs to commits by branch name.** The PR's `headRefName` (e.g., `rec-gov-explore-campsite-filtering`) corresponds directly to a worktree branch name from Step 2. All commits attributed to that branch in Step 3a belong to that PR. This is the primary matching strategy and is highly reliable for worktree-based workflows where each worktree = one feature branch = one PR.
+2. **Match Linear issues to PRs/branches** by scanning PR titles, branch names, and commit messages for issue identifiers (e.g., `ENG-123`, `NDS-456`). Branch names that embed an issue slug are a strong signal.
+3. **Match OpenCode sessions to repos/branches** by working directory. A session with directory `~/GitHub/wt-rec/rec-gov-explore-campsite-filtering` maps to that worktree's branch and its associated PR/issue.
+4. **Match commits without a PR** — Commits on a worktree branch that has no associated PR are still valid work items. Group them by branch name and present as "X commits on branch Y (no PR yet)."
 
 Each merged item should have:
 
