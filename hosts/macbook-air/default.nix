@@ -60,7 +60,7 @@
     darwin.security.touchId.enable = true;
     darwin.minecraft.enable = true;
 
-    services.tailscale.enable = true;
+    services.tailscale.enable = false;
   };
 
   # System packages specific to this host
