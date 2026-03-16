@@ -155,6 +155,38 @@ nix flake update                           # Update all flake inputs
 
 **Network cost:** Dependencies are downloaded exactly once during hash computation. The subsequent Nix build finds them cached in the store. No double-downloads.
 
+### `clean.sh` (Nix Store Cleanup Helper)
+
+Runs common Nix cleanup commands so you do not need to remember them.
+
+**What it does:**
+
+- Cleans old user generations with `nix-collect-garbage`
+- Optionally cleans system generations with `sudo nix-collect-garbage`
+- Optionally optimizes the store with `sudo nix-store --optimise`
+
+**Default behavior:**
+
+- Deletes generations older than `14d`
+- Runs both user and system cleanup (if `sudo` is available)
+
+**Usage:**
+
+```bash
+./scripts/clean.sh
+./scripts/clean.sh --older-than 30d
+./scripts/clean.sh --delete-all-old
+./scripts/clean.sh --delete-all-old --no-sudo
+```
+
+**Options:**
+
+- `-o, --older-than <duration>` - Delete generations older than a duration (default: `14d`)
+- `-d, --delete-all-old` - Aggressive cleanup (equivalent to `nix-collect-garbage -d`)
+- `--no-sudo` - Skip system cleanup and store optimization
+- `-y, --yes` - Skip confirmation prompt
+- `-h, --help` - Show help text
+
 ### `detect-hardware.sh` (Hardware Detection)
 
 NixOS-only script that detects hardware and suggests appropriate configuration options.
