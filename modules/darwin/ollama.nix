@@ -44,7 +44,7 @@ in
         StandardOutPath = "/Users/${config.myConfig.username}/Library/Logs/ollama.log";
         StandardErrorPath = "/Users/${config.myConfig.username}/Library/Logs/ollama.err.log";
         EnvironmentVariables = {
-          OLLAMA_HOST = "0.0.0.0";
+          OLLAMA_HOST = "0.0.0.0:11434";
         };
       };
     };
