@@ -1,7 +1,7 @@
 ---
 name: pr-review
 description: Fetch and address PR review comments. Validates comment accuracy against the codebase, categorizes as actionable or informational, skips resolved threads, and makes code changes.
-allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Question(*)
+allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Bash(mktemp:*), Question(*)
 ---
 
 ## Purpose
@@ -10,20 +10,45 @@ Fetch all review feedback on a pull request, categorize each comment as actionab
 
 ## Steps
 
-### 1. Identify the PR
+### 1. Determine working context
 
-- If the user provides a PR number or URL as an argument, use that.
-- Otherwise, auto-detect from the current branch:
+Determine whether the current working directory is a local checkout of the PR's repository. This step performs **detection only** — do not clone anything yet.
+
+- If the user provides a PR URL, parse `owner/repo` and `number` from the URL pattern `github.com/{owner}/{repo}/pull/{number}`.
+- If the user provides a PR number (no URL), the current directory **must** be the target repo — run `gh repo view --json nameWithOwner --jq .nameWithOwner` to extract `owner/repo`.
+- If neither is provided, auto-detect from the current branch:
   ```bash
   gh pr view --json number,url,title,headRefName,baseRefName
   ```
-- If no PR is found for the current branch, inform the user and stop.
+
+After identifying the PR, determine whether the current directory is a checkout of the target repo:
+
+```bash
+gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null
+```
+
+Compare the result (case-insensitive) against the `owner/repo` extracted from the PR. Record the result as one of:
+
+- **`local`** — CWD is a checkout of the target repo. Use local file reads for all subsequent steps.
+- **`remote`** — CWD is not a checkout of the target repo (or is not a git repo at all). Use the GitHub API for file reads in Steps 2–7. A local clone will only be created later if the user chooses to make code changes (Step 8).
+
+If the context is `remote`, also extract the PR's `headRefName` (the branch with the changes) for use in API-based file reads.
+
+If no PR is found, inform the user and stop.
+
+### 2. Identify the PR
+
+- Extract `owner` and `repo` from the context determined in Step 1.
+- If not already obtained, fetch PR metadata:
+  ```bash
+  gh pr view --json number,url,title,headRefName,baseRefName
+  ```
 - Extract `owner` and `repo` from the repo context:
   ```bash
   gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"'
   ```
 
-### 2. Fetch all review data
+### 3. Fetch all review data
 
 Use a **single GraphQL query** via `gh api graphql` to fetch all review threads, reviews, and issue-level comments. Paginate using cursor-based pagination until all data is retrieved.
 
@@ -91,7 +116,7 @@ After each query, check `pageInfo.hasNextPage` on each of the three connections 
 
 For **nested pagination** (comments within a single review thread with 100+ comments): if any thread's `comments.pageInfo.hasNextPage` is `true`, fetch the remaining comments for that specific thread with a targeted query using the thread's `id` and the comment `endCursor`. In practice this is extremely rare.
 
-### 3. Filter and categorize
+### 4. Filter and categorize
 
 #### Filter
 
@@ -119,9 +144,50 @@ Classify each unresolved review thread and each issue-level comment into one of 
 - Review summaries with `state: CHANGES_REQUESTED` should have their body text categorized like any other comment.
 - Review summaries with `state: COMMENTED` and an empty/generic body can be ignored (the substance is in the thread comments).
 
-### 4. Validate actionable comments
+### 5. Validate actionable comments
 
 Before presenting results, validate every actionable comment (`code-change` and `question`) against the actual codebase. The goal is to catch reviewer comments that are wrong, missing context, or based on stale assumptions.
+
+#### Reading files for validation
+
+How you read files depends on the working context determined in Step 1:
+
+**If context is `local`:**
+
+Read files directly from the local checkout. Use the file system to read the referenced file at the specified path and line, search for patterns, check `git log`/`git blame`, etc.
+
+**If context is `remote`:**
+
+Read files via the GitHub API. **Do NOT clone the repo for validation.** The GitHub API provides everything needed to validate comments without a local checkout.
+
+- **Read a specific file at the PR's head ref:**
+
+  ```bash
+  gh api repos/{owner}/{repo}/contents/{path}?ref={headRefName} --jq '.content' | base64 -d
+  ```
+
+- **Get the full PR diff for context:**
+
+  ```bash
+  gh pr diff {number} -R {owner}/{repo}
+  ```
+
+- **Read a file at a specific line range** (fetch the file, then extract the relevant lines from the decoded output).
+
+- **Search for patterns across the repo** (for Deep validation):
+
+  ```bash
+  gh api search/code -X GET -f q='{pattern}+repo:{owner}/{repo}' --jq '.items[].path'
+  ```
+
+  Then read the matching files individually via the contents API.
+
+- **Check git blame for a file:**
+  ```bash
+  gh api repos/{owner}/{repo}/commits?path={file}&sha={headRefName} --jq '.[0]'
+  ```
+
+All remote reads should use the PR's `headRefName` as the ref to ensure you're reading the current state of the PR branch, not the default branch.
 
 #### Validation tiers
 
@@ -163,7 +229,7 @@ Assign each actionable comment one of these tags:
 - **Check for already-addressed concerns.** Sometimes reviewers comment on an earlier commit and the PR author already fixed it in a later commit but the thread wasn't resolved. Read the current state of the file, not the diff state.
 - **Be honest about uncertainty.** Use `NEEDS CONTEXT` rather than guessing. False confidence in either direction is worse than admitting you don't know.
 
-### 5. Present the summary
+### 6. Present the summary
 
 Output a structured summary. The PR header, reviews, non-actionable items, and skipped items use a flat text format. **Actionable items** (code changes and questions) use the [embedded ascii-art format](../_shared/code-comment-format.md) so the user can see the code context and judge each comment before deciding what to address.
 
@@ -238,7 +304,7 @@ These stay as flat one-liners — no code context needed:
 
 **Validity tags are mandatory** on every actionable item. Each tag must include a one-line justification. `DISPUTED` and `INVALID` tags must cite specific file paths and line numbers as evidence.
 
-### 6. Prompt for action
+### 7. Prompt for action
 
 After presenting the summary, use the **Question tool** to let the user select which items to address. Use a single question with `multiple: true` so the user can pick any combination. Each actionable item becomes an option.
 
@@ -272,11 +338,40 @@ The user can select any subset, or type a custom answer. If the user selects not
 
 Do NOT make any code changes without explicit confirmation.
 
-### 7. Propose, apply, and verify changes
+### 8. Propose, apply, and verify changes
 
-Process each comment the user selected in Step 6 **one at a time**. For each comment, complete the full propose-apply-verify cycle before moving to the next.
+Process each comment the user selected in Step 7 **one at a time**. For each comment, complete the full propose-apply-verify cycle before moving to the next.
 
-#### 7a. Propose
+**If the user selected zero code-change items** (e.g., only questions, or they want to skip straight to replies), skip this step entirely and proceed to Step 9.
+
+#### Ensure local checkout
+
+Before making any code changes, a local checkout of the PR branch is required. This check runs **once**, at the start of Step 8 (not per-comment).
+
+**If the working context from Step 1 is `local`:**
+
+- Ensure you are on the PR's branch:
+  ```bash
+  gh pr checkout {number}
+  ```
+- Proceed to Step 8a.
+
+**If the working context from Step 1 is `remote`:**
+
+- The user selected code changes, so a local clone is now necessary. Clone to a temporary directory:
+  ```bash
+  WORK_DIR=$(mktemp -d)/{repo}
+  gh repo clone {owner}/{repo} "$WORK_DIR"
+  ```
+- Check out the PR branch (run from within `$WORK_DIR`):
+  ```bash
+  gh pr checkout {number}
+  ```
+- Inform the user:
+  > "Cloned {owner}/{repo} to `{WORK_DIR}` and checked out the PR branch. All file changes will be made there."
+- Use `$WORK_DIR` as the working directory for all subsequent steps (8a through 8d, and Step 9).
+
+#### 8a. Propose
 
 1. Read the relevant file and understand the surrounding code context
 2. Read the full comment thread to understand exactly what the reviewer is asking for
@@ -347,11 +442,11 @@ Wait for the user's response:
 - **Custom text** — the user provides adjusted instructions; revise the proposal and re-present
 - **Skip** — do not address this comment; move to the next one
 
-#### 7b. Apply
+#### 8b. Apply
 
 If approved, make the code change exactly as proposed (or as modified by the user).
 
-#### 7c. Verify
+#### 8c. Verify
 
 Immediately after applying the change, show the result so the user can verify it:
 
@@ -399,9 +494,9 @@ Handle the user's response:
 
 - **Accept** — the change is kept; move to the next comment
 - **Undo** — revert the change (e.g., `git checkout -- <file>`), mark this comment as skipped, and move on
-- **Redo** — revert the change, then go back to Step 7a for this comment to propose a different approach
+- **Redo** — revert the change, then go back to Step 8a for this comment to propose a different approach
 
-#### 7d. Repeat
+#### 8d. Repeat
 
 Continue the loop for every selected comment. After all comments have been processed, output a final summary:
 
@@ -418,13 +513,19 @@ Continue the loop for every selected comment. After all comments have been proce
 
 Do NOT commit the changes. The user will review and commit themselves.
 
-### 8. Respond to PR comments
+If a temporary clone was created at the start of Step 8, remind the user:
+
+> "All changes were made in `{WORK_DIR}`. You can review, commit, and push from that directory."
+
+### 9. Respond to PR comments
 
 After all code changes are finalized, offer to post replies on the PR threads. This step is optional — the user may decline entirely.
 
-#### 8a. Draft replies
+**Note:** This step does NOT require a local checkout. All reply operations use the GitHub API directly via `gh api graphql` and `gh api`. This step works regardless of whether the working context is `local` or `remote`.
 
-For each comment that was processed in Step 7 (whether addressed, skipped, or disputed), draft an appropriate reply:
+#### 9a. Draft replies
+
+For each comment that was processed in Step 8 (whether addressed, skipped, or disputed), draft an appropriate reply:
 
 **For comments that were addressed with a code change:**
 
@@ -449,7 +550,7 @@ For each comment that was processed in Step 7 (whether addressed, skipped, or di
 
 - Do not draft a reply. Silence is fine.
 
-#### 8b. Recommend thread resolution
+#### 9b. Recommend thread resolution
 
 For each drafted reply, recommend whether to also resolve the thread:
 
@@ -463,7 +564,7 @@ For each drafted reply, recommend whether to also resolve the thread:
 | Comment had multiple concerns and only some were addressed          | **Do NOT resolve** — the thread is not fully addressed                 |
 | The fix was partial or the user modified the solution significantly | **Do NOT resolve** — let the reviewer re-evaluate                      |
 
-#### 8c. Present and confirm
+#### 9c. Present and confirm
 
 Present all drafted replies together for review. For each reply, use the [embedded ascii-art format](../_shared/code-comment-format.md) with the "reviewer comment with draft reply" variant — show the code, the reviewer's original comment in a box, and the draft reply in a second box below it.
 
@@ -511,7 +612,7 @@ Handle the user's response on each reply:
 - **Custom text** — the user provides revised text; update and re-present for confirmation
 - **Skip** — do not post a reply for this comment
 
-#### 8d. Post replies
+#### 9d. Post replies
 
 For approved replies, use the GitHub GraphQL API:
 
@@ -552,7 +653,9 @@ After posting, confirm each reply was posted successfully and show the URL of th
 
 ## Rules
 
-- **Never act without user confirmation.** Present the summary (Step 5-6), get selection, propose each solution individually (Step 7a), wait for approval before applying (Step 7b), wait for verification after applying (Step 7c), and get approval before posting any replies (Step 8c). Every mutation — code change, PR reply, thread resolution — requires explicit user consent.
+- **Avoid cloning when possible.** Steps 1–7 and Step 9 should NEVER require a local clone. Use the GitHub API (`gh api repos/{owner}/{repo}/contents/...`, `gh pr diff`, `gh api graphql`) to read files remotely for validation and context. Only clone to a temporary directory in Step 8 if the user selects code changes to apply AND the current directory is not already a checkout of the target repo.
+- **Never clone into the user's working directory.** If a clone is needed, always use `mktemp -d` to create an isolated temporary directory. Never run `gh repo clone` in the user's current directory.
+- **Never act without user confirmation.** Present the summary (Step 6-7), get selection, propose each solution individually (Step 8a), wait for approval before applying (Step 8b), wait for verification after applying (Step 8c), and get approval before posting any replies (Step 9c). Every mutation — code change, PR reply, thread resolution — requires explicit user consent.
 - **Stop after each change.** Execute one code change at a time, show the `git diff`, and wait for the user to accept/undo/redo before moving to the next comment. Never batch multiple changes.
 - **Never post PR replies without user approval.** Draft all replies and present them for review before posting. The user controls what gets posted on their behalf.
 - **Never resolve threads without user approval.** Recommend resolution when appropriate, but always let the user make the final call. Resolving a thread the reviewer should re-evaluate is worse than leaving it open.
