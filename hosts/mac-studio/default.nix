@@ -42,6 +42,7 @@
     darwin.systemDefaults.enable = true;
     darwin.systemDefaults.darkMode = true;
     darwin.applications.enable = true;
+    darwin.ghostty.enable = true;
     darwin.googleChrome.enable = true;
     darwin.istatMenus.enable = true;
     darwin.microsoftEdge.enable = true;

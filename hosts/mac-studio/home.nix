@@ -25,6 +25,10 @@
 
     # CLI tools - now configured directly in home-manager
     cliTools = {
+      terminals.ghostty = {
+        enable = true;
+        hideWindowDecoration = true;
+      };
       terminals.zellij.enable = true;
       terminals.tmux.enable = true;
 
