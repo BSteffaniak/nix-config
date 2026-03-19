@@ -11,5 +11,5 @@
 #   hosts/<hostname>/** filter=git-crypt diff=git-crypt
 #   hosts/<hostname>/meta.nix !filter !diff
 
-hosts/bs-mbpro/** filter=git-ssh-crypt diff=git-ssh-crypt
+hosts/bs-mbpro/** filter=git-sshripped diff=git-sshripped
 hosts/bs-mbpro/meta.nix !filter !diff
