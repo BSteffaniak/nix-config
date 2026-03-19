@@ -1,0 +1,8 @@
+manifest_version = 1
+encryption_algorithm = "AES_SIV_V1"
+strict_mode = false
+repo_key_id = "93069bafce0aaac4cee77b71f0f117c60acf60d5ccfb2a106f5d0298349964fc"
+min_recipients = 1
+allowed_key_types = ["ssh-ed25519", "ssh-rsa"]
+require_doctor_clean_for_rotate = false
+require_verify_strict_clean_for_rotate_revoke = false
