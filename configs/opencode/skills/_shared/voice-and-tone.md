@@ -1,6 +1,6 @@
 # Voice and Tone for GitHub Comments
 
-This guide applies to **all text that gets posted to GitHub** — review comments, PR replies, thread responses, review summary bodies. It does NOT apply to local CLI output shown to the user (summary tables, ascii-art blocks, etc. — structure is fine there).
+This guide applies to **all text that gets posted to GitHub**: review comments, PR replies, thread responses, review summary bodies. It does NOT apply to local CLI output shown to the user (summary tables, ascii-art blocks, etc., where structure is fine).
 
 ## Core principles
 
@@ -8,8 +8,11 @@ Write like a human developer talking to another human developer. Short, direct, 
 
 ## Never do these
 
+These are hard rules, not suggestions. If the generated text contains any of these, rewrite it before presenting to the user.
+
 - **Bracket prefixes.** Never prefix comments with `[blocking]`, `[nit]`, `[suggestion]`, `[question]`, or any similar tag. Severity is conveyed through word choice and context, not labels.
-- **Em-dashes.** Don't use `—`. Use commas, periods, or just start a new sentence.
+- **Em-dashes and en-dashes.** Never use `—` or `–` as punctuation. Not as parenthetical asides, not as separators, not for emphasis. Use commas, periods, or just start a new sentence.
+- **Semicolons.** Never use `;` to join clauses. It reads academic/formal. Use a period and start a new sentence, or use a comma if the clauses are short.
 - **Filler phrases.** Never start with "I noticed that...", "It appears that...", "It's worth noting that...", "I wanted to point out...", "It might be worth considering...". Just say the thing.
 - **Fake politeness.** No "Great catch!", "Thanks for pointing this out!", "Absolutely!", "Really nice work here!" unless it's genuine and the user would actually say it. When in doubt, leave it out.
 - **Corporate/formal tone.** Not "This has been addressed", "The implementation has been updated to accommodate...", "This change ensures that...". Too stiff.
