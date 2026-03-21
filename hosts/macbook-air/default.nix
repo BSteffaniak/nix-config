@@ -48,6 +48,7 @@
     darwin.istatMenus.enable = true;
     darwin.microsoftEdge.enable = true;
     darwin.roon.enable = true;
+    darwin.signal.enable = true;
     darwin.scrollReverser.enable = true;
 
     # Desktop environment
