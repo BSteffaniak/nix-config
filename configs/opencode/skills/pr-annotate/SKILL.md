@@ -120,6 +120,8 @@ For each annotation the user selected, draft a comment and present it for approv
 
 #### Drafting rules
 
+All posted annotation text must follow the [voice and tone guide](../_shared/voice-and-tone.md). Additionally:
+
 - **1-3 sentences max.** Rarely more.
 - **No filler.** Cut "It's worth noting that...", "For context, ...", "Note that...", "This is because...". Just state the thing.
 - **Get straight to the point.** First word should carry meaning.
@@ -222,6 +224,7 @@ After all comments have been processed, output a final summary:
 
 ## Rules
 
+- **Follow the [voice and tone guide](../_shared/voice-and-tone.md) for all posted text.** Every annotation posted to GitHub must sound like a human wrote it.
 - **Never post without explicit user approval.** Every comment must be individually drafted, presented, and approved before posting. No batching, no assumptions.
 - **One at a time.** Draft and present one annotation at a time. Wait for the user's response before moving to the next.
 - **Conciseness is non-negotiable.** If a draft exceeds 3 sentences, rewrite it shorter. Reviewers will not read walls of text. Dense, informative, terse.

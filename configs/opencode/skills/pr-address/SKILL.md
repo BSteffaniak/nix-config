@@ -569,31 +569,28 @@ Draft and post replies on the PR threads. This step handles both standalone repl
 
 #### 9a. Draft replies
 
-Draft replies for each comment that should receive a response:
+All posted reply text must follow the [voice and tone guide](../_shared/voice-and-tone.md). Draft replies for each comment that should receive a response:
 
 **For comments that were addressed with a code change (fix + reply mode):**
 
-- Briefly describe what was changed and reference the specific fix (file, line)
-- Keep it concise — the reviewer can look at the updated diff for details
-- Example: _"Fixed — wrapped the `fetch()` call in a try/catch, matching the pattern in `src/api/client.ts:55`."_
+- Briefly say what you did. Reference the file/line if it helps.
+- Example: _"fixed, wrapped it in a try/catch. matches what `client.ts` does"_
 
 **For `DISPUTED`/`INVALID` comments the user chose to skip or reply to:**
 
-- Draft a respectful rebuttal explaining why the current code is correct
-- Cite the evidence found during validation (file paths, line numbers, patterns)
-- Keep it informative, not argumentative
-- Example: _"This case is already handled — the caller at `src/api/client.ts:55` wraps this in a try/catch that catches and logs `ApiError`. Adding a duplicate catch here would suppress the error before it reaches the centralized handler."_
+- Explain why the current code is correct. Cite the evidence found during validation.
+- Keep it factual, not argumentative.
+- Example: _"the caller in `client.ts:55` already catches this. adding another catch here would swallow the error before it hits the centralized handler"_
 
 **For `question` comments:**
 
-- Draft an answer based on what was learned during validation and code reading
-- If a code change was also made in response, mention it
-- Example: _"We went with the inline approach here because the shared helper doesn't support async iteration (see `src/utils/helper.ts:28`). Refactoring the helper is tracked in #456."_
+- Answer the question directly based on what was learned during validation.
+- Example: _"the shared helper doesn't support async iteration (`helper.ts:28`), that's why it's inline. tracked in #456"_
 
 **For `VALID` comments the user chose to reply to (without fixing):**
 
-- Acknowledge the feedback and explain the plan (e.g., "Good catch, will fix in a follow-up" or "Agreed, addressing now")
-- Be honest — don't claim it's fixed if it isn't
+- Acknowledge it honestly.
+- Example: _"good catch, will fix in a follow-up"_
 
 **For comments that were skipped without a rebuttal:**
 
@@ -703,6 +700,7 @@ After posting, confirm each reply was posted successfully and show the URL of th
 
 ## Rules
 
+- **Follow the [voice and tone guide](../_shared/voice-and-tone.md) for all posted text.** Every reply that gets posted to GitHub must sound like a human wrote it. No bracket prefixes, em-dashes, filler phrases, fake politeness, or over-structured formatting in posted text.
 - **Avoid cloning when possible.** Steps 1–7 and Step 9 should NEVER require a local clone. Use the GitHub API (`gh api repos/{owner}/{repo}/contents/...`, `gh pr diff`, `gh api graphql`) to read files remotely for validation and context. Only clone to a temporary directory in Step 8 if the user selects code changes to apply AND the current directory is not already a checkout of the target repo.
 - **Never clone into the user's working directory.** If a clone is needed, always use `mktemp -d` to create an isolated temporary directory. Never run `gh repo clone` in the user's current directory.
 - **Never act without user confirmation.** Present the summary (Step 6-7), get selection, propose each solution individually (Step 8a), wait for approval before applying (Step 8b), wait for verification after applying (Step 8c), and get approval before posting any replies (Step 9c). Every mutation — code change, PR reply, thread resolution — requires explicit user consent.
@@ -720,4 +718,4 @@ After posting, confirm each reply was posted successfully and show the URL of th
 - **Adaptive validation depth.** Scale investigation effort to the comment's complexity. Do not waste time doing deep codebase searches for a typo fix. Do not shallow-validate a claim that something "will crash in production."
 - **Do not dismiss reviewer expertise.** A `DISPUTED` or `INVALID` tag means you found concrete evidence the reviewer is wrong. Disagreeing with a reviewer's opinion or style preference without codebase evidence is not grounds for these tags — use `NEEDS CONTEXT` instead.
 - **Proposals must be specific.** "Fix the error handling" is not a proposal. Name the exact lines being changed, the exact modification, and cite the pattern being followed if applicable.
-- **Reply content must reference the actual change.** Do not post generic "Fixed" replies. Reference the specific file, line, and what was modified so the reviewer can verify without hunting through the diff.
+- **Reply content must reference the actual change.** Don't post generic "Fixed" replies. Reference the specific file, line, and what was modified so the reviewer can verify without hunting through the diff.

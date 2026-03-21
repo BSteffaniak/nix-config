@@ -198,28 +198,25 @@ Compose the review as a set of inline comments plus a summary body.
 For each finding, draft an inline comment. Each comment includes:
 
 - **File path and line number** — the specific line in the diff to attach the comment to
-- **Severity tag** — `[blocking]`, `[suggestion]`, `[nit]`, or `[question]`
-- **Comment body** — clear, actionable feedback
+- **Severity** (internal only) — `blocking`, `suggestion`, `nit`, or `question`. Used for ordering and triage in the local presentation. **Never included in the posted comment text.**
+- **Comment body** — the actual text that will be posted to GitHub
 
 **Comment writing guidelines:**
 
-- Lead with the concern, not a preamble. "This can panic if `user` is nil" not "I noticed that this might have an issue where..."
-- For `blocking` and `suggestion` comments, include a concrete suggestion — either prose describing the fix or a code snippet.
-- For `nit` comments, keep them brief. One sentence is often enough.
-- For `question` comments, explain why you're asking — what scenario or concern prompted the question.
-- Reference specific evidence when making claims. "The `UserService` on line 45 expects a non-nil user" is better than "this might break something."
-- If suggesting an alternative approach, briefly explain why the alternative is preferable.
-- Do not repeat information visible in the diff. The reviewer can see the code.
+All posted comment text must follow the [voice and tone guide](../_shared/voice-and-tone.md). Key points:
+
+- Get to the point immediately. First sentence carries the payload.
+- Never prefix comments with severity tags like `[blocking]` or `[nit]`. The severity comes through in how you write it, not a label.
+- Concrete suggestions for blocking/suggestion-level comments. Either prose or a code snippet.
+- One sentence is often enough for nits.
+- Reference specific evidence. "`UserService` on line 45 expects a non-nil user" not "this might break something".
+- Don't repeat information visible in the diff.
 
 #### Summary body
 
-Draft a summary review body that includes:
+Draft a summary review body. Keep it short and natural. A couple sentences covering the overall impression and the most important concerns. The inline comments carry the detail, so the summary doesn't need to enumerate everything.
 
-1. **One-line assessment** — overall impression of the PR (e.g., "Clean implementation of the caching layer with a few edge cases to address")
-2. **Key concerns** — bullet list of the most important findings (blocking and high-priority suggestions)
-3. **Positive observations** (if any) — briefly note things done well, but only if genuine. Do not fabricate praise.
-
-Keep the summary concise — 3-8 lines. The inline comments carry the detail.
+All posted text must follow the [voice and tone guide](../_shared/voice-and-tone.md).
 
 #### Recommended review state
 
@@ -247,13 +244,13 @@ Show the complete draft review for user approval before posting.
 
 #### Inline comments
 
-For each inline comment, present using the [embedded ascii-art format](../_shared/code-comment-format.md):
+For each inline comment, present using the [embedded ascii-art format](../_shared/code-comment-format.md). Show the severity in the **local header only** (for the user's triage), not in the comment body that will be posted:
 
 ```
 ### Comment #<N>: `<file>:<line>` [<severity>]
 ```
 
-Then the ascii-art block showing the code context and the draft comment in a box below the target line(s). For example:
+Then the ascii-art block showing the code context and the draft comment in a box below the target line(s). The comment body shown here is exactly what will be posted to GitHub. For example:
 
 ````
 ```
@@ -262,9 +259,9 @@ Then the ascii-art block showing the code context and the draft comment in a box
    42 │   return result.name;
       │
       │  ┌─ Draft comment ─────────────────────────────────
-      │  │ [blocking] `result` can be undefined if the
-      │  │ query returns no rows. Add a null guard:
-      │  │ `if (!result) throw new NotFoundError(id);`
+      │  │ `result` can be undefined if the query returns
+      │  │ no rows, this'll throw at `.name`. needs a
+      │  │ null check
       │  └─────────────────────────────────────────────────
       │
    43 │ }
@@ -284,15 +281,15 @@ Use the **Question tool** with `multiple: true` to let the user select which com
       "multiple": true,
       "options": [
         {
-          "label": "#1 [blocking] foo.ts:42",
+          "label": "#1 foo.ts:42 (blocking)",
           "description": "Null guard missing on query result"
         },
         {
-          "label": "#2 [suggestion] bar.ts:15",
+          "label": "#2 bar.ts:15 (suggestion)",
           "description": "Error message should include the request ID"
         },
         {
-          "label": "#3 [nit] baz.ts:88",
+          "label": "#3 baz.ts:88 (nit)",
           "description": "Inconsistent naming: `getData` vs `fetchData` elsewhere"
         }
       ]
@@ -387,7 +384,7 @@ Where `$EVENT` is one of `COMMENT`, `APPROVE`, or `REQUEST_CHANGES`, and `$COMME
   {
     "path": "src/foo.ts",
     "line": 42,
-    "body": "[blocking] `result` can be undefined if the query returns no rows. Add a null guard:\n`if (!result) throw new NotFoundError(id);`"
+    "body": "`result` can be undefined if the query returns no rows, this'll throw at `.name`. needs a null check"
   }
 ]
 ```
@@ -404,17 +401,18 @@ Comments: <N> inline comments
 
 ## Rules
 
+- **Follow the [voice and tone guide](../_shared/voice-and-tone.md) for all posted text.** Every comment body and summary body that gets posted to GitHub must sound like a human wrote it. Severity tags, bracket prefixes, em-dashes, filler phrases, and fake politeness are never acceptable in posted text.
+- **Severity is internal, not posted.** Severity levels (blocking, suggestion, nit, question) are used for ordering findings and helping the user triage in the local presentation. They are never included in the comment text posted to GitHub.
 - **Never clone the repository.** This skill is entirely read-only with respect to the filesystem. All code reads happen via local file reads (if in the repo) or the GitHub API (if remote). No cloning, no checkouts, no file modifications.
 - **Never post without user approval.** The draft review is presented in full (Step 5) and the user explicitly selects which comments to include and which review state to use before anything is submitted.
 - **Submit as a single atomic review.** All comments are posted together via `addPullRequestReview`, not as individual comment posts. This gives the PR author a single notification with all feedback, not a stream of individual comments.
 - **Do not duplicate existing feedback.** Check existing reviews and comments before drafting. If another reviewer has already flagged the same issue on the same line, skip it.
-- **Be constructive, not adversarial.** Review comments should help the author improve the code. Lead with the concern, provide evidence, suggest a fix. Avoid condescension, rhetorical questions, and "why did you...?" phrasing.
-- **Severity must be accurate.** Do not inflate severity to get attention. `blocking` means the code is broken or insecure — not that you prefer a different style. Misclassifying nits as blocking erodes trust.
+- **Severity must be accurate.** Do not inflate severity to get attention. `blocking` means the code is broken or insecure, not that you prefer a different style. Misclassifying nits as blocking erodes trust.
 - **Verify before commenting.** Read the actual file before drafting a comment. Do not comment on assumptions. If you cannot verify a concern, either investigate deeper or skip it.
 - **Respect the author's approach.** If the author chose a valid approach that differs from your preference, that is not a finding. Only flag it if you can cite a concrete problem (correctness, performance, maintainability) or a project convention that contradicts it.
-- **Keep comments actionable.** Every `blocking` and `suggestion` comment must include a concrete suggestion — either a code snippet or a clear description of what to change. "This could be better" is not actionable.
-- **Questions are genuine.** Use `question` severity when you genuinely need information to evaluate the code, not as a passive-aggressive way to suggest a change. If you already know the answer, make it a suggestion instead.
+- **Keep comments actionable.** Every blocking and suggestion comment must include a concrete suggestion. "This could be better" is not actionable.
+- **Questions are genuine.** Use question severity when you genuinely need information to evaluate the code, not as a passive-aggressive way to suggest a change. If you already know the answer, make it a suggestion instead.
 - **Deep analysis by default.** Unless the user explicitly requests a quick review, read full files and follow references to understand the code in context. Surface-level diff scanning misses the most important issues.
 - **Scale effort to PR size.** A 5-line PR does not need 20 minutes of analysis. A 500-line PR across 15 files warrants thorough investigation. Use judgment.
-- **The summary body is not a recap.** The summary should highlight the 2-3 most important points and give an overall assessment. Do not list every comment in the summary — the inline comments already do that.
-- **Positive feedback must be genuine.** If the code is well-written, say so briefly. Do not fabricate praise to soften criticism. Reviewers who pad every review with empty compliments are not taken seriously.
+- **The summary body is not a recap.** The summary should highlight the most important points and give an overall read. Do not enumerate every comment in the summary.
+- **Positive feedback must be genuine.** If the code is well-written, say so briefly. Do not fabricate praise to soften criticism.
