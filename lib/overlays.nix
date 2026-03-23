@@ -4,6 +4,7 @@
   lib,
   nixpkgs-unstable,
   ra-multiplex-src,
+  tone-clone-src ? null,
   rust-overlay ? null,
   zellij-fork ? null,
   cronstrue-src ? null,
@@ -12,6 +13,7 @@
   enableRust ? true,
   enableGithubReleases ? true,
   enableRaMultiplex ? true,
+  enableToneClone ? true,
   enableZellijFork ? false,
   enableCronstrue ? true,
   enableFirefoxDarwin ? true,
@@ -27,6 +29,7 @@ let
       firefox-darwin
       ;
     ra-multiplex = ra-multiplex-src;
+    tone-clone = tone-clone-src;
     cronstrue = cronstrue-src;
   };
 
@@ -39,6 +42,7 @@ let
     rust = import ./overlays/rust.nix;
     github-releases = import ./overlays/github-releases.nix;
     ra-multiplex = import ./overlays/ra-multiplex.nix;
+    tone-clone = import ./overlays/tone-clone.nix;
     zellij = import ./overlays/zellij.nix;
     cronstrue = import ./overlays/cronstrue.nix;
     firefox-darwin = import ./overlays/firefox-darwin.nix;
@@ -59,6 +63,7 @@ mkOverlaysLib.mkOverlays {
     enableRust
     enableGithubReleases
     enableRaMultiplex
+    enableToneClone
     enableZellijFork
     enableCronstrue
     enableFirefoxDarwin

@@ -1,0 +1,6 @@
+{
+    "flakeInput": "tone-clone-src",
+    "buildSystem": "rust",
+    "pname": "tone-clone",
+    "hashField": "cargoHash"
+}

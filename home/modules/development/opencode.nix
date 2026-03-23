@@ -137,12 +137,13 @@ in
       );
     }
 
-    # Deploy tone-clone skill from external repo
+    # Deploy tone-clone skill from external repo and install the CLI
     {
       xdg.configFile."opencode/skills/tone-clone" = {
         source = "${inputs.tone-clone-src}/skills/tone-clone";
         recursive = true;
       };
+      home.packages = [ pkgs.tone-clone ];
     }
 
     # Deploy raw provider files for per-provider aliases (opencode-bedrock, opencode-copilot, etc.)

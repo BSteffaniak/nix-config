@@ -14,6 +14,7 @@
       enableRust ? true,
       enableGithubReleases ? true,
       enableRaMultiplex ? true,
+      enableToneClone ? true,
       enableZellijFork ? false,
       enableCronstrue ? true,
       enableFirefoxDarwin ? true,
@@ -45,6 +46,10 @@
         {
           enable = enableRaMultiplex;
           overlay = overlayFunctions.ra-multiplex;
+        }
+        {
+          enable = enableToneClone;
+          overlay = overlayFunctions.tone-clone;
         }
         {
           enable = enableZellijFork;

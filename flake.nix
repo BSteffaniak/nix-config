@@ -134,6 +134,7 @@
           inherit (nixpkgsLib) lib;
           inherit nixpkgs-unstable;
           ra-multiplex-src = inputs.ra-multiplex;
+          tone-clone-src = inputs.tone-clone-src;
           rust-overlay = inputs.rust-overlay;
           zellij-fork = inputs.zellij-fork;
           cronstrue-src = inputs.cronstrue;
@@ -141,6 +142,7 @@
           enableRust = true;
           enableGithubReleases = true;
           enableRaMultiplex = true;
+          enableToneClone = true;
           enableZellijFork = true;
           enableCronstrue = true;
           enableFirefoxDarwin = true;
