@@ -125,4 +125,18 @@ These are hard rules, not suggestions. If the generated text contains any of the
 
 ## Writing style reference
 
-Before drafting any posted text, load the `tone-clone` skill and sample the user's real writing for the relevant comment type. Match the length, punctuation, capitalization, and casualness of the samples.
+Before drafting any posted text, run `tone-clone generate` to sample the user's real writing for the relevant comment type. Match the length, punctuation, capitalization, and casualness of the samples.
+
+Use the `--type` flag to match what you're about to write:
+
+| You're writing...            | Run this                                                       |
+| ---------------------------- | -------------------------------------------------------------- |
+| Review comments (pr-review)  | `tone-clone generate --stdout --type review_comment --limit 5` |
+| PR replies (pr-address)      | `tone-clone generate --stdout --type pr_comment --limit 5`     |
+| PR annotations (pr-annotate) | `tone-clone generate --stdout --type issue_comment --limit 5`  |
+| Issue comments               | `tone-clone generate --stdout --type issue_comment --limit 5`  |
+| PR/issue body text           | `tone-clone generate --stdout --type pr_body --limit 5`        |
+
+Add `--topic "relevant terms"` to get examples focused on a specific subject (e.g., `--topic "error handling"`).
+
+If `tone-clone` is not available or the database is empty, fall back to the rules and examples in this guide.

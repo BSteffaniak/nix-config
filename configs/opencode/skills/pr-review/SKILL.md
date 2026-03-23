@@ -1,7 +1,7 @@
 ---
 name: pr-review
 description: Review a pull request — analyze the diff, draft inline review comments, and submit a GitHub review. You are the reviewer.
-allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Bash(sqlite3:*), Question(*)
+allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Bash(sqlite3:*), Bash(tone-clone:*), Question(*)
 ---
 
 ## Purpose

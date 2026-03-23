@@ -1,7 +1,7 @@
 ---
 name: pr-address
 description: Address existing PR review feedback — validate reviewer comments against the codebase, reply to threads, dispute invalid feedback, and/or make code fixes.
-allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Bash(mktemp:*), Bash(sqlite3:*), Question(*)
+allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Bash(mktemp:*), Bash(sqlite3:*), Bash(tone-clone:*), Question(*)
 ---
 
 ## Purpose
