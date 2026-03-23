@@ -8,6 +8,7 @@
 #   ./scripts/source-build.sh update                  # Interactive: pick packages
 #   ./scripts/source-build.sh update --all            # Non-interactive: update all
 #   ./scripts/source-build.sh update cronstrue        # Non-interactive: update one
+#   ./scripts/source-build.sh update cronstrue --refresh  # Fetch latest + update
 #   ./scripts/source-build.sh list                    # List packages + stale status
 #   ./scripts/source-build.sh check                   # Check which are stale
 #   ./scripts/source-build.sh add                     # Interactive wizard
@@ -184,7 +185,7 @@ compute_cargo_hash() {
   pname=$(jq -r '.pname' "$config_file")
 
   local nix_expr
-  nix_expr="(import <nixpkgs> {}).rustPlatform.fetchCargoVendoredDeps { src = $store_path; name = \"${pname}-vendor\"; hash = \"\"; }"
+  nix_expr="(import <nixpkgs> {}).rustPlatform.fetchCargoVendor { src = $store_path; name = \"${pname}-vendor\"; hash = \"\"; }"
 
   info "Fetching cargo dependencies (single download)..." >&2
   local build_output
@@ -219,6 +220,7 @@ compute_cargo_hash() {
 update_project() {
   local project="$1"
   local dry_run="${2:-false}"
+  local refresh="${3:-false}"
   local config_file="$CONFIGS_DIR/$project.json"
   local hash_file="$HASHES_DIR/$project.json"
 
@@ -231,6 +233,12 @@ update_project() {
   flake_input=$(jq -r '.flakeInput' "$config_file")
   build_system=$(jq -r '.buildSystem' "$config_file")
   hash_field=$(jq -r '.hashField' "$config_file")
+
+  # Refresh flake input if requested
+  if [ "$refresh" = "true" ]; then
+    info "$project: refreshing flake input '$flake_input'..."
+    nix flake update "$flake_input" --flake "$REPO_ROOT"
+  fi
 
   # Get current locked rev
   local locked_rev
@@ -333,6 +341,7 @@ list_projects() {
 
 # ── Interactive Update ──────────────────────────────────────────────
 cmd_update_interactive() {
+  local refresh="${1:-false}"
   header "Update Source Build Hashes"
 
   local projects
@@ -384,7 +393,7 @@ cmd_update_interactive() {
   if [[ "$selection" == "a" ]] || [[ "$selection" == "A" ]]; then
     local failed=0
     for project in "${projects[@]}"; do
-      update_project "$project" || ((failed++)) || true
+      update_project "$project" "false" "$refresh" || ((failed++)) || true
     done
     if [ "$failed" -gt 0 ]; then
       err "$failed package(s) failed to update"
@@ -398,7 +407,7 @@ cmd_update_interactive() {
         ((failed++)) || true
         continue
       fi
-      update_project "${projects[$((num - 1))]}" || ((failed++)) || true
+      update_project "${projects[$((num - 1))]}" "false" "$refresh" || ((failed++)) || true
     done
     if [ "$failed" -gt 0 ]; then
       err "$failed package(s) failed to update"
@@ -440,7 +449,7 @@ cmd_add_interactive() {
   echo
   echo "Build system:"
   echo -e "  ${BOLD}1)${NC} npm (uses prefetch-npm-deps)"
-  echo -e "  ${BOLD}2)${NC} rust (uses fetchCargoVendoredDeps)"
+  echo -e "  ${BOLD}2)${NC} rust (uses fetchCargoVendor)"
   local bs_choice
   read -rp "Selection [1-2]: " bs_choice
 
@@ -599,6 +608,7 @@ usage() {
   echo "  (none)             Interactive main menu"
   echo "  update [PACKAGE]   Update hash (interactive if no package given)"
   echo "  update --all       Update all hashes"
+  echo "  update --refresh   Fetch latest source from flake input before updating"
   echo "  list               List packages with stale status"
   echo "  check [PACKAGE]    Check for stale hashes (dry run)"
   echo "  add                Interactive wizard to register a package"
@@ -606,15 +616,20 @@ usage() {
   echo "  -h, --help         Show this help message"
   echo
   echo "Examples:"
-  echo "  $(basename "$0")                          # Interactive menu"
-  echo "  $(basename "$0") update cronstrue         # Update one package"
-  echo "  $(basename "$0") update --all             # Update all hashes"
-  echo "  $(basename "$0") check                    # Check all for staleness"
-  echo "  $(basename "$0") list                     # Show status"
+  echo "  $(basename "$0")                                  # Interactive menu"
+  echo "  $(basename "$0") update cronstrue                 # Update one package"
+  echo "  $(basename "$0") update --all                     # Update all hashes"
+  echo "  $(basename "$0") update tone-clone --refresh      # Fetch latest + update hash"
+  echo "  $(basename "$0") update --all --refresh           # Fetch all latest + update"
+  echo "  $(basename "$0") check                            # Check all for staleness"
+  echo "  $(basename "$0") list                             # Show status"
   echo
   echo "Typical workflow after 'nix flake update':"
-  echo "  $(basename "$0") check                    # See what's stale"
-  echo "  $(basename "$0") update --all             # Fix all stale hashes"
+  echo "  $(basename "$0") check                            # See what's stale"
+  echo "  $(basename "$0") update --all                     # Fix all stale hashes"
+  echo
+  echo "Or refresh a specific input and update in one step:"
+  echo "  $(basename "$0") update tone-clone --refresh"
 }
 
 # ── Entry Point ─────────────────────────────────────────────────────
@@ -629,20 +644,29 @@ main() {
 
   case "$command" in
     update)
-      if [ $# -eq 0 ]; then
-        cmd_update_interactive
-      elif [ "$1" = "--all" ]; then
+      local refresh=false
+      local args=()
+      for arg in "$@"; do
+        if [ "$arg" = "--refresh" ]; then
+          refresh=true
+        else
+          args+=("$arg")
+        fi
+      done
+      if [ ${#args[@]} -eq 0 ]; then
+        cmd_update_interactive "$refresh"
+      elif [ "${args[0]}" = "--all" ]; then
         local projects
         read -ra projects <<< "$(get_projects)"
         local failed=0
         for project in "${projects[@]}"; do
-          update_project "$project" || ((failed++)) || true
+          update_project "$project" "false" "$refresh" || ((failed++)) || true
         done
         [ "$failed" -gt 0 ] && exit 1
       else
         local failed=0
-        for project in "$@"; do
-          update_project "$project" || ((failed++)) || true
+        for project in "${args[@]}"; do
+          update_project "$project" "false" "$refresh" || ((failed++)) || true
         done
         [ "$failed" -gt 0 ] && exit 1
       fi

@@ -534,11 +534,11 @@
     "tone-clone-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1774275933,
-        "narHash": "sha256-5iVbHsopYxuUjW24H7WZ2LMZXMsG1gwYVg3R41sWcBI=",
+        "lastModified": 1774284130,
+        "narHash": "sha256-qdN2VZIijVIFbDheiFQ2+60UI/jX9EnVcYIocHeMdUY=",
         "owner": "BSteffaniak",
         "repo": "tone-clone",
-        "rev": "425ba9daaf253408e9358bb61bae6c51782144bf",
+        "rev": "bcfdb43bef6f0da19300ded739a2bcef7b2c61d6",
         "type": "github"
       },
       "original": {
