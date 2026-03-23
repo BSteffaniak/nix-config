@@ -114,7 +114,19 @@ The user can select any subset, or type a custom answer. If the user selects not
 
 Do NOT draft or post anything without selection.
 
-### 4. Draft comments one-by-one
+### 4. Calibrate voice
+
+Before drafting any annotations, run `tone-clone generate` to sample the user's real writing:
+
+```bash
+tone-clone generate --stdout --type issue_comment --limit 5
+```
+
+Study the output for: sentence length, punctuation patterns, capitalization, level of formality, use of contractions, how links and code are referenced. All drafted annotations must match these patterns.
+
+If `tone-clone` is not available or returns no results, fall back to the rules and examples in the [voice and tone guide](../_shared/voice-and-tone.md).
+
+### 5. Draft comments one-by-one
 
 For each annotation the user selected, draft a comment and present it for approval. Process them **one at a time** — do not batch.
 
@@ -167,7 +179,7 @@ Wait for the user's response on each draft before moving to the next:
 - **Custom text** — user provided revised text; update the draft and re-present for confirmation
 - **Skip** — do not post this annotation; move to the next one
 
-### 5. Post approved comments
+### 6. Post approved comments
 
 After all drafts have been reviewed, post each approved comment to the PR.
 
@@ -207,7 +219,7 @@ After each post, confirm success and show the URL of the posted comment.
 
 If a post fails (e.g., the line is not part of the diff), report the error and move on to the next comment. Do not retry unless the user asks.
 
-### 6. Summary
+### 7. Summary
 
 After all comments have been processed, output a final summary:
 

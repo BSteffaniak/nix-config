@@ -567,6 +567,18 @@ Draft and post replies on the PR threads. This step handles both standalone repl
 
 **If no items were selected for replies** (and the action mode was "fix only"), skip this step.
 
+#### Calibrate voice
+
+Before drafting any replies, run `tone-clone generate` to sample the user's real writing:
+
+```bash
+tone-clone generate --stdout --type pr_comment --limit 5
+```
+
+Study the output for: sentence length, punctuation patterns, capitalization, level of formality, use of contractions, how links and code are referenced. All drafted replies must match these patterns.
+
+If `tone-clone` is not available or returns no results, fall back to the rules and examples in the [voice and tone guide](../_shared/voice-and-tone.md).
+
 #### 9a. Draft replies
 
 All posted reply text must follow the [voice and tone guide](../_shared/voice-and-tone.md). Draft replies for each comment that should receive a response:

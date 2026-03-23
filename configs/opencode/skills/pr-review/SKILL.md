@@ -189,7 +189,19 @@ Before recording a finding, check the existing reviews fetched in Step 2:
 - If the concern was flagged and **resolved**, check whether the resolution is adequate. Only re-flag if the fix is insufficient.
 - If the concern was flagged but on a **different line** or with **different reasoning**, it's not a duplicate — include it.
 
-### 4. Draft the review
+### 4. Calibrate voice
+
+Before drafting any text that will be posted to GitHub, run `tone-clone generate` to sample the user's real writing:
+
+```bash
+tone-clone generate --stdout --type review_comment --limit 5
+```
+
+Study the output for: sentence length, punctuation patterns, capitalization, level of formality, use of contractions, how links and code are referenced. All drafted comment bodies and the summary body in the next step must match these patterns.
+
+If `tone-clone` is not available or returns no results, fall back to the rules and examples in the [voice and tone guide](../_shared/voice-and-tone.md).
+
+### 5. Draft the review
 
 Compose the review as a set of inline comments plus a summary body.
 
@@ -226,7 +238,7 @@ Based on the findings, recommend a review state:
 - **REQUEST_CHANGES** — At least one blocking issue that must be fixed
 - **COMMENT** — No blocking issues, but substantial suggestions worth discussing
 
-### 5. Present the draft review
+### 6. Present the draft review
 
 Show the complete draft review for user approval before posting.
 
@@ -334,7 +346,7 @@ Then ask for the review state:
 
 If the user selects nothing (no comments and no state), treat it as "cancel" — do not submit a review.
 
-### 6. Submit the review
+### 7. Submit the review
 
 Post the review as a single atomic GitHub review using the `addPullRequestReview` GraphQL mutation. This submits all inline comments together as one review — not as individual comments.
 
@@ -404,7 +416,7 @@ Comments: <N> inline comments
 - **Follow the [voice and tone guide](../_shared/voice-and-tone.md) for all posted text.** Every comment body and summary body that gets posted to GitHub must sound like a human wrote it. Severity tags, bracket prefixes, em-dashes, filler phrases, and fake politeness are never acceptable in posted text.
 - **Severity is internal, not posted.** Severity levels (blocking, suggestion, nit, question) are used for ordering findings and helping the user triage in the local presentation. They are never included in the comment text posted to GitHub.
 - **Never clone the repository.** This skill is entirely read-only with respect to the filesystem. All code reads happen via local file reads (if in the repo) or the GitHub API (if remote). No cloning, no checkouts, no file modifications.
-- **Never post without user approval.** The draft review is presented in full (Step 5) and the user explicitly selects which comments to include and which review state to use before anything is submitted.
+- **Never post without user approval.** The draft review is presented in full (Step 6) and the user explicitly selects which comments to include and which review state to use before anything is submitted.
 - **Submit as a single atomic review.** All comments are posted together via `addPullRequestReview`, not as individual comment posts. This gives the PR author a single notification with all feedback, not a stream of individual comments.
 - **Do not duplicate existing feedback.** Check existing reviews and comments before drafting. If another reviewer has already flagged the same issue on the same line, skip it.
 - **Severity must be accurate.** Do not inflate severity to get attention. `blocking` means the code is broken or insecure, not that you prefer a different style. Misclassifying nits as blocking erodes trust.
