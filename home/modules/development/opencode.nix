@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  inputs,
   myLib,
   ...
 }:
@@ -134,6 +135,14 @@ in
           };
         }) skillEntries
       );
+    }
+
+    # Deploy tone-clone skill from external repo
+    {
+      xdg.configFile."opencode/skills/tone-clone" = {
+        source = "${inputs.tone-clone-src}/skills/tone-clone";
+        recursive = true;
+      };
     }
 
     # Deploy raw provider files for per-provider aliases (opencode-bedrock, opencode-copilot, etc.)

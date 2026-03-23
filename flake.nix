@@ -78,6 +78,10 @@
       url = "github:schpet/linear-cli";
       flake = false;
     };
+    tone-clone-src = {
+      url = "github:BSteffaniak/tone-clone";
+      flake = false;
+    };
   };
 
   outputs =

@@ -1,7 +1,7 @@
 ---
 name: pr-annotate
 description: Analyze a PR's changes and post concise guiding comments to help reviewers understand context, decisions, and complexity.
-allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Question(*)
+allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Bash(sqlite3:*), Question(*)
 ---
 
 ## Purpose

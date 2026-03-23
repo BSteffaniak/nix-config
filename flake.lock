@@ -451,6 +451,7 @@
         "ra-multiplex": "ra-multiplex",
         "rust-overlay": "rust-overlay",
         "swww": "swww",
+        "tone-clone-src": "tone-clone-src",
         "zellij-fork": "zellij-fork"
       }
     },
@@ -527,6 +528,22 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "tone-clone-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774275933,
+        "narHash": "sha256-5iVbHsopYxuUjW24H7WZ2LMZXMsG1gwYVg3R41sWcBI=",
+        "owner": "BSteffaniak",
+        "repo": "tone-clone",
+        "rev": "425ba9daaf253408e9358bb61bae6c51782144bf",
+        "type": "github"
+      },
+      "original": {
+        "owner": "BSteffaniak",
+        "repo": "tone-clone",
         "type": "github"
       }
     },

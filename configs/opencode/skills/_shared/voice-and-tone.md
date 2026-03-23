@@ -122,3 +122,7 @@ These are hard rules, not suggestions. If the generated text contains any of the
 **Good:**
 
 > split out from `processAll` so the batch retry logic (#234) can re-process individual failed items without re-running the whole batch
+
+## Writing style reference
+
+Before drafting any posted text, load the `tone-clone` skill and sample the user's real writing for the relevant comment type. Match the length, punctuation, capitalization, and casualness of the samples.
