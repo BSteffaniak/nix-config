@@ -1,14 +1,14 @@
-# git-crypt: Encrypt private host configurations
+# git-sshripped: Encrypt private host configurations
 # Hosts listed here will be encrypted at rest in the git repo.
-# On machines with the git-crypt key unlocked, files are transparent.
+# On machines with the git-sshripped key unlocked, files are transparent.
 # On GitHub (or any clone without the key), these appear as binary blobs.
 #
 # IMPORTANT: meta.nix files must remain plaintext so that flake.nix can
-# discover hosts on machines without the git-crypt key. Use the !filter
+# discover hosts on machines without the git-sshripped key. Use the !filter
 # negation to exclude them from the wildcard rule.
 #
 # To add a new private host:
-#   hosts/<hostname>/** filter=git-crypt diff=git-crypt
+#   hosts/<hostname>/** filter=git-sshripped diff=git-sshripped
 #   hosts/<hostname>/meta.nix !filter !diff
 
 hosts/bs-mbpro/** filter=git-sshripped diff=git-sshripped
