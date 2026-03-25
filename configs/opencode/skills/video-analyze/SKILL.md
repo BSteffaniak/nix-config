@@ -20,7 +20,7 @@ Analyze video content by extracting frames and viewing them as images. The skill
   ```bash
   nix shell nixpkgs#ffmpeg -c <command>
   ```
-- The Read tool must support image files (PNG) for displaying extracted frames.
+- The Read tool must support image files (JPEG) for displaying extracted frames.
 
 ## Steps
 
@@ -132,14 +132,43 @@ Choose an extraction frame rate based on the **effective duration** — the time
 - **Ceiling**: Never exceed the video's native fps.
 - **Frame count sanity check**: If the calculated fps would produce more than 200 frames, reduce fps until the frame count is ≤ 200. This prevents overwhelming the context with too many images on the initial pass.
 
-Use `python3` for the calculation:
+#### Image quality tiers
+
+Frame resolution and compression are adaptive — tied to how many frames are being extracted. More frames means smaller, more compressed images. Fewer frames allows higher fidelity. This keeps total context size manageable and avoids hitting the **2000px API limit** (the model rejects images where any dimension exceeds 2000px in many-image requests).
+
+**Resolution tiers** (based on expected frame count):
+
+| Frame count | Max dimension (px) | Rationale                                |
+| ----------- | ------------------ | ---------------------------------------- |
+| 1–10        | 1600               | Few frames — maximize readable detail    |
+| 11–30       | 1200               | Moderate count — still very readable     |
+| 31–80       | 800                | Many frames — shrink to stay efficient   |
+| 81–200      | 600                | Lots of frames — thumbnails for scanning |
+
+**Hard ceiling**: 2000px on any dimension, regardless of frame count. This is an API constraint that must never be violated.
+
+**JPEG quality tiers** (ffmpeg `-q:v` scale: 2 = best, 31 = worst):
+
+| Pass type                       | `-q:v` value | Typical file size | When used                       |
+| ------------------------------- | ------------ | ----------------- | ------------------------------- |
+| Initial scan                    | 5            | ~100–300 KB       | Default first extraction        |
+| Detail re-extract (time range)  | 3            | ~200–500 KB       | Zooming into a segment          |
+| Full detail (user requests max) | 2            | ~300–800 KB       | Explicit "high quality" request |
+
+**Why JPEG instead of PNG?** Screen recording PNGs are typically 2–5 MB each. At 100+ frames, that's hundreds of megabytes flowing through context. JPEG at quality 5 is visually indistinguishable for screen content analysis and 10–20x smaller.
+
+#### Combined calculation
+
+Use `python3` to compute fps, frame count, max dimension, and quality together:
 
 ```bash
 python3 -c "
 import math
 duration = 45.2  # effective duration in seconds
 native_fps = 30
+pass_type = 'initial'  # 'initial', 'detail', or 'full'
 
+# --- FPS tiers ---
 if duration < 1:
     fps = native_fps
 elif duration <= 5:
@@ -161,14 +190,31 @@ while frame_count > 200 and fps > 1:
     fps = max(1, fps - 1)
     frame_count = math.ceil(duration * fps)
 
-print(f'{fps} {frame_count}')
+# --- Resolution tiers ---
+if frame_count <= 10:
+    max_dim = 1600
+elif frame_count <= 30:
+    max_dim = 1200
+elif frame_count <= 80:
+    max_dim = 800
+else:
+    max_dim = 600
+
+# Hard ceiling: API rejects >2000px in many-image requests
+max_dim = min(max_dim, 2000)
+
+# --- Quality tiers ---
+quality = {'initial': 5, 'detail': 3, 'full': 2}[pass_type]
+
+print(f'{fps} {frame_count} {max_dim} {quality}')
 "
 ```
 
 Report the plan:
 
 ```
-Extracting at 5 fps → ~226 frames... reducing to 4 fps → ~181 frames
+Extracting at 4 fps → ~181 frames
+Resolution: scaled to max 600px | Quality: JPEG q=5 (initial scan)
 ```
 
 ### 4. Extract frames
@@ -187,47 +233,61 @@ If the directory already exists and contains frames from a previous extraction, 
 #### Full video extraction
 
 ```bash
-ffmpeg -i "/path/to/video.mp4" -vf "fps=5" -q:v 2 /tmp/video-analyze-abcd1234/frame_%04d.png
+ffmpeg -i "/path/to/video.mp4" \
+  -vf "fps=5,scale='min(800,iw)':-1" \
+  -q:v 5 /tmp/video-analyze-abcd1234/frame_%04d.jpg
 ```
 
 #### Time range extraction
 
 ```bash
 # Extract from 1:30 for 30 seconds at 5 fps
-ffmpeg -ss 90 -i "/path/to/video.mp4" -t 30 -vf "fps=5" -q:v 2 /tmp/video-analyze-abcd1234/frame_%04d.png
+ffmpeg -ss 90 -i "/path/to/video.mp4" -t 30 \
+  -vf "fps=5,scale='min(800,iw)':-1" \
+  -q:v 5 /tmp/video-analyze-abcd1234/frame_%04d.jpg
 ```
 
-#### Flags explained
+#### The `-vf` filter chain
 
-- `-vf "fps=N"` — Extract at N frames per second
-- `-q:v 2` — High quality PNG output
+The `-vf` parameter chains two filters together:
+
+1. `fps=N` — Extract at N frames per second
+2. `scale='min(MAX_DIM,iw)':-1` — Scale the longest dimension down to MAX_DIM pixels if the source is larger. Never upscales. The `-1` maintains aspect ratio.
+
+Replace `MAX_DIM` with the value from the resolution tier calculated in Step 3 (e.g., 600, 800, 1200, or 1600).
+
+#### Other flags
+
+- `-q:v N` — JPEG quality (2 = best, 31 = worst). Use the quality tier from Step 3.
 - `-ss` — Start time in seconds
 - `-t` — Duration in seconds
-- `frame_%04d.png` — Sequential numbered output
+- `frame_%04d.jpg` — Sequential numbered JPEG output
 
 After extraction, count the frames:
 
 ```bash
-ls /tmp/video-analyze-abcd1234/frame_*.png | wc -l
+ls /tmp/video-analyze-abcd1234/frame_*.jpg | wc -l
 ```
 
 Report:
 
 ```
 Extracted 181 frames to /tmp/video-analyze-abcd1234/
-Covering 0:00 – 0:45.2 at 4 fps
+Covering 0:00 – 0:45.2 at 4 fps | max 600px | JPEG q=5
 ```
 
 ### 5. Present frames
 
-Use the Read tool to display extracted frame images. Adapt the presentation strategy to the number of frames:
+Use the Read tool to display extracted frame images. Frames are already scaled and compressed during extraction (Step 4) to be within API limits, so they can be sent through Read safely.
+
+Adapt the presentation strategy to the number of frames:
 
 #### Few frames (≤ 20)
 
-Show all frames at once. Read each PNG file:
+Show all frames at once. Read each JPEG file:
 
 ```
-Read frame_0001.png through frame_0020.png
+Read frame_0001.jpg through frame_0020.jpg
 ```
 
 #### Moderate frames (21–50)
@@ -255,7 +315,7 @@ For each frame or batch, note the approximate timestamp:
 
 ```
 Frame 15 (~3.0s):
-[Read frame_0015.png]
+[Read frame_0015.jpg]
 ```
 
 Use `python3` to calculate timestamps from frame numbers:
@@ -285,13 +345,16 @@ If the user wants to see a specific segment more closely:
 
 1. Parse the requested time range
 2. Recalculate fps using the duration tiers from Step 3, but applied to the **segment duration** (shorter segments get higher fps)
-3. Clear the temp directory (or create a subdirectory like `/tmp/video-analyze-<hash>/detail/`)
-4. Re-extract frames for just that segment
-5. Present all re-extracted frames (the segment is short, so frame count should be manageable)
+3. Recalculate resolution and quality using `pass_type = 'detail'` — this gives higher JPEG quality (`-q:v 3`) and the resolution tier is based on the new (smaller) frame count, so images will typically be larger and sharper
+4. Clear the temp directory (or create a subdirectory like `/tmp/video-analyze-<hash>/detail/`)
+5. Re-extract frames for just that segment with the updated parameters
+6. Present all re-extracted frames (the segment is short, so frame count should be manageable)
 
 ```bash
-# Example: re-extract 0:10 to 0:15 at 10 fps
-ffmpeg -ss 10 -i "/path/to/video.mp4" -t 5 -vf "fps=10" -q:v 2 /tmp/video-analyze-abcd1234/detail/frame_%04d.png
+# Example: re-extract 0:10 to 0:15 at 10 fps, detail quality
+ffmpeg -ss 10 -i "/path/to/video.mp4" -t 5 \
+  -vf "fps=10,scale='min(1200,iw)':-1" \
+  -q:v 3 /tmp/video-analyze-abcd1234/detail/frame_%04d.jpg
 ```
 
 #### Request full re-extract at higher fps
@@ -300,8 +363,17 @@ If the user wants the entire video at higher detail:
 
 1. Warn if this will produce a large number of frames (> 100)
 2. Use the Question tool to confirm if > 200 frames would be generated
-3. Clear and re-extract at the requested fps
-4. Present using the same adaptive strategy from Step 5
+3. Use `pass_type = 'detail'` for quality, but keep the resolution tier based on the actual frame count (many frames still means smaller images)
+4. Clear and re-extract at the requested fps
+5. Present using the same adaptive strategy from Step 5
+
+#### Full detail mode
+
+If the user explicitly asks for maximum quality on a small number of frames (e.g., "show me frame 45 at full resolution"):
+
+1. Use `pass_type = 'full'` — JPEG quality 2, max dimension 1600px
+2. Only allow this for ≤ 10 frames at a time to stay within API limits
+3. If the user requests full detail on many frames, warn that this may hit context limits and suggest narrowing the range
 
 #### This step loops
 
@@ -311,7 +383,9 @@ Continue responding to questions and re-extraction requests until the user moves
 
 - **Minimize interruptions.** Only use the Question tool when genuinely ambiguous (multiple video candidates, confirmation for large re-extractions). If the user's intent is clear, proceed directly. This skill should integrate into an existing conversation without breaking flow.
 - **Never exceed native fps.** Do not extract more frames per second than the video actually has. Cap extraction fps at the native frame rate.
-- **Frame count awareness.** Be mindful of how many frames are being sent through the Read tool. More than 200 frames in a single pass will degrade context quality. Use sampling and batching to stay within reasonable limits.
+- **Respect the 2000px API limit.** The model rejects images where any dimension exceeds 2000px in many-image requests. Always use the `scale` filter in ffmpeg to enforce dimension limits. The resolution tiers in Step 3 are designed to stay well under this ceiling — never bypass them.
+- **Frame count and image size awareness.** Be mindful of both the number of frames and their individual size. More than 200 frames in a single pass degrades context quality. Use the adaptive resolution and quality tiers from Step 3: more frames = smaller, more compressed images. Fewer frames = larger, sharper images. Use sampling and batching in Step 5 to stay within reasonable limits.
+- **JPEG by default, enhance only when needed.** Use JPEG output for all extractions. Initial scans use quality 5, detail passes use quality 3, and full detail uses quality 2. Never use PNG unless the user explicitly requests lossless output and is extracting very few frames (≤ 5).
 - **Cross-platform commands.** Use `python3` for hashing, date math, and timestamp calculations. Use platform-appropriate `find` and `stat` flags — detect the OS and choose the right variant. Never use macOS-only or GNU-only commands without a fallback.
 - **No hardcoded paths.** Derive search directories from the tool/source hint and the OS. Never hardcode user-specific directory paths.
 - **Temp directory hygiene.** Always report the temp directory path so the user knows where frames are stored. Do not auto-delete the directory — the user may want to reference the frames later. Reuse existing frames when the video file hasn't changed.
