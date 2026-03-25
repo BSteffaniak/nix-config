@@ -187,6 +187,36 @@ Runs common Nix cleanup commands so you do not need to remember them.
 - `-y, --yes` - Skip confirmation prompt
 - `-h, --help` - Show help text
 
+### `update-all.sh` (Unified Update Helper)
+
+Runs all update steps in one command so you do not need to remember each script.
+
+**Default order:**
+
+1. `nix flake update`
+2. `./scripts/source-build.sh update --all`
+3. `./scripts/github-release.sh update --all`
+
+If any step fails, the script exits immediately so you can fix the issue before continuing.
+
+**Usage:**
+
+```bash
+./scripts/update-all.sh
+./scripts/update-all.sh --yes
+./scripts/update-all.sh --no-github
+```
+
+**Options:**
+
+- `--no-flake` - Skip flake input updates
+- `--no-source` - Skip source-build hash updates
+- `--no-github` - Skip GitHub release updates
+- `-y, --yes` - Skip confirmation prompt
+- `-h, --help` - Show help text
+
+At the end it prints `git status --short` so you can immediately see what changed.
+
 ### `detect-hardware.sh` (Hardware Detection)
 
 NixOS-only script that detects hardware and suggests appropriate configuration options.

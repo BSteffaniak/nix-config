@@ -103,6 +103,7 @@ This repository uses a **unified flake** at the root that provides:
 ├── packages/                # Custom packages (display-ctl, etc.)
 │
 └── scripts/                 # Helper scripts
+    ├── update-all.sh        # One-command full update helper
     ├── github-release.sh    # Manage GitHub release overlays
     ├── source-build.sh      # Manage source-built package hashes
     ├── detect-hardware.sh   # NixOS hardware detection
@@ -881,6 +882,33 @@ Format all Nix files in the repository using nixfmt. Supports check mode for CI/
 - Color-coded output showing progress
 - Check mode for CI/CD pipelines
 - Summary statistics at the end
+
+### `scripts/update-all.sh`
+
+Unified updater for everything that normally needs to be run separately.
+
+**Default flow:**
+
+```bash
+./scripts/update-all.sh
+```
+
+Runs, in order:
+
+1. `nix flake update`
+2. `./scripts/source-build.sh update --all`
+3. `./scripts/github-release.sh update --all`
+
+Useful options:
+
+```bash
+./scripts/update-all.sh --yes        # Skip confirmation
+./scripts/update-all.sh --no-github  # Skip GitHub release updates
+./scripts/update-all.sh --no-source  # Skip source-build hash updates
+./scripts/update-all.sh --no-flake   # Skip flake input updates
+```
+
+After completion, it prints `git status --short` so you can review changed files quickly.
 
 ### `bootstrap.sh`
 
