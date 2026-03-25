@@ -684,13 +684,17 @@ main() {
         for project in "${projects[@]}"; do
           update_project "$project" "false" "$refresh" || ((failed++)) || true
         done
-        [ "$failed" -gt 0 ] && exit 1
+        if [ "$failed" -gt 0 ]; then
+          exit 1
+        fi
       else
         local failed=0
         for project in "${args[@]}"; do
           update_project "$project" "false" "$refresh" || ((failed++)) || true
         done
-        [ "$failed" -gt 0 ] && exit 1
+        if [ "$failed" -gt 0 ]; then
+          exit 1
+        fi
       fi
       ;;
     list)
