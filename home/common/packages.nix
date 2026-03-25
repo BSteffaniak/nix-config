@@ -26,6 +26,7 @@
 
       # Code tools
       unstable.claude-code
+      worktree-setup
     ]
     ++ lib.optionals pkgs.stdenv.isLinux [
       # Linux-only packages

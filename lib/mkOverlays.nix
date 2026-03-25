@@ -15,6 +15,7 @@
       enableGithubReleases ? true,
       enableRaMultiplex ? true,
       enableToneClone ? true,
+      enableWorktreeSetup ? true,
       enableZellijFork ? false,
       enableCronstrue ? true,
       enableFirefoxDarwin ? true,
@@ -50,6 +51,10 @@
         {
           enable = enableToneClone;
           overlay = overlayFunctions.tone-clone;
+        }
+        {
+          enable = enableWorktreeSetup;
+          overlay = overlayFunctions.worktree-setup;
         }
         {
           enable = enableZellijFork;

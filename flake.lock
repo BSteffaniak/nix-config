@@ -452,6 +452,7 @@
         "rust-overlay": "rust-overlay",
         "swww": "swww",
         "tone-clone-src": "tone-clone-src",
+        "worktree-setup-src": "worktree-setup-src",
         "zellij-fork": "zellij-fork"
       }
     },
@@ -544,6 +545,22 @@
       "original": {
         "owner": "BSteffaniak",
         "repo": "tone-clone",
+        "type": "github"
+      }
+    },
+    "worktree-setup-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774480524,
+        "narHash": "sha256-qdXU19a0cCOTjtWfM4XOJB1z+OufQtTSBVxB3vwGaGs=",
+        "owner": "BSteffaniak",
+        "repo": "worktree-setup",
+        "rev": "a770635339eb15853041e4c5da2125e3dbcc036d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "BSteffaniak",
+        "repo": "worktree-setup",
         "type": "github"
       }
     },

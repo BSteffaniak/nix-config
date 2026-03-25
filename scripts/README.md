@@ -133,7 +133,7 @@ Run: ./scripts/source-build.sh update cronstrue
 ```
 lib/source-builds/
   configs/              # Per-package config (committed)
-    cronstrue.json      # { flakeInput, buildSystem, pname, hashField }
+    cronstrue.json      # { flakeInput, buildSystem, pname, hashField, ... }
     ra-multiplex.json
     zellij.json
   hashes/               # Auto-generated hash data (committed)
@@ -143,6 +143,8 @@ lib/source-builds/
 ```
 
 **Important:** The `hashes/` directory contains pinned dependency hashes that Nix reads at evaluation time. These files must be committed to git so all machines use the same hashes.
+
+For Rust repos that do not commit a `Cargo.lock`, set `cargoLockFile` in the package config and point it to a lock file in this repo (for example `lib/source-builds/locks/<name>-Cargo.lock`).
 
 **Typical workflow after updating flake inputs:**
 

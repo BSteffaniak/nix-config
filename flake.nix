@@ -82,6 +82,10 @@
       url = "github:BSteffaniak/tone-clone";
       flake = false;
     };
+    worktree-setup-src = {
+      url = "github:BSteffaniak/worktree-setup";
+      flake = false;
+    };
   };
 
   outputs =
@@ -135,6 +139,7 @@
           inherit nixpkgs-unstable;
           ra-multiplex-src = inputs.ra-multiplex;
           tone-clone-src = inputs.tone-clone-src;
+          worktree-setup-src = inputs.worktree-setup-src;
           rust-overlay = inputs.rust-overlay;
           zellij-fork = inputs.zellij-fork;
           cronstrue-src = inputs.cronstrue;
@@ -143,6 +148,7 @@
           enableGithubReleases = true;
           enableRaMultiplex = true;
           enableToneClone = true;
+          enableWorktreeSetup = true;
           enableZellijFork = true;
           enableCronstrue = true;
           enableFirefoxDarwin = true;

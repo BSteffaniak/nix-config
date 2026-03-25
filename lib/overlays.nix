@@ -5,6 +5,7 @@
   nixpkgs-unstable,
   ra-multiplex-src,
   tone-clone-src ? null,
+  worktree-setup-src ? null,
   rust-overlay ? null,
   zellij-fork ? null,
   cronstrue-src ? null,
@@ -14,6 +15,7 @@
   enableGithubReleases ? true,
   enableRaMultiplex ? true,
   enableToneClone ? true,
+  enableWorktreeSetup ? true,
   enableZellijFork ? false,
   enableCronstrue ? true,
   enableFirefoxDarwin ? true,
@@ -30,6 +32,7 @@ let
       ;
     ra-multiplex = ra-multiplex-src;
     tone-clone = tone-clone-src;
+    worktree-setup = worktree-setup-src;
     cronstrue = cronstrue-src;
   };
 
@@ -43,6 +46,7 @@ let
     github-releases = import ./overlays/github-releases.nix;
     ra-multiplex = import ./overlays/ra-multiplex.nix;
     tone-clone = import ./overlays/tone-clone.nix;
+    worktree-setup = import ./overlays/worktree-setup.nix;
     zellij = import ./overlays/zellij.nix;
     cronstrue = import ./overlays/cronstrue.nix;
     firefox-darwin = import ./overlays/firefox-darwin.nix;
@@ -64,6 +68,7 @@ mkOverlaysLib.mkOverlays {
     enableGithubReleases
     enableRaMultiplex
     enableToneClone
+    enableWorktreeSetup
     enableZellijFork
     enableCronstrue
     enableFirefoxDarwin

@@ -165,7 +165,9 @@ compute_cargo_hash() {
   local project="$1"
   local config_file="$CONFIGS_DIR/$project.json"
   local flake_input
+  local cargo_lock_file
   flake_input=$(jq -r '.flakeInput' "$config_file")
+  cargo_lock_file=$(jq -r '.cargoLockFile // empty' "$config_file")
 
   info "Computing cargoHash for ${BOLD}$project${NC}..." >&2
   info "This downloads cargo dependencies once (they'll be cached for the real build)..." >&2
@@ -173,8 +175,28 @@ compute_cargo_hash() {
   local store_path
   store_path=$(get_input_store_path "$flake_input") || return 1
 
-  if [ ! -f "$store_path/Cargo.lock" ]; then
+  local cargo_lock_path=""
+  local vendor_src="$store_path"
+
+  if [ -n "$cargo_lock_file" ]; then
+    cargo_lock_path="$REPO_ROOT/$cargo_lock_file"
+    if [ ! -f "$cargo_lock_path" ]; then
+      err "Configured cargoLockFile not found: $cargo_lock_path"
+      return 1
+    fi
+
+    local tmpdir
+    tmpdir=$(mktemp -d)
+    local temp_src="$tmpdir/src"
+    cp -R "$store_path" "$temp_src"
+    chmod u+w "$temp_src"
+    cp "$cargo_lock_path" "$temp_src/Cargo.lock"
+    vendor_src="$temp_src"
+  elif [ -f "$store_path/Cargo.lock" ]; then
+    cargo_lock_path="$store_path/Cargo.lock"
+  else
     err "No Cargo.lock found in $store_path"
+    err "For repos without Cargo.lock, set cargoLockFile in lib/source-builds/configs/$project.json"
     return 1
   fi
 
@@ -185,7 +207,7 @@ compute_cargo_hash() {
   pname=$(jq -r '.pname' "$config_file")
 
   local nix_expr
-  nix_expr="(import <nixpkgs> {}).rustPlatform.fetchCargoVendor { src = $store_path; name = \"${pname}-vendor\"; hash = \"\"; }"
+  nix_expr="(import <nixpkgs> {}).rustPlatform.fetchCargoVendor { src = $vendor_src; name = \"${pname}-vendor\"; hash = \"\"; }"
 
   info "Fetching cargo dependencies (single download)..." >&2
   local build_output
