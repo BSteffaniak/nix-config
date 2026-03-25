@@ -1,7 +1,7 @@
 ---
 name: video-analyze
 description: Extract and view frames from a video to analyze its visual content. Interactive — finds recordings, adapts frame rate to video length, and supports re-extraction at higher detail.
-allowed-tools: Bash(ffmpeg:*), Bash(ffprobe:*), Bash(mkdir:*), Bash(ls:*), Bash(find:*), Bash(stat:*), Bash(python3:*), Question(*), Read(*)
+allowed-tools: Bash(ffmpeg:*), Bash(ffprobe:*), Bash(mkdir:*), Bash(ls:*), Bash(find:*), Bash(python3:*), Question(*), Read(*)
 ---
 
 ## Purpose
@@ -47,21 +47,22 @@ If the user mentions a recording tool or source (e.g., "latest screen recording"
 | "obs"                                       | `~/Movies`                             | `~/Videos`              |
 | Generic / no hint                           | `~/Desktop`, `~/Movies`, `~/Documents` | `~/Videos`, `~/Desktop` |
 
-Search for the most recent video file in the resolved directories:
+Search for the most recent video file in the resolved directories. Use `python3` for cross-platform compatibility (handles spaces in filenames, works on both macOS and Linux):
 
 ```bash
 find ~/Desktop ~/Movies -maxdepth 2 \
   \( -name "*.mov" -o -name "*.mp4" -o -name "*.mkv" -o -name "*.webm" -o -name "*.avi" \) \
-  -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -5
+  -type f -print0 | xargs -0 python3 -c "
+import os, sys
+files = sys.argv[1:]
+entries = [(os.path.getmtime(f), f) for f in files]
+entries.sort(reverse=True)
+for mtime, path in entries[:5]:
+    print(f'{mtime} {path}')
+"
 ```
 
-On macOS where `find -printf` is unavailable, use:
-
-```bash
-find ~/Desktop ~/Movies -maxdepth 2 \
-  \( -name "*.mov" -o -name "*.mp4" -o -name "*.mkv" -o -name "*.webm" -o -name "*.avi" \) \
-  -type f -exec stat -f '%m %N' {} + 2>/dev/null | sort -rn | head -5
-```
+**Do not use `stat -f` or `find -printf`** — `stat -f '%m'` produces filesystem metadata (not file mtime) when combined with `find -exec` on macOS, and `-printf` is a GNU extension unavailable on macOS. The `python3 + os.path.getmtime()` approach is reliable on all platforms.
 
 #### Disambiguation
 
@@ -234,7 +235,7 @@ If the directory already exists and contains frames from a previous extraction, 
 
 ```bash
 ffmpeg -i "/path/to/video.mp4" \
-  -vf "fps=5,scale='min(800,iw)':-1" \
+  -vf "fps=5,scale=800:800:force_original_aspect_ratio=decrease:force_divisible_by=2" \
   -q:v 5 /tmp/video-analyze-abcd1234/frame_%04d.jpg
 ```
 
@@ -243,7 +244,7 @@ ffmpeg -i "/path/to/video.mp4" \
 ```bash
 # Extract from 1:30 for 30 seconds at 5 fps
 ffmpeg -ss 90 -i "/path/to/video.mp4" -t 30 \
-  -vf "fps=5,scale='min(800,iw)':-1" \
+  -vf "fps=5,scale=800:800:force_original_aspect_ratio=decrease:force_divisible_by=2" \
   -q:v 5 /tmp/video-analyze-abcd1234/frame_%04d.jpg
 ```
 
@@ -252,9 +253,11 @@ ffmpeg -ss 90 -i "/path/to/video.mp4" -t 30 \
 The `-vf` parameter chains two filters together:
 
 1. `fps=N` — Extract at N frames per second
-2. `scale='min(MAX_DIM,iw)':-1` — Scale the longest dimension down to MAX_DIM pixels if the source is larger. Never upscales. The `-1` maintains aspect ratio.
+2. `scale=MAX_DIM:MAX_DIM:force_original_aspect_ratio=decrease:force_divisible_by=2` — Scale the frame so that **neither width nor height** exceeds MAX_DIM pixels, maintaining aspect ratio. `force_original_aspect_ratio=decrease` means it only shrinks, never upscales. `force_divisible_by=2` ensures even pixel dimensions (required by some codecs).
 
 Replace `MAX_DIM` with the value from the resolution tier calculated in Step 3 (e.g., 600, 800, 1200, or 1600).
+
+**Do not use `scale='min(W,iw)':-1`** — that syntax only constrains width and lets height float freely, which fails for portrait/vertical videos where height can exceed the API limit.
 
 #### Other flags
 
@@ -268,6 +271,22 @@ After extraction, count the frames:
 ```bash
 ls /tmp/video-analyze-abcd1234/frame_*.jpg | wc -l
 ```
+
+#### Verify dimensions
+
+**Mandatory safety check** — always verify the first frame's dimensions before presenting any frames:
+
+```bash
+ffprobe -v quiet -select_streams v:0 -show_entries stream=width,height -of csv=p=0 /tmp/video-analyze-abcd1234/frame_0001.jpg
+```
+
+If either dimension exceeds 2000px, the extraction failed to scale correctly. Do not present the frames. Instead:
+
+1. Delete the oversized frames
+2. Re-extract with an explicitly lower `MAX_DIM` (halve the current value)
+3. Re-verify before presenting
+
+This check catches cases where the scale filter was misconfigured, the video has unusual dimensions, or the ffmpeg version handles the filter differently than expected.
 
 Report:
 
@@ -353,7 +372,7 @@ If the user wants to see a specific segment more closely:
 ```bash
 # Example: re-extract 0:10 to 0:15 at 10 fps, detail quality
 ffmpeg -ss 10 -i "/path/to/video.mp4" -t 5 \
-  -vf "fps=10,scale='min(1200,iw)':-1" \
+  -vf "fps=10,scale=1200:1200:force_original_aspect_ratio=decrease:force_divisible_by=2" \
   -q:v 3 /tmp/video-analyze-abcd1234/detail/frame_%04d.jpg
 ```
 
@@ -383,10 +402,10 @@ Continue responding to questions and re-extraction requests until the user moves
 
 - **Minimize interruptions.** Only use the Question tool when genuinely ambiguous (multiple video candidates, confirmation for large re-extractions). If the user's intent is clear, proceed directly. This skill should integrate into an existing conversation without breaking flow.
 - **Never exceed native fps.** Do not extract more frames per second than the video actually has. Cap extraction fps at the native frame rate.
-- **Respect the 2000px API limit.** The model rejects images where any dimension exceeds 2000px in many-image requests. Always use the `scale` filter in ffmpeg to enforce dimension limits. The resolution tiers in Step 3 are designed to stay well under this ceiling — never bypass them.
+- **Respect the 2000px API limit.** The model rejects images where **either width or height** exceeds 2000px in many-image requests. Always use `scale=W:H:force_original_aspect_ratio=decrease:force_divisible_by=2` in ffmpeg to constrain both dimensions. The resolution tiers in Step 3 are designed to stay well under this ceiling — never bypass them. After extraction, always verify the first frame's dimensions with ffprobe before presenting any frames.
 - **Frame count and image size awareness.** Be mindful of both the number of frames and their individual size. More than 200 frames in a single pass degrades context quality. Use the adaptive resolution and quality tiers from Step 3: more frames = smaller, more compressed images. Fewer frames = larger, sharper images. Use sampling and batching in Step 5 to stay within reasonable limits.
 - **JPEG by default, enhance only when needed.** Use JPEG output for all extractions. Initial scans use quality 5, detail passes use quality 3, and full detail uses quality 2. Never use PNG unless the user explicitly requests lossless output and is extracting very few frames (≤ 5).
-- **Cross-platform commands.** Use `python3` for hashing, date math, and timestamp calculations. Use platform-appropriate `find` and `stat` flags — detect the OS and choose the right variant. Never use macOS-only or GNU-only commands without a fallback.
+- **Cross-platform commands.** Use `python3` for hashing, date math, timestamp calculations, and file discovery (via `os.path.getmtime`). Do not use `stat -f` (broken with `find -exec` on macOS) or `find -printf` (GNU-only). The `python3` + `find -print0` + `xargs -0` pattern is reliable on all platforms.
 - **No hardcoded paths.** Derive search directories from the tool/source hint and the OS. Never hardcode user-specific directory paths.
 - **Temp directory hygiene.** Always report the temp directory path so the user knows where frames are stored. Do not auto-delete the directory — the user may want to reference the frames later. Reuse existing frames when the video file hasn't changed.
 - **Time ranges are natural language.** Accept human-friendly time specifications ("first 10 seconds", "from 1:30 to 2:00", "the part where the error appears around 0:45") and convert them to precise ffmpeg flags. When a description is vague ("around 0:45"), add padding (e.g., ±5 seconds).
