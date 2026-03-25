@@ -24,6 +24,20 @@ Analyze video content by extracting frames and viewing them as images. The skill
 
 ## Steps
 
+### 0. Check for oversized images in conversation history
+
+**This check is mandatory and must be performed before any other step.**
+
+If this skill has been used previously in the current conversation, old frame images may still be in the conversation context. The API sends ALL images from the entire conversation history with every message. If any previous frame extraction produced images exceeding 2000px on either dimension, the API will reject every subsequent message — even if newly extracted frames are correctly sized.
+
+**Check**: Scan the conversation history for any prior frame Read operations (e.g., `Read frame_*.png` or `Read frame_*.jpg`). If found:
+
+1. **STOP.** Do not proceed with extraction or frame presentation in this conversation.
+2. **Tell the user**: "This conversation contains frame images from a previous video analysis that may exceed the API's 2000px image size limit. Those old images are re-sent with every message and cannot be removed. Please start a new conversation for this video analysis."
+3. **Do not attempt any workaround.** There is no way to remove images from conversation history. A new conversation is the only fix.
+
+If no prior frame images are found in the conversation, proceed to Step 1.
+
 ### 1. Locate the video
 
 Parse the user's request to determine the video source. There are three modes:
@@ -299,16 +313,6 @@ Covering 0:00 – 0:45.2 at 4 fps | max 600px | JPEG q=5
 
 Use the Read tool to display extracted frame images. Frames are already scaled and compressed during extraction (Step 4) to be within API limits, so they can be sent through Read safely.
 
-#### Context contamination check
-
-**Before presenting any frames**, check whether the current conversation already contains frame images from a previous extraction (e.g., from an earlier run of this skill in the same session). Old frames may have been extracted at full resolution before the scale filter was applied, and those oversized images persist in the conversation context — they are re-sent to the API with every message and will trigger the 2000px rejection error even if the new frames are correctly sized.
-
-If the conversation already contains frame images from a prior extraction:
-
-- **Warn the user** that old oversized frames in the conversation history may cause API errors
-- **Recommend starting a new conversation** for the video analysis, since images cannot be removed from conversation history
-- Do not proceed with presenting new frames in the same conversation if old oversized frames are present — the API will reject the entire message regardless of how correct the new frames are
-
 Adapt the presentation strategy to the number of frames:
 
 #### Few frames (≤ 20)
@@ -413,7 +417,7 @@ Continue responding to questions and re-extraction requests until the user moves
 - **Minimize interruptions.** Only use the Question tool when genuinely ambiguous (multiple video candidates, confirmation for large re-extractions). If the user's intent is clear, proceed directly. This skill should integrate into an existing conversation without breaking flow.
 - **Never exceed native fps.** Do not extract more frames per second than the video actually has. Cap extraction fps at the native frame rate.
 - **Respect the 2000px API limit.** The model rejects images where **either width or height** exceeds 2000px in many-image requests. Always use `scale=W:H:force_original_aspect_ratio=decrease:force_divisible_by=2` in ffmpeg to constrain both dimensions. The resolution tiers in Step 3 are designed to stay well under this ceiling — never bypass them. After extraction, always verify the first frame's dimensions with ffprobe before presenting any frames.
-- **Beware context contamination.** Images from previous frame extractions persist in the conversation history and are re-sent to the API with every message. If an earlier extraction in the same conversation produced oversized frames (e.g., before the scale filter was applied), those old images will cause API rejections regardless of how correct the new frames are. When this happens, advise the user to start a fresh conversation. There is no way to remove images from conversation history.
+- **Beware context contamination.** Images from previous frame extractions persist in the conversation history and are re-sent to the API with every message. If an earlier extraction in the same conversation produced oversized frames, those old images will cause API rejections regardless of how correct new frames are. Step 0 is a mandatory gate that catches this — never skip it. When contamination is detected, the only fix is a new conversation.
 - **Frame count and image size awareness.** Be mindful of both the number of frames and their individual size. More than 200 frames in a single pass degrades context quality. Use the adaptive resolution and quality tiers from Step 3: more frames = smaller, more compressed images. Fewer frames = larger, sharper images. Use sampling and batching in Step 5 to stay within reasonable limits.
 - **JPEG by default, enhance only when needed.** Use JPEG output for all extractions. Initial scans use quality 5, detail passes use quality 3, and full detail uses quality 2. Never use PNG unless the user explicitly requests lossless output and is extracting very few frames (≤ 5).
 - **Cross-platform commands.** Use `python3` for hashing, date math, timestamp calculations, and file discovery (via `os.path.getmtime`). Do not use `stat -f` (broken with `find -exec` on macOS) or `find -printf` (GNU-only). The `python3` + `find -print0` + `xargs -0` pattern is reliable on all platforms.
