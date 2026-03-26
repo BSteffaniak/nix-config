@@ -121,13 +121,13 @@ Read files via the GitHub API. **Do NOT clone the repo.** This skill never requi
 - **Read a specific file at the PR's head ref:**
 
   ```bash
-  gh api repos/{owner}/{repo}/contents/{path}?ref={headRefName} --jq '.content' | base64 -d
+  gh api "repos/{owner}/{repo}/contents/{path}?ref={headRefName}" --jq '.content' | base64 -d
   ```
 
 - **Read a file at the base ref** (to understand what changed):
 
   ```bash
-  gh api repos/{owner}/{repo}/contents/{path}?ref={baseRefName} --jq '.content' | base64 -d
+  gh api "repos/{owner}/{repo}/contents/{path}?ref={baseRefName}" --jq '.content' | base64 -d
   ```
 
 - **Search for patterns across the repo** (for convention checking):
@@ -364,30 +364,26 @@ gh api graphql -f query='
 ' -f owner="$OWNER" -f repo="$REPO" -F number="$PR_NUMBER" --jq '.data.repository.pullRequest.id'
 ```
 
-Then submit the review:
+Then submit the review. Write the full GraphQL request body (query + variables) to a temp file and use `--input` so that the `comments` array is passed as structured JSON, not a string:
 
 ```bash
-gh api graphql -f query='
-  mutation($prId: ID!, $body: String!, $event: PullRequestReviewEvent!, $commitOID: GitObjectID!, $comments: [DraftPullRequestReviewComment!]) {
-    addPullRequestReview(input: {
-      pullRequestId: $prId
-      body: $body
-      event: $event
-      commitOID: $commitOID
-      comments: $comments
-    }) {
-      pullRequestReview {
-        id
-        url
-      }
-    }
+cat <<'EOF' > /tmp/pr-review-request.json
+{
+  "query": "mutation($prId: ID!, $body: String!, $event: PullRequestReviewEvent!, $commitOID: GitObjectID!, $comments: [DraftPullRequestReviewComment!]) { addPullRequestReview(input: { pullRequestId: $prId, body: $body, event: $event, commitOID: $commitOID, comments: $comments }) { pullRequestReview { id url } } }",
+  "variables": {
+    "prId": "$PR_NODE_ID",
+    "body": "$SUMMARY_BODY",
+    "event": "$EVENT",
+    "commitOID": "$HEAD_COMMIT_SHA",
+    "comments": $COMMENTS_JSON
   }
-' -f prId="$PR_NODE_ID" \
-  -f body="$SUMMARY_BODY" \
-  -f event="$EVENT" \
-  -f commitOID="$HEAD_COMMIT_SHA" \
-  -f comments="$COMMENTS_JSON"
+}
+EOF
+
+gh api graphql --input /tmp/pr-review-request.json
 ```
+
+`$COMMENTS_JSON` is a raw JSON array (not quoted) so it's embedded as structured data in the variables object. The other variables are strings and should be quoted.
 
 Where `$EVENT` is one of `COMMENT`, `APPROVE`, or `REQUEST_CHANGES`, and `$COMMENTS_JSON` is a JSON array of objects:
 
@@ -395,13 +391,56 @@ Where `$EVENT` is one of `COMMENT`, `APPROVE`, or `REQUEST_CHANGES`, and `$COMME
 [
   {
     "path": "src/foo.ts",
-    "line": 42,
+    "position": 42,
     "body": "`result` can be undefined if the query returns no rows, this'll throw at `.name`. needs a null check"
   }
 ]
 ```
 
-**Note on line numbers:** The `line` field must refer to a line in the **diff** (a line that was added or is within the diff context). If the target line is not in the diff, find the nearest line in the diff hunk and adjust the comment to reference the correct location.
+#### Calculating diff positions
+
+The `position` field is a 1-indexed offset within the file's diff. It is NOT the line number in the file. To convert a target file line number to a diff position:
+
+```bash
+gh pr diff {number} -R {owner}/{repo} | python3 -c "
+import sys, re
+
+target_file = 'PATH'  # e.g. 'src/foo.ts'
+target_lines = {42, 88}  # file line numbers to find
+
+in_file = False
+pos = 0
+new_line = 0
+
+for line in sys.stdin:
+    line = line.rstrip('\n')
+    if line.startswith('diff --git'):
+        in_file = target_file in line
+        pos = 0
+        new_line = 0
+        continue
+    if not in_file:
+        continue
+    if line.startswith('@@'):
+        m = re.search(r'\+(\d+)', line)
+        if m:
+            new_line = int(m.group(1)) - 1
+        pos += 1
+        continue
+    if line.startswith('-'):
+        pos += 1
+        continue
+    if line.startswith('+') or line.startswith(' '):
+        pos += 1
+        new_line += 1
+        if new_line in target_lines:
+            print(f'pos={pos} new_line={new_line} -> {line}')
+"
+```
+
+Run this for each file that has comments. The `pos` value is what goes in the `position` field.
+
+If the target line is not in the diff (not an added, removed, or context line), find the nearest line that IS in the diff and adjust the comment text to reference the correct location.
 
 After posting, confirm success and show the review URL:
 
