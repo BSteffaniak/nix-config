@@ -17,6 +17,7 @@
     ./homebrew.nix
     ./istat-menus.nix
     ./keepingyouawake.nix
+    ./lspmux.nix
     ./minecraft.nix
     ./microsoft-edge.nix
     ./ollama.nix
