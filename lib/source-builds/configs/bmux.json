@@ -1,0 +1,8 @@
+{
+    "flakeInput": "bmux-src",
+    "buildSystem": "rust",
+    "pname": "bmux",
+    "hashField": "cargoHash",
+    "doCheck": false,
+    "cargoBuildFlags": ["--package", "bmux_cli"]
+}

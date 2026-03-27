@@ -86,6 +86,10 @@
       url = "github:BSteffaniak/worktree-setup";
       flake = false;
     };
+    bmux-src = {
+      url = "git+ssh://git@github.com/BSteffaniak/bmux";
+      flake = false;
+    };
   };
 
   outputs =

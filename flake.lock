@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "bmux-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774581583,
+        "narHash": "sha256-0YxWtNxA1GFfDGPQ+ge1p4S2TpkGg2n1g8zPRDiajxY=",
+        "ref": "refs/heads/master",
+        "rev": "c4450e5d615a2a271bf7765651ef1024d7baff25",
+        "revCount": 402,
+        "type": "git",
+        "url": "ssh://git@github.com/BSteffaniak/bmux"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/BSteffaniak/bmux"
+      }
+    },
     "brew-src": {
       "flake": false,
       "locked": {
@@ -432,6 +448,7 @@
     },
     "root": {
       "inputs": {
+        "bmux-src": "bmux-src",
         "cronstrue": "cronstrue",
         "home-manager": "home-manager",
         "homebrew-aerospace": "homebrew-aerospace",
