@@ -163,7 +163,7 @@ Read files via the GitHub API. **Do NOT clone the repo for validation.** The Git
 - **Read a specific file at the PR's head ref:**
 
   ```bash
-  gh api repos/{owner}/{repo}/contents/{path}?ref={headRefName} --jq '.content' | base64 -d
+  gh api "repos/{owner}/{repo}/contents/{path}?ref={headRefName}" --jq '.content' | base64 -d
   ```
 
 - **Get the full PR diff for context:**
