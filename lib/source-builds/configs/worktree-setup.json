@@ -2,5 +2,7 @@
     "flakeInput": "worktree-setup-src",
     "buildSystem": "rust",
     "pname": "worktree-setup",
-    "hashField": "cargoHash"
+    "hashField": "cargoHash",
+    "doCheck": false,
+    "cargoBuildFlags": ["--package", "worktree-setup"]
 }

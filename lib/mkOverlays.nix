@@ -13,9 +13,7 @@
     {
       enableRust ? true,
       enableGithubReleases ? true,
-      enableRaMultiplex ? true,
-      enableToneClone ? true,
-      enableWorktreeSetup ? true,
+      enableSourceBuilds ? true,
       enableZellijFork ? false,
       enableCronstrue ? true,
       enableFirefoxDarwin ? true,
@@ -45,16 +43,8 @@
           overlay = overlayFunctions.github-releases;
         }
         {
-          enable = enableRaMultiplex;
-          overlay = overlayFunctions.ra-multiplex;
-        }
-        {
-          enable = enableToneClone;
-          overlay = overlayFunctions.tone-clone;
-        }
-        {
-          enable = enableWorktreeSetup;
-          overlay = overlayFunctions.worktree-setup;
+          enable = enableSourceBuilds;
+          overlay = overlayFunctions.source-builds;
         }
         {
           enable = enableZellijFork;

@@ -128,17 +128,55 @@ Run: ./scripts/source-build.sh update cronstrue
 - **npm** (`npmDepsHash`): Uses `prefetch-npm-deps` for fast, single-download hash computation
 - **Rust** (`cargoHash`): Uses `fetchCargoVendoredDeps` with automatic hash extraction. Downloads cargo dependencies once; they're cached for the real build
 
+**Auto-discovery:** Simple source-built packages (Rust `buildRustPackage` with no custom build steps) are **automatically discovered** from `lib/source-builds/configs/*.json`. No manual Nix file edits are needed — just create a config JSON, compute the hash, and the package appears in `pkgs`.
+
+**Adding a new simple source-built package:**
+
+```bash
+# 1. Add flake input to flake.nix (the only Nix file edit needed)
+#    my-tool-src = { url = "github:someone/my-tool"; flake = false; };
+
+# 2. Create config JSON
+cat > lib/source-builds/configs/my-tool.json << 'EOF'
+{
+    "flakeInput": "my-tool-src",
+    "buildSystem": "rust",
+    "pname": "my-tool",
+    "hashField": "cargoHash"
+}
+EOF
+
+# 3. Lock the input and compute hash
+nix flake lock
+./scripts/source-build.sh update my-tool
+
+# 4. Use pkgs.my-tool in your host config — done!
+```
+
+**Config JSON fields:**
+
+| Field             | Required | Description                                                                  |
+| ----------------- | -------- | ---------------------------------------------------------------------------- |
+| `flakeInput`      | Yes      | Name of the flake input in `flake.nix`                                       |
+| `buildSystem`     | Yes      | `"rust"` or `"npm"`                                                          |
+| `pname`           | Yes      | Package attribute name in `pkgs`                                             |
+| `hashField`       | Yes      | `"cargoHash"` or `"npmDepsHash"`                                             |
+| `doCheck`         | No       | Run tests? Default: `true`                                                   |
+| `cargoBuildFlags` | No       | Array of extra cargo flags, e.g. `["--package", "my-bin"]`                   |
+| `cargoLockFile`   | No       | Path to repo-managed lockfile for repos without `Cargo.lock`                 |
+| `complex`         | No       | Set to `true` to skip auto-discovery (use a standalone overlay file instead) |
+
+**Complex builds:** Packages that need custom toolchains, build phases, `nativeBuildInputs`, etc. should set `"complex": true` in their config and use a standalone overlay file in `lib/overlays/`. See `lib/overlays/zellij.nix` and `lib/overlays/cronstrue.nix` for examples.
+
 **Directory structure:**
 
 ```
 lib/source-builds/
   configs/              # Per-package config (committed)
-    cronstrue.json      # { flakeInput, buildSystem, pname, hashField, ... }
-    ra-multiplex.json
-    zellij.json
+    my-tool.json        # { flakeInput, buildSystem, pname, hashField, ... }
+    zellij.json         # { ..., "complex": true } — uses standalone overlay
   hashes/               # Auto-generated hash data (committed)
-    cronstrue.json      # { rev, npmDepsHash }
-    ra-multiplex.json   # { rev, cargoHash }
+    my-tool.json        # { rev, cargoHash }
     zellij.json         # { rev, cargoHash }
 ```
 

@@ -169,6 +169,32 @@ When adding a new package to the configuration:
 3. **Create feature flag**: Add `myConfig.*.enable` option
 4. **Update host configs**: Enable the feature in relevant `home.nix` files
 
+### Adding Source-Built Packages
+
+For packages built from Git source (not in nixpkgs), use the **auto-discovery source-build system**. Simple Rust packages require only:
+
+1. Add a flake input to `flake.nix`:
+   ```nix
+   my-tool-src = { url = "github:someone/my-tool"; flake = false; };
+   ```
+2. Create `lib/source-builds/configs/my-tool.json`:
+   ```json
+   {
+     "flakeInput": "my-tool-src",
+     "buildSystem": "rust",
+     "pname": "my-tool",
+     "hashField": "cargoHash"
+   }
+   ```
+3. Run `nix flake lock && ./scripts/source-build.sh update my-tool`
+4. Use `pkgs.my-tool` in your host config
+
+No other Nix files need editing. The auto-discovery overlay (`lib/overlays/source-builds.nix`) picks up configs automatically, similar to how `github-releases.nix` and `minecraft-plugins.nix` work.
+
+**Optional config fields:** `doCheck` (default `true`), `cargoBuildFlags` (array), `cargoLockFile` (for repos without `Cargo.lock`).
+
+**Complex builds** (custom toolchains, build phases, `nativeBuildInputs`, etc.) should set `"complex": true` in the config JSON and use a standalone overlay file in `lib/overlays/`. See `zellij.nix` and `cronstrue.nix` for examples.
+
 ## Adding New Hosts
 
 To add a new host, create a directory under `hosts/` with these files:

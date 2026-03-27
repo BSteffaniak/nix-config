@@ -2,5 +2,6 @@
     "flakeInput": "zellij-fork",
     "buildSystem": "rust",
     "pname": "zellij-custom",
-    "hashField": "cargoHash"
+    "hashField": "cargoHash",
+    "complex": true
 }

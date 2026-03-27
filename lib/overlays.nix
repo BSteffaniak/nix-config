@@ -1,11 +1,14 @@
 # Main overlay entry point
 # Simplifies passing flake inputs to the automatic overlay discovery system
+#
+# Source-built packages are auto-discovered from lib/source-builds/configs/*.json.
+# Only complex/custom overlays need explicit wiring here.
 {
   lib,
   nixpkgs-unstable,
-  ra-multiplex-src,
-  tone-clone-src ? null,
-  worktree-setup-src ? null,
+  # All flake inputs -- source-build auto-discovery looks up inputs by name
+  flakeInputs,
+  # Complex overlays that need explicit input wiring
   rust-overlay ? null,
   zellij-fork ? null,
   cronstrue-src ? null,
@@ -13,16 +16,16 @@
   # Optional overlay configuration
   enableRust ? true,
   enableGithubReleases ? true,
-  enableRaMultiplex ? true,
-  enableToneClone ? true,
-  enableWorktreeSetup ? true,
+  enableSourceBuilds ? true,
   enableZellijFork ? false,
   enableCronstrue ? true,
   enableFirefoxDarwin ? true,
   enableMinecraftPlugins ? true,
 }:
 let
-  # Bundle all inputs into a single attrset for easier passing
+  # Bundle inputs for overlays that need them
+  # Source-builds auto-discovery uses flakeInputs directly
+  # Complex overlays use named inputs
   inputs = {
     inherit
       nixpkgs-unstable
@@ -30,11 +33,9 @@ let
       zellij-fork
       firefox-darwin
       ;
-    ra-multiplex = ra-multiplex-src;
-    tone-clone = tone-clone-src;
-    worktree-setup = worktree-setup-src;
     cronstrue = cronstrue-src;
-  };
+  }
+  // flakeInputs;
 
   # Helper to extract git input metadata from flake.lock
   # Always uses root flake.lock with unified flake structure
@@ -44,9 +45,7 @@ let
   overlayFunctions = {
     rust = import ./overlays/rust.nix;
     github-releases = import ./overlays/github-releases.nix;
-    ra-multiplex = import ./overlays/ra-multiplex.nix;
-    tone-clone = import ./overlays/tone-clone.nix;
-    worktree-setup = import ./overlays/worktree-setup.nix;
+    source-builds = import ./overlays/source-builds.nix;
     zellij = import ./overlays/zellij.nix;
     cronstrue = import ./overlays/cronstrue.nix;
     firefox-darwin = import ./overlays/firefox-darwin.nix;
@@ -66,9 +65,7 @@ mkOverlaysLib.mkOverlays {
   inherit
     enableRust
     enableGithubReleases
-    enableRaMultiplex
-    enableToneClone
-    enableWorktreeSetup
+    enableSourceBuilds
     enableZellijFork
     enableCronstrue
     enableFirefoxDarwin

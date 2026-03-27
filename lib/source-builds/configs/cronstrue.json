@@ -2,5 +2,6 @@
     "flakeInput": "cronstrue",
     "buildSystem": "npm",
     "pname": "cronstrue-custom",
-    "hashField": "npmDepsHash"
+    "hashField": "npmDepsHash",
+    "complex": true
 }

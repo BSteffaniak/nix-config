@@ -137,18 +137,16 @@
         import ./lib/overlays.nix {
           inherit (nixpkgsLib) lib;
           inherit nixpkgs-unstable;
-          ra-multiplex-src = inputs.ra-multiplex;
-          tone-clone-src = inputs.tone-clone-src;
-          worktree-setup-src = inputs.worktree-setup-src;
+          # All flake inputs -- source-build auto-discovery looks up inputs by name
+          flakeInputs = inputs;
+          # Complex overlays that need explicit input wiring
           rust-overlay = inputs.rust-overlay;
           zellij-fork = inputs.zellij-fork;
           cronstrue-src = inputs.cronstrue;
           firefox-darwin = inputs.nixpkgs-firefox-darwin;
           enableRust = true;
           enableGithubReleases = true;
-          enableRaMultiplex = true;
-          enableToneClone = true;
-          enableWorktreeSetup = true;
+          enableSourceBuilds = true;
           enableZellijFork = true;
           enableCronstrue = true;
           enableFirefoxDarwin = true;
