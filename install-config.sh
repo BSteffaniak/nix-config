@@ -11,7 +11,7 @@ usage() {
   echo ""
   echo "Available configs:"
   echo "  neovim, hyprland, waybar, ghostty, tmux, wezterm, zellij,"
-  echo "  lazygit, bottom, gh, opencode, ra-multiplex, fuzzel,"
+  echo "  lazygit, bottom, gh, opencode, lspmux, fuzzel,"
   echo "  waypaper, act, htop"
   echo ""
   echo "Examples:"

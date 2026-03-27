@@ -156,7 +156,7 @@ cp -r configs/neovim ~/.config/nvim
 - `bottom` - Bottom system monitor
 - `gh` - GitHub CLI and gh-dash
 - `opencode` - OpenCode AI assistant configuration
-- `ra-multiplex` - Rust Analyzer multiplexer
+- `lspmux` - LSP multiplexer
 - `fuzzel` - Fuzzel application launcher
 - `waypaper` - Waypaper wallpaper manager
 - `act` - GitHub Actions locally
@@ -459,7 +459,7 @@ nix flake update
 
 The overlays read hashes from `lib/source-builds/hashes/<name>.json` and validate the git rev at evaluation time. If you forget to update hashes after a flake update, you get a clear error telling you exactly what to run.
 
-Currently managed packages: `cronstrue` (npm), `ra-multiplex` (Rust), `zellij` (Rust).
+Currently managed packages: `cronstrue` (npm), `lspmux` (Rust), `zellij` (Rust).
 
 See `./scripts/source-build.sh --help` and `scripts/README.md` for full documentation.
 

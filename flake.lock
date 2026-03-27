@@ -203,6 +203,22 @@
         "type": "github"
       }
     },
+    "lspmux": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1773222928,
+        "narHash": "sha256-OchqUe8GdBPL6tE3zpdaThfhzYZhYluagz1yXiexFT0=",
+        "ref": "refs/heads/main",
+        "rev": "18861f9d59e74ece8d867772cf07fa302c2dae98",
+        "revCount": 178,
+        "type": "git",
+        "url": "https://codeberg.org/p2502/lspmux"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://codeberg.org/p2502/lspmux"
+      }
+    },
     "neovim-nightly-overlay": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -414,22 +430,6 @@
         "type": "github"
       }
     },
-    "ra-multiplex": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1760261682,
-        "narHash": "sha256-QWCL+DZpBxBlubXFGbsVsZkfuQsd4nDufv8i33ZVkeY=",
-        "owner": "pr2502",
-        "repo": "ra-multiplex",
-        "rev": "d01f84d54dfdc17767f5450e3e4a0a120a057cfb",
-        "type": "github"
-      },
-      "original": {
-        "owner": "pr2502",
-        "repo": "ra-multiplex",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "cronstrue": "cronstrue",
@@ -440,6 +440,7 @@
         "homebrew-felixkratz": "homebrew-felixkratz",
         "homebrew-linear": "homebrew-linear",
         "linear-cli-src": "linear-cli-src",
+        "lspmux": "lspmux",
         "neovim-nightly-overlay": "neovim-nightly-overlay",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
@@ -448,7 +449,6 @@
         "nixpkgs-darwin": "nixpkgs-darwin",
         "nixpkgs-firefox-darwin": "nixpkgs-firefox-darwin",
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "ra-multiplex": "ra-multiplex",
         "rust-overlay": "rust-overlay",
         "swww": "swww",
         "tone-clone-src": "tone-clone-src",

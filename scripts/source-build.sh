@@ -108,17 +108,26 @@ get_input_store_path() {
   local path
   path=$(nix eval --raw ".inputs.$input_name.outPath" 2>/dev/null) || {
     # Fallback: reconstruct from flake.lock info
-    local owner repo rev
-    owner=$(jq -r ".nodes[\"$input_name\"].locked.owner // empty" "$FLAKE_LOCK")
-    repo=$(jq -r ".nodes[\"$input_name\"].locked.repo // empty" "$FLAKE_LOCK")
+    local input_type rev narHash
+    input_type=$(jq -r ".nodes[\"$input_name\"].locked.type // empty" "$FLAKE_LOCK")
     rev=$(jq -r ".nodes[\"$input_name\"].locked.rev // empty" "$FLAKE_LOCK")
-    local narHash
     narHash=$(jq -r ".nodes[\"$input_name\"].locked.narHash // empty" "$FLAKE_LOCK")
-    # Fetch via nix store (use --raw so we get a plain path string, not a Nix attrset)
-    path=$(nix eval --raw --impure --expr "(builtins.fetchTree { type = \"github\"; owner = \"$owner\"; repo = \"$repo\"; rev = \"$rev\"; narHash = \"$narHash\"; }).outPath" 2>/dev/null) || {
-      err "Could not resolve store path for input '$input_name'"
+
+    if [ "$input_type" = "github" ]; then
+      local owner repo
+      owner=$(jq -r ".nodes[\"$input_name\"].locked.owner // empty" "$FLAKE_LOCK")
+      repo=$(jq -r ".nodes[\"$input_name\"].locked.repo // empty" "$FLAKE_LOCK")
+      path=$(nix eval --raw --impure --expr "(builtins.fetchTree { type = \"github\"; owner = \"$owner\"; repo = \"$repo\"; rev = \"$rev\"; narHash = \"$narHash\"; }).outPath" 2>/dev/null)
+    elif [ "$input_type" = "git" ]; then
+      local url
+      url=$(jq -r ".nodes[\"$input_name\"].locked.url // .nodes[\"$input_name\"].original.url // empty" "$FLAKE_LOCK")
+      path=$(nix eval --raw --impure --expr "(builtins.fetchTree { type = \"git\"; url = \"$url\"; rev = \"$rev\"; narHash = \"$narHash\"; }).outPath" 2>/dev/null)
+    fi
+
+    if [ -z "${path:-}" ]; then
+      err "Could not resolve store path for input '$input_name' (type: ${input_type:-unknown})"
       return 1
-    }
+    fi
   }
   echo "$path"
 }

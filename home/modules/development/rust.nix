@@ -22,7 +22,7 @@ let
         (optional cfg.cargoTools.includeBinstall cargo-binstall)
         ++ (optional cfg.cargoTools.includeNextest cargo-nextest)
         ++ (optional cfg.cargoTools.includeLambda cargo-lambda)
-        ++ (optional cfg.cargoTools.includeRaMultiplex ra-multiplex-latest);
+        ++ (optional cfg.cargoTools.includeLspmux lspmux-latest);
 
       # Build toolchains with rust-src configuration
       stableToolchain = pkgs.mkRustStable { includeRustSrc = cfg.includeRustSrc; };
@@ -113,12 +113,12 @@ in
         '';
       };
 
-      includeRaMultiplex = mkOption {
+      includeLspmux = mkOption {
         type = types.bool;
         default = true;
         description = ''
-          Include ra-multiplex (rust-analyzer multiplexer).
-          Useful for managing multiple rust-analyzer instances in monorepos.
+          Include lspmux (LSP multiplexer).
+          Shares a single language server instance between multiple LSP clients.
         '';
       };
     };

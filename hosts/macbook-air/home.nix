@@ -73,7 +73,7 @@
       "git"
       "brew"
     ];
-    development.ra-multiplex.enable = true;
+    development.lspmux.enable = true;
 
     # DevOps tool configs
     devops.github.enable = true;

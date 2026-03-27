@@ -14,6 +14,6 @@
     ./lazygit.nix
     ./act.nix
     ./opencode.nix
-    ./ra-multiplex.nix
+    ./lspmux.nix
   ];
 }

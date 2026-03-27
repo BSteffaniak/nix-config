@@ -62,8 +62,8 @@
     };
 
     # Custom packages from source
-    ra-multiplex = {
-      url = "github:pr2502/ra-multiplex";
+    lspmux = {
+      url = "git+https://codeberg.org/p2502/lspmux";
       flake = false;
     };
     zellij-fork = {

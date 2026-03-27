@@ -4,7 +4,7 @@
 #
 # Then in your host's flake, import this file instead of the default overlay configuration.
 #
-# NOTE: Source-built packages (ra-multiplex, tone-clone, worktree-setup, etc.)
+# NOTE: Source-built packages (lspmux, tone-clone, worktree-setup, etc.)
 # are auto-discovered from lib/source-builds/configs/*.json and do NOT need
 # individual enable flags. They are all controlled by enableSourceBuilds.
 

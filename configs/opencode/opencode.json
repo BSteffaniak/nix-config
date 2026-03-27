@@ -19,8 +19,8 @@
         "rust": {
             "disabled": true
         },
-        "ra-multiplex": {
-            "command": ["ra-multiplex"],
+        "lspmux": {
+            "command": ["lspmux"],
             "extensions": [".rs"]
         }
     },
