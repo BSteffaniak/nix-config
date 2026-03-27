@@ -72,6 +72,12 @@ else
             # Optional config fields with defaults
             doCheck = config.doCheck or true;
             cargoBuildFlags = config.cargoBuildFlags or [ ];
+            hooksDir = ../source-builds/hooks;
+            postInstall =
+              if config ? "postInstallFile" then
+                builtins.readFile (hooksDir + "/${config.postInstallFile}")
+              else
+                null;
           in
           {
             ${config.pname} = final.rustPlatform.buildRustPackage (
@@ -83,6 +89,7 @@ else
                 inherit doCheck;
               }
               // (if cargoBuildFlags != [ ] then { inherit cargoBuildFlags; } else { })
+              // (if postInstall != null then { inherit postInstall; } else { })
             );
           };
   in
