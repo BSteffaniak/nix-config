@@ -27,6 +27,7 @@
       # Code tools
       unstable.claude-code
       worktree-setup
+      bmux
     ]
     ++ lib.optionals pkgs.stdenv.isLinux [
       # Linux-only packages
