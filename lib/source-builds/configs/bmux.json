@@ -4,5 +4,5 @@
     "pname": "bmux",
     "hashField": "cargoHash",
     "doCheck": false,
-    "postInstallFile": "bmux.sh"
+    "cargoBuildFlags": ["--package", "bmux_cli"]
 }
