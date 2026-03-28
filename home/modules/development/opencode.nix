@@ -64,6 +64,47 @@ let
   skillsDir = ../../../configs/opencode/skills;
   skillEntries = builtins.attrNames (builtins.readDir skillsDir);
 
+  # Filter to actual skill directories (exclude _shared and non-skill entries)
+  isSkillDir =
+    name:
+    let
+      dirContents = builtins.readDir (skillsDir + "/${name}");
+    in
+    name != "_shared" && builtins.hasAttr "SKILL.md" dirContents;
+  localSkillNames = builtins.filter isSkillDir skillEntries;
+
+  # Extract description from a SKILL.md file's YAML frontmatter
+  parseSkillDescription =
+    skillMdPath:
+    let
+      content = builtins.readFile skillMdPath;
+      matched = builtins.match "---\nname: ([^\n]+)\ndescription: ([^\n]+)\n.*" content;
+    in
+    if matched != null then builtins.elemAt matched 1 else "Run this skill";
+
+  # Generate a command markdown file that invokes the skill
+  makeSkillCommand =
+    name: description: "---\ndescription: ${description}\n---\n/skill ${name} $ARGUMENTS\n";
+
+  # Build command entries for all local skills
+  localSkillCommands = builtins.listToAttrs (
+    map (name: {
+      name = "opencode/commands/${name}.md";
+      value = {
+        text = makeSkillCommand name (parseSkillDescription (skillsDir + "/${name}/SKILL.md"));
+      };
+    }) localSkillNames
+  );
+
+  # Build command entry for tone-clone (external skill)
+  toneCloneCommand = {
+    "opencode/commands/tone-clone.md" = {
+      text = makeSkillCommand "tone-clone" (
+        parseSkillDescription "${inputs.tone-clone-src}/skills/tone-clone/SKILL.md"
+      );
+    };
+  };
+
   # Merge order: base → provider → permissions (alphabetical) → host overrides (in order)
   baseConfig = builtins.fromJSON (builtins.readFile ../../../configs/opencode/opencode.json);
   mergedConfig = foldl' myLib.deepMerge baseConfig (
@@ -144,6 +185,11 @@ in
         recursive = true;
       };
       home.packages = [ pkgs.tone-clone ];
+    }
+
+    # Auto-generate slash commands for all skills (local + external)
+    {
+      xdg.configFile = localSkillCommands // toneCloneCommand;
     }
 
     # Deploy raw provider files for per-provider aliases (opencode-bedrock, opencode-copilot, etc.)
