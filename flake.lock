@@ -3,11 +3,11 @@
     "bmux-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1774658815,
-        "narHash": "sha256-jaxQlserv5IigHU9I2dcCitDTC/Jeb0/MCFYrVHI5aQ=",
+        "lastModified": 1774712972,
+        "narHash": "sha256-JECXaLG2qAldBl7yvbrh7XaaK7TSp/4WPq80WYmx6BI=",
         "ref": "refs/heads/master",
-        "rev": "b664b1a7ae5338d020a486bf69880e0278003178",
-        "revCount": 408,
+        "rev": "4e603df48e4a735ff91755c1aba3276d99e8d810",
+        "revCount": 425,
         "type": "git",
         "url": "ssh://git@github.com/BSteffaniak/bmux"
       },
