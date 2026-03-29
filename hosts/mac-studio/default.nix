@@ -49,6 +49,7 @@
     darwin.microsoftEdge.enable = true;
     darwin.roon.enable = true;
     darwin.scrollReverser.enable = true;
+    darwin.scrollReverser.reverseVertical = false;
 
     # Desktop environment
     desktop.aerospace.enable = true;

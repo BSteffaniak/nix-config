@@ -19,6 +19,12 @@ in
       description = "Reverse mouse scroll direction";
     };
 
+    reverseVertical = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Reverse vertical scroll direction";
+    };
+
     startAtLogin = mkOption {
       type = types.bool;
       default = true;
@@ -44,7 +50,7 @@ in
           "-c"
           (concatStringsSep " && " [
             "defaults write com.pilotmoon.scroll-reverser InvertScrollingOn -bool true"
-            "defaults write com.pilotmoon.scroll-reverser ReverseY -bool true"
+            "defaults write com.pilotmoon.scroll-reverser ReverseY -bool ${boolToString cfg.reverseVertical}"
             "defaults write com.pilotmoon.scroll-reverser ReverseX -bool false"
             "defaults write com.pilotmoon.scroll-reverser ReverseTrackpad -bool false"
             "defaults write com.pilotmoon.scroll-reverser ReverseMouse -bool ${boolToString cfg.reverseMouse}"
