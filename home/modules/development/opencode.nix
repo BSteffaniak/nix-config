@@ -107,6 +107,7 @@ let
 
   # Merge order: base → provider → permissions (alphabetical) → host overrides (in order)
   baseConfig = builtins.fromJSON (builtins.readFile ../../../configs/opencode/opencode.json);
+  tuiConfig = ../../../configs/opencode/tui.json;
   mergedConfig = foldl' myLib.deepMerge baseConfig (
     [ providerConfig ] ++ permissionConfigs ++ overrideConfigs
   );
@@ -163,6 +164,7 @@ in
   config = mkIf cfg.enable (mkMerge [
     {
       xdg.configFile."opencode/opencode.json".text = builtins.toJSON mergedConfig;
+      xdg.configFile."opencode/tui.json".source = tuiConfig;
     }
 
     # Auto-discover and deploy all skill directories from configs/opencode/skills/
