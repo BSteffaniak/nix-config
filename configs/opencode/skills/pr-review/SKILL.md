@@ -85,6 +85,7 @@ gh api graphql -f query='
         }
         reviewThreads(first: 100) {
           nodes {
+            id
             isResolved
             path
             line
@@ -185,7 +186,8 @@ Assign each finding a severity that maps to its review impact:
 
 Before recording a finding, check the existing reviews fetched in Step 2:
 
-- If another reviewer has already flagged the **same concern** on the **same line** and it is **unresolved**, skip it — do not duplicate.
+- If a **human reviewer** has already flagged the **same concern** on the **same line** and it is **unresolved**, skip it — do not duplicate.
+- If an **automated reviewer** (bot, Codex, CodeRabbit, etc.) has flagged the same concern, still include the finding but mark it as a **thread reply** rather than a new inline comment. Human reinforcement of bot findings carries weight.
 - If the concern was flagged and **resolved**, check whether the resolution is adequate. Only re-flag if the fix is insufficient.
 - If the concern was flagged but on a **different line** or with **different reasoning**, it's not a duplicate — include it.
 
@@ -317,6 +319,16 @@ The user can:
 
 If the user modifies any comments, update the drafts and re-present the affected comments for confirmation.
 
+#### Thread reply drafts
+
+If any selected comments will be posted as thread replies (reinforcing existing review threads), present those drafts separately under a "Thread Replies" heading after the inline comments. Use the same format:
+
+```
+### Thread Reply #<N>: `<file>:<line>` (replying to @<author>)
+```
+
+Followed by the draft reply text. These go through the same approval gate — nothing is posted until the user confirms.
+
 Then ask for the review state:
 
 ```json
@@ -447,8 +459,26 @@ After posting, confirm success and show the review URL:
 ```
 Review submitted: <url>
 State: <COMMENT / APPROVE / REQUEST_CHANGES>
-Comments: <N> inline comments
+Comments: <N> inline comments, <M> thread replies
 ```
+
+#### Replying to existing review threads
+
+When the user selects a comment that overlaps with an existing unresolved review thread (same file, same line, same concern), post a **thread reply** instead of creating a duplicate inline comment. Use the `addPullRequestReviewThreadReply` mutation:
+
+```bash
+gh api graphql -f query='
+  mutation($threadId: ID!, $body: String!) {
+    addPullRequestReviewThreadReply(input: { pullRequestReviewThreadId: $threadId, body: $body }) {
+      comment { id url }
+    }
+  }
+' -f threadId="$THREAD_ID" -f body="$COMMENT_BODY"
+```
+
+The `$THREAD_ID` comes from the `id` field on `reviewThreads` nodes fetched in Step 2.
+
+Thread replies are posted individually (not part of the atomic review submission). Post them after the main review is submitted.
 
 ## Rules
 
