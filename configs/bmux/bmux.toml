@@ -43,21 +43,21 @@ prefix = "ctrl+a"
 # Tab (window) prev/next
 # Zellij: Ctrl h / Ctrl j / Ctrl Left -> GoToPreviousTab
 #         Ctrl s / Ctrl Right          -> GoToNextTab
-"ctrl+h"     = "plugin:bmux.windows:prev-window"
-"ctrl+j"     = "plugin:bmux.windows:prev-window"
-"ctrl+left"  = "plugin:bmux.windows:prev-window"
-"ctrl+s"     = "plugin:bmux.windows:next-window"
-"ctrl+right" = "plugin:bmux.windows:next-window"
+"ctrl+h"          = "plugin:bmux.windows:prev-window"
+"ctrl+j"          = "plugin:bmux.windows:prev-window"
+"ctrl+arrow_left" = "plugin:bmux.windows:prev-window"
+"ctrl+s"          = "plugin:bmux.windows:next-window"
+"ctrl+arrow_right" = "plugin:bmux.windows:next-window"
 
 # Pane focus navigation
 # Zellij: Alt h/j/k + Alt arrows -> MoveFocus / MoveFocusOrTab
-"alt+h"     = "focus_left_pane"
-"alt+left"  = "focus_left_pane"
-"alt+j"     = "focus_down_pane"
-"alt+down"  = "focus_down_pane"
-"alt+k"     = "focus_up_pane"
-"alt+up"    = "focus_up_pane"
-"alt+right" = "focus_right_pane"
+"alt+h"          = "focus_left_pane"
+"alt+arrow_left" = "focus_left_pane"
+"alt+j"          = "focus_down_pane"
+"alt+arrow_down" = "focus_down_pane"
+"alt+k"          = "focus_up_pane"
+"alt+arrow_up"   = "focus_up_pane"
+"alt+arrow_right" = "focus_right_pane"
 
 # Pane cycling
 # Zellij: Ctrl k / Ctrl t -> FocusPreviousPane; Alt t -> FocusNextPane
@@ -96,10 +96,10 @@ prefix = "ctrl+a"
 "j"          = "focus_down_pane"
 "k"          = "focus_up_pane"
 "l"          = "focus_right_pane"
-"left"       = "focus_left_pane"
-"down"       = "focus_down_pane"
-"up"         = "focus_up_pane"
-"right"      = "focus_right_pane"
+"arrow_left"       = "focus_left_pane"
+"arrow_down"       = "focus_down_pane"
+"arrow_up"         = "focus_up_pane"
+"arrow_right"      = "focus_right_pane"
 
 # Pane cycling
 # Zellij tmux: o -> FocusNextPane
@@ -120,14 +120,14 @@ prefix = "ctrl+a"
 "z" = "zoom_pane"
 
 # Resize (Shift + vim keys / Shift + arrows)
-"shift+h"          = "resize_left"
-"shift+l"          = "resize_right"
-"shift+k"          = "resize_up"
-"shift+j"          = "resize_down"
-"shift+left"       = "resize_left"
-"shift+right"      = "resize_right"
-"shift+up"         = "resize_up"
-"shift+down"       = "resize_down"
+"shift+h"              = "resize_left"
+"shift+l"              = "resize_right"
+"shift+k"              = "resize_up"
+"shift+j"              = "resize_down"
+"shift+arrow_left"     = "resize_left"
+"shift+arrow_right"    = "resize_right"
+"shift+arrow_up"       = "resize_up"
+"shift+arrow_down"     = "resize_down"
 "plus"             = "increase_split"
 "minus"            = "decrease_split"
 
@@ -155,20 +155,20 @@ prefix = "ctrl+a"
 "ctrl+a ]"  = "exit_scroll_mode"
 
 # Line-by-line scrolling (vim-style + arrows)
-"j"    = "scroll_down_line"
-"down" = "scroll_down_line"
-"k"    = "scroll_up_line"
-"up"   = "scroll_up_line"
+"j"          = "scroll_down_line"
+"arrow_down" = "scroll_down_line"
+"k"          = "scroll_up_line"
+"arrow_up"   = "scroll_up_line"
 
 # Page scrolling
 # Zellij: h/left/PageUp -> PageScrollUp; l/right/PageDown -> PageScrollDown
-"h"         = "scroll_up_page"
-"left"      = "scroll_up_page"
-"page_up"   = "scroll_up_page"
-"ctrl+b"    = "scroll_up_page"
-"l"         = "scroll_down_page"
-"right"     = "scroll_down_page"
-"page_down" = "scroll_down_page"
+"h"            = "scroll_up_page"
+"arrow_left"   = "scroll_up_page"
+"page_up"      = "scroll_up_page"
+"ctrl+b"       = "scroll_up_page"
+"l"            = "scroll_down_page"
+"arrow_right"  = "scroll_down_page"
+"page_down"    = "scroll_down_page"
 
 # Jump to top/bottom
 # Zellij: g -> ScrollToTop (mapped via scroll_top)
