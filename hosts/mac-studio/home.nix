@@ -26,6 +26,7 @@
 
     # CLI tools - now configured directly in home-manager
     cliTools = {
+      terminals.bmux.enable = true;
       terminals.ghostty = {
         enable = true;
         hideWindowDecoration = true;

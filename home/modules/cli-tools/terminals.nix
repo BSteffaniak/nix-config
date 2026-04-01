@@ -21,6 +21,7 @@ in
       description = "Enable all terminal tools (can be overridden per-tool)";
     };
 
+    bmux.enable = mkEnable "Bmux terminal multiplexer";
     zellij.enable = mkEnable "Zellij terminal workspace";
     tmux.enable = mkEnable "Tmux terminal multiplexer";
     wezterm.enable = mkEnable "WezTerm terminal emulator";
@@ -36,6 +37,11 @@ in
   };
 
   config = {
+    # Bmux
+    xdg.configFile."bmux/bmux.toml" = mkIf cfg.bmux.enable {
+      source = ../../../configs/bmux/bmux.toml;
+    };
+
     # Zellij - use custom package when available
     programs.zellij = mkIf cfg.zellij.enable {
       enable = true;

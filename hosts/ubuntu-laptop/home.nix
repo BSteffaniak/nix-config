@@ -50,6 +50,7 @@
 
     # CLI Tools - granular enables (no system-level on Ubuntu standalone)
     cliTools = {
+      terminals.bmux.enable = true;
       terminals.zellij.enable = true;
       terminals.tmux.enable = true;
       terminals.wezterm.enable = true;

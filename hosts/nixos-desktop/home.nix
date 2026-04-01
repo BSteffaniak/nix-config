@@ -49,6 +49,7 @@
   myConfig = {
     # CLI tools - now configured directly in home-manager
     cliTools = {
+      terminals.bmux.enable = true;
       terminals.zellij.enable = true;
       terminals.tmux.enable = true;
 
