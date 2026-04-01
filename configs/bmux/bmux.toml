@@ -30,24 +30,24 @@ prefix = "ctrl+a"
 [keybindings.global]
 
 # Tab (window) navigation -- Alt+number for direct switch
-"alt+1" = "window_goto_1"
-"alt+2" = "window_goto_2"
-"alt+3" = "window_goto_3"
-"alt+4" = "window_goto_4"
-"alt+5" = "window_goto_5"
-"alt+6" = "window_goto_6"
-"alt+7" = "window_goto_7"
-"alt+8" = "window_goto_8"
-"alt+9" = "window_goto_9"
+"alt+1" = "plugin:bmux.windows:goto-window 1"
+"alt+2" = "plugin:bmux.windows:goto-window 2"
+"alt+3" = "plugin:bmux.windows:goto-window 3"
+"alt+4" = "plugin:bmux.windows:goto-window 4"
+"alt+5" = "plugin:bmux.windows:goto-window 5"
+"alt+6" = "plugin:bmux.windows:goto-window 6"
+"alt+7" = "plugin:bmux.windows:goto-window 7"
+"alt+8" = "plugin:bmux.windows:goto-window 8"
+"alt+9" = "plugin:bmux.windows:goto-window 9"
 
 # Tab (window) prev/next
 # Zellij: Ctrl h / Ctrl j / Ctrl Left -> GoToPreviousTab
 #         Ctrl s / Ctrl Right          -> GoToNextTab
-"ctrl+h"     = "window_prev"
-"ctrl+j"     = "window_prev"
-"ctrl+left"  = "window_prev"
-"ctrl+s"     = "window_next"
-"ctrl+right" = "window_next"
+"ctrl+h"     = "plugin:bmux.windows:prev-window"
+"ctrl+j"     = "plugin:bmux.windows:prev-window"
+"ctrl+left"  = "plugin:bmux.windows:prev-window"
+"ctrl+s"     = "plugin:bmux.windows:next-window"
+"ctrl+right" = "plugin:bmux.windows:next-window"
 
 # Pane focus navigation
 # Zellij: Alt h/j/k + Alt arrows -> MoveFocus / MoveFocusOrTab
@@ -88,7 +88,7 @@ prefix = "ctrl+a"
 
 # New window/session
 # Zellij tmux: c -> NewTab, C -> new session via session-manager
-"c"       = "new_window"
+"c"       = "plugin:bmux.windows:new-window"
 "shift+c" = "new_session"
 
 # Pane navigation (vim-style + arrows)
@@ -107,13 +107,13 @@ prefix = "ctrl+a"
 
 # Tab (window) navigation
 # Zellij tmux: n -> next tab, p -> previous tab
-"n" = "window_next"
-"p" = "window_prev"
+"n" = "plugin:bmux.windows:next-window"
+"p" = "plugin:bmux.windows:prev-window"
 
 # Close pane / close tab
 # Zellij tmux: x -> CloseFocus, & -> CloseTab
 "x"       = "close_focused_pane"
-"shift+&" = "window_close"
+"shift+&" = "plugin:bmux.windows:close-current-window"
 
 # Zoom / fullscreen toggle
 # Zellij tmux: z -> ToggleFocusFullscreen
