@@ -5,9 +5,7 @@
 # bmux collapses these into prefix-based runtime bindings + global bindings.
 #
 # --- Zellij features with NO bmux equivalent (as of writing) ---
-# - Ctrl l  / Ctrl+a ^  : ToggleTab (switch to last-used tab/window)
 # - Alt f               : ToggleFloatingPanes (floating pane layer)
-# - Alt l               : ToggleSession (toggle between sessions)
 # - Alt i / Alt o       : MoveTab left/right (reorder tabs)
 # - Alt p / Alt Shift p : TogglePaneInGroup / ToggleGroupMarking
 # - Ctrl g              : Lock mode (pass all keys to terminal)
@@ -15,6 +13,7 @@
 # - Ctrl f              : Session manager plugin (fuzzy session picker)
 # - Ctrl+a ,            : Rename tab
 # - Ctrl+a space        : NextSwapLayout (cycle pane layouts)
+# - Ctrl+a Ctrl+a       : Send literal prefix key to pane
 # - d / u in scroll     : HalfPageScrollDown / HalfPageScrollUp
 # - e in scroll         : EditScrollback (open scrollback in $EDITOR)
 # - search sub-mode     : SearchInput / SearchToggleOption (incremental search)
@@ -39,31 +38,39 @@ prefix = "ctrl+a"
 "alt+7" = "plugin:bmux.windows:goto-window 7"
 "alt+8" = "plugin:bmux.windows:goto-window 8"
 "alt+9" = "plugin:bmux.windows:goto-window 9"
+"alt+0" = "plugin:bmux.windows:goto-window 10"
 
 # Tab (window) prev/next
 # Zellij: Ctrl h / Ctrl j / Ctrl Left -> GoToPreviousTab
 #         Ctrl s / Ctrl Right          -> GoToNextTab
-"ctrl+h"          = "plugin:bmux.windows:prev-window"
-"ctrl+j"          = "plugin:bmux.windows:prev-window"
-"ctrl+arrow_left" = "plugin:bmux.windows:prev-window"
-"ctrl+s"          = "plugin:bmux.windows:next-window"
-"ctrl+arrow_right" = "plugin:bmux.windows:next-window"
+"ctrl+h"     = "plugin:bmux.windows:prev-window"
+"ctrl+j"     = "plugin:bmux.windows:prev-window"
+"ctrl+left"  = "plugin:bmux.windows:prev-window"
+"ctrl+s"     = "plugin:bmux.windows:next-window"
+"ctrl+right" = "plugin:bmux.windows:next-window"
+
+# Toggle last window
+# Zellij: Ctrl l -> ToggleTab (switch to last-used tab)
+"ctrl+l" = "plugin:bmux.windows:last-window"
+
+# Session navigation
+# Zellij: Ctrl o -> enters session mode; mapped to session_prev as closest useful action
+"ctrl+o" = "session_prev"
 
 # Pane focus navigation
 # Zellij: Alt h/j/k + Alt arrows -> MoveFocus / MoveFocusOrTab
-"alt+h"          = "focus_left_pane"
-"alt+arrow_left" = "focus_left_pane"
-"alt+j"          = "focus_down_pane"
-"alt+arrow_down" = "focus_down_pane"
-"alt+k"          = "focus_up_pane"
-"alt+arrow_up"   = "focus_up_pane"
-"alt+arrow_right" = "focus_right_pane"
+"alt+h"     = "focus_left_pane"
+"alt+left"  = "focus_left_pane"
+"alt+j"     = "focus_down_pane"
+"alt+down"  = "focus_down_pane"
+"alt+k"     = "focus_up_pane"
+"alt+up"    = "focus_up_pane"
+"alt+right" = "focus_right_pane"
 
 # Pane cycling
 # Zellij: Ctrl k / Ctrl t -> FocusPreviousPane; Alt t -> FocusNextPane
-# bmux only has focus_next_pane, so all three cycle forward
-"ctrl+k" = "focus_next_pane"
-"ctrl+t" = "focus_next_pane"
+"ctrl+k" = "focus_previous_pane"
+"ctrl+t" = "focus_previous_pane"
 "alt+t"  = "focus_next_pane"
 
 # Resize
@@ -86,20 +93,23 @@ prefix = "ctrl+a"
 "\"" = "split_focused_horizontal"
 "%"  = "split_focused_vertical"
 
+# Toggle split direction
+"t" = "toggle_split_direction"
+
 # New window/session
 # Zellij tmux: c -> NewTab, C -> new session via session-manager
 "c"       = "plugin:bmux.windows:new-window"
 "shift+c" = "new_session"
 
 # Pane navigation (vim-style + arrows)
-"h"          = "focus_left_pane"
-"j"          = "focus_down_pane"
-"k"          = "focus_up_pane"
-"l"          = "focus_right_pane"
-"arrow_left"       = "focus_left_pane"
-"arrow_down"       = "focus_down_pane"
-"arrow_up"         = "focus_up_pane"
-"arrow_right"      = "focus_right_pane"
+"h"     = "focus_left_pane"
+"j"     = "focus_down_pane"
+"k"     = "focus_up_pane"
+"l"     = "focus_right_pane"
+"left"  = "focus_left_pane"
+"down"  = "focus_down_pane"
+"up"    = "focus_up_pane"
+"right" = "focus_right_pane"
 
 # Pane cycling
 # Zellij tmux: o -> FocusNextPane
@@ -110,26 +120,38 @@ prefix = "ctrl+a"
 "n" = "plugin:bmux.windows:next-window"
 "p" = "plugin:bmux.windows:prev-window"
 
+# Toggle last window
+# Zellij tmux: ^ -> ToggleTab; w -> last window (plugin default)
+"^" = "plugin:bmux.windows:last-window"
+"w" = "plugin:bmux.windows:last-window"
+
+# Session prev/next (tmux-style parentheses)
+"(" = "session_prev"
+")" = "session_next"
+
 # Close pane / close tab
 # Zellij tmux: x -> CloseFocus, & -> CloseTab
 "x"       = "close_focused_pane"
 "shift+&" = "plugin:bmux.windows:close-current-window"
+
+# Restart focused pane
+"r" = "restart_focused_pane"
 
 # Zoom / fullscreen toggle
 # Zellij tmux: z -> ToggleFocusFullscreen
 "z" = "zoom_pane"
 
 # Resize (Shift + vim keys / Shift + arrows)
-"shift+h"              = "resize_left"
-"shift+l"              = "resize_right"
-"shift+k"              = "resize_up"
-"shift+j"              = "resize_down"
-"shift+arrow_left"     = "resize_left"
-"shift+arrow_right"    = "resize_right"
-"shift+arrow_up"       = "resize_up"
-"shift+arrow_down"     = "resize_down"
-"plus"             = "increase_split"
-"minus"            = "decrease_split"
+"shift+h"     = "resize_left"
+"shift+l"     = "resize_right"
+"shift+k"     = "resize_up"
+"shift+j"     = "resize_down"
+"shift+left"  = "resize_left"
+"shift+right" = "resize_right"
+"shift+up"    = "resize_up"
+"shift+down"  = "resize_down"
+"plus"        = "increase_split"
+"minus"       = "decrease_split"
 
 # Scroll / copy mode
 # Zellij tmux: [ -> scroll mode, ] -> exit
@@ -150,31 +172,31 @@ prefix = "ctrl+a"
 [keybindings.scroll]
 
 # Exit scroll mode
-"escape"    = "exit_scroll_mode"
-"ctrl+c"    = "exit_scroll_mode"
-"ctrl+a ]"  = "exit_scroll_mode"
+"escape"   = "exit_scroll_mode"
+"ctrl+c"   = "exit_scroll_mode"
+"ctrl+a ]" = "exit_scroll_mode"
 
 # Line-by-line scrolling (vim-style + arrows)
-"j"          = "scroll_down_line"
-"arrow_down" = "scroll_down_line"
-"k"          = "scroll_up_line"
-"arrow_up"   = "scroll_up_line"
+"j"    = "scroll_down_line"
+"down" = "scroll_down_line"
+"k"    = "scroll_up_line"
+"up"   = "scroll_up_line"
 
 # Page scrolling
 # Zellij: h/left/PageUp -> PageScrollUp; l/right/PageDown -> PageScrollDown
-"h"            = "scroll_up_page"
-"arrow_left"   = "scroll_up_page"
-"page_up"      = "scroll_up_page"
-"ctrl+b"       = "scroll_up_page"
-"l"            = "scroll_down_page"
-"arrow_right"  = "scroll_down_page"
-"page_down"    = "scroll_down_page"
+"h"         = "scroll_up_page"
+"left"      = "scroll_up_page"
+"page_up"   = "scroll_up_page"
+"ctrl+b"    = "scroll_up_page"
+"l"         = "scroll_down_page"
+"right"     = "scroll_down_page"
+"page_down" = "scroll_down_page"
 
 # Jump to top/bottom
-# Zellij: g -> ScrollToTop (mapped via scroll_top)
 "g"       = "scroll_top"
 "shift+g" = "scroll_bottom"
 
 # Selection / copy
 "v"     = "begin_selection"
+"y"     = "copy_scrollback"
 "enter" = "confirm_scrollback"
