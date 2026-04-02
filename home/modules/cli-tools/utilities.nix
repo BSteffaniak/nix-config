@@ -79,7 +79,6 @@ in
       (mkIf cfg.media.mediainfo.enable [ pkgs.mediainfo ])
       (mkIf cfg.opencode.enable [
         pkgs.unstable.opencode
-        pkgs.unstable.claude-code
       ])
     ];
   };

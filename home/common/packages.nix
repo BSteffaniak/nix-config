@@ -25,7 +25,6 @@
       flac
 
       # Code tools
-      unstable.claude-code
       worktree-setup
       bmux
     ]
