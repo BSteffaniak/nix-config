@@ -501,8 +501,8 @@ If the user provides custom text, apply the edits to the already-written files.
 - **`allowed-tools` must be minimal.** Only include tools the skill's instructions explicitly use. Over-permissioning is a security concern.
 - **Cross-platform by default.** Use `python3` for date math, SQLite, and scripting. Never use macOS-only (`date -v`) or GNU-only (`date -d`) commands without a cross-platform alternative.
 - **No hardcoded user-specific paths.** Derive directories dynamically from git, session history, or user input. Never embed paths like `~/GitHub` or `~/Projects`.
-- **Every interactive skill needs gate rules.** If the skill uses the Question tool, its Rules section must include "Never act without user confirmation" and "Never skip a gate."
-- **Interactive mutation skills need barrier rules.** If a skill can mutate code, GitHub state, or configs, its Rules section must include: "Two-turn mutation barrier", "\"Recommended\" is not approval", and "Non-interactive fallback".
+- **Every interactive skill needs gate rules.** If the skill uses the Question tool, its Rules section must include "Never act without user confirmation" and "Never skip a gate", and approval must come from direct user Question responses.
+- **Interactive mutation skills need strict authorization rules.** If a skill can mutate code, GitHub state, or configs, its Rules section must include: "Two-turn mutation barrier", "\"Recommended\" is not approval", "Non-interactive fallback", "Strict approval provenance required", "No delegated approvals", and "No direct-mutation shortcut".
 - **Per-item review means one at a time.** If the skill uses the per-item review loop pattern, its Rules section must enforce processing items individually — never batch.
 - **Present before writing.** Never write files without the user having reviewed the content first. The draft-and-review cycle in Step 3 is mandatory.
 - **Respect the user's edits.** If the user provides custom text or edit instructions at any point, apply their changes faithfully. Do not re-edit their words.
