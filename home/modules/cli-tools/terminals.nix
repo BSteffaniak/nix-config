@@ -39,7 +39,12 @@ in
   config = {
     # Bmux
     xdg.configFile."bmux/bmux.toml" = mkIf cfg.bmux.enable {
-      source = ../../../configs/bmux/bmux.toml;
+      text = ''
+        [general]
+        default_shell = "${pkgs.fish}/bin/fish"
+
+      ''
+      + builtins.readFile ../../../configs/bmux/bmux.toml;
     };
 
     # Zellij - use custom package when available
