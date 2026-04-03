@@ -486,6 +486,9 @@ Thread replies are posted individually (not part of the atomic review submission
 - **Severity is internal, not posted.** Severity levels (blocking, suggestion, nit, question) are used for ordering findings and helping the user triage in the local presentation. They are never included in the comment text posted to GitHub.
 - **Never clone the repository.** This skill is entirely read-only with respect to the filesystem. All code reads happen via local file reads (if in the repo) or the GitHub API (if remote). No cloning, no checkouts, no file modifications.
 - **Never post without user approval.** The draft review is presented in full (Step 6) and the user explicitly selects which comments to include and which review state to use before anything is submitted.
+- **Two-turn mutation barrier.** Never submit a review or post thread replies in the same turn that presents draft text. Present first, then wait for a separate explicit approval turn.
+- **"Recommended" is not approval.** Recommendations are guidance only and never authorize posting.
+- **Non-interactive fallback.** If approval gates cannot be run in the current context, return draft review output only and stop; do not post.
 - **Submit as a single atomic review.** All comments are posted together via `addPullRequestReview`, not as individual comment posts. This gives the PR author a single notification with all feedback, not a stream of individual comments.
 - **Do not duplicate existing feedback.** Check existing reviews and comments before drafting. If another reviewer has already flagged the same issue on the same line, skip it.
 - **Severity must be accurate.** Do not inflate severity to get attention. `blocking` means the code is broken or insecure, not that you prefer a different style. Misclassifying nits as blocking erodes trust.

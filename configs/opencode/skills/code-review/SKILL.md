@@ -358,6 +358,9 @@ Present a final summary of the review session:
 ## Rules
 
 - **Never modify code without explicit user approval.** Every fix must be approved in Step 5 and confirmed in Step 6 before it persists. Two gates, no shortcuts.
+- **Two-turn mutation barrier.** Never apply edits in the same turn that presents findings or proposed fixes. Present first, then wait for a separate explicit approval turn.
+- **"Recommended" is not approval.** Recommendations are guidance only and never authorize edits.
+- **Non-interactive fallback.** If approval gates cannot be run in the current context, return findings plus proposed fixes only and stop; do not edit files.
 - **Process findings one at a time.** Never batch multiple findings into a single presentation or a single edit. Each finding gets its own review cycle.
 - **Never skip a gate.** Every Question tool prompt in the workflow is mandatory. Do not auto-approve, auto-skip, or assume the user's intent.
 - **Validate every finding against actual code.** Read the file before reporting an issue. If you cannot verify the issue exists in the current code, discard the finding. Never report issues based on assumptions.

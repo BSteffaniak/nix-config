@@ -214,6 +214,9 @@ cargo deny check licenses
 - **Isolate temp directories.** Every invocation must create its own unique temp directory via `mktemp -d`. Never reuse directories from previous invocations.
 - **Never skip the summary gate.** The user must see the failure overview and confirm which failures to investigate before any analysis or code changes.
 - **Never act without user confirmation.** Do not apply code fixes without explicit approval via the per-item review gate.
+- **Two-turn mutation barrier.** Never apply fixes in the same turn that presents failure analysis or proposed fixes. Present first, then wait for a separate explicit approval turn.
+- **"Recommended" is not approval.** Recommendations are guidance only and never authorize edits.
+- **Non-interactive fallback.** If approval gates cannot be run in the current context, return analysis plus fix drafts only and stop; do not edit files.
 - **Process fixes one at a time.** Present each proposed fix individually for review. Never batch multiple fixes into a single approval.
 - **Prefer structured data over logs.** For clippier failures, the `failures-summary.md` contains curated error output. Only fall back to raw job logs for non-clippier failures.
 - **Feature combos matter.** Clippier runs tests across different feature combinations. A failure in `features: "feat-a,feat-b"` may not reproduce with `features: "default"`. Always note which feature combination triggered the failure.

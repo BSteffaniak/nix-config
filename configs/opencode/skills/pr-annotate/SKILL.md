@@ -238,6 +238,9 @@ After all comments have been processed, output a final summary:
 
 - **Follow the [voice and tone guide](../_shared/voice-and-tone.md) for all posted text.** Every annotation posted to GitHub must sound like a human wrote it.
 - **Never post without explicit user approval.** Every comment must be individually drafted, presented, and approved before posting. No batching, no assumptions.
+- **Two-turn mutation barrier.** Never post annotations in the same turn that presents draft text. Present first, then wait for a separate explicit approval turn.
+- **"Recommended" is not approval.** Recommendations are guidance only and never authorize posting.
+- **Non-interactive fallback.** If approval gates cannot be run in the current context, return draft annotations only and stop; do not post.
 - **One at a time.** Draft and present one annotation at a time. Wait for the user's response before moving to the next.
 - **Conciseness is non-negotiable.** If a draft exceeds 3 sentences, rewrite it shorter. Reviewers will not read walls of text. Dense, informative, terse.
 - **Do not annotate the obvious.** If the diff speaks for itself, leave it alone. Annotations should add information the code doesn't already convey.

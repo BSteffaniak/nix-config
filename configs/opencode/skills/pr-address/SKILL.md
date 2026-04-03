@@ -339,7 +339,7 @@ First, ask the user which action they want to take:
 
 The user can also type a custom answer (e.g., "fix #1 and #3, reply to #2 and #4"). Interpret their intent and proceed accordingly.
 
-**Inference shortcut:** If the user's original invocation already implies the mode (e.g., "reply to the PR comments", "fix the review feedback", "address all the comments"), skip this question and infer the mode. If there is any ambiguity, ask.
+**Inference behavior:** You may infer a recommended mode from the user's wording (e.g., "reply to the PR comments", "fix the review feedback", "address all the comments"), but inference is advisory only. You must still present the selected mode and selected items and get explicit user confirmation before any mutation-capable step.
 
 #### Select items
 
@@ -379,6 +379,18 @@ Do NOT make any code changes or post any replies without explicit confirmation.
 - **Fix only** → go to Step 8 with the selected items; skip Step 9
 - **Fix + Reply** → go to Step 8 with the selected items, then Step 9 for all processed items
 - **Mixed** (user specified per-item) → go to Step 8 for the fix items, then Step 9 for reply items plus any items that were fixed (to draft "fixed" replies)
+
+#### Execution authorization checkpoint (mandatory)
+
+Before entering Step 8 or Step 9, present:
+
+- chosen mode
+- selected item numbers
+- whether the run is draft-only or execute-enabled
+
+Then require explicit confirmation to proceed.
+
+If explicit confirmation is missing, stop at draft/plan output and do not mutate code, post replies, or resolve threads.
 
 ### 8. Propose, apply, and verify changes
 
@@ -716,8 +728,11 @@ After posting, confirm each reply was posted successfully and show the URL of th
 - **Avoid cloning when possible.** Steps 1–7 and Step 9 should NEVER require a local clone. Use the GitHub API (`gh api repos/{owner}/{repo}/contents/...`, `gh pr diff`, `gh api graphql`) to read files remotely for validation and context. Only clone to a temporary directory in Step 8 if the user selects code changes to apply AND the current directory is not already a checkout of the target repo.
 - **Never clone into the user's working directory.** If a clone is needed, always use `mktemp -d` to create an isolated temporary directory. Never run `gh repo clone` in the user's current directory.
 - **Never act without user confirmation.** Present the summary (Step 6-7), get selection, propose each solution individually (Step 8a), wait for approval before applying (Step 8b), wait for verification after applying (Step 8c), and get approval before posting any replies (Step 9c). Every mutation — code change, PR reply, thread resolution — requires explicit user consent.
+- **Two-turn mutation barrier.** Never execute code changes, post replies, or resolve threads in the same turn that presents analysis, recommendations, or draft text. Present first, then wait for a separate explicit approval turn.
+- **"Recommended" is not approval.** Labels like "(recommended)" are guidance only and never authorize execution.
 - **Stop after each change.** Execute one code change at a time, show the `git diff`, and wait for the user to accept/undo/redo before moving to the next comment. Never batch multiple changes.
 - **Never post PR replies without user approval.** Draft all replies and present them for review before posting. The user controls what gets posted on their behalf.
+- **No direct-post shortcut.** Never call posting APIs unless Step 9c approval was completed for that specific reply in this run.
 - **Never resolve threads without user approval.** Recommend resolution when appropriate, but always let the user make the final call. Resolving a thread the reviewer should re-evaluate is worse than leaving it open.
 - **Fetch all pages.** Do not stop at the first page of results. Always check `hasNextPage` and paginate until all data is fetched.
 - **Preserve the reviewer's intent.** When making code changes, stay faithful to what the reviewer asked for. If the request is ambiguous, note the ambiguity to the user rather than guessing.
@@ -731,3 +746,5 @@ After posting, confirm each reply was posted successfully and show the URL of th
 - **Do not dismiss reviewer expertise.** A `DISPUTED` or `INVALID` tag means you found concrete evidence the reviewer is wrong. Disagreeing with a reviewer's opinion or style preference without codebase evidence is not grounds for these tags — use `NEEDS CONTEXT` instead.
 - **Proposals must be specific.** "Fix the error handling" is not a proposal. Name the exact lines being changed, the exact modification, and cite the pattern being followed if applicable.
 - **Reply content must reference the actual change.** Don't post generic "Fixed" replies. Reference the specific file, line, and what was modified so the reviewer can verify without hunting through the diff.
+- **Tone before draft.** Run tone calibration (or explicit voice-guide fallback) before drafting any reply text.
+- **Non-interactive fallback.** If approval gates cannot be run in the current context, return draft-only output and stop; do not mutate.

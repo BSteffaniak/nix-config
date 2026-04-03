@@ -127,6 +127,9 @@ If edits were made, remind user to run project-specific checks before commit.
 
 - **One alert at a time.** Never batch-dismiss or batch-fix without per-alert review.
 - **Approval before mutation.** Never edit code or dismiss alerts without explicit user approval.
+- **Two-turn mutation barrier.** Never apply fixes or dismiss alerts in the same turn that presents recommendations. Present first, then wait for a separate explicit approval turn.
+- **"Recommended" is not approval.** Suggested actions are guidance only and never authorize mutation.
+- **Non-interactive fallback.** If approval gates cannot be run in the current context, return triage plus proposed actions only and stop; do not mutate.
 - **Evidence-first decisions.** Every fix/dismiss recommendation must cite concrete evidence (path + line + context).
 - **No fabricated validation.** Never claim a fix is verified unless commands were actually run.
 - **No automatic commits or pushes.** Leave VCS integration decisions to the user unless explicitly requested.
