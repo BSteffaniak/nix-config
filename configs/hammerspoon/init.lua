@@ -26,6 +26,51 @@ hs.hotkey.bind({ "cmd", "alt" }, "2", function()
 end)
 
 --------------------------------------------------------------------------------
+-- Global right Option triple-tap -> Ctrl+Enter (OpenCode submit)
+--------------------------------------------------------------------------------
+
+local rightAltKeyCode = hs.keycodes.map.rightalt or 61
+local rightAltTapCount = 0
+local rightAltLastTapTime = 0
+local rightAltTapWindowSeconds = 0.6
+
+local rightAltTapWatcher = hs.eventtap.new({ hs.eventtap.event.types.flagsChanged }, function(event)
+  if event:getKeyCode() ~= rightAltKeyCode then
+    return false
+  end
+
+  local flags = event:getFlags()
+  local isRightAltDown = flags.alt
+
+  if not isRightAltDown then
+    return false
+  end
+
+  -- Only treat standalone right Option taps as candidates.
+  if flags.cmd or flags.ctrl or flags.shift or flags.fn then
+    rightAltTapCount = 0
+    return false
+  end
+
+  local now = hs.timer.secondsSinceEpoch()
+  if now - rightAltLastTapTime <= rightAltTapWindowSeconds then
+    rightAltTapCount = rightAltTapCount + 1
+  else
+    rightAltTapCount = 1
+  end
+  rightAltLastTapTime = now
+
+  if rightAltTapCount >= 3 then
+    rightAltTapCount = 0
+    hs.eventtap.keyStroke({ "ctrl" }, "return", 0)
+    return true
+  end
+
+  return false
+end)
+rightAltTapWatcher:start()
+
+--------------------------------------------------------------------------------
 -- Terminal key remaps (enabled only when a terminal app is focused)
 -- Uses hs.hotkey + app watcher instead of hs.eventtap for resilience
 -- (hs.eventtap can silently die during nix rebuilds; hs.hotkey survives)
