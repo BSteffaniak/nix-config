@@ -200,3 +200,25 @@ prefix = "ctrl+a"
 "v"     = "begin_selection"
 "y"     = "copy_scrollback"
 "enter" = "confirm_scrollback"
+
+# ---------------------------------------------------------------------------
+# Recording defaults
+# ---------------------------------------------------------------------------
+[recording]
+# Enable hidden rolling recording at server start.
+enabled = true
+
+# Keep the most recent 5 minutes in rolling storage.
+rolling_window_secs = 300
+
+# Manual recording defaults (also used as rolling fallbacks).
+capture_input = true
+capture_output = true
+capture_events = true
+
+# Rolling capture overrides: enable every capture category.
+rolling_capture_input = true
+rolling_capture_output = true
+rolling_capture_events = true
+rolling_capture_protocol_replies = true
+rolling_capture_images = true
