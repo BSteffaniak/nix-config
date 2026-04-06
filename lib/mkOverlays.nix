@@ -23,12 +23,29 @@
       # Core overlays (always enabled)
       coreOverlays = [
         # Unstable packages overlay (core functionality)
-        (final: prev: {
-          unstable = import inputs.nixpkgs-unstable {
-            system = prev.stdenv.hostPlatform.system;
-            config.allowUnfree = true;
-          };
-        })
+        (
+          final: prev:
+          let
+            unstablePkgs = import inputs.nixpkgs-unstable {
+              system = prev.stdenv.hostPlatform.system;
+              config.allowUnfree = true;
+            };
+          in
+          {
+            unstable = unstablePkgs;
+            fish = unstablePkgs.fish;
+            fishPlugins =
+              if prev.stdenv.isDarwin then
+                prev.fishPlugins
+                // {
+                  bass = prev.fishPlugins.bass.overrideAttrs (_: {
+                    doCheck = false;
+                  });
+                }
+              else
+                prev.fishPlugins;
+          }
+        )
       ];
 
       # List of available overlays
