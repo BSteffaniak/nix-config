@@ -198,7 +198,7 @@ in
         ]
       )
       {
-        users.users.${config.myConfig.username}.shell = mkDefault defaultShellPackage;
+        users.users.${config.myConfig.username}.shell = mkForce defaultShellPackage;
       }
     )
   ];
