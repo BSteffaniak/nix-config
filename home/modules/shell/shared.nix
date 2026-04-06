@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  myLib,
   pkgs,
   ...
 }:
@@ -8,6 +9,12 @@
 with lib;
 
 let
+  defaultShell = attrByPath [
+    "defaults"
+    "shell"
+    "default"
+  ] "nushell" myLib;
+
   cfg = config.myConfig.shell;
   sharedCfg = config.homeModules.shell.shared;
 
@@ -50,7 +57,7 @@ in
         "zsh"
         "nushell"
       ];
-      default = "fish";
+      default = defaultShell;
       description = "Default shell";
     };
 

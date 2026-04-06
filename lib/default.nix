@@ -1,6 +1,12 @@
 { lib, ... }:
 
 {
+  defaults = {
+    shell = {
+      default = "nushell";
+    };
+  };
+
   # Helper for enable options with a custom default value
   # Usage: mkEnableOption' cfg.enableAll "Description of the feature"
   mkEnableOption' =

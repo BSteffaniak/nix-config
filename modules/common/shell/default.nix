@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  myLib,
   pkgs,
   options,
   ...
@@ -9,6 +10,12 @@
 with lib;
 
 let
+  defaultShell = attrByPath [
+    "defaults"
+    "shell"
+    "default"
+  ] "nushell" myLib;
+
   cfg = config.myConfig.shell;
 
   shellPackages = {
@@ -60,7 +67,7 @@ in
         "zsh"
         "nushell"
       ];
-      default = "fish";
+      default = defaultShell;
       description = "Default login shell";
     };
 
@@ -175,15 +182,21 @@ in
         "defaultUserShell"
       ])
       {
-        users.defaultUserShell = mkDefault defaultShellPackage;
+        users.defaultUserShell = mkOverride 900 defaultShellPackage;
       }
     )
 
     (optionalAttrs
-      (hasOption [
-        "users"
-        "users"
-      ])
+      (
+        hasOption [
+          "users"
+          "users"
+        ]
+        && !hasOption [
+          "users"
+          "defaultUserShell"
+        ]
+      )
       {
         users.users.${config.myConfig.username}.shell = mkDefault defaultShellPackage;
       }

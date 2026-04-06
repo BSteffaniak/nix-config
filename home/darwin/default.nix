@@ -1,12 +1,20 @@
 {
   config,
   lib,
+  myLib,
   pkgs,
   osConfig,
   inputs ? { },
   ...
 }:
 
+let
+  defaultShell = lib.attrByPath [
+    "defaults"
+    "shell"
+    "default"
+  ] "nushell" myLib;
+in
 {
   imports = [
     ../common
@@ -41,7 +49,7 @@
     devops.infrastructure.enable = osConfig.myConfig.development.devops.enable or false;
 
     # Shell
-    shell.default = lib.mkDefault (osConfig.myConfig.shell.default or "fish");
+    shell.default = lib.mkDefault (osConfig.myConfig.shell.default or defaultShell);
     shell.fish.enable = osConfig.myConfig.shell.fish.enable or false;
     shell.bash.enable = osConfig.myConfig.shell.bash.enable or false;
     shell.zsh.enable = osConfig.myConfig.shell.zsh.enable or false;

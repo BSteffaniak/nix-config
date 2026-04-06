@@ -115,24 +115,26 @@ ENABLE_FISH="${ENABLE_FISH:-true}"
 ENABLE_BASH="${ENABLE_BASH:-true}"
 ENABLE_ZSH="${ENABLE_ZSH:-true}"
 ENABLE_NUSHELL="${ENABLE_NUSHELL:-true}"
-DEFAULT_SHELL="${DEFAULT_SHELL:-fish}"
+DEFAULT_SHELL="${DEFAULT_SHELL:-}"
 ENABLE_GIT="${ENABLE_GIT:-true}"
 ENABLE_CLITOOLS="${ENABLE_CLITOOLS:-true}"
 STATE_VERSION="${STATE_VERSION:-24.11}"
 HOME_MANAGER_STATE_VERSION="${HOME_MANAGER_STATE_VERSION:-25.05}"
 
-case "$DEFAULT_SHELL" in
-    fish|bash|zsh|nushell) ;;
-    *)
-        echo "Error: --default-shell must be one of: fish, bash, zsh, nushell"
-        exit 1
-        ;;
-esac
+if [ -n "$DEFAULT_SHELL" ]; then
+    case "$DEFAULT_SHELL" in
+        fish|bash|zsh|nushell) ;;
+        *)
+            echo "Error: --default-shell must be one of: fish, bash, zsh, nushell"
+            exit 1
+            ;;
+    esac
 
-if [ "$DEFAULT_SHELL" = "fish" ]; then ENABLE_FISH="true"; fi
-if [ "$DEFAULT_SHELL" = "bash" ]; then ENABLE_BASH="true"; fi
-if [ "$DEFAULT_SHELL" = "zsh" ]; then ENABLE_ZSH="true"; fi
-if [ "$DEFAULT_SHELL" = "nushell" ]; then ENABLE_NUSHELL="true"; fi
+    if [ "$DEFAULT_SHELL" = "fish" ]; then ENABLE_FISH="true"; fi
+    if [ "$DEFAULT_SHELL" = "bash" ]; then ENABLE_BASH="true"; fi
+    if [ "$DEFAULT_SHELL" = "zsh" ]; then ENABLE_ZSH="true"; fi
+    if [ "$DEFAULT_SHELL" = "nushell" ]; then ENABLE_NUSHELL="true"; fi
+fi
 
 # Generate the configuration file
 OUTPUT_FILE="$SCRIPT_DIR/hosts/$HOSTNAME/default.nix"
@@ -323,7 +325,7 @@ EOF
     cat >> "$OUTPUT_FILE" << EOF
 
     # Shell and editors
-    shell.default = "$DEFAULT_SHELL";
+${DEFAULT_SHELL:+    shell.default = "$DEFAULT_SHELL";}
     shell.fish.enable = $ENABLE_FISH;
     shell.bash.enable = $ENABLE_BASH;
     shell.zsh.enable = $ENABLE_ZSH;
@@ -562,7 +564,7 @@ EOF
     cat >> "$OUTPUT_FILE" << EOF
 
     # Shell and editors
-    shell.default = "$DEFAULT_SHELL";
+${DEFAULT_SHELL:+    shell.default = "$DEFAULT_SHELL";}
     shell.fish.enable = $ENABLE_FISH;
     shell.bash.enable = $ENABLE_BASH;
     shell.zsh.enable = $ENABLE_ZSH;

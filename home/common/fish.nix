@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  myLib,
   pkgs,
   osConfig ? { },
   ...
@@ -10,6 +11,12 @@ with lib;
 
 let
   fishCfg = config.homeModules.fish;
+
+  defaultShell = attrByPath [
+    "defaults"
+    "shell"
+    "default"
+  ] "nushell" myLib;
 
   systemNeovimEnabled =
     if
@@ -35,7 +42,8 @@ let
     then
       osConfig.myConfig.shell.fish.enable
     else
-      (config.myConfig.shell.fish.enable or false) || (config.myConfig.shell.default or "fish") == "fish";
+      (config.myConfig.shell.fish.enable or false)
+      || (config.myConfig.shell.default or defaultShell) == "fish";
 
   # ============================================================
   # FLAT PROJECT CONFIGURATION

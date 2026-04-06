@@ -307,11 +307,12 @@ myConfig = {
 
 ### Multi-Shell Configuration
 
-Shell behavior can be shared across Fish, Bash, Zsh, and Nushell from one place:
+Shell behavior can be shared across Fish, Bash, Zsh, and Nushell from one place.
+The global default shell is set in `lib/default.nix`.
 
 ```nix
 myConfig.shell = {
-  default = "fish";
+  default = "nushell"; # optional per-host override
 
   fish.enable = true;
   bash.enable = true;

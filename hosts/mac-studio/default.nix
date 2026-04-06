@@ -30,7 +30,6 @@
     development.java.enable = true;
 
     # Shell and editors
-    shell.default = "fish";
     shell.fish.enable = true;
     shell.bash.enable = true;
     shell.zsh.enable = true;

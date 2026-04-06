@@ -12,12 +12,6 @@
     ../common
   ];
 
-  # Let Home Manager manage itself
-  programs.home-manager.enable = true;
-
-  # Enable XDG base directories
-  xdg.enable = true;
-
   # Default options structure for myConfig
   # These can be overridden in host-specific configs
   options.myConfig = with lib; {
@@ -26,20 +20,17 @@
 
   # Sensible defaults for standalone usage
   config = {
+    # Let Home Manager manage itself
+    programs.home-manager.enable = true;
+
+    # Enable XDG base directories
+    xdg.enable = true;
+
     # Enable manual pages
     manual.manpages.enable = true;
 
     # Allow unfree packages (needed for some development tools)
     nixpkgs.config.allowUnfree = true;
-
-    # Set up session variables
-    home.sessionVariables = {
-      # XDG directories
-      XDG_CONFIG_HOME = "$HOME/.config";
-      XDG_CACHE_HOME = "$HOME/.cache";
-      XDG_DATA_HOME = "$HOME/.local/share";
-      XDG_STATE_HOME = "$HOME/.local/state";
-    };
 
     home.activation.warnLoginShellMismatch =
       lib.mkIf config.myConfig.shell.warnOnStandaloneLoginShellMismatch

@@ -302,27 +302,29 @@ ENABLE_BASH=$(prompt_yes_no "Enable Bash shell?" "y" && echo "true" || echo "fal
 ENABLE_ZSH=$(prompt_yes_no "Enable Zsh shell?" "y" && echo "true" || echo "false")
 ENABLE_NUSHELL=$(prompt_yes_no "Enable Nushell?" "y" && echo "true" || echo "false")
 
-DEFAULT_SHELL=$(prompt_input "Default shell (fish/bash/zsh/nushell)" "fish")
-case "$DEFAULT_SHELL" in
-    fish|bash|zsh|nushell) ;;
-    *)
-        print_warning "Invalid default shell '$DEFAULT_SHELL', falling back to fish"
-        DEFAULT_SHELL="fish"
-        ;;
-esac
+DEFAULT_SHELL=$(prompt_input "Default shell override (fish/bash/zsh/nushell, leave blank for global default)" "")
+if [ -n "$DEFAULT_SHELL" ]; then
+    case "$DEFAULT_SHELL" in
+        fish|bash|zsh|nushell) ;;
+        *)
+            print_warning "Invalid default shell '$DEFAULT_SHELL'. Ignoring override and using global default."
+            DEFAULT_SHELL=""
+            ;;
+    esac
 
-# Ensure the selected default shell is enabled
-if [ "$DEFAULT_SHELL" = "fish" ] && [ "$ENABLE_FISH" != "true" ]; then
-    ENABLE_FISH="true"
-fi
-if [ "$DEFAULT_SHELL" = "bash" ] && [ "$ENABLE_BASH" != "true" ]; then
-    ENABLE_BASH="true"
-fi
-if [ "$DEFAULT_SHELL" = "zsh" ] && [ "$ENABLE_ZSH" != "true" ]; then
-    ENABLE_ZSH="true"
-fi
-if [ "$DEFAULT_SHELL" = "nushell" ] && [ "$ENABLE_NUSHELL" != "true" ]; then
-    ENABLE_NUSHELL="true"
+    # Ensure the selected default shell is enabled
+    if [ "$DEFAULT_SHELL" = "fish" ] && [ "$ENABLE_FISH" != "true" ]; then
+        ENABLE_FISH="true"
+    fi
+    if [ "$DEFAULT_SHELL" = "bash" ] && [ "$ENABLE_BASH" != "true" ]; then
+        ENABLE_BASH="true"
+    fi
+    if [ "$DEFAULT_SHELL" = "zsh" ] && [ "$ENABLE_ZSH" != "true" ]; then
+        ENABLE_ZSH="true"
+    fi
+    if [ "$DEFAULT_SHELL" = "nushell" ] && [ "$ENABLE_NUSHELL" != "true" ]; then
+        ENABLE_NUSHELL="true"
+    fi
 fi
 
 ENABLE_GIT=$(prompt_yes_no "Enable Git configuration?" "y" && echo "true" || echo "false")
@@ -462,7 +464,7 @@ mkdir -p "$SCRIPT_DIR/hosts/$HOSTNAME"
     --bash "$ENABLE_BASH" \
     --zsh "$ENABLE_ZSH" \
     --nushell "$ENABLE_NUSHELL" \
-    --default-shell "$DEFAULT_SHELL" \
+    ${DEFAULT_SHELL:+--default-shell "$DEFAULT_SHELL"} \
     --git "$ENABLE_GIT" \
     --clitools "$ENABLE_CLITOOLS" \
     --state-version "$STATE_VERSION" \
@@ -555,7 +557,11 @@ echo "  Platform: $PLATFORM"
 echo "  Architecture: $ARCH"
 echo "  Hostname: $HOSTNAME"
 echo "  Username: $USERNAME"
-echo "  Default shell: $DEFAULT_SHELL"
+if [ -n "$DEFAULT_SHELL" ]; then
+    echo "  Default shell override: $DEFAULT_SHELL"
+else
+    echo "  Default shell: (global default)"
+fi
 echo ""
 echo "Generated files:"
 echo "  $SCRIPT_DIR/hosts/$HOSTNAME/default.nix"
