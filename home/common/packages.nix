@@ -15,7 +15,6 @@
       # Development tools
       gh-dash
       natscli
-      aider-chat
 
       # Cloud tools
       flyctl
