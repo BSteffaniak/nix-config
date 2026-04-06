@@ -18,6 +18,15 @@ let
   jsonProviderFiles = builtins.filter (f: hasSuffix ".json" f) allProviderFiles;
   providerNames = map (f: removeSuffix ".json" f) jsonProviderFiles;
 
+  providerWrapperCommands = builtins.listToAttrs (
+    map (name: {
+      name = "opencode-${name}";
+      value = ''
+        OPENCODE_CONFIG="$HOME/.config/opencode/providers/${name}.json" opencode-dev "$@"
+      '';
+    }) providerNames
+  );
+
   # Read and parse the selected provider config
   providerConfig = builtins.fromJSON (builtins.readFile (providersDir + "/${cfg.provider}.json"));
 
@@ -194,7 +203,7 @@ in
       xdg.configFile = localSkillCommands // toneCloneCommand;
     }
 
-    # Deploy raw provider files for per-provider aliases (opencode-bedrock, opencode-copilot, etc.)
+    # Deploy raw provider files for per-provider wrapper commands (opencode-bedrock, opencode-copilot, etc.)
     {
       xdg.configFile = builtins.listToAttrs (
         map (name: {
@@ -204,6 +213,11 @@ in
           };
         }) providerNames
       );
+    }
+
+    # Cross-shell wrapper commands for switching provider profiles
+    {
+      homeModules.shell.shared.functions = providerWrapperCommands;
     }
   ]);
 }

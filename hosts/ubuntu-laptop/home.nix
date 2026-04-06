@@ -40,7 +40,11 @@
     devops.infrastructure.enable = true;
 
     # Shell configuration
+    shell.default = "fish";
     shell.fish.enable = true;
+    shell.bash.enable = true;
+    shell.zsh.enable = true;
+    shell.nushell.enable = true;
     shell.git.enable = true;
     shell.ssh.enable = true;
 

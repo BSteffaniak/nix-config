@@ -41,14 +41,13 @@ in
       ++ (optional cfg.includeTerraformLS terraform-ls)
       ++ (optional cfg.includeProtobuf buf);
 
-    # Terraform/OpenTofu aliases
-    programs.fish.interactiveShellInit = mkIf (config.programs.fish.enable && cfg.includeTerraform) ''
-      # Terraform/OpenTofu aliases
-      alias tf='tofu'
-      alias tfi='tofu init'
-      alias tfp='tofu plan'
-      alias tfa='tofu apply'
-      alias tfd='tofu destroy'
-    '';
+    # Terraform/OpenTofu aliases shared across configured shells
+    homeModules.shell.shared.aliases = mkIf cfg.includeTerraform {
+      tf = "tofu";
+      tfi = "tofu init";
+      tfp = "tofu plan";
+      tfa = "tofu apply";
+      tfd = "tofu destroy";
+    };
   };
 }

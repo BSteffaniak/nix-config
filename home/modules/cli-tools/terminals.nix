@@ -10,8 +10,27 @@ with lib;
 
 let
   cfg = config.myConfig.cliTools.terminals;
+  shellCfg = config.myConfig.shell;
 
   mkEnable = myLib.mkEnableOption' cfg.enableAll;
+
+  defaultShellPackages = {
+    fish = pkgs.fish;
+    bash = pkgs.bashInteractive;
+    zsh = pkgs.zsh;
+    nushell = pkgs.nushell;
+  };
+
+  defaultShellBinaries = {
+    fish = "fish";
+    bash = "bash";
+    zsh = "zsh";
+    nushell = "nu";
+  };
+
+  defaultShellPath = "${defaultShellPackages.${shellCfg.default}}/bin/${
+    defaultShellBinaries.${shellCfg.default}
+  }";
 in
 {
   options.myConfig.cliTools.terminals = {
@@ -41,7 +60,7 @@ in
     xdg.configFile."bmux/bmux.toml" = mkIf cfg.bmux.enable {
       text = ''
         [general]
-        default_shell = "${pkgs.fish}/bin/fish"
+        default_shell = "${defaultShellPath}"
 
       ''
       + builtins.readFile ../../../configs/bmux/bmux.toml;

@@ -51,10 +51,5 @@ in
       ++ (optional cfg.includeGCP google-cloud-sdk)
       ++ (optional cfg.includeAzure azure-cli);
 
-    # AWS completions
-    programs.fish.interactiveShellInit = mkIf (config.programs.fish.enable && cfg.includeAWS) ''
-      # AWS CLI completions
-      complete -c aws -f -a '(begin; set -lx COMP_SHELL fish; set -lx COMP_LINE (commandline); aws_completer | sed \'s/ $//\'; end)'
-    '';
   };
 }

@@ -9,7 +9,9 @@
 with lib;
 
 let
-  cfg = config.myConfig.shell.fish;
+  shellCfg = config.myConfig.shell;
+  cfg = shellCfg.fish;
+  fishEnabled = cfg.enable || shellCfg.default == "fish";
 in
 {
   options.myConfig.shell.fish = {
@@ -23,7 +25,7 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
+  config = mkIf fishEnabled {
     # Enable the existing homeModules.fish configuration
     homeModules.fish = {
       enable = true;
@@ -33,9 +35,6 @@ in
       direnv.enable = true;
       editor.enable = true;
       utilities.enable = true;
-
-      # Enable opencode alias if opencode development tools are enabled
-      opencode.enable = config.myConfig.development.opencode.enable or false;
     };
 
     # Install fish plugins

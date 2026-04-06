@@ -52,7 +52,11 @@
     development.openssl.enable = true;
 
     # Shell and editors
+    shell.default = "fish";
     shell.fish.enable = true;
+    shell.bash.enable = true;
+    shell.zsh.enable = true;
+    shell.nushell.enable = true;
     shell.git.enable = true;
     shell.ssh.enable = true;
     shell.ssh.server.enable = true;
@@ -81,7 +85,6 @@
   users.users.braden = {
     isNormalUser = true;
     description = "Braden Steffaniak";
-    shell = pkgs.fish;
     extraGroups = [
       "networkmanager"
       "wheel"
@@ -104,8 +107,6 @@
       acpi
     ];
   };
-
-  users.defaultUserShell = pkgs.fish;
 
   # System packages specific to this host
   environment.systemPackages = with pkgs; [

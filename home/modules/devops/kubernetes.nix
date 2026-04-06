@@ -64,20 +64,19 @@ in
       ++ (optional cfg.includeKrew krew)
       ++ (optional cfg.includeCertManager cmctl);
 
-    # Kubectl completions and aliases
-    programs.fish.interactiveShellInit = mkIf config.programs.fish.enable ''
-      # Kubectl completions
-      kubectl completion fish | source
-
-      # Common kubectl aliases
-      alias k='kubectl'
-      alias kgp='kubectl get pods'
-      alias kgs='kubectl get services'
-      alias kgd='kubectl get deployments'
-      alias kdp='kubectl describe pod'
-      alias kl='kubectl logs'
-      alias klf='kubectl logs -f'
-    '';
+    # Shared completion hooks and aliases across all configured shells
+    homeModules.shell.shared = {
+      completionCommands = [ "kubectl" ];
+      aliases = {
+        k = "kubectl";
+        kgp = "kubectl get pods";
+        kgs = "kubectl get services";
+        kgd = "kubectl get deployments";
+        kdp = "kubectl describe pod";
+        kl = "kubectl logs";
+        klf = "kubectl logs -f";
+      };
+    };
 
     # XDG config for kubectl
     xdg.configFile."kubectl/.keep".text = "";

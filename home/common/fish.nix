@@ -2,7 +2,7 @@
   config,
   lib,
   pkgs,
-  osConfig,
+  osConfig ? { },
   ...
 }:
 
@@ -10,6 +10,32 @@ with lib;
 
 let
   fishCfg = config.homeModules.fish;
+
+  systemNeovimEnabled =
+    if
+      hasAttrByPath [
+        "myConfig"
+        "editors"
+        "neovim"
+        "enable"
+      ] osConfig
+    then
+      osConfig.myConfig.editors.neovim.enable
+    else
+      config.myConfig.editors.neovim.enable or true;
+
+  systemFishEnabled =
+    if
+      hasAttrByPath [
+        "myConfig"
+        "shell"
+        "fish"
+        "enable"
+      ] osConfig
+    then
+      osConfig.myConfig.shell.fish.enable
+    else
+      (config.myConfig.shell.fish.enable or false) || (config.myConfig.shell.default or "fish") == "fish";
 
   # ============================================================
   # FLAT PROJECT CONFIGURATION
@@ -59,15 +85,17 @@ let
   # ============================================================
   # ZELLIJ CONFIGURATION
   # ============================================================
-  zellijFunctions = optionalAttrs (fishCfg.zellij.enable && fishCfg.zellij.resurrect) {
+  zellijFunctions = { };
+
+  zellijSharedFunctions = optionalAttrs (fishCfg.zellij.enable && fishCfg.zellij.resurrect) {
     zresurrect = ''
       echo "Resurrecting zellij sessions..."
-      zellij list-sessions --short | while read session
-        if test -n "$session"
-          echo "→ $session"
-          zellij attach $session --force-run-commands --create-background
-        end
-      end
+      zellij list-sessions --short | while IFS= read -r session; do
+        if [ -n "$session" ]; then
+          echo "-> $session"
+          zellij attach "$session" --force-run-commands --create-background
+        fi
+      done
       echo "Done! Check sessions with: zellij ls"
     '';
   };
@@ -106,26 +134,35 @@ let
         end
       '';
     })
-    // (optionalAttrs fishCfg.utilities.retryCommand {
-      auto-retry = ''
-        set current_attempt 0
-        set max_attempts $argv[1]
-        set delay $argv[2]
-        set cmd $argv[3..-1]
-
-        while test $current_attempt -lt $max_attempts
-          set current_attempt (math $current_attempt + 1)
-          if eval $cmd
-            return 0
-          end
-          echo "Failed at attempt $current_attempt/$max_attempts, retrying after {$delay}s"
-          sleep $delay
-        end
-
-        return 1
-      '';
-    })
   );
+
+  utilitySharedFunctions =
+    optionalAttrs (fishCfg.utilities.enable && fishCfg.utilities.retryCommand)
+      {
+        auto-retry = ''
+          current_attempt=0
+          max_attempts="$1"
+          delay="$2"
+          shift 2
+
+          if [ -z "$max_attempts" ] || [ -z "$delay" ] || [ "$#" -eq 0 ]; then
+            echo "Usage: auto-retry <max_attempts> <delay_seconds> <command...>"
+            exit 2
+          fi
+
+          while [ "$current_attempt" -lt "$max_attempts" ]; do
+            current_attempt=$((current_attempt + 1))
+            if "$@"; then
+              exit 0
+            fi
+
+            echo "Failed at attempt $current_attempt/$max_attempts, retrying after $delay seconds"
+            sleep "$delay"
+          done
+
+          exit 1
+        '';
+      };
 
   # ============================================================
   # DEVELOPMENT CONFIGURATION
@@ -170,16 +207,16 @@ let
   # These use mkDefault so they can be overridden in host-specific configs
   smartDefaults = {
     # Neovim features: auto-enable if neovim is enabled system-wide
-    neovim.enable = mkDefault (osConfig.myConfig.editors.neovim.enable or true);
+    neovim.enable = mkDefault systemNeovimEnabled;
 
     # Editor config: use neovim if it's enabled system-wide
     editor = {
       enable = mkDefault true;
-      nvim = mkDefault (osConfig.myConfig.editors.neovim.enable or true);
+      nvim = mkDefault systemNeovimEnabled;
     };
 
     # Direnv: enabled by default when fish is enabled
-    direnv.enable = mkDefault (osConfig.myConfig.shell.fish.enable or true);
+    direnv.enable = mkDefault systemFishEnabled;
 
     # Utilities: always enabled by default (generally useful)
     utilities.enable = mkDefault true;
@@ -193,7 +230,7 @@ let
 
 in
 {
-  config = mkIf osConfig.myConfig.shell.fish.enable {
+  config = mkIf systemFishEnabled {
     # Apply smart defaults, then merge with feature-based configuration
     homeModules.fish = mkMerge [
       smartDefaults
@@ -215,6 +252,11 @@ in
           direnvInit
         ];
       }
+    ];
+
+    homeModules.shell.shared.functions = mkMerge [
+      zellijSharedFunctions
+      utilitySharedFunctions
     ];
 
     # Set session variables for editor

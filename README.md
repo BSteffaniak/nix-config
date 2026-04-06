@@ -47,7 +47,7 @@ This repository uses a **unified flake** at the root that provides:
 ├── modules/                 # System-level modules (NixOS/nix-darwin)
 │   ├── common/              # Cross-platform system modules
 │   │   ├── development/     # Dev toolchains (rust, node, go, python, etc.)
-│   │   ├── shell/           # Shell configuration (fish, git)
+│   │   ├── shell/           # Shell configuration (fish/bash/zsh/nushell, git)
 │   │   ├── editors/         # Text editors (neovim)
 │   │   └── services/        # System services (tailscale)
 │   │
@@ -77,7 +77,7 @@ This repository uses a **unified flake** at the root that provides:
 │   │   ├── design/          # Design tools
 │   │   ├── shell/           # Shell utilities (bat, eza, zoxide, etc.)
 │   │   ├── tools/           # Misc tools (7zip, age, ollama, etc.)
-│   │   ├── fish.nix         # Fish shell configuration
+│   │   ├── fish.nix         # Fish shell features/integration
 │   │   ├── git.nix          # Git configuration
 │   │   └── gtk-theming.nix  # GTK theming (opt-in)
 │   ├── nixos/               # NixOS-specific home bridge
@@ -279,7 +279,7 @@ nix run home-manager/release-25.11 -- switch --flake ~/.config/nix#braden@ubuntu
 - All development tools (Rust, Node.js, Go, Python, etc.)
 - Rootless Podman for containers (Docker-compatible!)
 - DevOps tools (kubectl, helm, terraform, aws-cli)
-- Complete shell setup (fish, git, ssh, neovim)
+- Complete shell setup (fish/bash/zsh/nushell, git, ssh, neovim)
 - All CLI utilities
 - No sudo required for package management!
 
@@ -302,6 +302,26 @@ myConfig = {
   services.docker.enable = true;
 
   # etc...
+};
+```
+
+### Multi-Shell Configuration
+
+Shell behavior can be shared across Fish, Bash, Zsh, and Nushell from one place:
+
+```nix
+myConfig.shell = {
+  default = "fish";
+
+  fish.enable = true;
+  bash.enable = true;
+  zsh.enable = true;
+  nushell.enable = true;
+
+  shared.aliases = {
+    k = "kubectl";
+    tf = "tofu";
+  };
 };
 ```
 
@@ -689,7 +709,7 @@ The bootstrap script asks about:
 - **Desktop environment** (NixOS only): Hyprland, Waybar, GTK, X Server
 - **Hardware support** (NixOS only): NVIDIA GPU, graphics, audio
 - **System services**: Docker, Podman, Minecraft server, observability
-- **Shell & editors**: Fish shell, Neovim (with optional nightly builds), Git config
+- **Shell & editors**: Fish/Bash/Zsh/Nushell, default shell, Neovim (with optional nightly builds), Git config
 
 ### Hardware Detection (NixOS)
 
@@ -748,7 +768,7 @@ home/
 │   ├── design/         # Design tools
 │   ├── shell/          # Shell utilities (bat, eza, zoxide, etc.)
 │   ├── tools/          # Misc tools (7zip, age, ollama, etc.)
-│   ├── fish.nix        # Fish shell configuration
+│   ├── fish.nix        # Fish shell features/integration
 │   ├── git.nix         # Git configuration
 │   └── gtk-theming.nix # GTK theming (opt-in)
 ├── nixos/               # NixOS-specific home bridge

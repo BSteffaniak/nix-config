@@ -36,10 +36,7 @@ in
       ++ (optional cfg.includeCompose docker-compose)
       ++ (optional cfg.includeBuildx docker-buildx);
 
-    # Fish shell completions
-    programs.fish.interactiveShellInit = mkIf config.programs.fish.enable ''
-      # Docker completions
-      docker completion fish | source
-    '';
+    # Docker completions shared across configured shells
+    homeModules.shell.shared.completionCommands = [ "docker" ];
   };
 }

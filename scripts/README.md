@@ -29,7 +29,7 @@ The script will prompt you for:
 2. Architecture (x86_64, aarch64)
 3. Hostname and user information
 4. Development tools (Rust, Node.js, Go, Python, Java, Zig, Android, DevOps)
-5. Editors and shell (Neovim, Fish, Git config, CLI tools)
+5. Editors and shell (Neovim, Fish/Bash/Zsh/Nushell, default shell, Git config, CLI tools)
 6. Platform-specific options:
    - **NixOS**: Desktop environment, hardware support, services
    - **Darwin**: Homebrew, system defaults, applications
@@ -74,7 +74,8 @@ Development tools:
 Editors and shell:
 
 - `--neovim`, `--neovim-nightly` - true/false
-- `--fish`, `--git`, `--clitools` - true/false
+- `--fish`, `--bash`, `--zsh`, `--nushell`, `--git`, `--clitools` - true/false
+- `--default-shell` - one of: `fish`, `bash`, `zsh`, `nushell`
 
 NixOS-specific:
 

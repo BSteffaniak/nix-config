@@ -43,6 +43,10 @@ while [[ $# -gt 0 ]]; do
         --neovim) ENABLE_NEOVIM="$2"; shift 2 ;;
         --neovim-nightly) NEOVIM_NIGHTLY="$2"; shift 2 ;;
         --fish) ENABLE_FISH="$2"; shift 2 ;;
+        --bash) ENABLE_BASH="$2"; shift 2 ;;
+        --zsh) ENABLE_ZSH="$2"; shift 2 ;;
+        --nushell) ENABLE_NUSHELL="$2"; shift 2 ;;
+        --default-shell) DEFAULT_SHELL="$2"; shift 2 ;;
         --git) ENABLE_GIT="$2"; shift 2 ;;
         --clitools) ENABLE_CLITOOLS="$2"; shift 2 ;;
         --desktop) ENABLE_DESKTOP="$2"; shift 2 ;;
@@ -108,10 +112,27 @@ NUGET_SOURCES="${NUGET_SOURCES:-}"
 ENABLE_NEOVIM="${ENABLE_NEOVIM:-true}"
 NEOVIM_NIGHTLY="${NEOVIM_NIGHTLY:-true}"
 ENABLE_FISH="${ENABLE_FISH:-true}"
+ENABLE_BASH="${ENABLE_BASH:-true}"
+ENABLE_ZSH="${ENABLE_ZSH:-true}"
+ENABLE_NUSHELL="${ENABLE_NUSHELL:-true}"
+DEFAULT_SHELL="${DEFAULT_SHELL:-fish}"
 ENABLE_GIT="${ENABLE_GIT:-true}"
 ENABLE_CLITOOLS="${ENABLE_CLITOOLS:-true}"
 STATE_VERSION="${STATE_VERSION:-24.11}"
 HOME_MANAGER_STATE_VERSION="${HOME_MANAGER_STATE_VERSION:-25.05}"
+
+case "$DEFAULT_SHELL" in
+    fish|bash|zsh|nushell) ;;
+    *)
+        echo "Error: --default-shell must be one of: fish, bash, zsh, nushell"
+        exit 1
+        ;;
+esac
+
+if [ "$DEFAULT_SHELL" = "fish" ]; then ENABLE_FISH="true"; fi
+if [ "$DEFAULT_SHELL" = "bash" ]; then ENABLE_BASH="true"; fi
+if [ "$DEFAULT_SHELL" = "zsh" ]; then ENABLE_ZSH="true"; fi
+if [ "$DEFAULT_SHELL" = "nushell" ]; then ENABLE_NUSHELL="true"; fi
 
 # Generate the configuration file
 OUTPUT_FILE="$SCRIPT_DIR/hosts/$HOSTNAME/default.nix"
@@ -302,7 +323,11 @@ EOF
     cat >> "$OUTPUT_FILE" << EOF
 
     # Shell and editors
+    shell.default = "$DEFAULT_SHELL";
     shell.fish.enable = $ENABLE_FISH;
+    shell.bash.enable = $ENABLE_BASH;
+    shell.zsh.enable = $ENABLE_ZSH;
+    shell.nushell.enable = $ENABLE_NUSHELL;
     shell.git.enable = $ENABLE_GIT;
     editors.neovim.enable = $ENABLE_NEOVIM;
     editors.neovim.useNightly = $NEOVIM_NIGHTLY;
@@ -373,7 +398,6 @@ EOF
   users.users.$USERNAME = {
     isNormalUser = true;
     description = "$FULLNAME";
-    shell = pkgs.fish;
     extraGroups = [
       "networkmanager"
       "wheel"
@@ -389,8 +413,6 @@ EOF
       # Add user-specific packages here
     ];
   };
-
-  users.defaultUserShell = pkgs.fish;
 
   # System packages specific to this host
   environment.systemPackages = with pkgs; [
@@ -540,7 +562,11 @@ EOF
     cat >> "$OUTPUT_FILE" << EOF
 
     # Shell and editors
+    shell.default = "$DEFAULT_SHELL";
     shell.fish.enable = $ENABLE_FISH;
+    shell.bash.enable = $ENABLE_BASH;
+    shell.zsh.enable = $ENABLE_ZSH;
+    shell.nushell.enable = $ENABLE_NUSHELL;
     shell.git.enable = $ENABLE_GIT;
     editors.neovim.enable = $ENABLE_NEOVIM;
     editors.neovim.useNightly = $NEOVIM_NIGHTLY;

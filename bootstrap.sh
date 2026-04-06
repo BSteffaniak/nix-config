@@ -298,6 +298,33 @@ else
 fi
 
 ENABLE_FISH=$(prompt_yes_no "Enable Fish shell?" "y" && echo "true" || echo "false")
+ENABLE_BASH=$(prompt_yes_no "Enable Bash shell?" "y" && echo "true" || echo "false")
+ENABLE_ZSH=$(prompt_yes_no "Enable Zsh shell?" "y" && echo "true" || echo "false")
+ENABLE_NUSHELL=$(prompt_yes_no "Enable Nushell?" "y" && echo "true" || echo "false")
+
+DEFAULT_SHELL=$(prompt_input "Default shell (fish/bash/zsh/nushell)" "fish")
+case "$DEFAULT_SHELL" in
+    fish|bash|zsh|nushell) ;;
+    *)
+        print_warning "Invalid default shell '$DEFAULT_SHELL', falling back to fish"
+        DEFAULT_SHELL="fish"
+        ;;
+esac
+
+# Ensure the selected default shell is enabled
+if [ "$DEFAULT_SHELL" = "fish" ] && [ "$ENABLE_FISH" != "true" ]; then
+    ENABLE_FISH="true"
+fi
+if [ "$DEFAULT_SHELL" = "bash" ] && [ "$ENABLE_BASH" != "true" ]; then
+    ENABLE_BASH="true"
+fi
+if [ "$DEFAULT_SHELL" = "zsh" ] && [ "$ENABLE_ZSH" != "true" ]; then
+    ENABLE_ZSH="true"
+fi
+if [ "$DEFAULT_SHELL" = "nushell" ] && [ "$ENABLE_NUSHELL" != "true" ]; then
+    ENABLE_NUSHELL="true"
+fi
+
 ENABLE_GIT=$(prompt_yes_no "Enable Git configuration?" "y" && echo "true" || echo "false")
 ENABLE_CLITOOLS=$(prompt_yes_no "Enable CLI tools (tmux, fzf, ripgrep, etc)?" "y" && echo "true" || echo "false")
 
@@ -432,6 +459,10 @@ mkdir -p "$SCRIPT_DIR/hosts/$HOSTNAME"
     --neovim "$ENABLE_NEOVIM" \
     --neovim-nightly "$NEOVIM_NIGHTLY" \
     --fish "$ENABLE_FISH" \
+    --bash "$ENABLE_BASH" \
+    --zsh "$ENABLE_ZSH" \
+    --nushell "$ENABLE_NUSHELL" \
+    --default-shell "$DEFAULT_SHELL" \
     --git "$ENABLE_GIT" \
     --clitools "$ENABLE_CLITOOLS" \
     --state-version "$STATE_VERSION" \
@@ -524,6 +555,7 @@ echo "  Platform: $PLATFORM"
 echo "  Architecture: $ARCH"
 echo "  Hostname: $HOSTNAME"
 echo "  Username: $USERNAME"
+echo "  Default shell: $DEFAULT_SHELL"
 echo ""
 echo "Generated files:"
 echo "  $SCRIPT_DIR/hosts/$HOSTNAME/default.nix"

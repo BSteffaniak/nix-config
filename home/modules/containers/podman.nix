@@ -126,10 +126,7 @@ in
       Install.WantedBy = [ "timers.target" ];
     };
 
-    # Fish shell completions
-    programs.fish.interactiveShellInit = mkIf config.programs.fish.enable ''
-      # Podman completions
-      podman completion fish | source
-    '';
+    # Podman completions shared across configured shells
+    homeModules.shell.shared.completionCommands = [ "podman" ];
   };
 }
