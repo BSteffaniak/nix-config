@@ -72,7 +72,9 @@ in
       package = pkgs.zellij-custom or pkgs.zellij;
     };
     xdg.configFile."zellij/config.kdl" = mkIf cfg.zellij.enable {
-      source = ../../../configs/zellij/config.kdl;
+      text =
+        builtins.replaceStrings [ "default_shell \"fish\"" ] [ "default_shell \"${defaultShellPath}\"" ]
+          (builtins.readFile ../../../configs/zellij/config.kdl);
     };
 
     # Tmux
