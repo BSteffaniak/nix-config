@@ -222,3 +222,9 @@ rolling_capture_output = true
 rolling_capture_events = true
 rolling_capture_protocol_replies = true
 rolling_capture_images = true
+
+# Auto-export GIFs when user-initiated recordings stop/cut.
+auto_export = true
+
+# Write auto-exported GIFs to ~/bmux-recordings.
+auto_export_dir = "~/bmux-recordings"
