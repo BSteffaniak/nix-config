@@ -82,6 +82,9 @@ prefix = "ctrl+a"
 # New pane (Alt n in zellij creates a pane in default direction)
 "alt+n" = "split_focused_horizontal"
 
+# Prompted action: cut recording with user-specified duration
+"ctrl+alt+r" = "plugin:bmux.prompted_actions:run recording-cut"
+
 # ---------------------------------------------------------------------------
 # Runtime bindings (Ctrl+a prefix required)
 # Matches zellij's tmux mode (Ctrl+a -> key)
@@ -228,3 +231,19 @@ auto_export = true
 
 # Write auto-exported GIFs to ~/bmux-recordings.
 auto_export_dir = "~/bmux-recordings"
+
+# ---------------------------------------------------------------------------
+# Prompted Actions plugin settings
+# ---------------------------------------------------------------------------
+[plugins.settings."bmux.prompted_actions"]
+
+[[plugins.settings."bmux.prompted_actions".actions]]
+name = "recording-cut"
+command = "plugin:bmux.plugin_cli:recording-cut --last-seconds {seconds}"
+
+[[plugins.settings."bmux.prompted_actions".actions.prompts]]
+key = "seconds"
+type = "text"
+title = "Cut Recording"
+placeholder = "last N seconds"
+validation = "positive_integer"
