@@ -74,7 +74,7 @@ in
       (mkIf cfg.lsof.enable [ pkgs.lsof ])
       (mkIf cfg.killall.enable [ pkgs.killall ])
       (mkIf cfg.nix-search.enable [ pkgs.nix-search ])
-      (mkIf cfg.media.ffmpeg.enable [ pkgs.ffmpeg ])
+      (mkIf cfg.media.ffmpeg.enable [ pkgs.unstable.ffmpeg ])
       (mkIf cfg.media.flac.enable [ pkgs.flac ])
       (mkIf cfg.media.mediainfo.enable [ pkgs.mediainfo ])
       (mkIf cfg.opencode.enable [
