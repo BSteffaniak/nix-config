@@ -198,7 +198,17 @@ in
         ]
       )
       {
-        users.users.${config.myConfig.username}.shell = mkForce defaultShellPackage;
+        users.users.${config.myConfig.username}.shell = mkDefault defaultShellPackage;
+      }
+    )
+
+    (optionalAttrs
+      (hasOption [
+        "users"
+        "knownUsers"
+      ])
+      {
+        users.knownUsers = [ config.myConfig.username ];
       }
     )
   ];
