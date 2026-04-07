@@ -39,6 +39,11 @@ in
         ${shellCfg.shared.nushellEnv}
       '';
       extraConfig = ''
+        $env.config.history = {
+            file_format: "sqlite"
+            isolation: true
+        }
+
         ${config.homeModules.shell.shared.nushellConfig}
         ${shellCfg.shared.nushellConfig}
       '';
