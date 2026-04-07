@@ -18,6 +18,12 @@ in
       default = true;
       description = "Start KeepingYouAwake at login";
     };
+
+    activateOnLaunch = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Activate sleep prevention immediately when KeepingYouAwake starts";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -29,12 +35,17 @@ in
 
     launchd.user.agents.keepingyouawake = mkIf cfg.startAtLogin {
       serviceConfig = {
-        Label = "info.marcel-dez.KeepingYouAwake.launcher";
+        Label = "info.marcel-dierkes.KeepingYouAwake.launcher";
         RunAtLoad = true;
         ProgramArguments = [
-          "/usr/bin/open"
-          "-a"
-          "KeepingYouAwake"
+          "/bin/sh"
+          "-c"
+          (concatStringsSep " && " (
+            optional cfg.activateOnLaunch "defaults write info.marcel-dierkes.KeepingYouAwake 'info.marcel-dierkes.KeepingYouAwake.ActivateOnLaunch' -bool true"
+            ++ [
+              "open -a 'KeepingYouAwake'"
+            ]
+          ))
         ];
       };
     };
