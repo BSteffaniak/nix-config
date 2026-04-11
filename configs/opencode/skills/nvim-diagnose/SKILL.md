@@ -1,7 +1,7 @@
 ---
 name: nvim-diagnose
 description: Diagnose neovim startup errors and runtime issues. Interactive — captures diagnostics, categorizes errors, and traces root causes to config files.
-allowed-tools: Bash(nvim:*), Bash(git:*), Question(*)
+allowed-tools: Bash(nvim:*), Bash(git:*), Bash(ls:*), Read(*), Grep(*), Glob(*), Question(*)
 ---
 
 ## Purpose
@@ -85,7 +85,10 @@ nvim --headless -c 'redir! > /tmp/nvim-diag-msgs.txt | silent messages | redir E
 nvim --headless -c 'checkhealth' -c 'lua vim.defer_fn(function() vim.cmd("w! /tmp/nvim-diag-health.txt"); vim.cmd("qa!") end, 5000)' 2>&1
 ```
 
-Read `/tmp/nvim-diag-health.txt`. Focus on lines containing `ERROR` or `WARN`.
+Read `/tmp/nvim-diag-health.txt`, and also parse stderr/stdout from the `checkhealth`
+command itself. If the file is empty, truncated, or incomplete due to early failure,
+treat command output as authoritative and include any `ERROR`/`WARN` lines from stderr
+in findings.
 
 #### 2d. Lazy.nvim plugin status
 
@@ -292,8 +295,9 @@ group by category.
   proceeding.
 - **Never act without user confirmation.** Do not begin deep analysis until the user
   selects which categories to investigate.
-- **Respect the config structure.** The neovim config is deployed via `xdg.configFile`
-  from `configs/neovim/` in the nix config repo. Always reference files relative to
-  the repo root, not `~/.config/nvim/`.
+- **Respect the config structure.** The source of truth is `configs/neovim/` in the
+  nix config repo. You may read runtime files under `~/.config/nvim/` only to confirm
+  active/generated state (for example `host-config.lua`), but root-cause references
+  and suggested fixes must point to repo-relative source files.
 - **Stderr is signal.** In headless mode, most neovim errors go to stderr. Always
   capture and analyze stderr output — do not discard it.
