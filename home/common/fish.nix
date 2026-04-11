@@ -83,11 +83,15 @@ let
         enable-flat-logging
       '';
     })
-    // (optionalAttrs fishCfg.flat.airship {
+  );
+
+  # Shared flat functions (POSIX scripts, available in all shells)
+  flatSharedFunctions = optionalAttrs fishCfg.flat.enable (
+    optionalAttrs fishCfg.flat.airship {
       devship = ''
-        airship --use-links $argv
+        exec airship --use-links "$@"
       '';
-    })
+    }
   );
 
   # ============================================================
@@ -111,15 +115,19 @@ let
   # ============================================================
   # NEOVIM CONFIGURATION
   # ============================================================
-  neovimFunctions = optionalAttrs fishCfg.neovim.enable (
+  # Fish-only neovim functions (none remaining -- moved to shared)
+  neovimFunctions = { };
+
+  # Shared neovim functions (POSIX scripts, available in all shells)
+  neovimSharedFunctions = optionalAttrs fishCfg.neovim.enable (
     (optionalAttrs fishCfg.neovim.sessionLoading {
       nvims = ''
-        nvim -c 'lua Handle_load_session()' $argv
+        exec nvim -c 'lua Handle_load_session()' "$@"
       '';
     })
     // (optionalAttrs fishCfg.neovim.manPages {
-      man = ''
-        command man $argv 2>/dev/null | col -b | nvim -R -c 'set ft=man nomod nolist' -
+      nman = ''
+        command man "$@" 2>/dev/null | col -b | nvim -R -c 'set ft=man nomod nolist' -
       '';
     })
   );
@@ -175,25 +183,33 @@ let
   # ============================================================
   # DEVELOPMENT CONFIGURATION
   # ============================================================
-  developmentFunctions = optionalAttrs (fishCfg.development.enable && fishCfg.development.benchmark) {
-    benchmark = ''
-      for i in (seq 1 400000)
-        echo -e '\r'
-        echo -e "Iteration $i:\r"
-        echo -e '\033[0K\033[1mBold\033[0m \033[7mInvert\033[0m \033[4mUnderline\033[0m'
-        echo -e '\033[0K\033[1m\033[7m\033[4mBold & Invert & Underline\033[0m'
-        echo
-        echo -e '\033[0K\033[31m Red \033[32m Green \033[33m Yellow \033[34m Blue \033[35m Magenta \033[36m Cyan \033[0m'
-        echo -e '\033[0K\033[1m\033[4m\033[31m Red \033[32m Green \033[33m Yellow \033[34m Blue \033[35m Magenta \033[36m Cyan \033[0m'
-        echo
-        echo -e '\033[0K\033[41m Red \033[42m Green \033[43m Yellow \033[44m Blue \033[45m Magenta \033[46m Cyan \033[0m'
-        echo -e '\033[0K\033[1m\033[4m\033[41m Red \033[42m Green \033[43m Yellow \033[44m Blue \033[45m Magenta \033[46m Cyan \033[0m'
-        echo
-        echo -e '\033[0K\033[30m\033[41m Red \033[42m Green \033[43m Yellow \033[44m Blue \033[45m Magenta \033[46m Cyan \033[0m'
-        echo -e '\033[0K\033[30m\033[1m\033[4m\033[41m Red \033[42m Green \033[43m Yellow \033[44m Blue \033[45m Magenta \033[46m Cyan \033[0m'
-      end
-    '';
-  };
+  # Fish-only development functions (none remaining -- moved to shared)
+  developmentFunctions = { };
+
+  # Shared development functions (POSIX scripts, available in all shells)
+  developmentSharedFunctions =
+    optionalAttrs (fishCfg.development.enable && fishCfg.development.benchmark)
+      {
+        benchmark = ''
+          i=0
+          while [ "$i" -lt 400000 ]; do
+            i=$((i + 1))
+            printf '\r'
+            printf "Iteration %s:\r" "$i"
+            printf '\033[0K\033[1mBold\033[0m \033[7mInvert\033[0m \033[4mUnderline\033[0m\n'
+            printf '\033[0K\033[1m\033[7m\033[4mBold & Invert & Underline\033[0m\n'
+            echo
+            printf '\033[0K\033[31m Red \033[32m Green \033[33m Yellow \033[34m Blue \033[35m Magenta \033[36m Cyan \033[0m\n'
+            printf '\033[0K\033[1m\033[4m\033[31m Red \033[32m Green \033[33m Yellow \033[34m Blue \033[35m Magenta \033[36m Cyan \033[0m\n'
+            echo
+            printf '\033[0K\033[41m Red \033[42m Green \033[43m Yellow \033[44m Blue \033[45m Magenta \033[46m Cyan \033[0m\n'
+            printf '\033[0K\033[1m\033[4m\033[41m Red \033[42m Green \033[43m Yellow \033[44m Blue \033[45m Magenta \033[46m Cyan \033[0m\n'
+            echo
+            printf '\033[0K\033[30m\033[41m Red \033[42m Green \033[43m Yellow \033[44m Blue \033[45m Magenta \033[46m Cyan \033[0m\n'
+            printf '\033[0K\033[30m\033[1m\033[4m\033[41m Red \033[42m Green \033[43m Yellow \033[44m Blue \033[45m Magenta \033[46m Cyan \033[0m\n'
+          done
+        '';
+      };
 
   # ============================================================
   # INTERACTIVE SHELL INIT COMPONENTS
@@ -245,13 +261,11 @@ in
       {
         enable = true;
 
-        # Merge built-in functions (don't reference fishCfg.functions to avoid recursion)
+        # Fish-only functions (shell-state mutators that use set -gx, fish builtins, etc.)
         functions = mkMerge [
           flatFunctions
           zellijFunctions
-          neovimFunctions
           utilitiesFunctions
-          developmentFunctions
         ];
 
         # Merge init scripts (don't reference fishCfg.interactiveShellInit to avoid recursion)
@@ -262,9 +276,13 @@ in
       }
     ];
 
+    # Shared functions (POSIX scripts via writeShellScriptBin, available in all shells)
     homeModules.shell.shared.functions = mkMerge [
+      flatSharedFunctions
       zellijSharedFunctions
+      neovimSharedFunctions
       utilitySharedFunctions
+      developmentSharedFunctions
     ];
 
     # Set session variables for editor
