@@ -1,5 +1,9 @@
 local M = {}
 
+local methods = vim.lsp.protocol.Methods or {}
+local method_formatting = methods.textDocument_formatting or "textDocument/formatting"
+local method_range_formatting = methods.textDocument_rangeFormatting or "textDocument/rangeFormatting"
+
 function Format()
   vim.lsp.buf.format({
     bufnr = vim.api.nvim_get_current_buf(),
@@ -53,7 +57,7 @@ function M.lsp_on_attach(client, bufnr)
   end, opts)
 
   -- format on save
-  if client.server_capabilities.documentFormattingProvider then
+  if client:supports_method(method_formatting, bufnr) then
     vim.api.nvim_create_autocmd("BufWritePre", {
       group = vim.api.nvim_create_augroup("Format", { clear = true }),
       buffer = bufnr,
@@ -63,11 +67,11 @@ function M.lsp_on_attach(client, bufnr)
 end
 
 function M.init_formatting(client, bufnr)
-  if client.supports_method("textDocument/formatting") then
+  if client:supports_method(method_formatting, bufnr) then
     vim.keymap.set("n", "<Leader>a", Format, { buffer = bufnr, desc = "[lsp] format" })
   end
 
-  if client.supports_method("textDocument/rangeFormatting") then
+  if client:supports_method(method_range_formatting, bufnr) then
     vim.keymap.set({ "x", "v" }, "<Leader>a", Format, { buffer = bufnr, desc = "[lsp] range format" })
   else
     -- print("odusnt support range formatting")
