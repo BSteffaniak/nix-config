@@ -11,7 +11,7 @@
             "extensions": [".toml"]
         },
         "prettierd": {
-            "command": ["prettierd", "$FILE"],
+            "command": ["prettier", "--write", "$FILE"],
             "extensions": [".md", ".yaml", ".yml"]
         }
     },
