@@ -85,6 +85,7 @@ in
         # Neovim configuration editing tools
         stylua
         lua-language-server
+        tree-sitter
 
         # Universal language servers
         nil # Nix LSP

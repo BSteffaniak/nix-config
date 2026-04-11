@@ -39,6 +39,13 @@ vim.filetype.add({
   },
 })
 
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "*",
+  callback = function(args)
+    pcall(vim.treesitter.start, args.buf)
+  end,
+})
+
 -- Helper function to detect if Nix is available on the system
 local function is_nix_system()
   return vim.fn.executable("nix") == 1
@@ -359,5 +366,3 @@ vim.diagnostic.config({
     header = "",
   },
 })
-
-require("nvim-treesitter.configs").setup({ highlight = { enable = true } })
