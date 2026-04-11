@@ -23,7 +23,7 @@ in
 
     nixfmt.enable = mkEnable "Nix formatter (nixfmt-rfc-style)";
     eslint.enable = mkEnable "ESLint daemon";
-    prettier.enable = mkEnable "Prettier daemon";
+    prettier.enable = mkEnable "Prettier CLI + daemon";
     taplo.enable = mkEnable "TOML formatter";
   };
 
@@ -31,7 +31,10 @@ in
     home.packages = mkMerge [
       (mkIf cfg.nixfmt.enable [ pkgs.nixfmt-rfc-style ])
       (mkIf cfg.eslint.enable [ pkgs.eslint_d ])
-      (mkIf cfg.prettier.enable [ pkgs.prettierd ])
+      (mkIf cfg.prettier.enable [
+        pkgs.prettier
+        pkgs.prettierd
+      ])
       (mkIf cfg.taplo.enable [ pkgs.taplo ])
     ];
   };
