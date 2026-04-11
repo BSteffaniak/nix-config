@@ -45,8 +45,14 @@ nixpkgs.lib.nixosSystem {
       nixpkgs.overlays = extraOverlays ++ (mkOverlays meta.system nixpkgs);
     }
     (
-      { config, ... }:
       {
+        config,
+        lib,
+        ...
+      }:
+      {
+        myConfig.username = lib.mkDefault meta.username;
+
         home-manager = {
           useGlobalPkgs = true;
           useUserPackages = true;

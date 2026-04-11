@@ -186,30 +186,5 @@ in
       }
     )
 
-    (optionalAttrs
-      (
-        hasOption [
-          "users"
-          "users"
-        ]
-        && !hasOption [
-          "users"
-          "defaultUserShell"
-        ]
-      )
-      {
-        users.users.${config.myConfig.username}.shell = mkDefault defaultShellPackage;
-      }
-    )
-
-    (optionalAttrs
-      (hasOption [
-        "users"
-        "knownUsers"
-      ])
-      {
-        users.knownUsers = [ config.myConfig.username ];
-      }
-    )
   ];
 }

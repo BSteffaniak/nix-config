@@ -17,7 +17,6 @@
 
   # Host-specific settings
   myConfig = {
-    username = "braden";
     fullName = "Braden Steffaniak";
 
     # Boot configuration
@@ -81,7 +80,7 @@
   };
 
   # User configuration
-  users.users.braden = {
+  users.users.${config.myConfig.username} = {
     isNormalUser = true;
     description = "Braden Steffaniak";
     extraGroups = [

@@ -49,11 +49,17 @@ nix-darwin.lib.darwinSystem {
       nixpkgs.overlays = extraOverlays ++ (mkOverlays meta.system nixpkgs-darwin);
     }
     (
-      { config, ... }:
+      {
+        config,
+        lib,
+        ...
+      }:
       let
         username = config.myConfig.username;
       in
       {
+        myConfig.username = lib.mkDefault meta.username;
+
         nix-homebrew = {
           enable = true;
           enableRosetta = true;

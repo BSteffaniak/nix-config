@@ -19,7 +19,6 @@ with lib;
   options.myConfig = {
     username = lib.mkOption {
       type = lib.types.str;
-      default = "braden";
       description = "Primary username";
     };
 

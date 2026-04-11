@@ -129,7 +129,7 @@ with lib;
       scrapeConfigs = [
         {
           scrape_interval = "2s";
-          job_name = "braden";
+          job_name = config.myConfig.username;
           static_configs = [
             {
               targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.node.port}" ];
@@ -240,7 +240,7 @@ with lib;
               max_age = "12h";
               labels = {
                 job = "systemd-journal";
-                host = "braden";
+                host = config.myConfig.username;
               };
             };
             relabel_configs = [

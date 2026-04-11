@@ -14,7 +14,6 @@
 
   # Host-specific settings
   myConfig = {
-    username = "bsteffaniak";
     fullName = "Braden Steffaniak";
     homeManagerStateVersion = "24.11";
 
@@ -76,7 +75,7 @@
   networking.computerName = "Braden's Mac Studio";
 
   # User configuration
-  system.primaryUser = "bsteffaniak";
+  system.primaryUser = config.myConfig.username;
 
   # System version
   system.stateVersion = 6;
