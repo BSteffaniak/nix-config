@@ -38,8 +38,13 @@ initial_mode = "normal"
 "ctrl+alt+r" = "plugin:bmux.prompted_actions:run recording-cut"
 
 [composition.profiles.zellij_vim_local.patch.keybindings.modes.normal.bindings]
+h = "plugin:bmux.windows:prev-window"
+j = "plugin:bmux.windows:prev-window"
+l = "plugin:bmux.windows:last-window"
 p = "enter_mode pane"
 r = "enter_mode resize"
+s = "plugin:bmux.windows:next-window"
+";" = "plugin:bmux.windows:next-window"
 
 [composition.profiles.zellij_vim_local.patch.keybindings.modes.pane]
 label       = "PANE"
