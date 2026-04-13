@@ -17,6 +17,7 @@ with lib;
       enable = true;
       onActivation.cleanup = "zap";
       onActivation.upgrade = true;
+      casks = optionals config.myConfig.development.android.enable [ "android-studio" ];
     };
   };
 }

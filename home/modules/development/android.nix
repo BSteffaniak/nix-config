@@ -48,8 +48,8 @@ in
   config = mkIf cfg.enable {
     home.packages = [
       android.androidsdk
-      pkgs.android-studio
-    ];
+    ]
+    ++ optional (meta.availableOn pkgs.stdenv.hostPlatform pkgs.android-studio) pkgs.android-studio;
 
     home.sessionVariables = {
       ANDROID_HOME = "${android.androidsdk}/libexec/android-sdk";

@@ -46,8 +46,8 @@ in
   config = mkIf config.myConfig.development.android.enable {
     environment.systemPackages = [
       android.androidsdk
-      pkgs.android-studio
-    ];
+    ]
+    ++ optional (meta.availableOn pkgs.stdenv.hostPlatform pkgs.android-studio) pkgs.android-studio;
 
     environment.variables = {
       ANDROID_HOME = "${android.androidsdk}/libexec/android-sdk";
