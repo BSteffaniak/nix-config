@@ -57,6 +57,9 @@ in
       (mkIf pkgs.stdenv.isDarwin {
         ANDROID_HOME = darwinSdkRoot;
         ANDROID_SDK_ROOT = darwinSdkRoot;
+        ANDROID_NDK_HOME = "${android.androidsdk}/libexec/android-sdk/ndk-bundle";
+        ANDROID_NDK_ROOT = "${android.androidsdk}/libexec/android-sdk/ndk-bundle";
+        NDK_HOME = "${android.androidsdk}/libexec/android-sdk/ndk-bundle";
       })
       (mkIf (!pkgs.stdenv.isDarwin) {
         ANDROID_HOME = "${android.androidsdk}/libexec/android-sdk";
