@@ -166,6 +166,16 @@ in
     (optionalAttrs
       (hasOption [
         "environment"
+        "systemPackages"
+      ])
+      {
+        environment.systemPackages = enabledShellPackages;
+      }
+    )
+
+    (optionalAttrs
+      (hasOption [
+        "environment"
         "pathsToLink"
       ])
       {
