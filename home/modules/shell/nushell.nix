@@ -32,6 +32,22 @@ in
       shellAliases = config.homeModules.shell.resolvedAliases;
       environmentVariables = mergedSessionVariables;
       extraEnv = ''
+        # Nix system paths (POSIX shells get these from set-environment/nix-daemon.sh,
+        # but nushell cannot source POSIX shell scripts)
+        let nix_paths = [
+          $"($env.HOME)/.nix-profile/bin"
+          $"/etc/profiles/per-user/($env.USER)/bin"
+          "/run/current-system/sw/bin"
+          "/nix/var/nix/profiles/default/bin"
+        ] | where { |p| ($p | path exists) }
+        $env.PATH = ($env.PATH | prepend $nix_paths)
+
+        # Homebrew (POSIX shells get this from 'brew shellenv' in /etc/zshrc)
+        let brew_paths = ["/opt/homebrew/bin" "/opt/homebrew/sbin"]
+          | where { |p| ($p | path exists) }
+        $env.PATH = ($env.PATH | append $brew_paths)
+
+        # Custom session paths from nix modules
         let additional_path = [ ${additionalPathLiteral} ]
         $env.PATH = ($env.PATH | prepend $additional_path)
 
