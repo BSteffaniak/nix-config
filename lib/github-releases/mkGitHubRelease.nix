@@ -28,6 +28,15 @@ let
   binaryName = config.binaryName or config.pname;
   installedBinaryName = config.installedBinaryName or config.pname;
 
+  # installMode controls how the archive is unpacked into $out:
+  #   "binary"    - (default) copy only the single binary into $out/bin
+  #   "directory" - copy the entire top-level directory from the archive into
+  #                 $out/libexec/<pname>/ and install a wrapper script at
+  #                 $out/bin/<installedBinaryName> that execs the binary. Use
+  #                 this when the binary requires sibling files (e.g. pi
+  #                 expects package.json next to the executable).
+  installMode = config.installMode or "binary";
+
   # Map license string to nixpkgs license attribute
   licenseMap = {
     "mit" = pkgs.lib.licenses.mit;
@@ -83,23 +92,61 @@ pkgs.stdenv.mkDerivation {
 
   installPhase = ''
     mkdir -p $out/bin
+  ''
+  + (
+    if installMode == "binary" then
+      ''
+        # Search common locations for the binary
+        if [ -f "${binaryName}" ]; then
+          cp "${binaryName}" "$out/bin/${installedBinaryName}"
+        elif [ -f "bin/${binaryName}" ]; then
+          cp "bin/${binaryName}" "$out/bin/${installedBinaryName}"
+        elif [ -f */"${binaryName}" ]; then
+          cp */"${binaryName}" "$out/bin/${installedBinaryName}"
+        else
+          echo "Error: Could not find '${binaryName}' binary in extracted archive"
+          echo "Archive contents:"
+          find . -type f | head -50
+          exit 1
+        fi
 
-    # Search common locations for the binary
-    if [ -f "${binaryName}" ]; then
-      cp "${binaryName}" "$out/bin/${installedBinaryName}"
-    elif [ -f "bin/${binaryName}" ]; then
-      cp "bin/${binaryName}" "$out/bin/${installedBinaryName}"
-    elif [ -f */"${binaryName}" ]; then
-      cp */"${binaryName}" "$out/bin/${installedBinaryName}"
+        chmod +x "$out/bin/${installedBinaryName}"
+      ''
+    else if installMode == "directory" then
+      ''
+        # Copy the entire top-level directory from the archive. The binary stays
+        # together with any sibling files it expects (e.g. package.json, assets,
+        # bundled resources).
+        mkdir -p "$out/libexec"
+
+        # Find the top-level directory that contains the binary.
+        srcDir=""
+        if [ -f "${binaryName}" ]; then
+          srcDir="."
+        elif [ -f */"${binaryName}" ]; then
+          srcDir=$(dirname */"${binaryName}")
+        else
+          echo "Error: Could not find '${binaryName}' binary in extracted archive"
+          echo "Archive contents:"
+          find . -type f | head -50
+          exit 1
+        fi
+
+        cp -r "$srcDir" "$out/libexec/${config.pname}"
+        chmod -R u+w "$out/libexec/${config.pname}"
+        chmod +x "$out/libexec/${config.pname}/${binaryName}"
+
+        # Wrapper script so the binary is reachable on PATH while still being
+        # exec'd from its install directory (needed for sibling-file lookups).
+        cat > "$out/bin/${installedBinaryName}" <<EOF
+        #!/bin/sh
+        exec "$out/libexec/${config.pname}/${binaryName}" "\$@"
+        EOF
+        chmod +x "$out/bin/${installedBinaryName}"
+      ''
     else
-      echo "Error: Could not find '${binaryName}' binary in extracted archive"
-      echo "Archive contents:"
-      find . -type f | head -50
-      exit 1
-    fi
-
-    chmod +x "$out/bin/${installedBinaryName}"
-  '';
+      throw "Unknown installMode '${installMode}' for ${config.pname}. Expected 'binary' or 'directory'."
+  );
 
   meta = {
     description = config.meta.description or "${config.pname} (from GitHub releases)";

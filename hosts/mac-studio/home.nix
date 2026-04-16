@@ -63,6 +63,7 @@
       utilities.media.flac.enable = true;
       utilities.media.mediainfo.enable = true;
       utilities.opencode.enable = true;
+      utilities.pi.enable = true;
     };
 
     # Development tool configs
@@ -73,6 +74,7 @@
       "git"
       "brew"
     ];
+    development.pi.enable = true;
     development.lspmux.enable = true;
 
     # DevOps tool configs

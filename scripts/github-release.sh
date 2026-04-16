@@ -868,6 +868,7 @@ usage() {
   echo "Examples:"
   echo "  $(basename "$0")                                 # Interactive menu"
   echo "  $(basename "$0") update opencode                 # Update one project"
+  echo "  $(basename "$0") update pi                       # (or any other configured project)"
   echo "  $(basename "$0") update --all                    # Update all projects"
   echo "  $(basename "$0") add                             # Interactive add wizard"
   echo "  $(basename "$0") add --non-interactive --owner sst --repo opencode --pname opencode-dev"

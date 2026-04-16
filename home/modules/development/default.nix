@@ -14,6 +14,7 @@
     ./lazygit.nix
     ./act.nix
     ./opencode.nix
+    ./pi.nix
     ./lspmux.nix
   ];
 }

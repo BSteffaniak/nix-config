@@ -1,0 +1,5 @@
+{
+    "provider": "copilot",
+    "model": "claude-opus-4.7",
+    "thinking": "high"
+}

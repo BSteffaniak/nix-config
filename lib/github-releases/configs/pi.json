@@ -1,0 +1,20 @@
+{
+    "owner": "badlogic",
+    "repo": "pi-mono",
+    "pname": "pi",
+    "binaryName": "pi",
+    "installedBinaryName": "pi",
+    "installMode": "directory",
+    "stripVersionPrefix": "v",
+    "platforms": {
+        "x86_64-linux": "pi-linux-x64.tar.gz",
+        "aarch64-linux": "pi-linux-arm64.tar.gz",
+        "x86_64-darwin": "pi-darwin-x64.tar.gz",
+        "aarch64-darwin": "pi-darwin-arm64.tar.gz"
+    },
+    "meta": {
+        "description": "Pi interactive coding agent CLI (from pi-mono GitHub releases)",
+        "homepage": "https://github.com/badlogic/pi-mono",
+        "license": "mit"
+    }
+}

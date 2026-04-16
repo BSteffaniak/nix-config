@@ -54,6 +54,7 @@ in
     };
 
     opencode.enable = mkEnable "OpenCode and Claude Code";
+    pi.enable = mkEnable "Pi coding agent CLI";
   };
 
   config = {
@@ -80,6 +81,7 @@ in
       (mkIf cfg.opencode.enable [
         pkgs.unstable.opencode
       ])
+      (mkIf cfg.pi.enable [ pkgs.pi ])
     ];
   };
 }

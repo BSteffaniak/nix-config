@@ -27,6 +27,7 @@
     development.python.enable = true;
     development.zig.enable = true;
     development.opencode.enable = true;
+    development.pi.enable = true;
 
     # Containers - rootless!
     containers.podman.enable = true;
@@ -87,6 +88,7 @@
       utilities.media.flac.enable = true;
       utilities.media.mediainfo.enable = true;
       utilities.opencode.enable = true;
+      utilities.pi.enable = true;
     };
   };
 

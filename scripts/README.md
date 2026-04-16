@@ -358,6 +358,11 @@ lib/github-releases/
 
 **Important:** The `versions/` directory contains pinned version data that Nix reads at evaluation time. These files must be committed to git so that all machines see the same versions.
 
+**Install modes:** The per-project config supports an optional `installMode` field:
+
+- `"binary"` (default) — copies only the single binary into `$out/bin`. Use for self-contained binaries.
+- `"directory"` — copies the entire archive's top-level directory into `$out/libexec/<pname>/` and installs a wrapper script at `$out/bin/<installedBinaryName>` that execs the binary. Use when the binary expects sibling files next to it (e.g. `pi` requires `package.json` alongside the executable).
+
 **Hash resolution:** The script uses the GitHub API `digest` field (sha256) when available for fast hash lookups. Falls back to `nix-prefetch-url` for repos that don't provide digests.
 
 ## Workflow Examples
