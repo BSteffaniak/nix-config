@@ -64,6 +64,7 @@
       utilities.media.mediainfo.enable = true;
       utilities.opencode.enable = true;
       utilities.pi.enable = true;
+      utilities.sshenv.enable = true;
     };
 
     # Development tool configs

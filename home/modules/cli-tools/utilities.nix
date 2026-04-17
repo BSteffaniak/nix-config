@@ -55,6 +55,7 @@ in
 
     opencode.enable = mkEnable "OpenCode and Claude Code";
     pi.enable = mkEnable "Pi coding agent CLI";
+    sshenv.enable = mkEnable "sshenv SSH-key-backed env vault";
   };
 
   config = {
@@ -82,6 +83,14 @@ in
         pkgs.unstable.opencode
       ])
       (mkIf cfg.pi.enable [ pkgs.pi ])
+      (mkIf cfg.sshenv.enable [ pkgs.sshenv ])
     ];
+
+    # Shim dir goes first in PATH so sshenv shims shadow nix-profile,
+    # ~/.cargo/bin, ~/.local/bin, etc. Contributed via the internal
+    # homeModules.shell.shared.sessionPath hook, which the shared shell
+    # module concatenates BEFORE user-facing defaults when building
+    # home.sessionPath (see home/modules/shell/shared.nix).
+    homeModules.shell.shared.sessionPath = mkIf cfg.sshenv.enable [ "$HOME/.sshenv/bin" ];
   };
 }
