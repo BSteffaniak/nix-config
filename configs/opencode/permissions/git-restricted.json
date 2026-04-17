@@ -28,6 +28,7 @@
                     "git tag --list": "allow",
                     "git tag --list *": "allow",
                     "git stash": "deny",
+                    "git stash --include-untracked": "deny",
                     "git stash drop": "deny",
                     "git stash pop": "deny",
                     "git stash apply": "deny",
