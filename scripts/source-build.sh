@@ -224,12 +224,17 @@ compute_cargo_hash() {
 
   # Parse the hash from the error output
   # Nix outputs something like: "got:    sha256-xxxxx"
+  # Use sed with a BRE-compatible pattern; macOS/BSD grep lacks -P (Perl regex).
   local hash
-  hash=$(echo "$build_output" | grep -oP 'got:\s+\Ksha256-[A-Za-z0-9+/=]+' | head -1)
+  hash=$(echo "$build_output" \
+    | sed -n 's/.*got:[[:space:]]*\(sha256-[A-Za-z0-9+/=]*\).*/\1/p' \
+    | head -1)
 
   if [ -z "$hash" ]; then
-    # Try alternative format: "specified: ...\n got: sha256:hexhash"
-    hash=$(echo "$build_output" | grep -oP 'got:\s+\Ksha256:[a-f0-9]+' | head -1)
+    # Try alternative format: "got: sha256:hexhash" (older nix versions).
+    hash=$(echo "$build_output" \
+      | sed -n 's/.*got:[[:space:]]*\(sha256:[a-f0-9]*\).*/\1/p' \
+      | head -1)
     if [ -n "$hash" ]; then
       # Convert sha256:hex to sha256-base64 format
       local hex="${hash#sha256:}"

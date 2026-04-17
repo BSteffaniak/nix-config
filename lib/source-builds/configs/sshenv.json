@@ -1,0 +1,8 @@
+{
+    "flakeInput": "sshenv-src",
+    "buildSystem": "rust",
+    "pname": "sshenv",
+    "hashField": "cargoHash",
+    "doCheck": false,
+    "cargoBuildFlags": ["--package", "sshenv"]
+}

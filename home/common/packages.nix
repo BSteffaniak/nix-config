@@ -26,6 +26,7 @@
       # Code tools
       worktree-setup
       bmux
+      sshenv
     ]
     ++ lib.optionals pkgs.stdenv.isLinux [
       # Linux-only packages
