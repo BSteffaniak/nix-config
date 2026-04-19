@@ -1,0 +1,9 @@
+{
+    "flakeInput": "sledge-src",
+    "buildSystem": "rust",
+    "pname": "sledge",
+    "hashField": "cargoHash",
+    "doCheck": false,
+    "cargoBuildFlags": ["--package", "sledge"],
+    "postInstallFile": "sledge-bundle.sh"
+}

@@ -7,6 +7,7 @@
     ./hyprland.nix
     ./mkalias.nix
     ./sketchybar.nix
+    ./sledge.nix
     ./waybar.nix
     ./utilities.nix
   ];

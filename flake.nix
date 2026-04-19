@@ -94,6 +94,10 @@
       url = "github:BSteffaniak/sshenv";
       flake = false;
     };
+    sledge-src = {
+      url = "github:BSteffaniak/sledge";
+      flake = false;
+    };
   };
 
   outputs =

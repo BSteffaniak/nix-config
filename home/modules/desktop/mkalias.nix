@@ -21,12 +21,43 @@
 
 with lib;
 
+let
+  cfg = config.myConfig.desktop.mkalias;
+
+  # Build a case-statement pattern that lets us `continue` the alias
+  # loop for any app in the exclusion list. Each basename is escaped
+  # individually to tolerate unusual characters in a .app name.
+  skipCase =
+    if cfg.excludeApps == [ ] then
+      ""
+    else
+      ''
+        case "$app_name" in
+          ${lib.concatMapStringsSep " | " lib.escapeShellArg cfg.excludeApps})
+            continue
+            ;;
+        esac
+      '';
+in
 {
   options.myConfig.desktop.mkalias = {
     enable = mkEnableOption "macOS Finder aliases for home-manager apps";
+
+    excludeApps = mkOption {
+      type = types.listOf types.str;
+      default = [ ];
+      example = [ "Sledge.app" ];
+      description = ''
+        App basenames (e.g. `"Sledge.app"`) to skip when creating
+        Finder aliases. Use this for home-manager packages that self-
+        install to `/Applications/` via their own activation script,
+        where a Finder alias would conflict with the real bundle on
+        subsequent rebuilds.
+      '';
+    };
   };
 
-  config = mkIf (config.myConfig.desktop.mkalias.enable && pkgs.stdenv.isDarwin) {
+  config = mkIf (cfg.enable && pkgs.stdenv.isDarwin) {
     home.activation.aliasHomeManagerApps = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       manifest="''${XDG_STATE_HOME:-$HOME/.local/state}/hm-mkalias-apps.txt"
 
@@ -50,6 +81,7 @@ with lib;
       if [ -d "$hm_apps" ]; then
         find "$hm_apps" -maxdepth 1 -name "*.app" -type l -exec readlink '{}' + | while read -r src; do
           app_name=$(basename "$src")
+          ${skipCase}
           target="/Applications/$app_name"
           run ${pkgs.mkalias}/bin/mkalias "$src" "$target"
           echo "$target" >> "$manifest"

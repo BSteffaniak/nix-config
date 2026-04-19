@@ -1,0 +1,74 @@
+# sledge configuration (deployed by home-manager from nix config)
+#
+# This file is installed to ~/.config/sledge/config.toml.
+# Edits here take effect on the next `darwin-rebuild switch` (SIGHUP
+# to the sledge daemon) and in-daemon hot-reload within ~250ms.
+#
+# Override per-host by setting myConfig.desktop.sledge.enable = false
+# and writing the file manually.
+
+[daemon]
+# Log level: "trace" | "debug" | "info" | "warn" | "error".
+# Hot-reloadable: editing this value in the deployed file triggers a
+# config reload and the new filter is applied within ~250ms without
+# restarting the daemon.
+log_level = "info"
+
+# -----------------------------------------------------------------------------
+# App aliases
+#
+# Logical names -> per-platform identifiers. Use these in `when.app_in` so the
+# same config can eventually work on Linux and Windows too.
+# -----------------------------------------------------------------------------
+
+[app_aliases.ghostty]
+macos = "com.mitchellh.ghostty"
+
+[app_aliases.kitty]
+macos = "net.kovidgoyal.kitty"
+
+[app_aliases.wezterm]
+macos = "com.github.wez.wezterm"
+
+[app_aliases.iterm2]
+macos = "com.googlecode.iterm2"
+
+[app_aliases.terminal]
+macos = "com.apple.Terminal"
+
+# -----------------------------------------------------------------------------
+# Bindings
+#
+# Each binding has:
+#   trigger = { ... }                 required
+#   action  = { type = "...", ... }   required
+#   when    = { ... }                 optional (scope predicate)
+#
+# Trigger shapes:
+#   { key = "KeyA", mods = ["cmd", "alt"] }
+#   { tap = "RightAlt", count = 3, within_ms = 600 }
+#
+# Action shapes:
+#   { type = "send_key", key = "Return", mods = ["ctrl"] }
+#   { type = "set_input_source", id = "com.apple.keylayout.US" }
+#
+# Scope predicate (when):
+#   { app_in = ["ghostty", "kitty"] }
+# -----------------------------------------------------------------------------
+
+# Triple-tap right Option -> Ctrl+Enter  (OpenCode submit)
+[[binding]]
+action = { type = "send_key", key = "Return", mods = ["ctrl"] }
+trigger = { tap = "RightAlt", count = 3, within_ms = 600 }
+
+# Terminal-only: Ctrl+; -> Ctrl+s  (zellij tab navigation)
+[[binding]]
+action = { type = "send_key", key = "KeyS", mods = ["ctrl"] }
+trigger = { key = "Semicolon", mods = ["ctrl"] }
+when = { app_in = ["ghostty", "kitty", "wezterm", "iterm2", "terminal"] }
+
+# Terminal-only: Alt+k -> Alt+t  (zellij workaround)
+[[binding]]
+action = { type = "send_key", key = "KeyT", mods = ["alt"] }
+trigger = { key = "KeyK", mods = ["alt"] }
+when = { app_in = ["ghostty", "kitty", "wezterm", "iterm2", "terminal"] }

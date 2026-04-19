@@ -467,6 +467,7 @@
         "nixpkgs-firefox-darwin": "nixpkgs-firefox-darwin",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "rust-overlay": "rust-overlay",
+        "sledge-src": "sledge-src",
         "sshenv-src": "sshenv-src",
         "swww": "swww",
         "tone-clone-src": "tone-clone-src",
@@ -512,6 +513,22 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "sledge-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1776568084,
+        "narHash": "sha256-FPWiW6PvtAs8CxJ3D7DR7AEWX3U0f/7coxMLRpTYT2g=",
+        "owner": "BSteffaniak",
+        "repo": "sledge",
+        "rev": "3961be7b19a062c43544187c5613948f00967300",
+        "type": "github"
+      },
+      "original": {
+        "owner": "BSteffaniak",
+        "repo": "sledge",
         "type": "github"
       }
     },
