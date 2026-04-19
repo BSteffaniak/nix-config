@@ -57,11 +57,8 @@
     desktop.aerospace.enable = true;
     desktop.sketchybar.enable = true;
 
-    # Keyboard customization
-    # Sledge replaces Hammerspoon. Sledge lives entirely in home-manager
-    # (see hosts/macbook-air/home.nix), so only the Hammerspoon disable
-    # lives here.
-    darwin.hammerspoon.enable = false;
+    # Keyboard customization (sledge) lives entirely in home-manager;
+    # see hosts/macbook-air/home.nix for `myConfig.desktop.sledge.enable`.
     darwin.security.touchId.enable = true;
     darwin.minecraft.enable = true;
 

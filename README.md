@@ -162,7 +162,7 @@ cp -r configs/neovim ~/.config/nvim
 - `act` - GitHub Actions locally
 - `htop` - htop system monitor
 - `aerospace` - AeroSpace window manager (macOS)
-- `hammerspoon` - Hammerspoon automation (macOS)
+- `sledge` - Sledge keyboard remap daemon (macOS)
 - `sketchybar` - SketchyBar status bar (macOS)
 
 Each config works standalone and can be cloned/used independently.
