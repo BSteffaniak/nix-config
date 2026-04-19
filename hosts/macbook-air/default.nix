@@ -57,9 +57,11 @@
     desktop.aerospace.enable = true;
     desktop.sketchybar.enable = true;
 
-    # Keyboard customization (Hammerspoon - uses CGEventTap instead of
-    # virtual HID keyboard, which avoids breaking Dvorak Ctrl key mappings)
-    darwin.hammerspoon.enable = true;
+    # Keyboard customization
+    # Sledge replaces Hammerspoon. Sledge lives entirely in home-manager
+    # (see hosts/macbook-air/home.nix), so only the Hammerspoon disable
+    # lives here.
+    darwin.hammerspoon.enable = false;
     darwin.security.touchId.enable = true;
     darwin.minecraft.enable = true;
 

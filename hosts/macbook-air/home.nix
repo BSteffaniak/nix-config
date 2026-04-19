@@ -23,6 +23,7 @@
     desktop.sketchybar.enable = true;
     desktop.browsers.firefox.enable = true;
     desktop.mkalias.enable = true;
+    desktop.sledge.enable = true;
 
     # CLI tools - now configured directly in home-manager
     cliTools = {
