@@ -643,7 +643,7 @@ All posted reply text must follow the [voice and tone guide](../_shared/voice-an
 **For `VALID` comments the user chose to reply to (without fixing):**
 
 - Acknowledge it honestly.
-- Example: _"good catch, will fix in a follow-up"_
+- Example: _"will fix in a follow-up"_
 
 **For comments that were skipped without a rebuttal:**
 

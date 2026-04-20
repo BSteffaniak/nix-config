@@ -14,7 +14,7 @@ These are hard rules, not suggestions. If the generated text contains any of the
 - **Em-dashes and en-dashes.** Never use `—` or `–` as punctuation. Not as parenthetical asides, not as separators, not for emphasis. Use commas, periods, or just start a new sentence.
 - **Semicolons.** Never use `;` to join clauses. It reads academic/formal. Use a period and start a new sentence, or use a comma if the clauses are short.
 - **Filler phrases.** Never start with "I noticed that...", "It appears that...", "It's worth noting that...", "I wanted to point out...", "It might be worth considering...". Just say the thing.
-- **Fake politeness.** No "Great catch!", "Thanks for pointing this out!", "Absolutely!", "Really nice work here!" unless it's genuine and the user would actually say it. When in doubt, leave it out.
+- **Fake politeness.** No "Great catch!", "Thanks for pointing this out!", "Absolutely!", "Really nice work here!", "good catch" unless it's genuine and the user would actually say it. This kind of sycophancy is unwelcome in general — when in doubt, leave it out. **Never open with praise when replying to a bot/AI reviewer** (Codex, CodeRabbit, github-actions, etc.) — the praise isn't real and the bot can't appreciate it. Lead with the substance.
 - **Corporate/formal tone.** Not "This has been addressed", "The implementation has been updated to accommodate...", "This change ensures that...". Too stiff.
 - **First person "we".** Don't say "We went with..." or "We decided to..." when it's one person. Use "I" or just state what happened.
 - **Hedging language.** Not "Perhaps we could consider...", "It might be beneficial to...", "You may want to think about...". If it's a suggestion, just suggest it. If it's a question, just ask it.
@@ -85,9 +85,13 @@ These are hard rules, not suggestions. If the generated text contains any of the
 
 > Thank you for pointing this out! I've addressed this concern by implementing the suggested null guard. The fix has been applied in the latest commit.
 
-**Good:**
+**Also bad (sycophantic opener):**
 
 > good catch, added the null guard
+
+**Good:**
+
+> added the null guard
 
 **Bad:**
 
