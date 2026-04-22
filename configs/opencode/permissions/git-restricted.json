@@ -57,6 +57,8 @@
                     "git diff-tree *": "allow",
                     "git branch": "allow",
                     "git branch *": "allow",
+                    "git ls-tree": "allow",
+                    "git ls-tree *": "allow",
                     "git ls-files": "allow",
                     "git ls-files *": "allow",
                     "git remote": "allow",
