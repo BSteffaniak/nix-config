@@ -1,27 +1,27 @@
 {
-    "model": "openai/gpt-5.4",
+    "model": "openai/gpt-5.5-fast",
     "small_model": "openai/gpt-5.3-codex-spark",
     "agent": {
         "build": {
-            "model": "openai/gpt-5.4"
+            "model": "openai/gpt-5.5-fast"
         },
         "plan": {
-            "model": "openai/gpt-5.4"
+            "model": "openai/gpt-5.5-fast"
         },
         "explore": {
-            "model": "openai/gpt-5.4"
+            "model": "openai/gpt-5.5-fast"
         },
         "general": {
-            "model": "openai/gpt-5.4"
+            "model": "openai/gpt-5.5-fast"
         },
         "title": {
             "model": "openai/gpt-5.3-codex-spark"
         },
         "summary": {
-            "model": "openai/gpt-5.4"
+            "model": "openai/gpt-5.5-fast"
         },
         "compaction": {
-            "model": "openai/gpt-5.4"
+            "model": "openai/gpt-5.5-fast"
         }
     }
 }
