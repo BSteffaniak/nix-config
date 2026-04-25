@@ -1,3 +1,13 @@
+# ---------------------------------------------------------------------------
+# Theme
+# ---------------------------------------------------------------------------
+[plugins.settings."bmux.theme"]
+# Bundled theme selected by the bmux.theme plugin. Its decoration slice
+# exercises the bmux.decoration Luau scripting surface: the focused pane's
+# border breathes between lime-green and cyan at 30 Hz.
+theme = "pulse-demo"
+persistence = "persist_between_connects"
+
 [composition]
 active_profile = "zellij_vim_local"
 
@@ -24,7 +34,7 @@ initial_mode = "normal"
 "ctrl+s"     = "plugin:bmux.windows:next-window"
 "ctrl+right" = "plugin:bmux.windows:next-window"
 "ctrl+l"     = "plugin:bmux.windows:last-window"
-"ctrl+o"     = "session_prev"
+"ctrl+o"     = "plugin:bmux.windows:prev-window"
 "alt+left"   = "focus_left_pane"
 "alt+down"   = "focus_down_pane"
 "alt+up"     = "focus_up_pane"
@@ -53,8 +63,8 @@ passthrough = false
 [composition.profiles.zellij_vim_local.patch.keybindings.modes.pane.bindings]
 "\""        = "split_focused_horizontal"
 "%"         = "split_focused_vertical"
-"("         = "session_prev"
-")"         = "session_next"
+"("         = "plugin:bmux.windows:prev-window"
+")"         = "plugin:bmux.windows:next-window"
 "["         = "enter_scroll_mode"
 "]"         = "exit_scroll_mode"
 "^"         = "plugin:bmux.windows:last-window"
@@ -70,7 +80,7 @@ right       = "focus_right_pane"
 n           = "plugin:bmux.windows:next-window"
 o           = "focus_next_pane"
 p           = "plugin:bmux.windows:prev-window"
-"shift+c"  = "new_session"
+"shift+c"  = "plugin:bmux.sessions:new-session"
 "shift+r"  = "restart_focused_pane"
 "shift+&"  = "plugin:bmux.windows:close-current-window"
 t           = "toggle_split_direction"
