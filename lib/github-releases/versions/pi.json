@@ -1,22 +1,22 @@
 {
-    "version": "0.67.5",
-    "tag": "v0.67.5",
+    "version": "0.70.2",
+    "tag": "v0.70.2",
     "platforms": {
         "aarch64-darwin": {
-            "url": "https://github.com/badlogic/pi-mono/releases/download/v0.67.5/pi-darwin-arm64.tar.gz",
-            "sha256": "539af35680cc3b0adcf8b5da50c89be5740df134d9efbc13b24f1ec0b21f591d"
+            "url": "https://github.com/badlogic/pi-mono/releases/download/v0.70.2/pi-darwin-arm64.tar.gz",
+            "sha256": "4e039050367d82bff963e15fea8d85ca268f7b0284b83f5f15939aad087353a4"
         },
         "aarch64-linux": {
-            "url": "https://github.com/badlogic/pi-mono/releases/download/v0.67.5/pi-linux-arm64.tar.gz",
-            "sha256": "23e9816482f9d26ad312016acd04905e394f9e8023519f3d297192e27bcd48c7"
+            "url": "https://github.com/badlogic/pi-mono/releases/download/v0.70.2/pi-linux-arm64.tar.gz",
+            "sha256": "91f5025050bf735653a7c21a0731acf699d345f79aec2014b0865dcd5b90e6ef"
         },
         "x86_64-darwin": {
-            "url": "https://github.com/badlogic/pi-mono/releases/download/v0.67.5/pi-darwin-x64.tar.gz",
-            "sha256": "78d8428c908101e1d00035e7722c59d149dbe961060ec72c2894c3a3e5a8b916"
+            "url": "https://github.com/badlogic/pi-mono/releases/download/v0.70.2/pi-darwin-x64.tar.gz",
+            "sha256": "0ffed2128efb469ef23c46f861cd1d848022153ba7247dab3ee7ea41bf6c3864"
         },
         "x86_64-linux": {
-            "url": "https://github.com/badlogic/pi-mono/releases/download/v0.67.5/pi-linux-x64.tar.gz",
-            "sha256": "249e33ae82b5aa2654dc3c297b0ed6d57c78dd46e28020c88b74a0459f76f2cb"
+            "url": "https://github.com/badlogic/pi-mono/releases/download/v0.70.2/pi-linux-x64.tar.gz",
+            "sha256": "54312268e486b7268dafed5476ac8b7424d0876cd727dc325d4e00ec7446f749"
         }
     }
 }
