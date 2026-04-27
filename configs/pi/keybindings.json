@@ -1,3 +1,5 @@
 {
+    "tui.input.submit": ["ctrl+enter"],
+    "tui.input.newLine": ["enter"],
     "tui.input.tab": ["ctrl+space"]
 }
