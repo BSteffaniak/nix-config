@@ -290,8 +290,15 @@ cat << 'EOF'
   shell.git.enable = true;
   editors.neovim.enable = true;
 
-  # CLI tools
-  cliTools.enable = true;
+};
+
+# In hosts/<hostname>/home.nix, enable CLI tools at the Home Manager layer:
+myConfig.cliTools = {
+  terminals.enableAll = true;
+  monitoring.enableAll = true;
+  fileTools.enableAll = true;
+  formatters.enableAll = true;
+  utilities.enableAll = true;
 };
 EOF
 

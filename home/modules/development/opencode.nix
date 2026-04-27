@@ -242,7 +242,10 @@ in
         source = "${inputs.tone-clone-src}/skills/tone-clone";
         recursive = true;
       };
-      home.packages = [ pkgs.tone-clone ];
+      home.packages = [
+        pkgs.opencode-dev
+        pkgs.tone-clone
+      ];
     }
 
     # Auto-generate slash commands for all skills (local + external)

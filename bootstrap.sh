@@ -399,7 +399,6 @@ if [ "$PLATFORM" = "nixos" ]; then
     
     ENABLE_OBSERVABILITY=$(prompt_yes_no "Enable observability (monitoring)?" "n" && echo "true" || echo "false")
     ENABLE_MINECRAFT=$(prompt_yes_no "Enable Minecraft server?" "n" && echo "true" || echo "false")
-    ENABLE_NIXOS_CLITOOLS=$(prompt_yes_no "Enable NixOS-specific CLI tools?" "y" && echo "true" || echo "false")
     
     # State version
     STATE_VERSION=$(prompt_input "NixOS state version" "24.11")
@@ -466,7 +465,6 @@ mkdir -p "$SCRIPT_DIR/hosts/$HOSTNAME"
     --nushell "$ENABLE_NUSHELL" \
     ${DEFAULT_SHELL:+--default-shell "$DEFAULT_SHELL"} \
     --git "$ENABLE_GIT" \
-    --clitools "$ENABLE_CLITOOLS" \
     --state-version "$STATE_VERSION" \
     ${HOME_MANAGER_STATE_VERSION:+--home-manager-state-version "$HOME_MANAGER_STATE_VERSION"} \
     ${ENABLE_DESKTOP:+--desktop "$ENABLE_DESKTOP"} \
@@ -488,7 +486,6 @@ mkdir -p "$SCRIPT_DIR/hosts/$HOSTNAME"
     ${DOCKER_DATA_ROOT:+--docker-data-root "$DOCKER_DATA_ROOT"} \
     ${ENABLE_OBSERVABILITY:+--observability "$ENABLE_OBSERVABILITY"} \
     ${ENABLE_MINECRAFT:+--minecraft "$ENABLE_MINECRAFT"} \
-    ${ENABLE_NIXOS_CLITOOLS:+--nixos-clitools "$ENABLE_NIXOS_CLITOOLS"} \
     ${ENABLE_HOMEBREW:+--homebrew "$ENABLE_HOMEBREW"} \
     ${ENABLE_SYSTEM_DEFAULTS:+--system-defaults "$ENABLE_SYSTEM_DEFAULTS"} \
     ${ENABLE_APPLICATIONS:+--applications "$ENABLE_APPLICATIONS"} \
@@ -525,6 +522,29 @@ EOF
 
 print_success "Created $SCRIPT_DIR/hosts/$HOSTNAME/meta.nix"
 print_success "The flake and rebuild.sh will auto-discover this host -- no manual edits needed."
+
+# Generate required host-specific Home Manager overrides.
+cat > "$SCRIPT_DIR/hosts/$HOSTNAME/home.nix" << EOF
+# Personal home-manager overrides for $HOSTNAME host
+{
+  ...
+}:
+
+{
+  myConfig = {
+    # CLI tools are managed at the Home Manager layer.
+    cliTools = {
+      terminals.enableAll = $ENABLE_CLITOOLS;
+      monitoring.enableAll = $ENABLE_CLITOOLS;
+      fileTools.enableAll = $ENABLE_CLITOOLS;
+      formatters.enableAll = $ENABLE_CLITOOLS;
+      utilities.enableAll = $ENABLE_CLITOOLS;
+    };
+  };
+}
+EOF
+
+print_success "Created $SCRIPT_DIR/hosts/$HOSTNAME/home.nix"
 
 # For NixOS, handle hardware-configuration.nix
 if [ "$PLATFORM" = "nixos" ]; then
@@ -566,6 +586,7 @@ echo ""
 echo "Generated files:"
 echo "  $SCRIPT_DIR/hosts/$HOSTNAME/default.nix"
 echo "  $SCRIPT_DIR/hosts/$HOSTNAME/meta.nix"
+echo "  $SCRIPT_DIR/hosts/$HOSTNAME/home.nix"
 echo ""
 
 print_success "Next steps:"

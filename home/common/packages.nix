@@ -12,20 +12,8 @@
       # Password management
       bitwarden-desktop
 
-      # Development tools
-      gh-dash
-      natscli
-
-      # Cloud tools
-      flyctl
-
-      # Media tools
-      mediainfo
-      flac
-
       # Code tools
       worktree-setup
-      bmux
     ]
     ++ lib.optionals pkgs.stdenv.isLinux [
       # Linux-only packages

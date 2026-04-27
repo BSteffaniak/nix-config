@@ -31,6 +31,12 @@ in
       default = true;
       description = "Include buf (Protocol buffer tooling)";
     };
+
+    includeNats = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Include natscli";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -39,7 +45,8 @@ in
       [ ]
       ++ (optional cfg.includeTerraform opentofu)
       ++ (optional cfg.includeTerraformLS terraform-ls)
-      ++ (optional cfg.includeProtobuf buf);
+      ++ (optional cfg.includeProtobuf buf)
+      ++ (optional cfg.includeNats natscli);
 
     # Terraform/OpenTofu aliases shared across configured shells
     homeModules.shell.shared.aliases = mkIf cfg.includeTerraform {

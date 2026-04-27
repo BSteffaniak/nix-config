@@ -97,9 +97,4 @@
       utilities.sshenv.enable = true;
     };
   };
-
-  # Ubuntu laptop specific packages
-  home.packages = with pkgs; [
-    # Add any laptop-specific tools here
-  ];
 }

@@ -1,43 +1,59 @@
-# Example overlay configuration for hosts
-# Copy this file to your host directory (e.g., hosts/nixos-desktop/overlays.nix)
-# and customize the flags to disable overlays you don't need.
+# Example overlay configuration.
 #
-# Then in your host's flake, import this file instead of the default overlay configuration.
-#
-# NOTE: Source-built packages (lspmux, tone-clone, worktree-setup, etc.)
-# are auto-discovered from lib/source-builds/configs/*.json and do NOT need
-# individual enable flags. They are all controlled by enableSourceBuilds.
-
+# This repository currently enables overlays from flake.nix via mkOverlays.
+# If you want a custom overlay set, use this file as a starting point and wire
+# it into flake.nix's mkOverlays function for the host(s) that need it.
 {
+  lib,
   nixpkgs-unstable,
   flakeInputs,
-  rust-overlay,
+  rust-overlay ? null,
+  zellij-fork ? null,
+  cronstrue-src ? null,
+  firefox-darwin ? null,
 }:
 
-# Example 1: Disable Rust overlay (saves build time if you don't use Rust)
-import ../../lib/overlays.nix {
+# Example 1: disable the Rust overlay, but keep source builds and releases.
+import ../lib/overlays.nix {
   inherit
+    lib
     nixpkgs-unstable
     flakeInputs
     rust-overlay
+    zellij-fork
+    cronstrue-src
+    firefox-darwin
     ;
+
   enableRust = false;
   enableGithubReleases = true;
   enableSourceBuilds = true;
+  enableZellijFork = false;
+  enableCronstrue = true;
+  enableFirefoxDarwin = true;
+  enableMinecraftPlugins = true;
 }
 
-# Example 2: Only enable unstable packages (minimal setup)
-# import ../../lib/overlays.nix {
-#   inherit nixpkgs-unstable flakeInputs rust-overlay;
+# Example 2: only enable unstable packages (minimal setup)
+# import ../lib/overlays.nix {
+#   inherit lib nixpkgs-unstable flakeInputs rust-overlay;
 #   enableRust = false;
 #   enableGithubReleases = false;
 #   enableSourceBuilds = false;
+#   enableZellijFork = false;
+#   enableCronstrue = false;
+#   enableFirefoxDarwin = false;
+#   enableMinecraftPlugins = false;
 # }
 
-# Example 3: Enable everything (default behavior)
-# import ../../lib/overlays.nix {
-#   inherit nixpkgs-unstable flakeInputs rust-overlay;
+# Example 3: enable everything (default behavior)
+# import ../lib/overlays.nix {
+#   inherit lib nixpkgs-unstable flakeInputs rust-overlay zellij-fork cronstrue-src firefox-darwin;
 #   enableRust = true;
 #   enableGithubReleases = true;
 #   enableSourceBuilds = true;
+#   enableZellijFork = true;
+#   enableCronstrue = true;
+#   enableFirefoxDarwin = true;
+#   enableMinecraftPlugins = true;
 # }

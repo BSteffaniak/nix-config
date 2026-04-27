@@ -16,8 +16,11 @@ in
   };
 
   config = mkIf cfg.enable {
-    # Install gh package (don't use programs.gh to avoid conflicts)
-    home.packages = with pkgs; [ gh ];
+    # Install GitHub tools (don't use programs.gh to avoid conflicts)
+    home.packages = with pkgs; [
+      gh
+      gh-dash
+    ];
 
     # Manually symlink standalone GitHub CLI configs from configs/gh
     # NOTE: hosts.yml is NOT managed here - let gh auth login handle it

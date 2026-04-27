@@ -142,6 +142,5 @@
   # Personal packages
   home.packages = with pkgs; [
     steam
-    opencode-dev
   ];
 }

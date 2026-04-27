@@ -37,6 +37,12 @@ in
       default = false;
       description = "Include Azure CLI";
     };
+
+    includeFlyctl = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Include flyctl (Fly.io CLI)";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -49,7 +55,8 @@ in
       ])
       ++ (optional cfg.includeDigitalOcean doctl)
       ++ (optional cfg.includeGCP google-cloud-sdk)
-      ++ (optional cfg.includeAzure azure-cli);
+      ++ (optional cfg.includeAzure azure-cli)
+      ++ (optional cfg.includeFlyctl flyctl);
 
   };
 }

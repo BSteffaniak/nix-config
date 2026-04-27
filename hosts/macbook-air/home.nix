@@ -1,4 +1,4 @@
-# Personal home-manager overrides for nixos-desktop host
+# Personal home-manager overrides for macbook-air host
 # Contains personal preferences and should not be copied when bootstrapping new hosts
 {
   config,
@@ -105,7 +105,7 @@
       jdtls = false; # Disable Java development tools (not needed on laptop)
       elixir = false; # Disable Elixir plugins (not used on laptop)
       ionide = false; # Disable F# support (not used on laptop)
-      dadbod = true; # Disable database tools (not needed on laptop)
+      dadbod = true; # Enable database tools
       treesitterHypr = false; # Disable Hyprland tree-sitter (macOS doesn't use Hyprland)
     };
 
@@ -121,9 +121,4 @@
       database.postgresql.enable = true;
     };
   };
-
-  # Personal packages (packages not managed by myConfig modules)
-  home.packages = with pkgs; [
-    opencode-dev
-  ];
 }

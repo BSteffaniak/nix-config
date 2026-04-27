@@ -56,6 +56,8 @@ in
   };
 
   config = {
+    home.packages = mkIf cfg.bmux.enable [ pkgs.bmux ];
+
     # Bmux
     xdg.configFile."bmux/bmux.toml" = mkIf cfg.bmux.enable {
       text = ''

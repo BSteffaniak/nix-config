@@ -1,4 +1,4 @@
-# Personal home-manager overrides for nixos-desktop host
+# Personal home-manager overrides for mac-studio host
 # Contains personal preferences and should not be copied when bootstrapping new hosts
 {
   config,
@@ -103,9 +103,4 @@
       ai.ollama.enable = true;
     };
   };
-
-  # Personal packages
-  home.packages = with pkgs; [
-    opencode-dev
-  ];
 }

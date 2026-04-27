@@ -1,8 +1,6 @@
 {
-  config,
   lib,
   myLib,
-  pkgs,
   osConfig,
   inputs ? { },
   ...
@@ -78,11 +76,6 @@ in
   _module.args = {
     inherit inputs;
   };
-
-  # NixOS-specific packages (minimal - just examples)
-  home.packages = with pkgs; [
-    # Add platform-specific packages here
-  ];
 
   # NixOS-specific home files
   home.file = {

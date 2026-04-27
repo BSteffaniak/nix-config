@@ -1,8 +1,6 @@
 {
-  config,
   lib,
   myLib,
-  pkgs,
   osConfig,
   inputs ? { },
   ...
@@ -72,9 +70,4 @@ in
   _module.args = {
     inherit inputs;
   };
-
-  # Darwin-specific packages
-  home.packages = with pkgs; [
-    # Add macOS-specific packages here
-  ];
 }

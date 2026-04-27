@@ -48,7 +48,6 @@ while [[ $# -gt 0 ]]; do
         --nushell) ENABLE_NUSHELL="$2"; shift 2 ;;
         --default-shell) DEFAULT_SHELL="$2"; shift 2 ;;
         --git) ENABLE_GIT="$2"; shift 2 ;;
-        --clitools) ENABLE_CLITOOLS="$2"; shift 2 ;;
         --desktop) ENABLE_DESKTOP="$2"; shift 2 ;;
         --hyprland) ENABLE_HYPRLAND="$2"; shift 2 ;;
         --waybar) ENABLE_WAYBAR="$2"; shift 2 ;;
@@ -68,7 +67,6 @@ while [[ $# -gt 0 ]]; do
         --docker-data-root) DOCKER_DATA_ROOT="$2"; shift 2 ;;
         --observability) ENABLE_OBSERVABILITY="$2"; shift 2 ;;
         --minecraft) ENABLE_MINECRAFT="$2"; shift 2 ;;
-        --nixos-clitools) ENABLE_NIXOS_CLITOOLS="$2"; shift 2 ;;
         --homebrew) ENABLE_HOMEBREW="$2"; shift 2 ;;
         --system-defaults) ENABLE_SYSTEM_DEFAULTS="$2"; shift 2 ;;
         --applications) ENABLE_APPLICATIONS="$2"; shift 2 ;;
@@ -117,7 +115,6 @@ ENABLE_ZSH="${ENABLE_ZSH:-true}"
 ENABLE_NUSHELL="${ENABLE_NUSHELL:-true}"
 DEFAULT_SHELL="${DEFAULT_SHELL:-}"
 ENABLE_GIT="${ENABLE_GIT:-true}"
-ENABLE_CLITOOLS="${ENABLE_CLITOOLS:-true}"
 STATE_VERSION="${STATE_VERSION:-24.11}"
 HOME_MANAGER_STATE_VERSION="${HOME_MANAGER_STATE_VERSION:-25.05}"
 
@@ -334,13 +331,7 @@ ${DEFAULT_SHELL:+    shell.default = "$DEFAULT_SHELL";}
     editors.neovim.enable = $ENABLE_NEOVIM;
     editors.neovim.useNightly = $NEOVIM_NIGHTLY;
 
-    # CLI tools
-    cliTools.enable = $ENABLE_CLITOOLS;
 EOF
-
-    if [ "$ENABLE_NIXOS_CLITOOLS" = "true" ]; then
-        echo "    nixos.cliTools.enable = true;" >> "$OUTPUT_FILE"
-    fi
 
     # Services
     if [ "$ENABLE_DOCKER" = "true" ] || [ "$ENABLE_OBSERVABILITY" = "true" ] || [ "$ENABLE_MINECRAFT" = "true" ]; then
@@ -572,9 +563,6 @@ ${DEFAULT_SHELL:+    shell.default = "$DEFAULT_SHELL";}
     shell.git.enable = $ENABLE_GIT;
     editors.neovim.enable = $ENABLE_NEOVIM;
     editors.neovim.useNightly = $NEOVIM_NIGHTLY;
-
-    # CLI tools
-    cliTools.enable = $ENABLE_CLITOOLS;
 
     # Darwin-specific
     darwin.homebrew.enable = ${ENABLE_HOMEBREW:-true};
