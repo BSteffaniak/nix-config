@@ -37,6 +37,7 @@ in
     development.go.enable = osConfig.myConfig.development.go.enable or false;
     development.python.enable = osConfig.myConfig.development.python.enable or false;
     development.android.enable = osConfig.myConfig.development.android.enable or false;
+    development.java.enable = osConfig.myConfig.development.java.enable or false;
     development.zig.enable = osConfig.myConfig.development.zig.enable or false;
     development.openssl.enable = osConfig.myConfig.development.openssl.enable or false;
 
