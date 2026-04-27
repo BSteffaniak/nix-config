@@ -1,9 +1,15 @@
 {
     "providers": {
+        "openai-codex": {
+            "modelOverrides": {
+                "gpt-5.5": {
+                    "name": "gpt-5.5-fast"
+                }
+            }
+        },
         "openai": {
             "baseUrl": "https://api.openai.com/v1",
             "api": "openai-responses",
-            "apiKey": "OPENAI_API_KEY",
             "models": [
                 {
                     "id": "gpt-5.5-fast",

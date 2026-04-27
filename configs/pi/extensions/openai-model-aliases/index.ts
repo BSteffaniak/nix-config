@@ -6,6 +6,16 @@ type Payload = {
     [key: string]: unknown;
 };
 
+type ModelLike = {
+    provider?: unknown;
+    id?: unknown;
+    name?: unknown;
+};
+
+type ContextLike = {
+    model?: ModelLike;
+};
+
 const aliases: Record<string, { model: string; serviceTier?: string }> = {
     "gpt-5.5-fast": {
         model: "gpt-5.5",
@@ -13,18 +23,30 @@ const aliases: Record<string, { model: string; serviceTier?: string }> = {
     },
 };
 
+function selectedFastAlias(ctx: ContextLike): boolean {
+    const model = ctx.model;
+    return (
+        model?.provider === "openai-codex" &&
+        model.id === "gpt-5.5" &&
+        model.name === "gpt-5.5-fast"
+    );
+}
+
 export default function openaiModelAliases(pi: ExtensionAPI): void {
-    pi.on("before_provider_request", (event) => {
+    pi.on("before_provider_request", (event, ctx) => {
         const payload = event.payload as Payload;
         if (typeof payload.model !== "string") return undefined;
 
         const alias = aliases[payload.model];
-        if (!alias) return undefined;
+        const serviceTier =
+            alias?.serviceTier ??
+            (selectedFastAlias(ctx as ContextLike) ? "priority" : undefined);
+        if (!alias && !serviceTier) return undefined;
 
         return {
             ...payload,
-            model: alias.model,
-            ...(alias.serviceTier ? { service_tier: alias.serviceTier } : {}),
+            model: alias?.model ?? payload.model,
+            ...(serviceTier ? { service_tier: serviceTier } : {}),
         };
     });
 }
