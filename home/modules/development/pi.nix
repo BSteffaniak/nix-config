@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  inputs,
   myLib,
   ...
 }:
@@ -121,6 +122,17 @@ let
     isDir && builtins.pathExists full && builtins.hasAttr "SKILL.md" (builtins.readDir full);
   skillNames = builtins.filter isSkillDir skillEntries;
 
+  # Reuse the OpenCode skill set for Pi. Keep it in a separate resource root
+  # so Pi-native skills in ~/.pi/agent/skills/ can coexist and override by name.
+  # The whole tree is copied so relative references like ../_shared/*.md keep working.
+  opencodeSkillsDir = ../../../configs/opencode/skills;
+  opencodeSkillsForPi = pkgs.runCommand "pi-opencode-skills" { } ''
+    mkdir -p "$out"
+    cp -R ${opencodeSkillsDir}/. "$out/"
+    rm -rf "$out/tone-clone"
+    cp -R ${inputs.tone-clone-src}/skills/tone-clone "$out/tone-clone"
+  '';
+
   # Auto-discover prompt template files from configs/pi/prompts/
   promptsDir = ../../../configs/pi/prompts;
   promptEntries =
@@ -163,13 +175,20 @@ let
   }
   // (optionalAttrs (cfg.models != [ ]) { models = cfg.models; });
 
-  mergedSettings = foldl' myLib.deepMerge baseSettings (
+  mergedSettingsBase = foldl' myLib.deepMerge baseSettings (
     [
       derivedSettings
       cfg.extraSettings
     ]
     ++ overrideConfigs
   );
+
+  mergedSettings = mergedSettingsBase // {
+    # settings.json paths resolve relative to ~/.pi/agent, where this module
+    # deploys the generated OpenCode-compatible skill root below. Add this after
+    # overrides so host-local skill settings don't accidentally drop OpenCode skills.
+    skills = unique ((mergedSettingsBase.skills or [ ]) ++ [ "opencode-skills" ]);
+  };
 in
 {
   options.myConfig.development.pi = {
@@ -238,7 +257,10 @@ in
 
   config = mkIf cfg.enable (mkMerge [
     {
-      home.packages = [ pkgs.pi ];
+      home.packages = [
+        pkgs.pi
+        pkgs.tone-clone
+      ];
 
       # Pi respects this env var to disable anonymous install/update telemetry.
       home.sessionVariables.PI_TELEMETRY = "0";
@@ -254,6 +276,9 @@ in
 
       # OpenCode-compatible permission config consumed by the local Pi extension.
       home.file.".pi/agent/opencode-permissions.json".text = builtins.toJSON mergedPermissions;
+
+      # OpenCode skills made available to Pi via settings.json `skills`.
+      home.file.".pi/agent/opencode-skills".source = opencodeSkillsForPi;
     }
 
     # Cross-shell wrapper commands for per-provider profile selection (pi-bedrock, pi-codex, ...)
