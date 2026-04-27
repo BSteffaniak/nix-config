@@ -1,0 +1,6 @@
+{
+    "provider": "openai",
+    "model": "gpt-5.5-fast",
+    "thinking": "high",
+    "apiKeyEnv": "OPENAI_API_KEY"
+}

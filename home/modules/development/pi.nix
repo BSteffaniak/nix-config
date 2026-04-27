@@ -26,9 +26,10 @@ let
       descriptor = builtins.fromJSON (builtins.readFile (providersDir + "/${name}.json"));
       thinkingFlag =
         if descriptor ? thinking then " --thinking ${escapeShellArg descriptor.thinking}" else "";
+      apiKeyFlag = if descriptor ? apiKeyEnv then " --api-key \"$" + descriptor.apiKeyEnv + "\"" else "";
     in
     ''
-      pi --provider ${escapeShellArg descriptor.provider} --model ${escapeShellArg descriptor.model}${thinkingFlag} "$@"
+      pi --provider ${escapeShellArg descriptor.provider} --model ${escapeShellArg descriptor.model}${apiKeyFlag}${thinkingFlag} "$@"
     '';
 
   providerWrapperCommands = builtins.listToAttrs (
