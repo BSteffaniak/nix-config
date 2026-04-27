@@ -38,6 +38,75 @@ let
     }) providerNames
   );
 
+  # Reuse OpenCode permission files so Pi follows the same plan/build rules.
+  permissionsDir = ../../../configs/opencode/permissions;
+  allPermissionFiles = builtins.attrNames (builtins.readDir permissionsDir);
+  jsonPermissionFiles = builtins.filter (f: hasSuffix ".json" f) allPermissionFiles;
+  allPermissionNames = map (f: removeSuffix ".json" f) jsonPermissionFiles;
+
+  isPermissionVariant = name: hasSuffix "-restricted" name || hasSuffix "-yolo" name;
+  basePermissionNames = builtins.filter (name: !(isPermissionVariant name)) allPermissionNames;
+
+  resolvePermissionFile =
+    name:
+    if builtins.elem name cfg.permissions.yolo then
+      "${name}-yolo"
+    else if builtins.elem name cfg.permissions.restricted then
+      "${name}-restricted"
+    else
+      name;
+
+  discoveredPermissionNames =
+    let
+      base = if cfg.permissions.autoDiscover then basePermissionNames else cfg.permissions.include;
+    in
+    builtins.filter (name: !(builtins.elem name cfg.permissions.exclude)) base;
+
+  resolvedPermissionNames = map resolvePermissionFile discoveredPermissionNames;
+
+  permissionConfigs = map (
+    name: builtins.fromJSON (builtins.readFile (permissionsDir + "/${name}.json"))
+  ) (builtins.sort (a: b: a < b) resolvedPermissionNames);
+
+  permissionOverrideConfigs = map (
+    f: builtins.fromJSON (builtins.readFile f)
+  ) cfg.permissionOverrides;
+
+  basePermissionConfig = {
+    agent = {
+      build = {
+        tools = {
+          write = true;
+          edit = true;
+          bash = true;
+        };
+        permission = {
+          bash = {
+            "*" = "allow";
+          };
+          external_directory = "allow";
+        };
+      };
+      plan = {
+        tools = {
+          write = false;
+          edit = false;
+          bash = true;
+        };
+        permission = {
+          bash = {
+            "*" = "deny";
+          };
+          external_directory = "allow";
+        };
+      };
+    };
+  };
+
+  mergedPermissions = foldl' myLib.deepMerge basePermissionConfig (
+    permissionConfigs ++ permissionOverrideConfigs
+  );
+
   # Auto-discover skill directories from configs/pi/skills/
   skillsDir = ../../../configs/pi/skills;
   skillEntries =
@@ -63,11 +132,29 @@ let
     if builtins.pathExists themesDir then builtins.attrNames (builtins.readDir themesDir) else [ ];
   themeFiles = builtins.filter (f: hasSuffix ".json" f) themeEntries;
 
+  # Auto-discover extension files/directories from configs/pi/extensions/
+  extensionsDir = ../../../configs/pi/extensions;
+  extensionEntries =
+    if builtins.pathExists extensionsDir then
+      builtins.attrNames (builtins.readDir extensionsDir)
+    else
+      [ ];
+  isExtensionEntry =
+    name:
+    let
+      kind = (builtins.readDir extensionsDir).${name} or null;
+      full = extensionsDir + "/${name}";
+    in
+    (kind == "regular" && (hasSuffix ".ts" name || hasSuffix ".js" name))
+    || (kind == "directory" && builtins.pathExists (full + "/index.ts"));
+  extensionNames = builtins.filter isExtensionEntry extensionEntries;
+
   # Read and parse host-specific settings overrides
   overrideConfigs = map (f: builtins.fromJSON (builtins.readFile f)) cfg.overrides;
 
   # Base settings.json + module-derived keys + extraSettings + overrides
   baseSettings = builtins.fromJSON (builtins.readFile ../../../configs/pi/settings.json);
+  modelsConfig = ../../../configs/pi/models.json;
 
   derivedSettings = {
     enableInstallTelemetry = false;
@@ -107,6 +194,44 @@ in
       default = [ ];
       description = "JSON files deep-merged into settings.json last (e.g., host-specific encrypted overrides)";
     };
+
+    permissionOverrides = mkOption {
+      type = types.listOf types.path;
+      default = [ ];
+      description = "OpenCode-style permission JSON files deep-merged into Pi's permission config last";
+    };
+
+    permissions = {
+      autoDiscover = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Auto-discover and merge all permission files from configs/opencode/permissions/";
+      };
+
+      include = mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        description = "When autoDiscover is false, explicitly list which permission files to include (without .json)";
+      };
+
+      exclude = mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        description = "Permission files to exclude from auto-discovery (without .json)";
+      };
+
+      restricted = mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        description = "Use <name>-restricted.json instead of <name>.json for these programs";
+      };
+
+      yolo = mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        description = "Use <name>-yolo.json instead of <name>.json for these programs";
+      };
+    };
   };
 
   config = mkIf cfg.enable (mkMerge [
@@ -118,6 +243,12 @@ in
 
       # Deploy the merged settings.json to pi's default config location (~/.pi/agent/).
       home.file.".pi/agent/settings.json".text = builtins.toJSON mergedSettings;
+
+      # Register custom provider models that Pi's built-in registry may not know yet.
+      home.file.".pi/agent/models.json".source = modelsConfig;
+
+      # OpenCode-compatible permission config consumed by the local Pi extension.
+      home.file.".pi/agent/opencode-permissions.json".text = builtins.toJSON mergedPermissions;
     }
 
     # Cross-shell wrapper commands for per-provider profile selection (pi-bedrock, pi-codex, ...)
@@ -159,6 +290,19 @@ in
             source = themesDir + "/${fname}";
           };
         }) themeFiles
+      );
+    })
+
+    # Auto-deploy Pi extensions from configs/pi/extensions/.
+    (mkIf (extensionNames != [ ]) {
+      home.file = builtins.listToAttrs (
+        map (name: {
+          name = ".pi/agent/extensions/${name}";
+          value = {
+            source = extensionsDir + "/${name}";
+            recursive = true;
+          };
+        }) extensionNames
       );
     })
   ]);
