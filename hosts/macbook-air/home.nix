@@ -73,6 +73,11 @@
     development.act.enable = true;
     development.opencode.enable = true;
     development.opencode.provider = "openai";
+    development.opencode.aliases.openai-api = {
+      provider = "openai";
+      sshenvProfile = "openai-api";
+      ignorePersistedAuth = true;
+    };
     development.opencode.permissions.restricted = [
       "git"
       "brew"

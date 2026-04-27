@@ -27,6 +27,26 @@ let
     }) providerNames
   );
 
+  mkAliasWrapper =
+    name: alias:
+    let
+      authEnv = optionalString alias.ignorePersistedAuth "OPENCODE_AUTH_CONTENT={} ";
+      command = ''
+        env OPENCODE_CONFIG="$HOME/.config/opencode/providers/${alias.provider}.json" ${authEnv}opencode-dev "$@"
+      '';
+    in
+    if alias.sshenvProfile == null then
+      command
+    else
+      ''
+        sshenv run ${escapeShellArg alias.sshenvProfile} -- ${command}
+      '';
+
+  aliasWrapperCommands = mapAttrs' (name: alias: {
+    name = "opencode-${name}";
+    value = mkAliasWrapper name alias;
+  }) cfg.aliases;
+
   # Read and parse the selected provider config
   providerConfig = builtins.fromJSON (builtins.readFile (providersDir + "/${cfg.provider}.json"));
 
@@ -137,6 +157,33 @@ in
       description = "List of JSON files to deep-merge over the base config (e.g., host-specific encrypted overrides)";
     };
 
+    aliases = mkOption {
+      type = types.attrsOf (
+        types.submodule {
+          options = {
+            provider = mkOption {
+              type = types.enum providerNames;
+              description = "Provider profile to use for this OpenCode alias";
+            };
+
+            sshenvProfile = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Optional sshenv profile to load before starting OpenCode";
+            };
+
+            ignorePersistedAuth = mkOption {
+              type = types.bool;
+              default = false;
+              description = "Ignore ~/.local/share/opencode/auth.json for this alias so env credentials win";
+            };
+          };
+        }
+      );
+      default = { };
+      description = "Additional opencode-<name> wrapper commands for provider and credential variants";
+    };
+
     permissions = {
       autoDiscover = mkOption {
         type = types.bool;
@@ -217,7 +264,7 @@ in
 
     # Cross-shell wrapper commands for switching provider profiles
     {
-      homeModules.shell.shared.functions = providerWrapperCommands;
+      homeModules.shell.shared.functions = providerWrapperCommands // aliasWrapperCommands;
     }
   ]);
 }

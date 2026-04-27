@@ -72,6 +72,11 @@
     development.lazygit.enable = true;
     development.act.enable = true;
     development.opencode.enable = true;
+    development.opencode.aliases.openai-api = {
+      provider = "openai";
+      sshenvProfile = "openai-api";
+      ignorePersistedAuth = true;
+    };
     development.opencode.permissions.restricted = [
       "git"
       "brew"

@@ -27,6 +27,11 @@
     development.python.enable = true;
     development.zig.enable = true;
     development.opencode.enable = true;
+    development.opencode.aliases.openai-api = {
+      provider = "openai";
+      sshenvProfile = "openai-api";
+      ignorePersistedAuth = true;
+    };
     development.pi.enable = true;
 
     # Containers - rootless!
