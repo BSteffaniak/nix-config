@@ -150,6 +150,45 @@ function isExternalPath(path: string, cwd: string): boolean {
     );
 }
 
+function messageText(message: unknown): string {
+    const content = (message as { content?: unknown }).content;
+    if (typeof content === "string") return content;
+    if (!Array.isArray(content)) return "";
+    return content
+        .map((item) => {
+            if (typeof item === "string") return item;
+            if (
+                item &&
+                typeof item === "object" &&
+                typeof (item as { text?: unknown }).text === "string"
+            ) {
+                return (item as { text: string }).text;
+            }
+            return "";
+        })
+        .join("\n");
+}
+
+function isStaleModeMessage(message: unknown, activeMode: ModeName): boolean {
+    const customType = (message as { customType?: unknown }).customType;
+    if (activeMode === "build" && customType === "opencode-plan-mode-context") {
+        return true;
+    }
+    if (activeMode === "plan" && customType === "opencode-build-mode-context") {
+        return true;
+    }
+
+    const text = messageText(message);
+    if (activeMode === "build") {
+        return (
+            text.includes("[PLAN MODE ACTIVE]") ||
+            text.includes("# Plan Mode - System Reminder") ||
+            text.includes("Plan mode ACTIVE")
+        );
+    }
+    return text.includes("[BUILD MODE ACTIVE]");
+}
+
 async function maybeAsk(
     ctx: ExtensionContext,
     title: string,
@@ -247,12 +286,31 @@ export default function opencodeModes(pi: ExtensionAPI): void {
         applyMode(ctx);
     });
 
-    pi.on("before_agent_start", async () => {
-        if (mode !== "plan") return undefined;
+    pi.on("context", async (event) => ({
+        messages: event.messages.filter(
+            (message) => !isStaleModeMessage(message, mode),
+        ),
+    }));
+
+    pi.on("before_agent_start", async (event) => {
+        if (mode === "build") {
+            return {
+                systemPrompt: `${event.systemPrompt}
+
+[BUILD MODE ACTIVE]
+You are in OpenCode-style build mode.
+
+Capabilities:
+- You may edit and write files when needed.
+- Bash commands are governed by the OpenCode permission config in ${CONFIG_PATH}.
+- Do not claim you are in plan mode. If the user asks you to start implementation, proceed subject to tool permissions.`,
+            };
+        }
+
         return {
-            message: {
-                customType: "opencode-plan-mode-context",
-                content: `[PLAN MODE ACTIVE]
+            systemPrompt: `${event.systemPrompt}
+
+[PLAN MODE ACTIVE]
 You are in OpenCode-style plan mode.
 
 Restrictions:
@@ -260,8 +318,6 @@ Restrictions:
 - You must not edit, write, or otherwise modify files.
 - Bash commands are governed by the OpenCode permission config in ${CONFIG_PATH}.
 - Produce a concrete implementation plan and wait for the user to switch to build mode before making changes.`,
-                display: false,
-            },
         };
     });
 
