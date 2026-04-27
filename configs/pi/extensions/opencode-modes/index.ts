@@ -186,6 +186,10 @@ export default function opencodeModes(pi: ExtensionAPI): void {
         pi.appendEntry("opencode-mode", { mode });
     }
 
+    function toggleMode(ctx: ExtensionContext): void {
+        setMode(mode === "plan" ? "build" : "plan", ctx);
+    }
+
     pi.registerCommand("plan", {
         description: "Switch to OpenCode-style read-only plan mode",
         handler: async (_args, ctx) => setMode("plan", ctx),
@@ -214,6 +218,11 @@ export default function opencodeModes(pi: ExtensionAPI): void {
             ]);
             if (choice === "plan" || choice === "build") setMode(choice, ctx);
         },
+    });
+
+    pi.registerShortcut("tab", {
+        description: "Toggle OpenCode plan/build mode",
+        handler: async (ctx) => toggleMode(ctx),
     });
 
     pi.on("session_start", async (_event, ctx) => {

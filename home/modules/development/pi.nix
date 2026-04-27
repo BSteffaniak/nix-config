@@ -155,6 +155,7 @@ let
   # Base settings.json + module-derived keys + extraSettings + overrides
   baseSettings = builtins.fromJSON (builtins.readFile ../../../configs/pi/settings.json);
   modelsConfig = ../../../configs/pi/models.json;
+  keybindingsConfig = ../../../configs/pi/keybindings.json;
 
   derivedSettings = {
     enableInstallTelemetry = false;
@@ -246,6 +247,9 @@ in
 
       # Register custom provider models that Pi's built-in registry may not know yet.
       home.file.".pi/agent/models.json".source = modelsConfig;
+
+      # Free Tab for the opencode-modes shortcut; Ctrl+Space keeps autocomplete available.
+      home.file.".pi/agent/keybindings.json".source = keybindingsConfig;
 
       # OpenCode-compatible permission config consumed by the local Pi extension.
       home.file.".pi/agent/opencode-permissions.json".text = builtins.toJSON mergedPermissions;
