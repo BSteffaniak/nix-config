@@ -57,6 +57,16 @@
     editors.neovim.enable = true;
     editors.neovim.useNightly = true;
 
+    # Desktop utilities previously installed as common Home Manager packages
+    desktop.utilities = {
+      bitwarden.enable = true;
+      screenshot.enable = true;
+      brightness.enable = true;
+      inputDiagnostics.enable = true;
+      calculator.enable = true;
+      music.enable = true;
+    };
+
     # CLI Tools - granular enables (no system-level on Ubuntu standalone)
     cliTools = {
       terminals.bmux.enable = true;
@@ -92,9 +102,9 @@
       utilities.media.ffmpeg.enable = true;
       utilities.media.flac.enable = true;
       utilities.media.mediainfo.enable = true;
-      utilities.opencode.enable = true;
-      utilities.pi.enable = true;
+      utilities.opencodeUpstream.enable = true;
       utilities.sshenv.enable = true;
+      utilities.worktree-setup.enable = true;
     };
   };
 }

@@ -24,6 +24,7 @@
     desktop.hex.enable = true;
     desktop.mkalias.enable = true;
     desktop.sledge.enable = true;
+    desktop.utilities.bitwarden.enable = true;
 
     # CLI tools - now configured directly in home-manager
     cliTools = {
@@ -63,9 +64,9 @@
       utilities.media.ffmpeg.enable = true;
       utilities.media.flac.enable = true;
       utilities.media.mediainfo.enable = true;
-      utilities.opencode.enable = true;
-      utilities.pi.enable = true;
+      utilities.opencodeUpstream.enable = true;
       utilities.sshenv.enable = true;
+      utilities.worktree-setup.enable = true;
     };
 
     # Development tool configs

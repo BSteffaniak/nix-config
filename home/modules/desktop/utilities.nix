@@ -66,23 +66,48 @@ in
       default = "";
       description = "Default wallpaper filename (relative to wallpaperFolder)";
     };
+
+    bitwarden.enable = mkEnableOption "Bitwarden desktop app";
+    screenshot.enable = mkEnableOption "screenshot tools (hyprshot, Linux only)";
+    brightness.enable = mkEnableOption "brightness controls (brightnessctl, Linux only)";
+    inputDiagnostics.enable = mkEnableOption "input diagnostic tools (libinput, evtest, Linux only)";
+    calculator.enable = mkEnableOption "calculator app (Qalculate, Linux only)";
+    music.enable = mkEnableOption "music player app (Elisa, Linux only)";
   };
 
-  config = mkIf cfg.enable {
-    # Fuzzel application launcher and Waypaper wallpaper manager
-    xdg.configFile = {
-      "fuzzel/fuzzel.ini" = mkIf cfg.fuzzel {
-        source = ../../../configs/fuzzel/fuzzel.ini;
-      };
+  config = mkMerge [
+    {
+      home.packages =
+        with pkgs;
+        (optional cfg.bitwarden.enable bitwarden-desktop)
+        ++ optionals pkgs.stdenv.isLinux (
+          (optional cfg.screenshot.enable hyprshot)
+          ++ (optional cfg.brightness.enable brightnessctl)
+          ++ (optionals cfg.inputDiagnostics.enable [
+            libinput
+            evtest
+          ])
+          ++ (optional cfg.calculator.enable qalculate-gtk)
+          ++ (optional cfg.music.enable kdePackages.elisa)
+        );
+    }
 
-      "waypaper/config.ini" = mkIf cfg.waypaper {
-        text = lib.generators.toINI { } waypaperConfig;
-      };
+    (mkIf cfg.enable {
+      # Fuzzel application launcher and Waypaper wallpaper manager
+      xdg.configFile = {
+        "fuzzel/fuzzel.ini" = mkIf cfg.fuzzel {
+          source = ../../../configs/fuzzel/fuzzel.ini;
+        };
 
-      "waypaper/random-wallpaper.sh" = mkIf cfg.waypaper {
-        source = ../../../configs/waypaper/random-wallpaper.sh;
-        executable = true;
+        "waypaper/config.ini" = mkIf cfg.waypaper {
+          text = lib.generators.toINI { } waypaperConfig;
+        };
+
+        "waypaper/random-wallpaper.sh" = mkIf cfg.waypaper {
+          source = ../../../configs/waypaper/random-wallpaper.sh;
+          executable = true;
+        };
       };
-    };
-  };
+    })
+  ];
 }

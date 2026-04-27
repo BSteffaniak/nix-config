@@ -53,12 +53,17 @@ in
       mediainfo.enable = mkMediaEnable "media info analyzer";
     };
 
-    opencode.enable = mkEnable "OpenCode and Claude Code";
-    pi.enable = mkEnable "Pi coding agent CLI";
+    opencodeUpstream.enable = mkEnable "upstream OpenCode CLI";
+    pi.enable = mkEnable "Pi coding agent CLI without managed config";
     sshenv.enable = mkEnable "sshenv SSH-key-backed env vault";
+    worktree-setup.enable = mkEnable "worktree setup helper";
   };
 
   config = {
+    warnings = optional (
+      cfg.pi.enable && config.myConfig.development.pi.enable
+    ) "myConfig.cliTools.utilities.pi.enable is redundant when myConfig.development.pi.enable is true.";
+
     # Direnv
     programs.direnv = mkIf cfg.direnv.enable {
       enable = true;
@@ -79,11 +84,12 @@ in
       (mkIf cfg.media.ffmpeg.enable [ pkgs.unstable.ffmpeg ])
       (mkIf cfg.media.flac.enable [ pkgs.flac ])
       (mkIf cfg.media.mediainfo.enable [ pkgs.mediainfo ])
-      (mkIf cfg.opencode.enable [
+      (mkIf cfg.opencodeUpstream.enable [
         pkgs.unstable.opencode
       ])
       (mkIf cfg.pi.enable [ pkgs.pi ])
       (mkIf cfg.sshenv.enable [ pkgs.sshenv ])
+      (mkIf cfg.worktree-setup.enable [ pkgs.worktree-setup ])
     ];
 
     # Shim dir goes first in PATH so sshenv shims shadow nix-profile,

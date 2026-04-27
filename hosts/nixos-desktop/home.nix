@@ -83,9 +83,9 @@
       utilities.media.ffmpeg.enable = true;
       utilities.media.flac.enable = true;
       utilities.media.mediainfo.enable = true;
-      utilities.opencode.enable = true;
-      utilities.pi.enable = true;
+      utilities.opencodeUpstream.enable = true;
       utilities.sshenv.enable = true;
+      utilities.worktree-setup.enable = true;
     };
 
     # Development tool configs
@@ -110,6 +110,12 @@
     # Desktop utility configs
     desktop.utilities = {
       enable = true;
+      bitwarden.enable = true;
+      screenshot.enable = true;
+      brightness.enable = true;
+      inputDiagnostics.enable = true;
+      calculator.enable = true;
+      music.enable = true;
       wallpaperFolder = "/hdd/wallpapers";
       defaultWallpaper = "pexels-pok-rie-33563-982263.jpg";
     };

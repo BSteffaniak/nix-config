@@ -10,7 +10,6 @@
     ./git.nix
     ./fish.nix
     ./shell.nix
-    ./packages.nix
   ];
 
   # Let Home Manager install and manage itself

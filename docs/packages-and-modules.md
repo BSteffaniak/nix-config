@@ -30,7 +30,8 @@ Preferred locations for user tools:
 - CLI tools: `home/modules/cli-tools/`
 - Dev tools/languages: `home/modules/development/`
 - DevOps tools: `home/modules/devops/`
-- User apps across hosts: `home/common/packages.nix`
+- Desktop apps/utilities: `home/modules/desktop/`
+- Other shared user tools: `home/modules/tools/`
 
 System-level only when required:
 
