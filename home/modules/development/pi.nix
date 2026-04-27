@@ -127,11 +127,50 @@ let
   # The whole tree is copied so relative references like ../_shared/*.md keep working.
   opencodeSkillsDir = ../../../configs/opencode/skills;
   opencodeSkillsForPi = pkgs.runCommand "pi-opencode-skills" { } ''
-    mkdir -p "$out"
-    cp -R ${opencodeSkillsDir}/. "$out/"
-    rm -rf "$out/tone-clone"
-    cp -R ${inputs.tone-clone-src}/skills/tone-clone "$out/tone-clone"
+        mkdir -p "$out"
+        cp -R ${opencodeSkillsDir}/. "$out/"
+        rm -rf "$out/tone-clone"
+        cp -R ${inputs.tone-clone-src}/skills/tone-clone "$out/tone-clone"
+        chmod -R u+w "$out"
+
+        find "$out" -name SKILL.md -type f | while IFS= read -r skill; do
+          if grep -Eq 'Question(\(\*\)| tool)|Task(\(\*\)| tool)|Glob\(\*\)|Grep\(\*)' "$skill"; then
+            cat >> "$skill" <<'EOF'
+
+    ## Pi Compatibility
+
+    This skill was authored for OpenCode. In Pi:
+
+    - Use the `question` tool from `@rwese/pi-question` for OpenCode `Question(*)`.
+      - Put prompts under `questions: [{ questionTopic, prompt, type, options }]`.
+      - Use `type: "single"` for single-choice questions and `type: "multi"` for multi-select questions.
+      - Translate each option to `{ value, label, description?, recommended? }`.
+      - Use `recommended: true` for pre-selected or recommended options.
+      - Treat the `question` tool result as the direct user approval artifact required by this skill.
+
+    - Use the `subagent` tool from `pi-subagents` for OpenCode `Task(*)`.
+      - For exploration/search tasks, prefer agent `scout`.
+      - For planning tasks, prefer agent `planner`.
+      - For implementation tasks, prefer agent `worker`.
+      - For review tasks, prefer agent `reviewer`.
+
+    - Use Pi's `find` tool for OpenCode `Glob(*)`.
+    - Use Pi's `grep` tool for OpenCode `Grep(*)`.
+    EOF
+          fi
+        done
   '';
+
+  # Third-party Pi packages used by imported OpenCode skills. Pin npm versions
+  # here so the Nix-managed settings file is the source of truth.
+  piPackageSources = [
+    "npm:@rwese/pi-question@2.2.0"
+    "npm:pi-subagents@0.20.1"
+  ];
+
+  # Nix-provided npm defaults to a read-only Nix store global prefix. Point Pi's
+  # package installer at a user-writable prefix instead.
+  piNpmPrefix = "${config.home.homeDirectory}/.pi/agent/npm";
 
   # Auto-discover prompt template files from configs/pi/prompts/
   promptsDir = ../../../configs/pi/prompts;
@@ -188,6 +227,17 @@ let
     # deploys the generated OpenCode-compatible skill root below. Add this after
     # overrides so host-local skill settings don't accidentally drop OpenCode skills.
     skills = unique ((mergedSettingsBase.skills or [ ]) ++ [ "opencode-skills" ]);
+
+    # Load Pi-native packages that provide structured questions and subagent
+    # delegation for imported OpenCode skills.
+    packages = unique ((mergedSettingsBase.packages or [ ]) ++ piPackageSources);
+
+    npmCommand =
+      mergedSettingsBase.npmCommand or [
+        "npm"
+        "--prefix"
+        piNpmPrefix
+      ];
   };
 in
 {
@@ -279,6 +329,9 @@ in
 
       # OpenCode skills made available to Pi via settings.json `skills`.
       home.file.".pi/agent/opencode-skills".source = opencodeSkillsForPi;
+
+      # User-writable npm prefix for Pi package installs under Nix.
+      home.file.".pi/agent/npm/.keep".text = "";
     }
 
     # Cross-shell wrapper commands for per-provider profile selection (pi-bedrock, pi-codex, ...)
