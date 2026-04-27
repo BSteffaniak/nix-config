@@ -31,6 +31,8 @@ type Rule = {
 
 const CONFIG_PATH = `${homedir()}/.pi/agent/opencode-permissions.json`;
 const READ_TOOLS = ["read", "grep", "find", "ls"];
+const INTERACTIVE_TOOLS = ["question"];
+const BUILD_ONLY_TOOLS = ["subagent"];
 const MUTATING_TOOLS = new Set(["write", "edit"]);
 const DEFAULT_CONFIG: PermissionConfig = {
     agent: {
@@ -121,12 +123,13 @@ function deniedCommandPart(
     return undefined;
 }
 
-function activeToolsFor(config: ModeConfig): string[] {
+function activeToolsFor(config: ModeConfig, mode: ModeName): string[] {
     const tools = config.tools ?? {};
-    const active = [...READ_TOOLS];
+    const active = [...READ_TOOLS, ...INTERACTIVE_TOOLS];
     if (tools.bash !== false) active.push("bash");
     if (tools.edit === true) active.push("edit");
     if (tools.write === true) active.push("write");
+    if (mode === "build") active.push(...BUILD_ONLY_TOOLS);
     return active;
 }
 
@@ -214,7 +217,7 @@ export default function opencodeModes(pi: ExtensionAPI): void {
 
     function applyMode(ctx?: ExtensionContext): void {
         config = loadConfig();
-        pi.setActiveTools(activeToolsFor(modeConfig(config, mode)));
+        pi.setActiveTools(activeToolsFor(modeConfig(config, mode), mode));
         ctx?.ui.setStatus("opencode-mode", mode);
     }
 
