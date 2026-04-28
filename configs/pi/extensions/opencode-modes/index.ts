@@ -31,8 +31,6 @@ type Rule = {
 
 const CONFIG_PATH = `${homedir()}/.pi/agent/opencode-permissions.json`;
 const READ_TOOLS = ["read", "grep", "find", "ls"];
-const INTERACTIVE_TOOLS = ["question"];
-const BUILD_ONLY_TOOLS = ["subagent"];
 const MUTATING_TOOLS = new Set(["write", "edit"]);
 const DEFAULT_CONFIG: PermissionConfig = {
     agent: {
@@ -123,14 +121,23 @@ function deniedCommandPart(
     return undefined;
 }
 
-function activeToolsFor(config: ModeConfig, mode: ModeName): string[] {
+function activeToolsFor(
+    config: ModeConfig,
+    allTools: ReturnType<ExtensionAPI["getAllTools"]>,
+): string[] {
     const tools = config.tools ?? {};
-    const active = [...READ_TOOLS, ...INTERACTIVE_TOOLS];
-    if (tools.bash !== false) active.push("bash");
-    if (tools.edit === true) active.push("edit");
-    if (tools.write === true) active.push("write");
-    if (mode === "build") active.push(...BUILD_ONLY_TOOLS);
-    return active;
+    const activeBuiltins = new Set(READ_TOOLS);
+    if (tools.bash !== false) activeBuiltins.add("bash");
+    if (tools.edit === true) activeBuiltins.add("edit");
+    if (tools.write === true) activeBuiltins.add("write");
+
+    return allTools
+        .filter((tool) =>
+            tool.sourceInfo.source === "builtin"
+                ? activeBuiltins.has(tool.name)
+                : tools[tool.name] !== false,
+        )
+        .map((tool) => tool.name);
 }
 
 function candidatePaths(
@@ -217,7 +224,9 @@ export default function opencodeModes(pi: ExtensionAPI): void {
 
     function applyMode(ctx?: ExtensionContext): void {
         config = loadConfig();
-        pi.setActiveTools(activeToolsFor(modeConfig(config, mode), mode));
+        pi.setActiveTools(
+            activeToolsFor(modeConfig(config, mode), pi.getAllTools()),
+        );
         ctx?.ui.setStatus("opencode-mode", mode);
     }
 
