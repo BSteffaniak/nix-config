@@ -84,10 +84,6 @@
       "brew"
     ];
     development.pi.enable = true;
-    development.pi.permissions.restricted = [
-      "git"
-      "brew"
-    ];
     development.lspmux.enable = true;
 
     # DevOps tool configs

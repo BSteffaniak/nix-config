@@ -11,6 +11,7 @@ with lib;
 
 let
   cfg = config.myConfig.development.pi;
+  opencodeCfg = config.myConfig.development.opencode;
 
   # Auto-discover provider profiles from configs/pi/providers/
   providersDir = ../../../configs/pi/providers;
@@ -70,9 +71,9 @@ let
     name: builtins.fromJSON (builtins.readFile (permissionsDir + "/${name}.json"))
   ) (builtins.sort (a: b: a < b) resolvedPermissionNames);
 
-  permissionOverrideConfigs = map (
-    f: builtins.fromJSON (builtins.readFile f)
-  ) cfg.permissionOverrides;
+  permissionOverrideConfigs = map (f: builtins.fromJSON (builtins.readFile f)) (
+    opencodeCfg.overrides ++ cfg.permissionOverrides
+  );
 
   basePermissionConfig = {
     agent = {
@@ -269,38 +270,38 @@ in
     permissionOverrides = mkOption {
       type = types.listOf types.path;
       default = [ ];
-      description = "OpenCode-style permission JSON files deep-merged into Pi's permission config last";
+      description = "Additional Pi-only OpenCode-style permission JSON files merged after inherited OpenCode overrides.";
     };
 
     permissions = {
       autoDiscover = mkOption {
         type = types.bool;
-        default = true;
-        description = "Auto-discover and merge all permission files from configs/opencode/permissions/";
+        default = opencodeCfg.permissions.autoDiscover;
+        description = "Auto-discover and merge all permission files from configs/opencode/permissions/; defaults to OpenCode's setting.";
       };
 
       include = mkOption {
         type = types.listOf types.str;
-        default = [ ];
-        description = "When autoDiscover is false, explicitly list which permission files to include (without .json)";
+        default = opencodeCfg.permissions.include;
+        description = "When autoDiscover is false, explicitly list which permission files to include (without .json); defaults to OpenCode's setting.";
       };
 
       exclude = mkOption {
         type = types.listOf types.str;
-        default = [ ];
-        description = "Permission files to exclude from auto-discovery (without .json)";
+        default = opencodeCfg.permissions.exclude;
+        description = "Permission files to exclude from auto-discovery (without .json); defaults to OpenCode's setting.";
       };
 
       restricted = mkOption {
         type = types.listOf types.str;
-        default = [ ];
-        description = "Use <name>-restricted.json instead of <name>.json for these programs";
+        default = opencodeCfg.permissions.restricted;
+        description = "Use <name>-restricted.json instead of <name>.json for these programs; defaults to OpenCode's setting.";
       };
 
       yolo = mkOption {
         type = types.listOf types.str;
-        default = [ ];
-        description = "Use <name>-yolo.json instead of <name>.json for these programs";
+        default = opencodeCfg.permissions.yolo;
+        description = "Use <name>-yolo.json instead of <name>.json for these programs; defaults to OpenCode's setting.";
       };
     };
   };
