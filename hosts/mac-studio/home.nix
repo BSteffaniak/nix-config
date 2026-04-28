@@ -102,6 +102,7 @@
       archiving.enable = true;
       encryption.enable = true;
       ai.ollama.enable = true;
+      tts.piper.enable = true;
     };
   };
 }

@@ -57,6 +57,9 @@
     editors.neovim.enable = true;
     editors.neovim.useNightly = true;
 
+    # Tools
+    tools.tts.piper.enable = true;
+
     # Desktop utilities previously installed as common Home Manager packages
     desktop.utilities = {
       bitwarden.enable = true;

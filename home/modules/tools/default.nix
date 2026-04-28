@@ -15,6 +15,9 @@ let
   cfg = config.myConfig.tools;
 in
 {
+  imports = [
+    ./tts.nix
+  ];
   options.myConfig.tools = {
     # Archive tools
     archiving = {

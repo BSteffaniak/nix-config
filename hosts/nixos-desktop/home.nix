@@ -142,6 +142,7 @@
       encryption.enable = true;
       ai.gemini.enable = true;
       ai.ollama.enable = true;
+      tts.piper.enable = true;
     };
   };
 
