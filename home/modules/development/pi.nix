@@ -310,7 +310,8 @@ in
       home.packages = [
         pkgs.pi
         pkgs.tone-clone
-      ];
+      ]
+      ++ optional pkgs.stdenv.isLinux pkgs.espeak-ng;
 
       # Pi respects this env var to disable anonymous install/update telemetry.
       home.sessionVariables.PI_TELEMETRY = "0";
