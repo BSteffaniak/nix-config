@@ -58,6 +58,7 @@
     editors.neovim.useNightly = true;
 
     # Tools
+    tools.awake.enable = true;
     tools.tts.piper.enable = true;
 
     # Desktop utilities previously installed as common Home Manager packages

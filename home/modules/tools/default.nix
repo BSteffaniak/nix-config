@@ -16,6 +16,7 @@ let
 in
 {
   imports = [
+    ./awake.nix
     ./tts.nix
   ];
   options.myConfig.tools = {

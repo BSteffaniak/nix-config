@@ -115,6 +115,7 @@
 
     # Tools
     tools = {
+      awake.enable = true;
       archiving.enable = true;
       mapping.enable = true;
       encryption.enable = true;
