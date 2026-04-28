@@ -15,6 +15,24 @@ Pi extension for having the latest assistant response read aloud, useful for han
 - `/speak-auto on` — enable auto-read
 - `/speak-auto off` — disable auto-read
 
+## Audio adapter
+
+Before TTS, the extension can rewrite an assistant reply into a more natural spoken script. This is useful for code blocks, markdown tables, file paths, commands, and dense technical lists.
+
+Adapter selection:
+
+- `PI_READ_REPLY_AUDIO_ADAPTER=off` — no rewrite; legacy markdown cleanup only
+- `PI_READ_REPLY_AUDIO_ADAPTER=heuristic` — local code-block summaries, no API call
+- `PI_READ_REPLY_AUDIO_ADAPTER=llm` — use a fast model to rewrite for audio, with heuristic fallback
+
+The Nix-managed Pi module enables the LLM adapter by default:
+
+- `PI_READ_REPLY_AUDIO_ADAPTER=llm`
+- `PI_READ_REPLY_AUDIO_ADAPTER_PROVIDER=openai`
+- `PI_READ_REPLY_AUDIO_ADAPTER_MODEL=gpt-4o-mini`
+
+If that model or API key is unavailable, the extension falls back to the current Pi model when possible, then to the heuristic adapter.
+
 ## Backends
 
 Backend selection:
@@ -57,6 +75,6 @@ Environment overrides:
 - `PI_READ_REPLY_PIPER_SENTENCE_SILENCE` / `PIPER_SENTENCE_SILENCE`
 - `PI_READ_REPLY_PIPER_VOLUME` / `PIPER_VOLUME`
 
-The extension strips markdown formatting, omits fenced code blocks, and truncates long replies so it does not read forever.
+The extension strips residual markdown formatting and truncates long adapted scripts so it does not read forever.
 
 After deploying through home-manager, restart Pi from a fresh shell to pick up the Piper package and environment variables. `/reload` is enough only for extension code changes inside an already-correct environment.

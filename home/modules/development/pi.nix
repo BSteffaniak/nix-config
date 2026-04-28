@@ -312,8 +312,15 @@ in
         pkgs.tone-clone
       ];
 
-      # Pi respects this env var to disable anonymous install/update telemetry.
-      home.sessionVariables.PI_TELEMETRY = "0";
+      home.sessionVariables = {
+        # Pi respects this env var to disable anonymous install/update telemetry.
+        PI_TELEMETRY = "0";
+
+        # Rewrite assistant replies into a more listenable script before TTS.
+        PI_READ_REPLY_AUDIO_ADAPTER = "llm";
+        PI_READ_REPLY_AUDIO_ADAPTER_PROVIDER = "openai";
+        PI_READ_REPLY_AUDIO_ADAPTER_MODEL = "gpt-4o-mini";
+      };
 
       # Deploy the merged settings.json to pi's default config location (~/.pi/agent/).
       home.file.".pi/agent/settings.json".text = builtins.toJSON mergedSettings;

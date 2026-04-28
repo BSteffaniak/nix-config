@@ -2,6 +2,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { accessSync, constants, existsSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
+import { complete } from "@mariozechner/pi-ai";
 import type {
     ExtensionAPI,
     ExtensionContext,
@@ -11,10 +12,23 @@ const STATUS_KEY = "read-last-reply";
 const STATE_TYPE = "read-last-reply-state";
 const DEFAULT_MAX_CHARS = 6000;
 const DEFAULT_PIPER_VOICE = "en_US-ryan-high";
+const DEFAULT_AUDIO_ADAPTER_PROVIDER = "openai";
+const DEFAULT_AUDIO_ADAPTER_MODEL = "gpt-4o-mini";
+const AUDIO_ADAPTER_SYSTEM_PROMPT = [
+    "You rewrite coding-agent replies so they are easy to understand when read aloud while the user is driving.",
+    "Output only the spoken script. Do not mention that you rewrote the text.",
+    "Preserve important facts, file paths, commands, function names, flags, errors, and next steps.",
+    "Convert markdown structure into natural spoken prose with short sections.",
+    "Convert code blocks into concise spoken explanations. For short commands or snippets, read the command or essential lines verbatim in a speakable way.",
+    "For long code blocks, summarize what the code does and call out names and important behavior instead of reading every line.",
+    "For tables, summarize rows and columns naturally.",
+    "Keep it concise, but do not omit warnings, failures, or requested actions.",
+].join("\n");
 
 let currentJob: SpeechJob | undefined;
 let currentSpeechId = 0;
 let autoRead = false;
+const adapterCache = new Map<string, string>();
 
 type TextBlock = {
     type?: unknown;
@@ -59,9 +73,10 @@ type AudioPlayer = {
 
 type SpeechJob = {
     id: number;
-    phase: "synthesizing" | "speaking";
+    phase: "adapting" | "synthesizing" | "speaking";
     processes: Set<ChildProcess>;
     tempFiles: Set<string>;
+    abortController?: AbortController;
 };
 
 function executableInPath(name: string): string | undefined {
@@ -362,15 +377,235 @@ function sanitizeForSpeech(raw: string): { text: string; truncated: boolean } {
     return { text, truncated };
 }
 
+type AudioAdapterMode = "off" | "heuristic" | "llm";
+
+function getAudioAdapterMode(): AudioAdapterMode {
+    const raw = (
+        process.env.PI_READ_REPLY_AUDIO_ADAPTER ?? "off"
+    ).toLowerCase();
+    if (["llm", "ai", "model"].includes(raw)) return "llm";
+    if (["heuristic", "simple", "code"].includes(raw)) return "heuristic";
+    return "off";
+}
+
+function summarizeCodeBlock(
+    language: string | undefined,
+    code: string,
+): string {
+    const lines = code
+        .split("\n")
+        .map((line) => line.trimEnd())
+        .filter((line) => line.trim().length > 0);
+    const label = language?.trim() ? `${language.trim()} code` : "code";
+
+    if (lines.length === 0) return `${label} block omitted.`;
+
+    if (lines.length <= 5 && code.length <= 500) {
+        return [`Short ${label} block:`, ...lines].join("\n");
+    }
+
+    const firstUsefulLine =
+        lines.find(
+            (line) =>
+                !line.trim().startsWith("//") && !line.trim().startsWith("#"),
+        ) ?? lines[0];
+    return `A ${label} block with ${lines.length} lines. It starts with: ${firstUsefulLine.slice(0, 180)}.`;
+}
+
+function heuristicAdaptForSpeech(raw: string): string {
+    return raw.replace(
+        /```([^\n`]*)?\n?([\s\S]*?)```/g,
+        (_match, language: string | undefined, code: string) => {
+            return `\n${summarizeCodeBlock(language, code)}\n`;
+        },
+    );
+}
+
+function buildAudioAdapterPrompt(raw: string): string {
+    return [
+        "Rewrite this assistant reply as a script for text-to-speech.",
+        "The listener may be driving, so make code, markdown, tables, and paths understandable by ear.",
+        "Keep the same meaning and preserve important technical details.",
+        "Aim for less than 900 words unless the reply contains critical step-by-step instructions.",
+        "",
+        "<assistant_reply>",
+        raw,
+        "</assistant_reply>",
+    ].join("\n");
+}
+
+function extractResponseText(response: { content?: unknown }): string {
+    if (!Array.isArray(response.content)) return "";
+    return response.content
+        .filter((content): content is { type: "text"; text: string } => {
+            return Boolean(
+                content &&
+                typeof content === "object" &&
+                (content as { type?: unknown }).type === "text" &&
+                typeof (content as { text?: unknown }).text === "string",
+            );
+        })
+        .map((content) => content.text)
+        .join("\n")
+        .trim();
+}
+
+function rememberAdaptedText(raw: string, adapted: string): void {
+    adapterCache.set(raw, adapted);
+    while (adapterCache.size > 20) {
+        const first = adapterCache.keys().next().value;
+        if (first === undefined) break;
+        adapterCache.delete(first);
+    }
+}
+
+async function adaptWithLlm(
+    raw: string,
+    ctx: ExtensionContext,
+    signal?: AbortSignal,
+): Promise<string | undefined> {
+    const provider =
+        process.env.PI_READ_REPLY_AUDIO_ADAPTER_PROVIDER ??
+        DEFAULT_AUDIO_ADAPTER_PROVIDER;
+    const modelId =
+        process.env.PI_READ_REPLY_AUDIO_ADAPTER_MODEL ??
+        DEFAULT_AUDIO_ADAPTER_MODEL;
+    const requestedModel = ctx.modelRegistry.find(provider, modelId);
+    const candidates = [requestedModel, ctx.model].filter(
+        (model, index, models) => {
+            return Boolean(
+                model &&
+                models.findIndex(
+                    (other) =>
+                        other?.provider === model.provider &&
+                        other?.id === model.id,
+                ) === index,
+            );
+        },
+    );
+
+    if (candidates.length === 0) {
+        throw new Error(
+            `No model available for audio adapter (${provider}/${modelId})`,
+        );
+    }
+
+    const authErrors: string[] = [];
+    for (const model of candidates) {
+        if (!model) continue;
+
+        const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
+        if (!auth.ok || !auth.apiKey) {
+            authErrors.push(
+                auth.ok
+                    ? `No API key for ${model.provider}/${model.id}`
+                    : auth.error,
+            );
+            continue;
+        }
+
+        const response = await complete(
+            model,
+            {
+                systemPrompt: AUDIO_ADAPTER_SYSTEM_PROMPT,
+                messages: [
+                    {
+                        role: "user" as const,
+                        content: [
+                            {
+                                type: "text" as const,
+                                text: buildAudioAdapterPrompt(raw),
+                            },
+                        ],
+                        timestamp: Date.now(),
+                    },
+                ],
+            },
+            {
+                apiKey: auth.apiKey,
+                headers: auth.headers,
+                signal,
+                reasoningEffort: "minimal",
+            },
+        );
+
+        if (response.stopReason === "aborted") return undefined;
+
+        const adapted = extractResponseText(response).trim();
+        return adapted.length > 0 ? adapted : undefined;
+    }
+
+    throw new Error(
+        authErrors.join("; ") ||
+            `No API key for audio adapter (${provider}/${modelId})`,
+    );
+}
+
+async function adaptForSpeech(
+    raw: string,
+    ctx: ExtensionContext,
+): Promise<string | undefined> {
+    const mode = getAudioAdapterMode();
+    if (mode === "off") return raw;
+
+    const cached = adapterCache.get(raw);
+    if (cached) return cached;
+
+    const heuristic = heuristicAdaptForSpeech(raw);
+    if (mode === "heuristic") {
+        rememberAdaptedText(raw, heuristic);
+        return heuristic;
+    }
+
+    const job = startJob(ctx, "adapting");
+    job.abortController = new AbortController();
+
+    try {
+        const adapted = await adaptWithLlm(
+            raw,
+            ctx,
+            job.abortController.signal,
+        );
+        if (currentJob !== job) return undefined;
+
+        currentJob = undefined;
+        cleanupJob(job);
+        updateStatus(ctx);
+
+        if (adapted) {
+            rememberAdaptedText(raw, adapted);
+            return adapted;
+        }
+    } catch (error) {
+        if (currentJob !== job) return undefined;
+        finishJob(ctx, job);
+        if (ctx.hasUI) {
+            const message =
+                error instanceof Error ? error.message : String(error);
+            ctx.ui.notify(
+                `Audio adapter failed; using heuristic fallback: ${message}`,
+                "warning",
+            );
+        }
+    }
+
+    rememberAdaptedText(raw, heuristic);
+    return heuristic;
+}
+
 function updateStatus(ctx: ExtensionContext): void {
     if (!ctx.hasUI) return;
 
     if (currentJob) {
-        const label =
-            currentJob.phase === "synthesizing"
-                ? "🔊 synthesizing"
-                : "🔊 speaking";
-        ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg("accent", label));
+        const labels: Record<SpeechJob["phase"], string> = {
+            adapting: "🔊 adapting",
+            synthesizing: "🔊 synthesizing",
+            speaking: "🔊 speaking",
+        };
+        ctx.ui.setStatus(
+            STATUS_KEY,
+            ctx.ui.theme.fg("accent", labels[currentJob.phase]),
+        );
         return;
     }
 
@@ -421,6 +656,7 @@ function stopSpeech(ctx?: ExtensionContext, notify = true): void {
     currentJob = undefined;
     currentSpeechId += 1;
 
+    job.abortController?.abort();
     for (const process of job.processes) {
         killProcess(process);
     }
@@ -623,8 +859,17 @@ function speakWithPiperBackend(
     });
 }
 
-function speakText(rawText: string, ctx: ExtensionContext): void {
-    const { text, truncated } = sanitizeForSpeech(rawText);
+async function speakText(
+    rawText: string,
+    ctx: ExtensionContext,
+): Promise<void> {
+    const backend = resolveBackend(ctx);
+    if (!backend) return;
+
+    const adaptedText = await adaptForSpeech(rawText, ctx);
+    if (adaptedText === undefined) return;
+
+    const { text, truncated } = sanitizeForSpeech(adaptedText);
     if (!text) {
         if (ctx.hasUI)
             ctx.ui.notify(
@@ -634,9 +879,6 @@ function speakText(rawText: string, ctx: ExtensionContext): void {
         return;
     }
 
-    const backend = resolveBackend(ctx);
-    if (!backend) return;
-
     if (backend.kind === "piper") {
         speakWithPiperBackend(text, backend, ctx, truncated);
         return;
@@ -645,7 +887,7 @@ function speakText(rawText: string, ctx: ExtensionContext): void {
     speakWithDirectBackend(text, backend, ctx, truncated);
 }
 
-function speakLastReply(ctx: ExtensionContext): void {
+async function speakLastReply(ctx: ExtensionContext): Promise<void> {
     const text = findLastAssistantText(ctx);
     if (!text) {
         if (ctx.hasUI)
@@ -653,7 +895,7 @@ function speakLastReply(ctx: ExtensionContext): void {
         return;
     }
 
-    speakText(text, ctx);
+    await speakText(text, ctx);
 }
 
 function restoreState(ctx: ExtensionContext): void {
@@ -694,7 +936,7 @@ export default function readLastReply(pi: ExtensionAPI): void {
     pi.registerShortcut("ctrl+alt+r", {
         description: "Read the last assistant reply aloud",
         handler: async (ctx) => {
-            speakLastReply(ctx);
+            await speakLastReply(ctx);
         },
     });
 
@@ -708,7 +950,7 @@ export default function readLastReply(pi: ExtensionAPI): void {
     pi.registerCommand("speak-last", {
         description: "Read the last assistant reply aloud",
         handler: async (_args, ctx) => {
-            speakLastReply(ctx);
+            await speakLastReply(ctx);
         },
     });
 
@@ -746,7 +988,7 @@ export default function readLastReply(pi: ExtensionAPI): void {
         const text = extractAssistantText(event.message).trim();
         if (!text) return;
 
-        speakText(text, ctx);
+        await speakText(text, ctx);
     });
 
     pi.on("session_shutdown", async (_event, ctx) => {
