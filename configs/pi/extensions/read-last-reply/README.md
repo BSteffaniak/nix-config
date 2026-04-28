@@ -32,8 +32,8 @@ myConfig.tools.tts.piper.enable = true;
 That module installs `piper`, a default voice, the `tts-say` helper, and exports:
 
 - `TTS_BACKEND=piper`
-- `PIPER_VOICE=~/.local/share/tts/piper/voices/en_US-lessac-medium.onnx`
-- `PIPER_VOICE_CONFIG=~/.local/share/tts/piper/voices/en_US-lessac-medium.onnx.json`
+- `PIPER_VOICE=~/.local/share/tts/piper/voices/en_US-ryan-high.onnx`
+- `PIPER_VOICE_CONFIG=~/.local/share/tts/piper/voices/en_US-ryan-high.onnx.json`
 
 The extension also supports Pi-specific overrides:
 

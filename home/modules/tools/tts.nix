@@ -22,6 +22,17 @@ let
         sha256 = "184hnvd8389xpdm0x2w6phss23v5pb34i0lhd4nmy1gdgd0rrqgg";
       };
     };
+
+    en_US-ryan-high = {
+      model = pkgs.fetchurl {
+        url = "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/en_US-ryan-high.onnx";
+        sha256 = "1jjf2nxn1zyih00jwh8c3bg65wblf1ha8w5spy6yr0z10rv0v6dk";
+      };
+      config = pkgs.fetchurl {
+        url = "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/en_US-ryan-high.onnx.json";
+        sha256 = "04c0ni1qb8jw7p6l1fb47i81njgzqh7xaj8dpyzb8p1i127vkly6";
+      };
+    };
   };
 
   usingPackagedVoice = cfg.piper.modelPath == null;
@@ -112,21 +123,21 @@ in
 
       defaultVoice = mkOption {
         type = types.enum (attrNames packagedVoices);
-        default = "en_US-lessac-medium";
+        default = "en_US-ryan-high";
         description = "Packaged Piper voice to install when modelPath is not set.";
       };
 
       modelPath = mkOption {
         type = types.nullOr types.str;
         default = null;
-        example = "$HOME/.local/share/tts/piper/voices/en_US-lessac-medium.onnx";
+        example = "$HOME/.local/share/tts/piper/voices/en_US-ryan-high.onnx";
         description = "Optional external Piper ONNX model path. When null, the packaged defaultVoice is installed.";
       };
 
       configPath = mkOption {
         type = types.nullOr types.str;
         default = null;
-        example = "$HOME/.local/share/tts/piper/voices/en_US-lessac-medium.onnx.json";
+        example = "$HOME/.local/share/tts/piper/voices/en_US-ryan-high.onnx.json";
         description = "Optional external Piper voice config path. Defaults to modelPath + .json for external models.";
       };
     };

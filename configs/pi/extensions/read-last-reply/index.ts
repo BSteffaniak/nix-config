@@ -10,7 +10,7 @@ import type {
 const STATUS_KEY = "read-last-reply";
 const STATE_TYPE = "read-last-reply-state";
 const DEFAULT_MAX_CHARS = 6000;
-const DEFAULT_PIPER_VOICE = "en_US-lessac-medium";
+const DEFAULT_PIPER_VOICE = "en_US-ryan-high";
 
 let currentJob: SpeechJob | undefined;
 let currentSpeechId = 0;
