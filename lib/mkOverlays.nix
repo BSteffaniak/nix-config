@@ -13,6 +13,7 @@
     {
       enableRust ? true,
       enableGithubReleases ? true,
+      enablePiClipboard ? true,
       enableSourceBuilds ? true,
       enableZellijFork ? false,
       enableCronstrue ? true,
@@ -58,6 +59,10 @@
         {
           enable = enableGithubReleases;
           overlay = overlayFunctions.github-releases;
+        }
+        {
+          enable = enablePiClipboard;
+          overlay = overlayFunctions.pi-clipboard;
         }
         {
           enable = enableSourceBuilds;
