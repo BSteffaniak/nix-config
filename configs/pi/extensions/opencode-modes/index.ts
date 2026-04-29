@@ -215,6 +215,7 @@ async function maybeAsk(
 export default function opencodeModes(pi: ExtensionAPI): void {
     let config = loadConfig();
     let mode: ModeName = "build";
+    let draftMode: ModeName = mode;
 
     pi.registerFlag("plan", {
         description: "Start in OpenCode-style plan mode",
@@ -222,26 +223,51 @@ export default function opencodeModes(pi: ExtensionAPI): void {
         default: false,
     });
 
+    function statusText(): string {
+        const active = mode === "plan" ? "PLAN (read-only)" : "BUILD";
+        if (draftMode === mode) return active;
+        const next = draftMode === "plan" ? "PLAN (read-only)" : "BUILD";
+        return `${active} → next: ${next}`;
+    }
+
+    function updateStatus(ctx?: ExtensionContext): void {
+        ctx?.ui.setStatus("opencode-mode", statusText());
+    }
+
     function applyMode(ctx?: ExtensionContext): void {
         config = loadConfig();
         pi.setActiveTools(
             activeToolsFor(modeConfig(config, mode), pi.getAllTools()),
         );
-        ctx?.ui.setStatus(
-            "opencode-mode",
-            mode === "plan" ? "PLAN (read-only)" : "BUILD",
-        );
+        updateStatus(ctx);
     }
 
     function setMode(nextMode: ModeName, ctx: ExtensionContext): void {
         mode = nextMode;
+        draftMode = nextMode;
         applyMode(ctx);
         ctx.ui.notify(`OpenCode ${mode} mode enabled`, "info");
         pi.appendEntry("opencode-mode", { mode });
     }
 
+    function setDraftMode(nextMode: ModeName, ctx: ExtensionContext): void {
+        draftMode = nextMode;
+        updateStatus(ctx);
+        ctx.ui.notify(
+            `OpenCode ${draftMode} mode selected for the next message`,
+            "info",
+        );
+    }
+
+    function commitDraftMode(ctx?: ExtensionContext): void {
+        if (draftMode === mode) return;
+        mode = draftMode;
+        applyMode(ctx);
+        pi.appendEntry("opencode-mode", { mode });
+    }
+
     function toggleMode(ctx: ExtensionContext): void {
-        setMode(mode === "plan" ? "build" : "plan", ctx);
+        setDraftMode(draftMode === "plan" ? "build" : "plan", ctx);
     }
 
     pi.registerCommand("plan", {
@@ -262,21 +288,28 @@ export default function opencodeModes(pi: ExtensionAPI): void {
                 setMode(requested, ctx);
                 return;
             }
+            const pending =
+                draftMode === mode ? "" : `; next message: ${draftMode}`;
             if (!ctx.hasUI) {
-                ctx.ui.notify(`Current mode: ${mode}`, "info");
+                ctx.ui.notify(`Current mode: ${mode}${pending}`, "info");
                 return;
             }
-            const choice = await ctx.ui.select(`Current mode: ${mode}`, [
-                "plan",
-                "build",
-            ]);
+            const choice = await ctx.ui.select(
+                `Current mode: ${mode}${pending}`,
+                ["plan", "build"],
+            );
             if (choice === "plan" || choice === "build") setMode(choice, ctx);
         },
     });
 
     pi.registerShortcut("tab", {
-        description: "Toggle OpenCode plan/build mode",
+        description: "Select OpenCode plan/build mode for the next message",
         handler: async (ctx) => toggleMode(ctx),
+    });
+
+    pi.on("input", async (_event, ctx) => {
+        commitDraftMode(ctx);
+        return { action: "continue" as const };
     });
 
     pi.on("session_start", async (_event, ctx) => {
@@ -297,6 +330,7 @@ export default function opencodeModes(pi: ExtensionAPI): void {
         }
 
         if (pi.getFlag("plan") === true) mode = "plan";
+        draftMode = mode;
 
         applyMode(ctx);
     });
