@@ -149,6 +149,126 @@ fetch_release() {
   echo "$release_json"
 }
 
+# ── Runtime Dependency Helpers ──────────────────────────────────────
+npm_runtime_deps_need_sync() {
+  local project="$1"
+  local config_file="$2"
+  local version_file="$3"
+  local runtime_dir="$REPO_ROOT/lib/github-releases/runtime-deps/$project"
+
+  jq -e '.runtimeDeps.npm' "$config_file" &>/dev/null || return 1
+  [ ! -f "$runtime_dir/package-lock.json" ] && return 0
+  jq -e '.runtimeDeps.npm.npmDepsHash' "$version_file" &>/dev/null || return 0
+  return 1
+}
+
+update_npm_runtime_deps() {
+  local project="$1"
+  local config_file="$2"
+  local version_file="$3"
+  local version="$4"
+  local platforms_json="$5"
+
+  if ! jq -e '.runtimeDeps.npm' "$config_file" &>/dev/null; then
+    return 0
+  fi
+
+  if ! command -v npm &>/dev/null; then
+    err "Project '$project' has npm runtime deps, but npm is not available"
+    return 1
+  fi
+  if ! command -v nix &>/dev/null; then
+    err "Project '$project' has npm runtime deps, but nix is not available to prefetch them"
+    return 1
+  fi
+
+  local runtime_dir="$REPO_ROOT/lib/github-releases/runtime-deps/$project"
+  mkdir -p "$runtime_dir"
+
+  local source_platform source_url
+  source_platform=$(jq -r '.runtimeDeps.npm.artifactPlatform // empty' "$config_file")
+  if [ -z "$source_platform" ]; then
+    source_platform=$(echo "$platforms_json" | jq -r 'keys[0]')
+  fi
+  source_url=$(echo "$platforms_json" | jq -r --arg platform "$source_platform" '.[$platform].url // empty')
+  if [ -z "$source_url" ]; then
+    err "No release artifact found for runtime dependency source platform '$source_platform'"
+    return 1
+  fi
+
+  local artifact_package_json_path
+  artifact_package_json_path=$(jq -r '.runtimeDeps.npm.artifactPackageJsonPath // "package.json"' "$config_file")
+
+  local tmp artifact extract_dir artifact_package_json
+  tmp=$(mktemp -d)
+  trap 'rm -rf "$tmp"; trap - RETURN' RETURN
+  artifact="$tmp/artifact"
+  extract_dir="$tmp/extract"
+  mkdir -p "$extract_dir"
+
+  info "$project: syncing npm runtime deps from $source_platform artifact"
+  curl -fsSL "$source_url" -o "$artifact"
+
+  if [[ "$source_url" == *.tar.gz ]]; then
+    tar xzf "$artifact" -C "$extract_dir"
+  elif [[ "$source_url" == *.zip ]]; then
+    if ! command -v unzip &>/dev/null; then
+      err "Runtime dependency sync needs unzip for $source_url"
+      return 1
+    fi
+    unzip -q "$artifact" -d "$extract_dir"
+  else
+    err "Unsupported artifact format for runtime dependency sync: $source_url"
+    return 1
+  fi
+
+  artifact_package_json=$(find "$extract_dir" -path "*/$artifact_package_json_path" -type f | head -n 1)
+  if [ -z "$artifact_package_json" ]; then
+    err "Could not find '$artifact_package_json_path' in $source_platform artifact"
+    return 1
+  fi
+
+  local deps_json="{}"
+  local dep_count
+  dep_count=$(jq '(.runtimeDeps.npm.syncFromArtifactPackageJson // []) | length' "$config_file")
+  for ((i = 0; i < dep_count; i++)); do
+    local section name spec
+    section=$(jq -r "(.runtimeDeps.npm.syncFromArtifactPackageJson // [])[$i].section" "$config_file")
+    name=$(jq -r "(.runtimeDeps.npm.syncFromArtifactPackageJson // [])[$i].name" "$config_file")
+    spec=$(jq -r --arg section "$section" --arg name "$name" '.[$section][$name] // empty' "$artifact_package_json")
+    if [ -z "$spec" ]; then
+      err "Runtime dependency '$name' not found in $section of artifact package.json"
+      return 1
+    fi
+    deps_json=$(echo "$deps_json" | jq --arg name "$name" --arg spec "$spec" '.[$name] = $spec')
+    ok "  npm runtime dep: $name@$spec"
+  done
+
+  jq -n \
+    --arg name "$project-runtime-deps" \
+    --arg version "$version" \
+    --argjson deps "$deps_json" \
+    '{ name: $name, version: $version, private: true, dependencies: $deps }' \
+    > "$runtime_dir/package.json"
+
+  (cd "$runtime_dir" && npm install --package-lock-only --ignore-scripts --no-audit --no-fund >/dev/null)
+
+  local npm_cache npm_hash
+  npm_cache="$tmp/npm-deps"
+  if command -v prefetch-npm-deps &>/dev/null; then
+    prefetch-npm-deps "$runtime_dir/package-lock.json" "$npm_cache" >/dev/null
+  else
+    nix run nixpkgs#prefetch-npm-deps -- "$runtime_dir/package-lock.json" "$npm_cache" >/dev/null
+  fi
+  npm_hash=$(nix hash path "$npm_cache")
+
+  local tmp_version_file
+  tmp_version_file="$tmp/version.json"
+  jq --arg hash "$npm_hash" '.runtimeDeps.npm.npmDepsHash = $hash' "$version_file" > "$tmp_version_file"
+  mv "$tmp_version_file" "$version_file"
+  ok "$project: npm runtime deps hash $npm_hash"
+}
+
 # ── Update Logic ────────────────────────────────────────────────────
 update_project() {
   local project="$1"
@@ -186,8 +306,12 @@ update_project() {
   fi
 
   if [ "$current_version" = "$version" ] && [ "$dry_run" = "false" ]; then
-    ok "$project: already at ${BOLD}v$version${NC}"
-    return 0
+    if npm_runtime_deps_need_sync "$project" "$config_file" "$version_file"; then
+      info "$project: already at ${BOLD}v$version${NC}; syncing runtime deps"
+    else
+      ok "$project: already at ${BOLD}v$version${NC}"
+      return 0
+    fi
   fi
 
   if [ "$dry_run" = "true" ]; then
@@ -246,6 +370,8 @@ update_project() {
     --argjson platforms "$platforms_json" \
     '{ version: $version, tag: $tag, platforms: $platforms }' \
     > "$version_file"
+
+  update_npm_runtime_deps "$project" "$config_file" "$version_file" "$version" "$platforms_json"
 
   ok "$project: updated to ${BOLD}v$version${NC} ($platform_count platforms)"
 }

@@ -1,0 +1,8 @@
+{
+    "name": "pi-runtime-deps",
+    "version": "0.70.6",
+    "private": true,
+    "dependencies": {
+        "@mariozechner/clipboard": "^0.3.3"
+    }
+}

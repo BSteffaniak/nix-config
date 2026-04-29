@@ -55,6 +55,99 @@ let
 
   license = licenseMap.${config.meta.license or "unfree"} or pkgs.lib.licenses.unfree;
 
+  hasNpmRuntimeDeps = config ? runtimeDeps && config.runtimeDeps ? npm;
+  npmRuntimeConfig = if hasNpmRuntimeDeps then config.runtimeDeps.npm else { };
+  npmRuntimeDepsDir = ./runtime-deps + "/${config.pname}";
+  npmRuntimeDepsHash =
+    if hasNpmRuntimeDeps then
+      versionData.runtimeDeps.npm.npmDepsHash
+        or (throw "Missing runtimeDeps.npm.npmDepsHash in versions/${config.pname}.json")
+    else
+      null;
+
+  npmRuntimeDeps =
+    if hasNpmRuntimeDeps then
+      pkgs.buildNpmPackage {
+        pname = "${config.pname}-runtime-deps";
+        version = versionData.version;
+        src = npmRuntimeDepsDir;
+        npmDepsHash = npmRuntimeDepsHash;
+        npmFlags = [ "--ignore-scripts" ];
+        dontNpmBuild = true;
+        installPhase = ''
+          runHook preInstall
+          mkdir -p "$out"
+          cp -R node_modules "$out/node_modules"
+          runHook postInstall
+        '';
+      }
+    else
+      null;
+
+  npmRuntimeValidation =
+    if hasNpmRuntimeDeps && npmRuntimeConfig ? syncFromArtifactPackageJson then
+      pkgs.lib.concatMapStringsSep "\n" (dep: ''
+        artifactSpec="$(${pkgs.jq}/bin/jq -r --arg section '${dep.section}' --arg name '${dep.name}' '.[$section][$name] // empty' "$out/${npmRuntimeConfig.packageJsonPath}")"
+        runtimeSpec="$(${pkgs.jq}/bin/jq -r --arg name '${dep.name}' '.dependencies[$name] // empty' '${npmRuntimeDepsDir}/package.json')"
+        if [ -z "$artifactSpec" ]; then
+          echo "Error: runtime dependency '${dep.name}' not found in $out/${npmRuntimeConfig.packageJsonPath}" >&2
+          echo "Run: ./scripts/github-release.sh update ${config.pname}" >&2
+          exit 1
+        fi
+        if [ "$artifactSpec" != "$runtimeSpec" ]; then
+          echo "Error: runtime dependency '${dep.name}' is out of sync for ${config.pname}" >&2
+          echo "  artifact: $artifactSpec" >&2
+          echo "  runtime:  $runtimeSpec" >&2
+          echo "Run: ./scripts/github-release.sh update ${config.pname}" >&2
+          exit 1
+        fi
+      '') npmRuntimeConfig.syncFromArtifactPackageJson
+    else
+      "";
+
+  npmRuntimeWrapperShell =
+    if hasNpmRuntimeDeps && npmRuntimeConfig ? wrapExecutables then
+      pkgs.lib.concatStringsSep "\n" (
+        pkgs.lib.mapAttrsToList (
+          executableName: wrapperConfig:
+          let
+            envLines = pkgs.lib.concatStringsSep "\n" (
+              pkgs.lib.mapAttrsToList (envName: envValue: ''export ${envName}="${envValue}"'') (
+                wrapperConfig.env or { }
+              )
+            );
+            execPath = wrapperConfig.exec or "@out@/bin/${executableName}";
+          in
+          ''
+            cat > "$out/bin/${executableName}" <<'EOF'
+            #!${pkgs.runtimeShell}
+            ${envLines}
+            exec "${execPath}" "$@"
+            EOF
+            substituteInPlace "$out/bin/${executableName}" --replace-fail @out@ "$out"
+            chmod +x "$out/bin/${executableName}"
+          ''
+        ) npmRuntimeConfig.wrapExecutables
+      )
+    else
+      "";
+
+  npmRuntimeInstallPhase = pkgs.lib.optionalString hasNpmRuntimeDeps ''
+    ${npmRuntimeValidation}
+
+    if [ ! -d "${npmRuntimeDeps}/node_modules" ]; then
+      echo "Error: npm runtime deps for ${config.pname} did not produce node_modules" >&2
+      exit 1
+    fi
+
+    mkdir -p "$out/${npmRuntimeConfig.nodeModulesPath or "libexec/${config.pname}/node_modules"}"
+    cp -R "${npmRuntimeDeps}/node_modules/." "$out/${
+      npmRuntimeConfig.nodeModulesPath or "libexec/${config.pname}/node_modules"
+    }/"
+
+    ${npmRuntimeWrapperShell}
+  '';
+
 in
 pkgs.stdenv.mkDerivation {
   pname = config.pname;
@@ -146,7 +239,8 @@ pkgs.stdenv.mkDerivation {
       ''
     else
       throw "Unknown installMode '${installMode}' for ${config.pname}. Expected 'binary' or 'directory'."
-  );
+  )
+  + npmRuntimeInstallPhase;
 
   meta = {
     description = config.meta.description or "${config.pname} (from GitHub releases)";
