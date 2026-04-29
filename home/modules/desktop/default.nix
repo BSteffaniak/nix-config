@@ -8,6 +8,7 @@
     ./sketchybar.nix
     ./sledge.nix
     ./waybar.nix
+    ./wallpaper.nix
     ./utilities.nix
   ];
 }

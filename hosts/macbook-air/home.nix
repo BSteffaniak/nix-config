@@ -25,6 +25,7 @@
     desktop.mkalias.enable = true;
     desktop.sledge.enable = true;
     desktop.utilities.bitwarden.enable = true;
+    desktop.wallpaper.enable = true;
 
     # CLI tools - now configured directly in home-manager
     cliTools = {
