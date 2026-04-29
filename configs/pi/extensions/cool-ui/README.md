@@ -1,8 +1,9 @@
-# Cool UI for Pi
+# Graphite UI for Pi
 
-Adds a neon header, animated working indicator, footer status pill, and a small editor glow effect for words like `ultrathink`, `xhigh`, `neon`, and `ship it`.
+An understated Pi interface: compact single-line header, quiet working indicator, and useful footer status. No neon, no rainbow editor gimmick.
 
 Commands:
 
-- `/cool-ui` reapplies the neon chrome.
-- `/boring-ui` restores Pi's built-in header, spinner, working text, footer status, and editor.
+- `/graphite-ui` enables the Graphite chrome.
+- `/plain-ui` restores Pi's built-in header, spinner, working text, and footer status.
+- `/cool-ui` and `/boring-ui` remain as compatibility aliases.

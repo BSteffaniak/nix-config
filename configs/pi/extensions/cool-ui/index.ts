@@ -4,186 +4,160 @@ import type {
     Theme,
     WorkingIndicatorOptions,
 } from "@mariozechner/pi-coding-agent";
-import { CustomEditor, VERSION } from "@mariozechner/pi-coding-agent";
+import { VERSION } from "@mariozechner/pi-coding-agent";
 import { truncateToWidth } from "@mariozechner/pi-tui";
 
-const RESET_FG = "\x1b[39m";
-const NEON_FRAMES = ["◐", "◓", "◑", "◒"];
-const NEON_COLORS = [
-    "\x1b[38;2;0;229;255m",
-    "\x1b[38;2;168;85;255m",
-    "\x1b[38;2;255;61;242m",
-    "\x1b[38;2;57;255;136m",
-];
-
-function rgb(text: string, color: string): string {
-    return `${color}${text}${RESET_FG}`;
+function modelLabel(ctx: ExtensionContext): string {
+    return ctx.model
+        ? `${ctx.model.provider}/${ctx.model.id}`
+        : "model pending";
 }
 
-function neonIndicator(): WorkingIndicatorOptions {
+function graphiteIndicator(ctx: ExtensionContext): WorkingIndicatorOptions {
+    const theme = ctx.ui.theme;
     return {
-        frames: NEON_FRAMES.map((frame, index) =>
-            rgb(frame, NEON_COLORS[index % NEON_COLORS.length]!),
-        ),
-        intervalMs: 90,
+        frames: [
+            theme.fg("dim", "·"),
+            theme.fg("muted", "·"),
+            theme.fg("accent", "○"),
+            theme.fg("muted", "·"),
+        ],
+        intervalMs: 180,
     };
 }
 
-function headerLines(theme: Theme): string[] {
-    const c = (text: string) => theme.fg("accent", text);
-    const p = (text: string) => theme.fg("customMessageLabel", text);
-    const d = (text: string) => theme.fg("dim", text);
-    const m = (text: string) => theme.fg("muted", text);
-    const g = (text: string) => theme.fg("success", text);
-
+function headerLine(
+    theme: Theme,
+    cwd: string,
+    mode: string,
+    model: string,
+): string {
+    const project = cwd.split("/").filter(Boolean).at(-1) ?? cwd;
+    const mark = theme.fg("accent", "π");
+    const sep = theme.fg("dim", " · ");
     return [
-        "",
-        `${p("╭")} ${c("π")}${p(" // ")}${theme.bold(c("NEON AGENT"))} ${p("━━━━━━━━━━━━━━━━━━━━╮")}`,
-        `${p("│")} ${d("wired for velocity")} ${p("·")} ${g("plan/build aware")} ${p("·")} ${m(`v${VERSION}`)} ${p("│")}`,
-        `${p("╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯")}`,
-    ];
+        mark,
+        theme.fg("text", project),
+        theme.fg("muted", mode),
+        theme.fg("dim", model),
+        theme.fg("dim", `v${VERSION}`),
+    ].join(sep);
 }
 
-function applyChrome(ctx: ExtensionContext, status = "ready"): void {
+function applyGraphite(
+    ctx: ExtensionContext,
+    state: string,
+    turnCount: number,
+): void {
     if (!ctx.hasUI) return;
 
+    const model = modelLabel(ctx);
+    const mode = state.includes("plan")
+        ? "plan"
+        : state.includes("build")
+          ? "build"
+          : "work";
     const theme = ctx.ui.theme;
-    ctx.ui.setWorkingIndicator(neonIndicator());
-    ctx.ui.setWorkingMessage(
-        `${theme.fg("accent", "π")} ${theme.fg("muted", "bending spacetime...")}`,
-    );
+
+    ctx.ui.setWorkingIndicator(graphiteIndicator(ctx));
+    ctx.ui.setWorkingMessage(`${theme.fg("muted", "thinking")}`);
     ctx.ui.setStatus(
-        "cool-ui",
-        `${theme.fg("accent", "π neon")} ${theme.fg("dim", "|")} ${theme.fg("muted", status)}`,
+        "graphite-ui",
+        [
+            theme.fg("accent", "pi"),
+            theme.fg("dim", state),
+            turnCount > 0 ? theme.fg("dim", `turn ${turnCount}`) : undefined,
+        ]
+            .filter(Boolean)
+            .join(theme.fg("dim", " · ")),
     );
+
     ctx.ui.setHeader((_tui, headerTheme) => ({
         render(width: number): string[] {
-            return headerLines(headerTheme).map((line) =>
-                truncateToWidth(line, width, ""),
-            );
+            return [
+                truncateToWidth(
+                    headerLine(headerTheme, ctx.cwd, mode, model),
+                    width,
+                    "",
+                ),
+            ];
         },
         invalidate() {},
     }));
 }
 
-const SHINE_COLORS = [
-    [0, 229, 255],
-    [77, 163, 255],
-    [168, 85, 255],
-    [255, 61, 242],
-    [57, 255, 136],
-] as const;
-
-function shine(text: string, frame: number): string {
-    return (
-        [...text]
-            .map((char, index) => {
-                const [r, g, b] =
-                    SHINE_COLORS[(index + frame) % SHINE_COLORS.length]!;
-                return `\x1b[38;2;${r};${g};${b}m${char}`;
-            })
-            .join("") + "\x1b[0m"
-    );
-}
-
-class NeonEditor extends CustomEditor {
-    private frame = 0;
-    private timer?: ReturnType<typeof setInterval>;
-
-    private hasNeonText(): boolean {
-        return /\b(ultrathink|xhigh|neon|ship it)\b/i.test(this.getText());
-    }
-
-    private start(): void {
-        if (this.timer) return;
-        this.timer = setInterval(() => {
-            this.frame++;
-            this.tui.requestRender();
-        }, 80);
-    }
-
-    private stop(): void {
-        if (!this.timer) return;
-        clearInterval(this.timer);
-        this.timer = undefined;
-    }
-
-    handleInput(data: string): void {
-        super.handleInput(data);
-        if (this.hasNeonText()) this.start();
-        else this.stop();
-    }
-
-    render(width: number): string[] {
-        return super
-            .render(width)
-            .map((line) =>
-                line.replace(/\b(ultrathink|xhigh|neon|ship it)\b/gi, (match) =>
-                    shine(match, this.frame),
-                ),
-            );
-    }
-}
-
 export default function (pi: ExtensionAPI) {
-    let turnCount = 0;
-    let currentModel = "model pending";
     let enabled = true;
-
-    function applyEditor(ctx: ExtensionContext): void {
-        if (!ctx.hasUI) return;
-        ctx.ui.setEditorComponent(
-            (tui, theme, keybindings) =>
-                new NeonEditor(tui, theme, keybindings),
-        );
-    }
+    let turnCount = 0;
+    let lastState = "idle";
 
     pi.on("session_start", async (_event, ctx) => {
         enabled = true;
-        currentModel = ctx.model
-            ? `${ctx.model.provider}/${ctx.model.id}`
-            : currentModel;
-        applyChrome(ctx, `${currentModel} · ready`);
-        applyEditor(ctx);
+        lastState = "idle";
+        applyGraphite(ctx, lastState, turnCount);
     });
 
-    pi.on("model_select", async (event, ctx) => {
-        currentModel = `${event.model.provider}/${event.model.id}`;
-        if (enabled) applyChrome(ctx, `${currentModel} · ready`);
+    pi.on("model_select", async (_event, ctx) => {
+        if (enabled) applyGraphite(ctx, lastState, turnCount);
     });
 
     pi.on("turn_start", async (_event, ctx) => {
         turnCount++;
-        if (enabled) applyChrome(ctx, `${currentModel} · turn ${turnCount}`);
+        lastState = "thinking";
+        if (enabled) applyGraphite(ctx, lastState, turnCount);
+    });
+
+    pi.on("tool_execution_start", async (event, ctx) => {
+        lastState = `tool ${event.toolName}`;
+        if (enabled) applyGraphite(ctx, lastState, turnCount);
     });
 
     pi.on("turn_end", async (_event, ctx) => {
-        if (enabled)
-            applyChrome(ctx, `${currentModel} · turn ${turnCount} complete`);
+        lastState = "idle";
+        if (enabled) applyGraphite(ctx, lastState, turnCount);
     });
 
-    pi.registerCommand("cool-ui", {
+    pi.registerCommand("graphite-ui", {
         description:
-            "Reapply the neon Pi header, spinner, editor glow, and footer status.",
+            "Use the understated Graphite Pi header, spinner, and status line.",
         handler: async (_args, ctx) => {
             enabled = true;
-            applyChrome(ctx, `${currentModel} · ready`);
-            applyEditor(ctx);
-            ctx.ui.notify("Neon UI reapplied", "info");
+            applyGraphite(ctx, lastState, turnCount);
+            ctx.ui.notify("Graphite UI enabled", "info");
         },
     });
 
-    pi.registerCommand("boring-ui", {
+    pi.registerCommand("plain-ui", {
         description:
-            "Restore Pi's built-in header, spinner, working text, and editor.",
+            "Restore Pi's built-in header, spinner, working text, and footer status.",
         handler: async (_args, ctx) => {
             enabled = false;
             ctx.ui.setHeader(undefined);
             ctx.ui.setWorkingIndicator();
             ctx.ui.setWorkingMessage();
-            ctx.ui.setStatus("cool-ui", undefined);
-            ctx.ui.setEditorComponent(undefined);
-            ctx.ui.notify("Back to boring mode", "info");
+            ctx.ui.setStatus("graphite-ui", undefined);
+            ctx.ui.notify("Plain UI restored", "info");
+        },
+    });
+
+    pi.registerCommand("cool-ui", {
+        description: "Alias for /graphite-ui.",
+        handler: async (_args, ctx) => {
+            enabled = true;
+            applyGraphite(ctx, lastState, turnCount);
+            ctx.ui.notify("Graphite UI enabled", "info");
+        },
+    });
+
+    pi.registerCommand("boring-ui", {
+        description: "Alias for /plain-ui.",
+        handler: async (_args, ctx) => {
+            enabled = false;
+            ctx.ui.setHeader(undefined);
+            ctx.ui.setWorkingIndicator();
+            ctx.ui.setWorkingMessage();
+            ctx.ui.setStatus("graphite-ui", undefined);
+            ctx.ui.notify("Plain UI restored", "info");
         },
     });
 }
