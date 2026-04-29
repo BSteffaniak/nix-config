@@ -67,6 +67,12 @@ in
     # Desktop
     desktop.hex.enable = osConfig.myConfig.darwin.hex.enable or false;
     desktop.hex.showDockIcon = false;
+
+    # Ghostty is installed as a Homebrew cask on Darwin, but still use Nix to
+    # provide terminfo for ncurses apps such as htop.
+    cliTools.terminals.ghostty.installTerminfo = lib.mkDefault (
+      osConfig.myConfig.darwin.ghostty.enable or false
+    );
   };
 
   # Pass inputs to modules that need them

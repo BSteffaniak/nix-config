@@ -31,6 +31,11 @@ let
   defaultShellPath = "${defaultShellPackages.${shellCfg.default}}/bin/${
     defaultShellBinaries.${shellCfg.default}
   }";
+
+  ghosttyTerminfo =
+    if pkgs.stdenv.hostPlatform.isDarwin then pkgs.ghostty-bin.terminfo else pkgs.ghostty.terminfo;
+
+  installGhosttyTerminfo = cfg.ghostty.enable || cfg.ghostty.installTerminfo;
 in
 {
   options.myConfig.cliTools.terminals = {
@@ -52,11 +57,24 @@ in
         default = false;
         description = "Hide window titlebar/decoration (recommended for tiling WMs)";
       };
+      installTerminfo = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Install Ghostty's xterm-ghostty terminfo entry without enabling the Ghostty config";
+      };
     };
   };
 
   config = {
-    home.packages = mkIf cfg.bmux.enable [ pkgs.bmux ];
+    home.packages = mkMerge [
+      (mkIf cfg.bmux.enable [ pkgs.bmux ])
+      (mkIf installGhosttyTerminfo [ ghosttyTerminfo ])
+    ];
+
+    home.file = mkIf installGhosttyTerminfo {
+      ".terminfo/78/xterm-ghostty".source = "${ghosttyTerminfo}/share/terminfo/78/xterm-ghostty";
+      ".terminfo/67/ghostty".source = "${ghosttyTerminfo}/share/terminfo/67/ghostty";
+    };
 
     # Bmux
     xdg.configFile."bmux/bmux.toml" = mkIf cfg.bmux.enable {
