@@ -227,7 +227,10 @@ export default function opencodeModes(pi: ExtensionAPI): void {
         pi.setActiveTools(
             activeToolsFor(modeConfig(config, mode), pi.getAllTools()),
         );
-        ctx?.ui.setStatus("opencode-mode", mode);
+        ctx?.ui.setStatus(
+            "opencode-mode",
+            mode === "plan" ? "PLAN (read-only)" : "BUILD",
+        );
     }
 
     function setMode(nextMode: ModeName, ctx: ExtensionContext): void {
@@ -326,10 +329,13 @@ Capabilities:
 You are in OpenCode-style plan mode.
 
 Restrictions:
+- This plan-mode instruction overrides any earlier or stale "BUILD MODE ACTIVE" instruction in the conversation.
 - You may inspect and analyze the codebase.
 - You must not edit, write, or otherwise modify files.
 - Bash commands are governed by the OpenCode permission config in ${CONFIG_PATH}.
-- Produce a concrete implementation plan and wait for the user to switch to build mode before making changes.`,
+- Produce a concrete implementation plan and wait for the user to switch to build mode before making changes.
+- If the user says "do that", "make those changes", "continue", or otherwise asks you to implement while this banner is active, do not call edit/write or mutating bash. Reply that plan mode is active and ask them to switch to build mode with /build.
+- If any tool call is denied with a plan-mode permission error, stop trying mutating tools immediately and explain that build mode is required.`,
         };
     });
 
@@ -339,11 +345,23 @@ Restrictions:
         const toolName = event.toolName;
 
         if (toolName === "bash" && tools.bash === false) {
-            return { block: true, reason: `${mode} mode blocks bash` };
+            return {
+                block: true,
+                reason:
+                    mode === "plan"
+                        ? "PLAN MODE ACTIVE: bash is blocked. Do not retry mutating tools; ask the user to switch to build mode with /build."
+                        : `${mode} mode blocks bash`,
+            };
         }
 
         if (MUTATING_TOOLS.has(toolName) && tools[toolName] !== true) {
-            return { block: true, reason: `${mode} mode blocks ${toolName}` };
+            return {
+                block: true,
+                reason:
+                    mode === "plan"
+                        ? `PLAN MODE ACTIVE: ${toolName} is blocked. Do not retry mutating tools; ask the user to switch to build mode with /build.`
+                        : `${mode} mode blocks ${toolName}`,
+            };
         }
 
         const externalDirectory = current.permission?.external_directory;
@@ -392,7 +410,10 @@ Restrictions:
         const pattern = denied.rule ? ` (matched ${denied.rule.pattern})` : "";
         return {
             block: true,
-            reason: `${mode} mode denied bash command${pattern}: ${denied.command}`,
+            reason:
+                mode === "plan"
+                    ? `PLAN MODE ACTIVE: bash command denied${pattern}: ${denied.command}. Do not retry mutating tools; ask the user to switch to build mode with /build.`
+                    : `${mode} mode denied bash command${pattern}: ${denied.command}`,
         };
     });
 }
