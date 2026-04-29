@@ -340,6 +340,27 @@ in
 
       # User-writable npm prefix for Pi package installs under Nix.
       home.file.".pi/agent/npm/.keep".text = "";
+
+      # Pi 0.70.6+ runs as a Bun-compiled binary and resolves global npm
+      # package resources via `bun pm bin -g`, even when `npmCommand` points
+      # installs at the Nix-managed npm prefix above. Give Pi a private Bun
+      # global tree that maps back to the real npm-managed node_modules.
+      home.activation.setupPiBunGlobal = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        bun_global="${config.home.homeDirectory}/.pi/agent/bun/install/global"
+        bun_bin="${config.home.homeDirectory}/.pi/agent/bun/bin"
+        npm_node_modules="${piNpmPrefix}/lib/node_modules"
+
+        mkdir -p "$bun_global" "$bun_bin" "$npm_node_modules"
+
+        if [ ! -f "$bun_global/package.json" ]; then
+          printf '%s\n' '{"name":"pi-bun-global","private":true}' > "$bun_global/package.json"
+        fi
+
+        if [ -e "$bun_global/node_modules" ] && [ ! -L "$bun_global/node_modules" ]; then
+          rm -rf "$bun_global/node_modules"
+        fi
+        ln -sfn "$npm_node_modules" "$bun_global/node_modules"
+      '';
     }
 
     # Cross-shell wrapper commands for per-provider profile selection (pi-bedrock, pi-codex, ...)

@@ -27,6 +27,7 @@
                 "pi": {
                     "exec": "@out@/libexec/pi/pi",
                     "env": {
+                        "BUN_INSTALL": "$HOME/.pi/agent/bun",
                         "NODE_PATH": "@out@/libexec/pi/node_modules${NODE_PATH:+:$NODE_PATH}"
                     }
                 }
