@@ -1,0 +1,5 @@
+{
+    "provider": "xai",
+    "model": "grok-code-fast",
+    "apiKeyEnv": "XAI_API_KEY"
+}

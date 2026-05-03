@@ -1,0 +1,27 @@
+{
+    "model": "xai/grok-code-fast",
+    "small_model": "xai/grok-code-fast",
+    "agent": {
+        "build": {
+            "model": "xai/grok-code-fast"
+        },
+        "plan": {
+            "model": "xai/grok-code-fast"
+        },
+        "explore": {
+            "model": "xai/grok-code-fast"
+        },
+        "general": {
+            "model": "xai/grok-code-fast"
+        },
+        "title": {
+            "model": "xai/grok-code-fast"
+        },
+        "summary": {
+            "model": "xai/grok-code-fast"
+        },
+        "compaction": {
+            "model": "xai/grok-code-fast"
+        }
+    }
+}
