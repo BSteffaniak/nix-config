@@ -13,6 +13,25 @@ let
 
   mkEnable = myLib.mkEnableOption' cfg.enableAll;
   mkMediaEnable = myLib.mkEnableOption' cfg.media.enableAll;
+
+  # Convert declarativeBindings value (nice form or raw TOML) into TOML text
+  bindingsFragmentToToml =
+    name: value:
+    if builtins.isString value then
+      value
+    else
+      lib.concatLines (
+        lib.mapAttrsToList (
+          profile: commands:
+          lib.concatLines (
+            map (cmd: ''
+              [[binding]]
+              profile = ${lib.escapeShellArg profile}
+              command = ${lib.escapeShellArg cmd}
+            '') commands
+          )
+        ) value
+      );
 in
 {
   options.myConfig.cliTools.utilities = {
@@ -59,20 +78,31 @@ in
       enable = mkEnable "sshenv SSH-key-backed env vault";
 
       declarativeBindings = mkOption {
-        type = types.attrsOf types.lines;
+        type = types.attrsOf (
+          types.oneOf [
+            (types.attrsOf (types.listOf types.str)) # nice form: profile -> [commands]
+            types.lines # raw TOML escape hatch
+          ]
+        );
         default = { };
         example = {
-          "10-core" = ''
-            [[binding]]
-            profile = "openrouter"
-            command = "pi-openrouter"
-          '';
+          "10-core" = {
+            openrouter = [
+              "pi-openrouter"
+              "opencode-openrouter"
+            ];
+            xai = [
+              "pi-grok-4.3"
+              "pi-grok-code-fast"
+            ];
+          };
         };
         description = ''
-          Declarative TOML fragments written to ~/.sshenv/bindings.d/<name>.toml.
-          These are merged (after the primary bindings.toml) by sshenv when
-          resolving shims or listing effective bindings. Fragments are never
-          mutated by `sshenv shims bind` etc.
+          Declarative bindings written to ~/.sshenv/bindings.d/<name>.toml.
+          Supports two forms:
+            - Nice form: { profile = [ "cmd1" "cmd2" ]; ... }
+            - Raw TOML string (escape hatch)
+          These are merged (after the primary bindings.toml) by sshenv.
         '';
       };
     };
@@ -122,9 +152,9 @@ in
     # Deploy declarative bindings fragments into bindings.d/.
     # sshenv automatically discovers and merges these with the primary bindings.toml.
     home.file = mkIf cfg.sshenv.enable (
-      lib.mapAttrs' (name: text: {
+      lib.mapAttrs' (name: value: {
         name = ".sshenv/bindings.d/${name}.toml";
-        value = { inherit text; };
+        value.text = bindingsFragmentToToml name value;
       }) cfg.sshenv.declarativeBindings
     );
   };
