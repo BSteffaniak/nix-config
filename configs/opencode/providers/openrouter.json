@@ -1,0 +1,27 @@
+{
+    "model": "openrouter/z-ai/glm-5.1",
+    "small_model": "openrouter/z-ai/glm-5.1",
+    "agent": {
+        "build": {
+            "model": "openrouter/z-ai/glm-5.1"
+        },
+        "plan": {
+            "model": "openrouter/z-ai/glm-5.1"
+        },
+        "explore": {
+            "model": "openrouter/z-ai/glm-5.1"
+        },
+        "general": {
+            "model": "openrouter/z-ai/glm-5.1"
+        },
+        "title": {
+            "model": "openrouter/z-ai/glm-5.1"
+        },
+        "summary": {
+            "model": "openrouter/z-ai/glm-5.1"
+        },
+        "compaction": {
+            "model": "openrouter/z-ai/glm-5.1"
+        }
+    }
+}

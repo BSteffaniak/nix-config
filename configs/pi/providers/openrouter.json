@@ -1,0 +1,5 @@
+{
+    "provider": "openrouter",
+    "model": "openrouter/z-ai/glm-5.1",
+    "apiKeyEnv": "OPENROUTER_API_KEY"
+}
