@@ -55,7 +55,27 @@ in
 
     opencodeUpstream.enable = mkEnable "upstream OpenCode CLI";
     pi.enable = mkEnable "Pi coding agent CLI without managed config";
-    sshenv.enable = mkEnable "sshenv SSH-key-backed env vault";
+    sshenv = {
+      enable = mkEnable "sshenv SSH-key-backed env vault";
+
+      declarativeBindings = mkOption {
+        type = types.attrsOf types.lines;
+        default = { };
+        example = {
+          "10-core" = ''
+            [[binding]]
+            profile = "openrouter"
+            command = "pi-openrouter"
+          '';
+        };
+        description = ''
+          Declarative TOML fragments written to ~/.sshenv/bindings.d/<name>.toml.
+          These are merged (after the primary bindings.toml) by sshenv when
+          resolving shims or listing effective bindings. Fragments are never
+          mutated by `sshenv shims bind` etc.
+        '';
+      };
+    };
     worktree-setup.enable = mkEnable "worktree setup helper";
   };
 
@@ -98,5 +118,14 @@ in
     # module concatenates BEFORE user-facing defaults when building
     # home.sessionPath (see home/modules/shell/shared.nix).
     homeModules.shell.shared.sessionPath = mkIf cfg.sshenv.enable [ "$HOME/.sshenv/bin" ];
+
+    # Deploy declarative bindings fragments into bindings.d/.
+    # sshenv automatically discovers and merges these with the primary bindings.toml.
+    home.file = mkIf cfg.sshenv.enable (
+      lib.mapAttrs' (name: text: {
+        name = ".sshenv/bindings.d/${name}.toml";
+        value = { inherit text; };
+      }) cfg.sshenv.declarativeBindings
+    );
   };
 }
