@@ -26,12 +26,33 @@ let
           lib.concatLines (
             map (cmd: ''
               [[binding]]
-              profile = ${lib.escapeShellArg profile}
-              command = ${lib.escapeShellArg cmd}
+              profile = "${profile}"
+              command = "${cmd}"
             '') commands
           )
         ) value
       );
+
+  # Base bindings automatically provided when sshenv + autoBindings are enabled
+  autoSshenvBindings = {
+    "00-sshenv-auto" = {
+      openai-api = [
+        "pi-openai-api"
+        "pi-openai"
+        "opencode-openai-api"
+      ];
+      openrouter = [
+        "pi-openrouter"
+        "opencode-openrouter"
+      ];
+      xai = [
+        "pi-grok-4.3"
+        "pi-grok-code-fast"
+        "opencode-grok-4-3"
+        "opencode-grok-code-fast"
+      ];
+    };
+  };
 in
 {
   options.myConfig.cliTools.utilities = {
@@ -76,6 +97,15 @@ in
     pi.enable = mkEnable "Pi coding agent CLI without managed config";
     sshenv = {
       enable = mkEnable "sshenv SSH-key-backed env vault";
+
+      autoBindings = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Automatically provide useful bindings for pi-* commands (and common opencode aliases)
+          when sshenv is enabled. Set to false to fully control bindings yourself.
+        '';
+      };
 
       declarativeBindings = mkOption {
         type = types.attrsOf (
@@ -150,12 +180,17 @@ in
     homeModules.shell.shared.sessionPath = mkIf cfg.sshenv.enable [ "$HOME/.sshenv/bin" ];
 
     # Deploy declarative bindings fragments into bindings.d/.
-    # sshenv automatically discovers and merges these with the primary bindings.toml.
+    # When autoBindings is enabled, we provide a base set of pi-* bindings.
+    # User declarativeBindings are merged on top (user wins on name conflicts).
     home.file = mkIf cfg.sshenv.enable (
+      let
+        base = if cfg.sshenv.autoBindings then autoSshenvBindings else { };
+        final = base // cfg.sshenv.declarativeBindings;
+      in
       lib.mapAttrs' (name: value: {
         name = ".sshenv/bindings.d/${name}.toml";
         value.text = bindingsFragmentToToml name value;
-      }) cfg.sshenv.declarativeBindings
+      }) final
     );
   };
 }
