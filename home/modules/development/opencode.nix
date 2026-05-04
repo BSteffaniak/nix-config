@@ -298,7 +298,7 @@ in
     (mkIf ollamaCfg.enable {
       xdg.configFile."opencode/providers/ollama.json".text = builtins.toJSON ollamaProviderConfig;
       homeModules.shell.shared.functions.opencode-ollama = ''
-        OPENCODE_CONFIG="$HOME/.config/opencode/providers/ollama.json" opencode-dev "$@"
+        OLLAMA_HOST=${escapeShellArg ollamaHost} OPENCODE_CONFIG="$HOME/.config/opencode/providers/ollama.json" opencode-dev "$@"
       '';
       home.sessionVariables.OLLAMA_HOST = ollamaHost;
     })
