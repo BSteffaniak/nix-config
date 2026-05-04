@@ -207,6 +207,21 @@ let
 
   # Ollama provider config (only when ollama is enabled)
   ollamaCfg = config.myConfig.tools.ai.ollama;
+  ollamaModels = unique ([ ollamaCfg.model ] ++ ollamaCfg.extraModels);
+  mkOllamaModelEntry = model: {
+    id = model;
+    name = model;
+    reasoning = false;
+    input = [ "text" ];
+    contextWindow = 131072;
+    maxTokens = 8192;
+    cost = {
+      input = 0;
+      output = 0;
+      cacheRead = 0;
+      cacheWrite = 0;
+    };
+  };
 
   # Base models.json merged with conditional ollama provider
   baseModelsConfig = builtins.fromJSON (builtins.readFile ../../../configs/pi/models.json);
@@ -214,22 +229,7 @@ let
     baseUrl = ollamaCfg.serverUrl;
     api = "openai-completions";
     apiKey = "ollama";
-    models = [
-      {
-        id = "qwen2.5:7b";
-        name = "Qwen 2.5 7B";
-        reasoning = false;
-        input = [ "text" ];
-        contextWindow = 131072;
-        maxTokens = 8192;
-        cost = {
-          input = 0;
-          output = 0;
-          cacheRead = 0;
-          cacheWrite = 0;
-        };
-      }
-    ];
+    models = map mkOllamaModelEntry ollamaModels;
   };
   mergedModelsConfig =
     if ollamaCfg.enable then
@@ -402,7 +402,7 @@ in
     # Conditional Ollama wrapper (only when tools.ai.ollama is enabled)
     (mkIf ollamaCfg.enable {
       homeModules.shell.shared.functions.pi-ollama = ''
-        pi --provider ollama --model qwen2.5:7b "$@"
+        pi --provider ollama --model ${escapeShellArg ollamaCfg.model} "$@"
       '';
     })
 

@@ -117,7 +117,15 @@
     tools = {
       archiving.enable = true;
       encryption.enable = true;
-      ai.ollama.enable = true;
+      ai.ollama = {
+        enable = true;
+        model = "qwen3:30b-a3b";
+        extraModels = [ "qwen3:14b" ];
+        modelsToPull = [
+          "qwen3:30b-a3b"
+          "qwen3:14b"
+        ];
+      };
       tts.piper.enable = true;
     };
   };

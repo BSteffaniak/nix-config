@@ -13,6 +13,15 @@ with lib;
 
 let
   cfg = config.myConfig.tools;
+  ollamaHost =
+    let
+      url = cfg.ai.ollama.serverUrl;
+    in
+    if hasSuffix "/v1" url then substring 0 (stringLength url - 3) url else url;
+  pullOllamaModelCommands = concatMapStringsSep "\n" (model: ''
+    echo "pulling ollama model ${model}..." >&2
+    OLLAMA_HOST=${escapeShellArg ollamaHost} ${pkgs.ollama}/bin/ollama pull ${escapeShellArg model} || true
+  '') cfg.ai.ollama.modelsToPull;
 in
 {
   imports = [
@@ -59,6 +68,29 @@ in
           default = "http://localhost:11434/v1";
           description = "Ollama server URL (for remote hosts, use e.g. http://mac-studio:11434/v1)";
         };
+        model = mkOption {
+          type = types.str;
+          default = "qwen3:14b";
+          description = "Primary Ollama model ID used by local coding tools";
+        };
+        extraModels = mkOption {
+          type = types.listOf types.str;
+          default = [ ];
+          example = [
+            "qwen3:30b-a3b"
+            "qwen2.5-coder:14b"
+          ];
+          description = "Additional Ollama models to register for model pickers";
+        };
+        modelsToPull = mkOption {
+          type = types.listOf types.str;
+          default = [ ];
+          example = [
+            "qwen3:14b"
+            "qwen3:30b-a3b"
+          ];
+          description = "Ollama models to pull during home-manager activation";
+        };
       };
     };
   };
@@ -73,5 +105,9 @@ in
       ++ (optional cfg.database.postgresql.enable postgresql)
       ++ (optional cfg.ai.gemini.enable unstable.gemini-cli)
       ++ (optional cfg.ai.ollama.enable ollama);
+
+    home.activation.pullOllamaModels = mkIf (
+      cfg.ai.ollama.enable && cfg.ai.ollama.modelsToPull != [ ]
+    ) (lib.hm.dag.entryAfter [ "writeBoundary" ] pullOllamaModelCommands);
   };
 }

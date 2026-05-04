@@ -143,7 +143,7 @@ let
 
   # Ollama provider config (only when ollama is enabled)
   ollamaCfg = config.myConfig.tools.ai.ollama;
-  ollamaModel = "ollama/qwen2.5:7b";
+  ollamaModel = "ollama/${ollamaCfg.model}";
   ollamaProviderConfig = {
     model = ollamaModel;
     small_model = ollamaModel;
