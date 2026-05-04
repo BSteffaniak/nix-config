@@ -143,8 +143,26 @@ let
 
   # Ollama provider config (only when ollama is enabled)
   ollamaCfg = config.myConfig.tools.ai.ollama;
+  ollamaModels = unique ([ ollamaCfg.model ] ++ ollamaCfg.extraModels);
   ollamaModel = "ollama/${ollamaCfg.model}";
+  ollamaModelRegistry = builtins.listToAttrs (
+    map (model: {
+      name = model;
+      value = {
+        name = model;
+      };
+    }) ollamaModels
+  );
   ollamaProviderConfig = {
+    provider.ollama = {
+      npm = "@ai-sdk/openai-compatible";
+      name = "Ollama";
+      options = {
+        baseURL = ollamaCfg.serverUrl;
+        apiKey = "ollama";
+      };
+      models = ollamaModelRegistry;
+    };
     model = ollamaModel;
     small_model = ollamaModel;
     agent = {
