@@ -79,6 +79,21 @@
       sshenvProfile = "openai-api";
       ignorePersistedAuth = true;
     };
+    development.opencode.aliases.openrouter = {
+      provider = "openrouter";
+      sshenvProfile = "openrouter";
+      ignorePersistedAuth = true;
+    };
+    development.opencode.aliases.grok-4-3 = {
+      provider = "grok-4.3";
+      sshenvProfile = "xai";
+      ignorePersistedAuth = true;
+    };
+    development.opencode.aliases.grok-code-fast = {
+      provider = "grok-code-fast";
+      sshenvProfile = "xai";
+      ignorePersistedAuth = true;
+    };
     development.opencode.permissions.restricted = [
       "git"
       "brew"
