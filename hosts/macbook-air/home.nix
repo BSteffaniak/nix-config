@@ -123,6 +123,7 @@
       web.enable = true;
       database.postgresql.enable = true;
       tts.piper.enable = true;
+      ai.ollama.enable = true;
     };
   };
 }

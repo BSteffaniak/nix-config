@@ -205,9 +205,40 @@ let
   # Read and parse host-specific settings overrides
   overrideConfigs = map (f: builtins.fromJSON (builtins.readFile f)) cfg.overrides;
 
+  # Ollama provider config (only when ollama is enabled)
+  ollamaCfg = config.myConfig.tools.ai.ollama;
+
+  # Base models.json merged with conditional ollama provider
+  baseModelsConfig = builtins.fromJSON (builtins.readFile ../../../configs/pi/models.json);
+  ollamaModelsEntry = {
+    baseUrl = ollamaCfg.serverUrl;
+    api = "openai-completions";
+    apiKey = "ollama";
+    models = [
+      {
+        id = "qwen2.5:7b";
+        name = "Qwen 2.5 7B";
+        reasoning = false;
+        input = [ "text" ];
+        contextWindow = 131072;
+        maxTokens = 8192;
+        cost = {
+          input = 0;
+          output = 0;
+          cacheRead = 0;
+          cacheWrite = 0;
+        };
+      }
+    ];
+  };
+  mergedModelsConfig =
+    if ollamaCfg.enable then
+      myLib.deepMerge baseModelsConfig { providers.ollama = ollamaModelsEntry; }
+    else
+      baseModelsConfig;
+
   # Base settings.json + module-derived keys + extraSettings + overrides
   baseSettings = builtins.fromJSON (builtins.readFile ../../../configs/pi/settings.json);
-  modelsConfig = ../../../configs/pi/models.json;
   keybindingsConfig = ../../../configs/pi/keybindings.json;
 
   derivedSettings = {
@@ -327,7 +358,7 @@ in
       home.file.".pi/agent/settings.json".text = builtins.toJSON mergedSettings;
 
       # Register custom provider models that Pi's built-in registry may not know yet.
-      home.file.".pi/agent/models.json".source = modelsConfig;
+      home.file.".pi/agent/models.json".text = builtins.toJSON mergedModelsConfig;
 
       # Free Tab for the opencode-modes shortcut; Ctrl+Space keeps autocomplete available.
       home.file.".pi/agent/keybindings.json".source = keybindingsConfig;
@@ -367,6 +398,13 @@ in
     {
       homeModules.shell.shared.functions = providerWrapperCommands;
     }
+
+    # Conditional Ollama wrapper (only when tools.ai.ollama is enabled)
+    (mkIf ollamaCfg.enable {
+      homeModules.shell.shared.functions.pi-ollama = ''
+        pi --provider ollama --model qwen2.5:7b "$@"
+      '';
+    })
 
     # Auto-deploy skill directories from configs/pi/skills/<name>/
     (mkIf (skillNames != [ ]) {

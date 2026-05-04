@@ -140,6 +140,30 @@ let
   mergedConfig = foldl' myLib.deepMerge baseConfig (
     [ providerConfig ] ++ permissionConfigs ++ overrideConfigs
   );
+
+  # Ollama provider config (only when ollama is enabled)
+  ollamaCfg = config.myConfig.tools.ai.ollama;
+  ollamaModel = "ollama/qwen2.5:7b";
+  ollamaProviderConfig = {
+    model = ollamaModel;
+    small_model = ollamaModel;
+    agent = {
+      build.model = ollamaModel;
+      plan.model = ollamaModel;
+      explore.model = ollamaModel;
+      general.model = ollamaModel;
+      title.model = ollamaModel;
+      summary.model = ollamaModel;
+      compaction.model = ollamaModel;
+    };
+  };
+
+  # Base OLLAMA_HOST is serverUrl minus /v1 suffix
+  ollamaHost =
+    let
+      url = ollamaCfg.serverUrl;
+    in
+    if hasSuffix "/v1" url then substring 0 (stringLength url - 3) url else url;
 in
 {
   options.myConfig.development.opencode = {
@@ -269,5 +293,14 @@ in
     {
       homeModules.shell.shared.functions = providerWrapperCommands // aliasWrapperCommands;
     }
+
+    # Conditional Ollama provider (only when tools.ai.ollama is enabled)
+    (mkIf ollamaCfg.enable {
+      xdg.configFile."opencode/providers/ollama.json".text = builtins.toJSON ollamaProviderConfig;
+      homeModules.shell.shared.functions.opencode-ollama = ''
+        OPENCODE_CONFIG="$HOME/.config/opencode/providers/ollama.json" opencode-dev "$@"
+      '';
+      home.sessionVariables.OLLAMA_HOST = ollamaHost;
+    })
   ]);
 }

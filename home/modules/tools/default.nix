@@ -54,6 +54,11 @@ in
       };
       ollama = {
         enable = mkEnableOption "Ollama local AI runner";
+        serverUrl = mkOption {
+          type = types.str;
+          default = "http://localhost:11434/v1";
+          description = "Ollama server URL (for remote hosts, use e.g. http://mac-studio:11434/v1)";
+        };
       };
     };
   };
