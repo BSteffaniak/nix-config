@@ -32,6 +32,8 @@ in
       shellAliases = config.homeModules.shell.resolvedAliases;
       environmentVariables = mergedSessionVariables;
       extraEnv = ''
+        $env.DIRENV_LOG_FORMAT = ""
+
         # Nix system paths (POSIX shells get these from set-environment/nix-daemon.sh,
         # but nushell cannot source POSIX shell scripts)
         let nix_paths = [
@@ -55,6 +57,8 @@ in
         ${shellCfg.shared.nushellEnv}
       '';
       extraConfig = ''
+        $env.config.show_banner = false
+
         $env.config.history = {
             file_format: "sqlite"
             isolation: true
