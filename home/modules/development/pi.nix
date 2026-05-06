@@ -162,11 +162,12 @@ let
         done
   '';
 
-  # Third-party Pi packages used by imported OpenCode skills. Pin npm versions
-  # here so the Nix-managed settings file is the source of truth.
+  # Third-party Pi packages. Pin npm versions here so the Nix-managed
+  # settings file is the source of truth.
   piPackageSources = [
     "npm:@rwese/pi-question@2.2.0"
     "npm:pi-subagents@0.20.1"
+    "npm:pi-figma-mcp@0.1.2"
   ];
 
   # Nix-provided npm defaults to a read-only Nix store global prefix. Point Pi's
