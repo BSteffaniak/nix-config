@@ -538,11 +538,11 @@
     "sshenv-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1777847128,
-        "narHash": "sha256-lMnwjcARzuGzVDih4LBLWSs8rtaBiRrHRB7RYgg5RjY=",
+        "lastModified": 1778007031,
+        "narHash": "sha256-LsLNxCaZI0wY2lUgYTwdEe7lDZF1l6zg8S/nj30Ifs4=",
         "owner": "BSteffaniak",
         "repo": "sshenv",
-        "rev": "71e0d27bb497042aac02d2420a26310cd8b014c1",
+        "rev": "3b0244b662c461fb26ec9c9a8f9ca5144679dd95",
         "type": "github"
       },
       "original": {
