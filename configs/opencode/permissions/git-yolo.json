@@ -17,6 +17,8 @@
                     "git branch *": "allow",
                     "git ls-files": "allow",
                     "git ls-files *": "allow",
+                    "git ls-remote": "allow",
+                    "git ls-remote *": "allow",
                     "git remote": "allow",
                     "git remote -v": "allow",
                     "git remote show *": "allow",
