@@ -144,6 +144,9 @@ let
 
     - Use the `question` tool from `@rwese/pi-question` for OpenCode `Question(*)`.
       - Put prompts under `questions: [{ questionTopic, prompt, type, options }]`.
+      - Keep `prompt` short (about 1-3 lines). The question UI truncates long prompts.
+      - If approval context, diffs, plans, findings, or trade-offs are long, write them as normal assistant text before calling `question`, then make `prompt` refer to the context above.
+      - Keep `questionTopic`, option labels, and descriptions concise; do not use them as long-form context containers.
       - Use `type: "single"` for single-choice questions and `type: "multi"` for multi-select questions.
       - Translate each option to `{ value, label, description?, recommended? }`.
       - Use `recommended: true` for pre-selected or recommended options.

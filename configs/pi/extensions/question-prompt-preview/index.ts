@@ -1,9 +1,18 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type {
+    BuildSystemPromptOptions,
+    ExtensionAPI,
+} from "@mariozechner/pi-coding-agent";
 import { truncateToWidth, wrapTextWithAnsi } from "@mariozechner/pi-tui";
 
 const WIDGET_KEY = "question-prompt-preview";
 const PROMPT_LINE_THRESHOLD = 7;
 const ESTIMATED_WRAP_WIDTH = 100;
+
+const QUESTION_PROMPT_AUTHORING_GUIDANCE = `## Question Tool Prompt Length
+
+When using the \`question\` tool, keep each \`questions[].prompt\` short enough for the question UI: usually 1-3 lines. Do not put long plans, diffs, review findings, option analysis, or approval context inside \`questionTopic\`, \`prompt\`, option labels, or option descriptions.
+
+If the user needs long context before answering, write that context as normal assistant conversation text immediately before calling \`question\`. Then make the question prompt a concise reference such as "Given the context above, which option should I take?".`;
 
 interface QuestionLike {
     questionTopic?: string;
@@ -23,6 +32,10 @@ function estimateWrappedLines(text: string): number {
             count + Math.max(1, Math.ceil(line.length / ESTIMATED_WRAP_WIDTH))
         );
     }, 0);
+}
+
+function hasQuestionTool(options: BuildSystemPromptOptions): boolean {
+    return options.selectedTools?.includes("question") ?? false;
 }
 
 function getLongPromptPreviews(input: unknown): PromptPreview[] {
@@ -133,6 +146,14 @@ function renderPromptPreview(
 
 export default function questionPromptPreview(pi: ExtensionAPI) {
     const activePreviewToolCalls = new Set<string>();
+
+    pi.on("before_agent_start", async (event) => {
+        if (!hasQuestionTool(event.systemPromptOptions)) return;
+
+        return {
+            systemPrompt: `${event.systemPrompt}\n\n${QUESTION_PROMPT_AUTHORING_GUIDANCE}`,
+        };
+    });
 
     pi.on("tool_call", async (event, ctx) => {
         if (event.toolName !== "question" || !ctx.hasUI) return;
