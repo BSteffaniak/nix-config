@@ -6,7 +6,7 @@
 # performance theme owns CPU/MEM diagnostics, while rainbow-snake contributes
 # the snake decoration component layered between the performance border and
 # header text.
-themes = ["performance", "rainbow-snake"]
+themes = ["performance", "rainbow-snake", "mode-aware"]
 persistence = "persist_between_connects"
 
 [plugins.settings."bmux.theme".components.snake]
