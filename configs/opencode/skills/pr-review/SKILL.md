@@ -34,6 +34,10 @@ Compare the result (case-insensitive) against the `owner/repo` extracted from th
 
 If the context is `remote`, also extract the PR's `headRefName` and `baseRefName` for use in API-based file reads.
 
+**Do not cd into a different directory to switch modes.** If the CWD isn't a checkout of the target repo but a sibling/subdirectory is (e.g., CWD is `~/GitHub` and `~/GitHub/repo-name` exists as a checkout), stay in `remote` mode and use the API. The user invoked this skill from the directory they wanted; respect that.
+
+If you genuinely need a local checkout (e.g. the GitHub API is missing some context, or grep across the entire tree is needed), clone into `/tmp` only. Never use any other non-temp directory, and never modify a checkout that already exists elsewhere on disk.
+
 If no PR is found, inform the user and stop.
 
 #### Parse review depth
@@ -69,38 +73,34 @@ gh pr diff {number} -R {owner}/{repo} --name-only
 
 #### Existing reviews and comments
 
-Fetch existing reviews to avoid duplicating feedback that has already been given:
+Fetch existing reviews to avoid duplicating feedback that has already been given.
+
+Write the query to a file first — inline multiline `-f query='...'` strings can be blocked by restrictive bash permission policies, and passing the query via `-F query=@file` keeps the GraphQL readable in source control too:
 
 ```bash
-gh api graphql -f query='
-  query($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      pullRequest(number: $number) {
-        reviews(first: 100) {
-          nodes {
-            state
-            body
-            author { login }
-          }
-        }
-        reviewThreads(first: 100) {
-          nodes {
-            id
-            isResolved
-            path
-            line
-            comments(first: 100) {
-              nodes {
-                body
-                author { login }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-' -f owner="$OWNER" -f repo="$REPO" -F number="$PR_NUMBER"
+# Use the Write tool to create /tmp/pr-review-existing.graphql with:
+#
+#   query($owner: String!, $repo: String!, $number: Int!) {
+#     repository(owner: $owner, name: $repo) {
+#       pullRequest(number: $number) {
+#         reviews(first: 100) {
+#           nodes { state body author { login } }
+#         }
+#         reviewThreads(first: 100) {
+#           nodes {
+#             id isResolved path line
+#             comments(first: 100) {
+#               nodes { body author { login } }
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+
+gh api graphql \
+  -F query=@/tmp/pr-review-existing.graphql \
+  -f owner="$OWNER" -f repo="$REPO" -F number="$PR_NUMBER"
 ```
 
 Paginate if needed (check `pageInfo.hasNextPage`).
@@ -119,17 +119,21 @@ Read files directly from the local checkout.
 
 Read files via the GitHub API. **Do NOT clone the repo.** This skill never requires a local clone.
 
-- **Read a specific file at the PR's head ref:**
+- **Read a specific file at the PR's head ref** — request raw content directly to skip base64 decoding (avoids the macOS `-D` vs GNU `-d` flag split):
 
   ```bash
-  gh api "repos/{owner}/{repo}/contents/{path}?ref={headRefName}" --jq '.content' | base64 -d
+  gh api -H "Accept: application/vnd.github.v3.raw" \
+    "repos/{owner}/{repo}/contents/{path}?ref={headRefName}"
   ```
 
 - **Read a file at the base ref** (to understand what changed):
 
   ```bash
-  gh api "repos/{owner}/{repo}/contents/{path}?ref={baseRefName}" --jq '.content' | base64 -d
+  gh api -H "Accept: application/vnd.github.v3.raw" \
+    "repos/{owner}/{repo}/contents/{path}?ref={baseRefName}"
   ```
+
+  If you must use the JSON form (e.g., to also inspect file metadata), decode with `base64 --decode` (works on both macOS Sonoma+ and GNU coreutils) rather than the platform-specific `-d` / `-D` flags.
 
 - **Search for patterns across the repo** (for convention checking):
   ```bash
@@ -229,6 +233,8 @@ All posted comment text must follow the [voice and tone guide](../_shared/voice-
 #### Summary body
 
 Draft a summary review body. Keep it short and natural. A couple sentences covering the overall impression and the most important concerns. The inline comments carry the detail, so the summary doesn't need to enumerate everything.
+
+**The summary is about the PR, not about the review.** Do not narrate what you did or how you approached the review. Skip phrases like "went deep on...", "ignoring the small stuff per request", "the things i care about", "took a thorough pass", or anything else that describes the review process. Lead directly with the substance — what's wrong, what's worth flagging, what's good. The reader cares about the code, not how it was reviewed.
 
 All posted text must follow the [voice and tone guide](../_shared/voice-and-tone.md).
 
@@ -417,40 +423,46 @@ Before any mutation call, run a strict preflight:
 
 If any check fails, return draft-only output with `DRAFT_ONLY_BLOCKED` and stop.
 
-First, get the PR's GraphQL node ID:
+First, get the PR's GraphQL node ID. Use the Write tool to create the query file (inline multiline `-f query='...'` strings can be blocked by restrictive bash permission policies):
 
 ```bash
-gh api graphql -f query='
-  query($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      pullRequest(number: $number) {
-        id
-      }
-    }
-  }
-' -f owner="$OWNER" -f repo="$REPO" -F number="$PR_NUMBER" --jq '.data.repository.pullRequest.id'
+# Use the Write tool to create /tmp/pr-review-id.graphql with:
+#
+#   query($owner: String!, $repo: String!, $number: Int!) {
+#     repository(owner: $owner, name: $repo) {
+#       pullRequest(number: $number) { id }
+#     }
+#   }
+
+gh api graphql \
+  -F query=@/tmp/pr-review-id.graphql \
+  -f owner="$OWNER" -f repo="$REPO" -F number="$PR_NUMBER" \
+  --jq '.data.repository.pullRequest.id'
 ```
 
-Then submit the review. Write the full GraphQL request body (query + variables) to a temp file and use `--input` so that the `comments` array is passed as structured JSON, not a string:
+Then submit the review. Use the Write tool to create the request body file (heredocs like `cat <<'EOF' > file EOF` are also blocked by restrictive permission policies, and writing the JSON to a file is necessary anyway so that the `comments` array passes as structured JSON, not a string):
 
 ```bash
-cat <<'EOF' > /tmp/pr-review-request.json
-{
-  "query": "mutation($prId: ID!, $body: String!, $event: PullRequestReviewEvent!, $commitOID: GitObjectID!, $comments: [DraftPullRequestReviewComment!]) { addPullRequestReview(input: { pullRequestId: $prId, body: $body, event: $event, commitOID: $commitOID, comments: $comments }) { pullRequestReview { id url } } }",
-  "variables": {
-    "prId": "$PR_NODE_ID",
-    "body": "$SUMMARY_BODY",
-    "event": "$EVENT",
-    "commitOID": "$HEAD_COMMIT_SHA",
-    "comments": $COMMENTS_JSON
-  }
-}
-EOF
+# Use the Write tool to create /tmp/pr-review-request.json with:
+#
+#   {
+#     "query": "mutation($prId: ID!, $body: String!, $event: PullRequestReviewEvent!, $commitOID: GitObjectID!, $comments: [DraftPullRequestReviewComment!]) { addPullRequestReview(input: { pullRequestId: $prId, body: $body, event: $event, commitOID: $commitOID, comments: $comments }) { pullRequestReview { id url } } }",
+#     "variables": {
+#       "prId": "<PR_NODE_ID>",
+#       "body": "<SUMMARY_BODY>",
+#       "event": "<EVENT>",
+#       "commitOID": "<HEAD_COMMIT_SHA>",
+#       "comments": <COMMENTS_JSON>
+#     }
+#   }
+#
+# `comments` is a raw JSON array (not quoted) so it embeds as structured
+# data in the variables object. The other variables are strings and
+# should be quoted. `event` is one of `COMMENT`, `APPROVE`, or
+# `REQUEST_CHANGES`.
 
 gh api graphql --input /tmp/pr-review-request.json
 ```
-
-`$COMMENTS_JSON` is a raw JSON array (not quoted) so it's embedded as structured data in the variables object. The other variables are strings and should be quoted.
 
 Where `$EVENT` is one of `COMMENT`, `APPROVE`, or `REQUEST_CHANGES`, and `$COMMENTS_JSON` is a JSON array of objects:
 
@@ -488,6 +500,13 @@ for line in sys.stdin:
         continue
     if not in_file:
         continue
+    if line.startswith('---') or line.startswith('+++'):
+        # Diff file headers (--- a/path, +++ b/path, --- /dev/null).
+        # These appear between 'diff --git' and the first '@@' hunk.
+        # They are NOT part of any hunk and must not increment pos —
+        # otherwise every position is off by 2 because both --- and +++
+        # would also match the +/- branches below.
+        continue
     if line.startswith('@@'):
         m = re.search(r'\+(\d+)', line)
         if m:
@@ -519,16 +538,24 @@ Comments: <N> inline comments, <M> thread replies
 
 #### Replying to existing review threads
 
-When the user selects a comment that overlaps with an existing unresolved review thread (same file, same line, same concern), post a **thread reply** instead of creating a duplicate inline comment. Use the `addPullRequestReviewThreadReply` mutation:
+When the user selects a comment that overlaps with an existing unresolved review thread (same file, same line, same concern), post a **thread reply** instead of creating a duplicate inline comment. Use the `addPullRequestReviewThreadReply` mutation. As with the main review submission, write the query to a file first:
 
 ```bash
-gh api graphql -f query='
-  mutation($threadId: ID!, $body: String!) {
-    addPullRequestReviewThreadReply(input: { pullRequestReviewThreadId: $threadId, body: $body }) {
-      comment { id url }
-    }
-  }
-' -f threadId="$THREAD_ID" -f body="$COMMENT_BODY"
+# Use the Write tool to create /tmp/pr-thread-reply.graphql with:
+#
+#   mutation($threadId: ID!, $body: String!) {
+#     addPullRequestReviewThreadReply(input: { pullRequestReviewThreadId: $threadId, body: $body }) {
+#       comment { id url }
+#     }
+#   }
+
+# For multi-line bodies, write the body to its own file too and pass via -F:
+gh api graphql \
+  -F query=@/tmp/pr-thread-reply.graphql \
+  -f threadId="$THREAD_ID" \
+  -F body=@/tmp/reply-body.txt
+
+# For short single-line bodies, -f body="..." is fine.
 ```
 
 The `$THREAD_ID` comes from the `id` field on `reviewThreads` nodes fetched in Step 2.
@@ -539,7 +566,8 @@ Thread replies are posted individually (not part of the atomic review submission
 
 - **Follow the [voice and tone guide](../_shared/voice-and-tone.md) for all posted text.** Every comment body and summary body that gets posted to GitHub must sound like a human wrote it. Severity tags, bracket prefixes, em-dashes, filler phrases, and fake politeness are never acceptable in posted text.
 - **Severity is internal, not posted.** Severity levels (blocking, suggestion, nit, question) are used for ordering findings and helping the user triage in the local presentation. They are never included in the comment text posted to GitHub.
-- **Never clone the repository.** This skill is entirely read-only with respect to the filesystem. All code reads happen via local file reads (if in the repo) or the GitHub API (if remote). No cloning, no checkouts, no file modifications.
+- **Read-only and remote-by-default.** This skill is read-only with respect to the user's filesystem. All code reads happen via local file reads (if the CWD is already a checkout of the target repo) or the GitHub API (if `remote`). If a local checkout is genuinely needed for something the API can't do, clone into `/tmp` only. Never use any other non-temp directory, and never cd into or modify a checkout that already exists elsewhere on disk.
+- **Never cd to switch into local mode.** If the working directory is not a checkout of the target repo, stay in remote mode regardless of whether a checkout exists at a sibling or subdirectory path. The `/tmp` clone escape hatch is the only allowed way to obtain local files.
 - **Default to draft-only mode.** Every run starts as `draft_only` and must remain non-mutating until the Step 6 submit gate is completed.
 - **Never post without explicit user approval.** The draft review is presented in full (Step 6) and the user explicitly selects which comments to include and which review state to use before anything is submitted.
 - **Two-turn mutation barrier.** Never submit a review or post thread replies in the same turn that presents draft text. Present first, then wait for a separate explicit approval turn.
@@ -559,5 +587,5 @@ Thread replies are posted individually (not part of the atomic review submission
 - **Questions are genuine.** Use question severity when you genuinely need information to evaluate the code, not as a passive-aggressive way to suggest a change. If you already know the answer, make it a suggestion instead.
 - **Deep analysis by default.** Unless the user explicitly requests a quick review, read full files and follow references to understand the code in context. Surface-level diff scanning misses the most important issues.
 - **Scale effort to PR size.** A 5-line PR does not need 20 minutes of analysis. A 500-line PR across 15 files warrants thorough investigation. Use judgment.
-- **The summary body is not a recap.** The summary should highlight the most important points and give an overall read. Do not enumerate every comment in the summary.
+- **The summary body is not a recap or a process narration.** The summary should highlight the most important points and give an overall read on the PR itself. Do not enumerate every comment, and do not narrate the review process ("went deep on…", "ignoring small stuff per request", "the things i care about"). Just state the substance.
 - **Positive feedback must be genuine.** If the code is well-written, say so briefly. Do not fabricate praise to soften criticism.
