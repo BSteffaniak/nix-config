@@ -170,7 +170,13 @@ let
   piPackageSources = [
     "npm:@rwese/pi-question@2.2.0"
     "npm:pi-subagents@0.20.1"
-    "npm:pi-figma-mcp@0.1.2"
+    {
+      source = "npm:pi-figma-mcp@0.1.2";
+      # Keep the Figma MCP extension installed, but do not load its skill into
+      # every session. The local zz-figma-tool-gate extension exposes /figma-on
+      # and keeps figma_* tools inactive until explicitly enabled.
+      skills = [ ];
+    }
   ];
 
   # Nix-provided npm defaults to a read-only Nix store global prefix. Point Pi's
