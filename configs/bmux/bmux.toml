@@ -2,11 +2,16 @@
 # Theme
 # ---------------------------------------------------------------------------
 [plugins.settings."bmux.theme"]
-# Bundled theme selected by the bmux.theme plugin. Its decoration slice
-# exercises the bmux.decoration Luau scripting surface: the focused pane's
-# border breathes between lime-green and cyan at 30 Hz.
-theme = "pulse-demo"
+# Compose bundled theme components through the bmux.theme plugin. The
+# performance theme owns CPU/MEM diagnostics, while rainbow-snake contributes
+# the snake decoration component layered between the performance border and
+# header text.
+themes = ["performance", "rainbow-snake"]
 persistence = "persist_between_connects"
+
+[plugins.settings."bmux.theme".components.snake]
+above = ["performance.border"]
+below = ["performance.header"]
 
 [composition]
 active_profile = "zellij_vim_local"
