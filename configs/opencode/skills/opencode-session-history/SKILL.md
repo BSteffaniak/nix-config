@@ -1,6 +1,6 @@
 ---
-name: session-history
-description: Browse and search OpenCode conversation history from the local SQLite database. List sessions, read past conversations, and search across sessions by keyword.
+name: opencode-session-history
+description: Browse and search OpenCode conversation history from the local SQLite database (~/.local/share/opencode/opencode.db). List sessions, read past conversations, and search across sessions by keyword.
 ---
 
 ## Purpose
