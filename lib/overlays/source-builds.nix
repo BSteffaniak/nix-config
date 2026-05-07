@@ -72,6 +72,8 @@ else
             # Optional config fields with defaults
             doCheck = config.doCheck or true;
             cargoBuildFlags = config.cargoBuildFlags or [ ];
+            nativeBuildInputs = map (pkgName: final.${pkgName}) (config.nativeBuildInputs or [ ]);
+            buildInputs = map (pkgName: final.${pkgName}) (config.buildInputs or [ ]);
             hooksDir = ../source-builds/hooks;
             postInstall =
               if config ? "postInstallFile" then
@@ -89,6 +91,8 @@ else
                 inherit doCheck;
               }
               // (if cargoBuildFlags != [ ] then { inherit cargoBuildFlags; } else { })
+              // (if nativeBuildInputs != [ ] then { inherit nativeBuildInputs; } else { })
+              // (if buildInputs != [ ] then { inherit buildInputs; } else { })
               // (if postInstall != null then { inherit postInstall; } else { })
             );
           };

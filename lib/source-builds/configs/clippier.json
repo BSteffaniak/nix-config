@@ -1,0 +1,10 @@
+{
+    "flakeInput": "clippier-src",
+    "buildSystem": "rust",
+    "pname": "clippier",
+    "hashField": "cargoHash",
+    "doCheck": false,
+    "cargoBuildFlags": ["--package", "clippier"],
+    "nativeBuildInputs": ["pkg-config"],
+    "buildInputs": ["openssl"]
+}

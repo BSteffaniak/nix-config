@@ -93,6 +93,10 @@
       url = "github:BSteffaniak/worktree-setup";
       flake = false;
     };
+    clippier-src = {
+      url = "github:MoosicBox/MoosicBox";
+      flake = false;
+    };
     bmux-src = {
       url = "git+ssh://git@github.com/BSteffaniak/bmux";
       flake = false;

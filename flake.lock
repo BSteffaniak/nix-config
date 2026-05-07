@@ -33,6 +33,22 @@
         "type": "github"
       }
     },
+    "clippier-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778141292,
+        "narHash": "sha256-Llo1ZJV82XMwIWtkDcreNYGB/N149gotsep8AZqC5CE=",
+        "owner": "MoosicBox",
+        "repo": "MoosicBox",
+        "rev": "5990dca509cdf09659cd7a331e319dc98d9e4c8a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "MoosicBox",
+        "repo": "MoosicBox",
+        "type": "github"
+      }
+    },
     "cronstrue": {
       "flake": false,
       "locked": {
@@ -452,6 +468,7 @@
       "inputs": {
         "bmux-src": "bmux-src",
         "brew-src": "brew-src",
+        "clippier-src": "clippier-src",
         "cronstrue": "cronstrue",
         "home-manager": "home-manager",
         "homebrew-aerospace": "homebrew-aerospace",
