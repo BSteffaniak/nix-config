@@ -231,8 +231,8 @@ in
 
     package = mkOption {
       type = types.package;
-      default = inputs.brouter.packages.${pkgs.system}.default;
-      defaultText = literalExpression "inputs.brouter.packages.\${pkgs.system}.default";
+      default = pkgs.brouter;
+      defaultText = literalExpression "pkgs.brouter";
       description = "brouter package to install and run.";
     };
 

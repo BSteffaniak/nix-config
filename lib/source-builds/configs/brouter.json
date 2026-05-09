@@ -1,0 +1,10 @@
+{
+    "flakeInput": "brouter-src",
+    "buildSystem": "rust",
+    "pname": "brouter",
+    "hashField": "cargoHash",
+    "doCheck": false,
+    "nativeBuildInputs": ["pkg-config"],
+    "buildInputs": ["openssl", "libiconv"],
+    "cargoBuildFlags": ["--package", "brouter_cli"]
+}

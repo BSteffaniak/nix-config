@@ -109,7 +109,10 @@
       url = "github:BSteffaniak/sledge";
       flake = false;
     };
-    brouter.url = "github:BSteffaniak/brouter";
+    brouter-src = {
+      url = "github:BSteffaniak/brouter";
+      flake = false;
+    };
   };
 
   outputs =
