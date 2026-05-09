@@ -114,11 +114,71 @@ let
     };
   };
 
+  mkOpenrouterModel = upstreamModel: quality: latencyClass: {
+    provider = "openrouter";
+    model = upstreamModel;
+    context_window = 128000;
+    input_cost_per_million = 0.0;
+    output_cost_per_million = 0.0;
+    inherit quality;
+    capabilities = [
+      "chat"
+      "code"
+      "json"
+      "tools"
+      "reasoning"
+    ];
+    attributes = {
+      latency_class = latencyClass;
+      billing_class = "subscription";
+    };
+    display_badges = [ latencyClass ];
+  };
+
+  openrouterModels = optionalAttrs cfg.openrouter.enable {
+    openrouter_fast = mkOpenrouterModel cfg.openrouter.fastModel 85 "standard";
+    openrouter_fast_priority = mkOpenrouterModel cfg.openrouter.fastModel 85 "priority";
+    openrouter_strong = mkOpenrouterModel cfg.openrouter.strongModel 92 "standard";
+    openrouter_strong_priority = mkOpenrouterModel cfg.openrouter.strongModel 92 "priority";
+  };
+
+  mkOpencodeZenModel = upstreamModel: quality: latencyClass: {
+    provider = "opencode_zen";
+    model = upstreamModel;
+    context_window = 128000;
+    input_cost_per_million = 0.0;
+    output_cost_per_million = 0.0;
+    inherit quality;
+    capabilities = [
+      "chat"
+      "code"
+      "json"
+      "tools"
+      "reasoning"
+    ];
+    attributes = {
+      latency_class = latencyClass;
+      billing_class = "subscription";
+    };
+    display_badges = [ latencyClass ];
+  };
+
+  opencodeZenModels = optionalAttrs cfg.opencodeZen.enable {
+    opencode_zen_fast = mkOpencodeZenModel cfg.opencodeZen.fastModel 88 "standard";
+    opencode_zen_fast_priority = mkOpencodeZenModel cfg.opencodeZen.fastModel 88 "priority";
+    opencode_zen_strong = mkOpencodeZenModel cfg.opencodeZen.strongModel 93 "standard";
+    opencode_zen_strong_priority = mkOpencodeZenModel cfg.opencodeZen.strongModel 93 "priority";
+  };
+
   primaryFastModel =
     if ollamaCfg.enable then
       "local_primary"
     else if cfg.openaiMax.enable then
       "openai_max_fast"
+    else if cfg.openrouter.enable then
+      "openrouter_fast"
+    else if cfg.opencodeZen.enable then
+      "opencode_zen_fast"
     else if cfg.openai.enable then
       "cheap_cloud"
     else
@@ -127,6 +187,10 @@ let
   primaryStrongModel =
     if cfg.openaiMax.enable then
       "openai_max_strong"
+    else if cfg.openrouter.enable then
+      "openrouter_strong"
+    else if cfg.opencodeZen.enable then
+      "opencode_zen_strong"
     else if cfg.openai.enable then
       "strong_cloud"
     else if ollamaCfg.enable then
@@ -161,7 +225,17 @@ let
       };
       llm_judge = {
         model = primaryFastModel;
-        provider = "openai_max";
+        provider =
+          if cfg.openaiMax.enable then
+            "openai_max"
+          else if cfg.openrouter.enable then
+            "openrouter"
+          else if cfg.opencodeZen.enable then
+            "opencode_zen"
+          else if cfg.openai.enable then
+            "openai"
+          else
+            "ollama";
         trigger = {
           score_gap_threshold = 5.0;
           rule_triggered = true;
@@ -267,9 +341,27 @@ let
           api_key_env = cfg.openai.apiKeyEnv;
           timeout_ms = 60000;
         };
+      }
+      // optionalAttrs cfg.openrouter.enable {
+        openrouter = {
+          kind = "open-ai-compatible";
+          base_url = cfg.openrouter.baseUrl;
+          auth_backend = "sshenv";
+          auth_profile = cfg.openrouter.authProfile;
+          auth_vault_path = cfg.openrouter.authVaultPath;
+          timeout_ms = 60000;
+        };
+      }
+      // optionalAttrs cfg.opencodeZen.enable {
+        opencode_zen = {
+          kind = "open-ai-compatible";
+          base_url = "https://api.opencode.ai/v1";
+          api_key_env = cfg.opencodeZen.apiKeyEnv;
+          timeout_ms = 60000;
+        };
       };
 
-    models = localModels // openaiMaxModels // openaiModels;
+    models = localModels // openaiMaxModels // openaiModels // openrouterModels // opencodeZenModels;
   };
 
   finalSettings = recursiveUpdate baseSettings cfg.extraSettings;
@@ -427,6 +519,70 @@ in
         description = "OpenAI embedding model.";
       };
     };
+
+    openrouter = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Add OpenRouter as a cloud upstream (aggregates many model providers).";
+      };
+
+      authProfile = mkOption {
+        type = types.str;
+        default = "openrouter";
+        description = "sshenv profile containing OpenRouter API key.";
+      };
+
+      authVaultPath = mkOption {
+        type = types.str;
+        default = "${config.home.homeDirectory}/.local/state/brouter/auth/openrouter_vault";
+        description = "brouter-owned sshenv vault path for OpenRouter API key.";
+      };
+
+      baseUrl = mkOption {
+        type = types.str;
+        default = "https://openrouter.ai/api/v1";
+        description = "OpenRouter API base URL.";
+      };
+
+      fastModel = mkOption {
+        type = types.str;
+        default = "anthropic/claude-3.5-haiku";
+        description = "OpenRouter model for fast routing.";
+      };
+
+      strongModel = mkOption {
+        type = types.str;
+        default = "anthropic/claude-3.7-sonnet";
+        description = "OpenRouter model for strong routing.";
+      };
+    };
+
+    opencodeZen = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Add OpenCode Zen as a cloud upstream (OpenCode's own LLM service).";
+      };
+
+      apiKeyEnv = mkOption {
+        type = types.str;
+        default = "OPENCODE_API_KEY";
+        description = "Environment variable brouter reads for the OpenCode Zen API key.";
+      };
+
+      fastModel = mkOption {
+        type = types.str;
+        default = "opencode/big-pickle";
+        description = "OpenCode Zen model for fast routing.";
+      };
+
+      strongModel = mkOption {
+        type = types.str;
+        default = "opencode/big-pickle";
+        description = "OpenCode Zen model for strong routing.";
+      };
+    };
   };
 
   config = mkIf cfg.enable (mkMerge [
@@ -434,7 +590,12 @@ in
       assertions = [
         {
           assertion =
-            ollamaCfg.enable || cfg.openaiMax.enable || cfg.openai.enable || cfg.extraSettings ? providers;
+            ollamaCfg.enable
+            || cfg.openaiMax.enable
+            || cfg.openai.enable
+            || cfg.openrouter.enable
+            || cfg.opencodeZen.enable
+            || cfg.extraSettings ? providers;
           message = "myConfig.development.brouter requires at least one upstream provider: enable tools.ai.ollama, enable development.brouter.openaiMax/openai, or provide extraSettings.providers/models.";
         }
       ];
