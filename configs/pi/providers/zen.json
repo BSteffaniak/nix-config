@@ -1,5 +1,6 @@
 {
     "provider": "opencode",
     "model": "big-pickle",
-    "thinking": "high"
+    "thinking": "high",
+    "apiKeyEnv": "OPENCODE_API_KEY"
 }

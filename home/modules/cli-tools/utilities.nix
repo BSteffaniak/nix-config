@@ -45,6 +45,10 @@ let
         "pi-openrouter"
         "opencode-openrouter"
       ];
+      opencode-zen = [
+        "pi-zen"
+        "opencode-zen"
+      ];
       xai = [
         "pi-grok-4.3"
         "pi-grok-code-fast"
