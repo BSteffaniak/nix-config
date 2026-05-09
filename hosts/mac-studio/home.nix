@@ -102,6 +102,9 @@
     development.brouter = {
       enable = true;
       makePiDefault = true;
+      openaiMax.enable = true;
+      openrouter.enable = true;
+      opencodeZen.enable = true;
     };
     development.pi.enable = true;
     development.lspmux.enable = true;
