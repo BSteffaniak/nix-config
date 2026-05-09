@@ -13,6 +13,7 @@
     ./openssl.nix
     ./lazygit.nix
     ./act.nix
+    ./brouter.nix
     ./opencode.nix
     ./pi.nix
     ./lspmux.nix

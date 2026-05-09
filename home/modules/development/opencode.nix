@@ -11,6 +11,7 @@ with lib;
 
 let
   cfg = config.myConfig.development.opencode;
+  brouterCfg = config.myConfig.development.brouter;
 
   # Auto-discover provider profiles from configs/opencode/providers/
   providersDir = ../../../configs/opencode/providers;
@@ -134,12 +135,46 @@ let
     };
   };
 
+  brouterModel = "${brouterCfg.providerName}/${brouterCfg.defaultModel}";
+  brouterFastModel = "${brouterCfg.providerName}/fast";
+  brouterProviderConfig = {
+    provider.${brouterCfg.providerName} = {
+      npm = "@ai-sdk/openai-compatible";
+      name = "BRouter";
+      options = {
+        baseURL = "http://${brouterCfg.host}:${toString brouterCfg.port}/v1";
+        apiKey = "brouter";
+      };
+      models = {
+        auto.name = "BRouter Auto";
+        fast.name = "BRouter Fast";
+        strong.name = "BRouter Strong";
+      };
+    };
+    model = brouterModel;
+    small_model = brouterFastModel;
+    agent = {
+      build.model = brouterModel;
+      plan.model = brouterModel;
+      explore.model = brouterModel;
+      general.model = brouterModel;
+      title.model = brouterFastModel;
+      summary.model = brouterModel;
+      compaction.model = brouterModel;
+    };
+  };
+
   # Merge order: base → provider → permissions (alphabetical) → host overrides (in order)
   baseConfig = builtins.fromJSON (builtins.readFile ../../../configs/opencode/opencode.json);
   tuiConfig = ../../../configs/opencode/tui.json;
-  mergedConfig = foldl' myLib.deepMerge baseConfig (
+  mergedConfigBase = foldl' myLib.deepMerge baseConfig (
     [ providerConfig ] ++ permissionConfigs ++ overrideConfigs
   );
+  mergedConfig =
+    if brouterCfg.enable && brouterCfg.enableOpenCodeIntegration && brouterCfg.makeOpenCodeDefault then
+      myLib.deepMerge mergedConfigBase brouterProviderConfig
+    else
+      mergedConfigBase;
 
   # Ollama provider config (only when ollama is enabled)
   ollamaCfg = config.myConfig.tools.ai.ollama;
@@ -319,6 +354,16 @@ in
         OLLAMA_HOST=${escapeShellArg ollamaHost} OPENCODE_CONFIG="$HOME/.config/opencode/providers/ollama.json" opencode-dev "$@"
       '';
       home.sessionVariables.OLLAMA_HOST = ollamaHost;
+    })
+
+    # Conditional brouter provider. It is available as opencode-brouter even
+    # when it is not the default OpenCode config.
+    (mkIf (brouterCfg.enable && brouterCfg.enableOpenCodeIntegration) {
+      xdg.configFile."opencode/providers/${brouterCfg.providerName}.json".text =
+        builtins.toJSON brouterProviderConfig;
+      homeModules.shell.shared.functions."opencode-${brouterCfg.providerName}" = ''
+        OPENCODE_CONFIG="$HOME/.config/opencode/providers/${brouterCfg.providerName}.json" opencode-dev "$@"
+      '';
     })
   ]);
 }

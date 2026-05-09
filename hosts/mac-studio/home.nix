@@ -99,6 +99,10 @@
       "git"
       "brew"
     ];
+    development.brouter = {
+      enable = true;
+      makePiDefault = true;
+    };
     development.pi.enable = true;
     development.lspmux.enable = true;
 

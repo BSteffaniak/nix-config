@@ -11,6 +11,7 @@ with lib;
 
 let
   cfg = config.myConfig.development.pi;
+  brouterCfg = config.myConfig.development.brouter;
   opencodeCfg = config.myConfig.development.opencode;
 
   # Auto-discover provider profiles from configs/pi/providers/
@@ -233,7 +234,7 @@ let
     };
   };
 
-  # Base models.json merged with conditional ollama provider
+  # Base models.json merged with conditional local providers
   baseModelsConfig = builtins.fromJSON (builtins.readFile ../../../configs/pi/models.json);
   ollamaModelsEntry = {
     baseUrl = ollamaCfg.serverUrl;
@@ -241,11 +242,47 @@ let
     apiKey = "ollama";
     models = map mkOllamaModelEntry ollamaModels;
   };
-  mergedModelsConfig =
-    if ollamaCfg.enable then
-      myLib.deepMerge baseModelsConfig { providers.ollama = ollamaModelsEntry; }
-    else
-      baseModelsConfig;
+  brouterModelsEntry = {
+    baseUrl = "http://${brouterCfg.host}:${toString brouterCfg.port}/v1";
+    api = "openai-completions";
+    apiKey = "brouter";
+    compat = {
+      supportsDeveloperRole = false;
+      supportsReasoningEffort = false;
+    };
+    models = [
+      {
+        id = "auto";
+        name = "BRouter Auto";
+        reasoning = false;
+        input = [ "text" ];
+        contextWindow = 131072;
+        maxTokens = 8192;
+      }
+      {
+        id = "fast";
+        name = "BRouter Fast";
+        reasoning = false;
+        input = [ "text" ];
+        contextWindow = 131072;
+        maxTokens = 8192;
+      }
+      {
+        id = "strong";
+        name = "BRouter Strong";
+        reasoning = false;
+        input = [ "text" ];
+        contextWindow = 131072;
+        maxTokens = 8192;
+      }
+    ];
+  };
+  mergedModelsConfig = foldl' myLib.deepMerge baseModelsConfig (
+    (optional ollamaCfg.enable { providers.ollama = ollamaModelsEntry; })
+    ++ (optional (brouterCfg.enable && brouterCfg.enablePiIntegration) {
+      providers.${brouterCfg.providerName} = brouterModelsEntry;
+    })
+  );
 
   # Base settings.json + module-derived keys + extraSettings + overrides
   baseSettings = builtins.fromJSON (builtins.readFile ../../../configs/pi/settings.json);
@@ -254,7 +291,21 @@ let
   derivedSettings = {
     enableInstallTelemetry = false;
   }
-  // (optionalAttrs (cfg.models != [ ]) { models = cfg.models; });
+  // (optionalAttrs (cfg.models != [ ]) {
+    models = cfg.models;
+    enabledModels = cfg.models;
+  })
+  // (optionalAttrs (brouterCfg.enable && brouterCfg.enablePiIntegration && brouterCfg.makePiDefault)
+    {
+      defaultProvider = brouterCfg.providerName;
+      defaultModel = brouterCfg.defaultModel;
+      enabledModels = [
+        "auto"
+        "fast"
+        "strong"
+      ];
+    }
+  );
 
   mergedSettingsBase = foldl' myLib.deepMerge baseSettings (
     [
@@ -413,6 +464,13 @@ in
     (mkIf ollamaCfg.enable {
       homeModules.shell.shared.functions.pi-ollama = ''
         pi --provider ollama --model ${escapeShellArg ollamaCfg.model} "$@"
+      '';
+    })
+
+    # Conditional brouter wrapper. The provider itself is registered in models.json above.
+    (mkIf (brouterCfg.enable && brouterCfg.enablePiIntegration) {
+      homeModules.shell.shared.functions.pi-brouter = ''
+        pi --provider ${escapeShellArg brouterCfg.providerName} --model ${escapeShellArg brouterCfg.defaultModel} "$@"
       '';
     })
 
