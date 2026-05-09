@@ -4,6 +4,7 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 
 const STATUS_KEY = "figma-tool-gate";
+const FIGMA_MCP_STATUS_KEY = "figma-mcp";
 const FIGMA_TOOL_PREFIX = "figma_";
 const STARTUP_GATE_INTERVAL_MS = 250;
 const STARTUP_GATE_MAX_TICKS = 20;
@@ -50,7 +51,8 @@ export default function figmaToolGate(pi: ExtensionAPI) {
     }
 
     function updateStatus(ctx?: ExtensionContext): void {
-        ctx?.ui.setStatus(STATUS_KEY, enabled ? "figma: on" : undefined);
+        ctx?.ui.setStatus(FIGMA_MCP_STATUS_KEY, "");
+        ctx?.ui.setStatus(STATUS_KEY, enabled ? "figma" : "");
     }
 
     function enforceGate(ctx?: ExtensionContext): void {

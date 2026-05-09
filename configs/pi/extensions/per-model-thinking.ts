@@ -119,7 +119,7 @@ export default function perModelThinking(pi: ExtensionAPI) {
         const key = currentModelKey ? ` ${currentModelKey}` : "";
         ctx.ui.setStatus(
             CUSTOM_TYPE,
-            ctx.ui.theme.fg("dim", `🧠 ${level}${key}`),
+            ctx.ui.theme.fg("dim", `think ${level}${key}`),
         );
     }
 

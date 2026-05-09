@@ -43,23 +43,16 @@ function routeFromHeaders(headers: Headers): Route | undefined {
 
 function routeLabel(route: Route): string {
     const fallback = route.fallbackUsed ? " fallback" : "";
-    return `brouter: ${route.selectedModel} → ${route.upstreamModel}${fallback}`;
-}
-
-function activeModelLabel(ctx: ExtensionContext): string {
-    return `${ctx.model.provider}/${ctx.model.id}`;
+    return `↗ ${route.upstreamModel}${fallback}`;
 }
 
 function updateStatus(ctx: ExtensionContext, route?: Route) {
-    if (ctx.model.provider !== PROVIDER_NAME) {
+    if (ctx.model.provider !== PROVIDER_NAME || !route) {
         ctx.ui.setStatus(STATUS_KEY, "");
         return;
     }
 
-    const label = route
-        ? routeLabel(route)
-        : `brouter: ${activeModelLabel(ctx)} waiting`;
-    ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg("dim", label));
+    ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg("dim", routeLabel(route)));
 }
 
 export default function brouterStatus(pi: ExtensionAPI) {

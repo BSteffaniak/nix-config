@@ -224,10 +224,10 @@ export default function opencodeModes(pi: ExtensionAPI): void {
     });
 
     function statusText(): string {
-        const active = mode === "plan" ? "PLAN (read-only)" : "BUILD";
+        const active = mode === "plan" ? "PLAN" : "BUILD";
         if (draftMode === mode) return active;
-        const next = draftMode === "plan" ? "PLAN (read-only)" : "BUILD";
-        return `${active} → next: ${next}`;
+        const next = draftMode === "plan" ? "PLAN" : "BUILD";
+        return `${active} → ${next}`;
     }
 
     function updateStatus(ctx?: ExtensionContext): void {
