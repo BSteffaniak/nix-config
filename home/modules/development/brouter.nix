@@ -175,11 +175,16 @@ let
             name = "debug-code-reasoning";
             intent = "debugging";
             prefer_capabilities = [ "reasoning" ];
-            prefer_attributes.latency_class = "priority";
           }
           {
-            name = "planning-priority";
-            intent = "planning";
+            name = "explicit-priority";
+            when_contains = [
+              "priority"
+              "urgent"
+              "asap"
+              "low latency"
+              "quick response"
+            ];
             prefer_attributes.latency_class = "priority";
           }
           {
@@ -190,13 +195,26 @@ let
         ];
     }
     // optionalAttrs (cfg.openai.enable || cfg.openaiMax.enable) {
-      groups.cloud =
-        (optional cfg.openaiMax.enable "openai_max_fast")
-        ++ (optional cfg.openaiMax.enable "openai_max_fast_priority")
-        ++ (optional cfg.openaiMax.enable "openai_max_strong")
-        ++ (optional cfg.openaiMax.enable "openai_max_strong_priority")
-        ++ (optional cfg.openai.enable "cheap_cloud")
-        ++ (optional cfg.openai.enable "strong_cloud");
+      groups = {
+        cloud =
+          (optional cfg.openaiMax.enable "openai_max_fast")
+          ++ (optional cfg.openaiMax.enable "openai_max_fast_priority")
+          ++ (optional cfg.openaiMax.enable "openai_max_strong")
+          ++ (optional cfg.openaiMax.enable "openai_max_strong_priority")
+          ++ (optional cfg.openai.enable "cheap_cloud")
+          ++ (optional cfg.openai.enable "strong_cloud");
+        standard =
+          (optional cfg.openaiMax.enable "openai_max_fast")
+          ++ (optional cfg.openaiMax.enable "openai_max_strong")
+          ++ (optional cfg.openai.enable "cheap_cloud")
+          ++ (optional cfg.openai.enable "strong_cloud");
+      }
+      // optionalAttrs cfg.openaiMax.enable {
+        priority = [
+          "openai_max_fast_priority"
+          "openai_max_strong_priority"
+        ];
+      };
     };
 
     telemetry.database_path = "${stateDir}/brouter.db";

@@ -299,6 +299,38 @@ let
         contextWindow = 131072;
         maxTokens = 8192;
       }
+      {
+        id = "standard";
+        name = "BRouter Standard";
+        reasoning = true;
+        thinkingLevelMap = {
+          off = "none";
+          minimal = "minimal";
+          low = "low";
+          medium = "medium";
+          high = "high";
+          xhigh = "max";
+        };
+        input = [ "text" ];
+        contextWindow = 131072;
+        maxTokens = 8192;
+      }
+      {
+        id = "priority";
+        name = "BRouter Priority";
+        reasoning = true;
+        thinkingLevelMap = {
+          off = "none";
+          minimal = "minimal";
+          low = "low";
+          medium = "medium";
+          high = "high";
+          xhigh = "max";
+        };
+        input = [ "text" ];
+        contextWindow = 131072;
+        maxTokens = 8192;
+      }
     ];
   };
   mergedModelsConfig = foldl' myLib.deepMerge baseModelsConfig (
@@ -327,6 +359,8 @@ let
         "auto"
         "fast"
         "strong"
+        "standard"
+        "priority"
       ];
     }
   );
