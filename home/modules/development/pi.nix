@@ -248,13 +248,21 @@ let
     apiKey = "brouter";
     compat = {
       supportsDeveloperRole = false;
-      supportsReasoningEffort = false;
+      supportsReasoningEffort = true;
     };
     models = [
       {
         id = "auto";
         name = "BRouter Auto";
-        reasoning = false;
+        reasoning = true;
+        thinkingLevelMap = {
+          off = "none";
+          minimal = "minimal";
+          low = "low";
+          medium = "medium";
+          high = "high";
+          xhigh = "max";
+        };
         input = [ "text" ];
         contextWindow = 131072;
         maxTokens = 8192;
@@ -262,7 +270,15 @@ let
       {
         id = "fast";
         name = "BRouter Fast";
-        reasoning = false;
+        reasoning = true;
+        thinkingLevelMap = {
+          off = "none";
+          minimal = "minimal";
+          low = "low";
+          medium = "medium";
+          high = "high";
+          xhigh = "max";
+        };
         input = [ "text" ];
         contextWindow = 131072;
         maxTokens = 8192;
@@ -270,7 +286,15 @@ let
       {
         id = "strong";
         name = "BRouter Strong";
-        reasoning = false;
+        reasoning = true;
+        thinkingLevelMap = {
+          off = "none";
+          minimal = "minimal";
+          low = "low";
+          medium = "medium";
+          high = "high";
+          xhigh = "max";
+        };
         input = [ "text" ];
         contextWindow = 131072;
         maxTokens = 8192;
