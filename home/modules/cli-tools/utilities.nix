@@ -197,9 +197,7 @@ in
 
     # Ensure shims are regenerated whenever bindings change.
     home.activation.sshenvSyncShims = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      if command -v sshenv >/dev/null 2>&1; then
-        sshenv shims sync 2>/dev/null || true
-      fi
+      ${pkgs.sshenv}/bin/sshenv shims sync 2>/dev/null || true
     '';
   };
 }
