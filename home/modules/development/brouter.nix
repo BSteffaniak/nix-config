@@ -159,6 +159,26 @@ let
         code_bonus = 15.0;
         reasoning_bonus = 20.0;
       };
+      llm_judge = {
+        model = primaryFastModel;
+        provider = "openai_max";
+        trigger = {
+          score_gap_threshold = 5.0;
+          rule_triggered = true;
+        };
+        shortlist = {
+          size = 5;
+          min_score = 0.0;
+        };
+        output = {
+          structured = true;
+          max_tokens = 256;
+          temperature = 0.0;
+        };
+        budget = {
+          max_estimated_cost = 0.0;
+        };
+      };
       rules =
         (optional ollamaCfg.enable {
           name = "private-local";
