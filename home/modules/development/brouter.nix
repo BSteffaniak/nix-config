@@ -356,7 +356,9 @@ let
         opencode_zen = {
           kind = "open-ai-compatible";
           base_url = "https://api.opencode.ai/v1";
-          api_key_env = cfg.opencodeZen.apiKeyEnv;
+          auth_backend = "sshenv";
+          auth_profile = cfg.opencodeZen.authProfile;
+          auth_vault_path = cfg.opencodeZen.authVaultPath;
           timeout_ms = 60000;
         };
       };
@@ -568,7 +570,19 @@ in
       apiKeyEnv = mkOption {
         type = types.str;
         default = "OPENCODE_API_KEY";
-        description = "Environment variable brouter reads for the OpenCode Zen API key.";
+        description = "Environment variable brouter reads for the OpenCode Zen API key (injected by sshenv vault).";
+      };
+
+      authProfile = mkOption {
+        type = types.str;
+        default = "opencode-zen";
+        description = "sshenv profile containing the OpenCode Zen API key.";
+      };
+
+      authVaultPath = mkOption {
+        type = types.str;
+        default = "${config.home.homeDirectory}/.local/state/brouter/auth/opencode_zen_vault";
+        description = "brouter-owned sshenv vault path for OpenCode Zen API key.";
       };
 
       fastModel = mkOption {
@@ -596,7 +610,7 @@ in
             || cfg.openrouter.enable
             || cfg.opencodeZen.enable
             || cfg.extraSettings ? providers;
-          message = "myConfig.development.brouter requires at least one upstream provider: enable tools.ai.ollama, enable development.brouter.openaiMax/openai, or provide extraSettings.providers/models.";
+          message = "myConfig.development.brouter requires at least one upstream provider: enable tools.ai.ollama, enable development.brouter.openaiMax/openai/openrouter/opencodeZen, or provide extraSettings.providers/models.";
         }
       ];
 
