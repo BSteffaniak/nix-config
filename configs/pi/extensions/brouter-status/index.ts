@@ -13,6 +13,7 @@ type Route = {
     provider: string;
     upstreamModel: string;
     fallbackUsed: boolean;
+    badges: string[];
 };
 
 function header(headers: Headers, name: string): string | undefined {
@@ -38,12 +39,21 @@ function routeFromHeaders(headers: Headers): Route | undefined {
         provider,
         upstreamModel,
         fallbackUsed: header(headers, "x-brouter-fallback-used") === "true",
+        badges: splitHeader(header(headers, "x-brouter-display-badges")),
     };
 }
 
+function splitHeader(value: string | undefined): string[] {
+    return (value ?? "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+}
+
 function routeLabel(route: Route): string {
+    const badges = route.badges.length > 0 ? ` ${route.badges.join(" ")}` : "";
     const fallback = route.fallbackUsed ? " fallback" : "";
-    return `↗ ${route.upstreamModel}${fallback}`;
+    return `↗ ${route.upstreamModel}${badges}${fallback}`;
 }
 
 function updateStatus(ctx: ExtensionContext, route?: Route) {
@@ -91,6 +101,7 @@ export default function brouterStatus(pi: ExtensionAPI) {
                     `selected: ${lastRoute.selectedModel}`,
                     `provider: ${lastRoute.provider}`,
                     `upstream: ${lastRoute.upstreamModel}`,
+                    `badges: ${lastRoute.badges.join(", ") || "none"}`,
                     `fallback: ${lastRoute.fallbackUsed ? "yes" : "no"}`,
                 ].join("\n"),
                 "info",

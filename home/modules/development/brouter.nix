@@ -44,38 +44,32 @@ let
     )
   );
 
-  openaiMaxModels = optionalAttrs cfg.openaiMax.enable {
-    openai_max_fast = {
-      provider = "openai_max";
-      model = cfg.openaiMax.fastModel;
-      context_window = 1050000;
-      input_cost_per_million = 0.0;
-      output_cost_per_million = 0.0;
-      quality = 96;
-      capabilities = [
-        "chat"
-        "code"
-        "json"
-        "tools"
-        "reasoning"
-      ];
+  mkOpenaiMaxModel = upstreamModel: quality: latencyClass: {
+    provider = "openai_max";
+    model = upstreamModel;
+    context_window = 1050000;
+    input_cost_per_million = 0.0;
+    output_cost_per_million = 0.0;
+    inherit quality;
+    capabilities = [
+      "chat"
+      "code"
+      "json"
+      "tools"
+      "reasoning"
+    ];
+    attributes = {
+      latency_class = latencyClass;
+      billing_class = "subscription";
     };
+    display_badges = [ latencyClass ];
+  };
 
-    openai_max_strong = {
-      provider = "openai_max";
-      model = cfg.openaiMax.strongModel;
-      context_window = 1050000;
-      input_cost_per_million = 0.0;
-      output_cost_per_million = 0.0;
-      quality = 98;
-      capabilities = [
-        "chat"
-        "code"
-        "json"
-        "tools"
-        "reasoning"
-      ];
-    };
+  openaiMaxModels = optionalAttrs cfg.openaiMax.enable {
+    openai_max_fast = mkOpenaiMaxModel cfg.openaiMax.fastModel 96 "standard";
+    openai_max_fast_priority = mkOpenaiMaxModel cfg.openaiMax.fastModel 96 "priority";
+    openai_max_strong = mkOpenaiMaxModel cfg.openaiMax.strongModel 98 "standard";
+    openai_max_strong_priority = mkOpenaiMaxModel cfg.openaiMax.strongModel 98 "priority";
   };
 
   openaiModels = optionalAttrs cfg.openai.enable {
@@ -181,13 +175,26 @@ let
             name = "debug-code-reasoning";
             intent = "debugging";
             prefer_capabilities = [ "reasoning" ];
+            prefer_attributes.latency_class = "priority";
+          }
+          {
+            name = "planning-priority";
+            intent = "planning";
+            prefer_attributes.latency_class = "priority";
+          }
+          {
+            name = "summaries-standard";
+            intent = "summarization";
+            prefer_attributes.latency_class = "standard";
           }
         ];
     }
     // optionalAttrs (cfg.openai.enable || cfg.openaiMax.enable) {
       groups.cloud =
         (optional cfg.openaiMax.enable "openai_max_fast")
+        ++ (optional cfg.openaiMax.enable "openai_max_fast_priority")
         ++ (optional cfg.openaiMax.enable "openai_max_strong")
+        ++ (optional cfg.openaiMax.enable "openai_max_strong_priority")
         ++ (optional cfg.openai.enable "cheap_cloud")
         ++ (optional cfg.openai.enable "strong_cloud");
     };
@@ -209,6 +216,10 @@ let
           auth_profile = cfg.openaiMax.authProfile;
           auth_vault_path = cfg.openaiMax.authVaultPath;
           timeout_ms = 60000;
+          attribute_mappings.latency_class = {
+            priority.request_fields.service_tier = "priority";
+            standard.omit_request_fields = [ "service_tier" ];
+          };
         };
       }
       // optionalAttrs cfg.openai.enable {

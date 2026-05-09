@@ -8,6 +8,7 @@ The extension reads brouter's OpenAI-compatible response headers:
 - `x-brouter-provider`
 - `x-brouter-upstream-model`
 - `x-brouter-fallback-used`
+- `x-brouter-display-badges`
 
 It does not inject anything into the conversation context.
 
