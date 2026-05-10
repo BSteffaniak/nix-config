@@ -346,19 +346,19 @@ let
         openrouter = {
           kind = "open-ai-compatible";
           base_url = cfg.openrouter.baseUrl;
+          api_key_env = cfg.openrouter.apiKeyEnv;
           auth_backend = "sshenv";
           auth_profile = cfg.openrouter.authProfile;
-          auth_vault_path = cfg.openrouter.authVaultPath;
           timeout_ms = 60000;
         };
       }
       // optionalAttrs cfg.opencodeZen.enable {
         opencode_zen = {
           kind = "open-ai-compatible";
-          base_url = "https://api.opencode.ai/v1";
+          base_url = "https://opencode.ai/zen/v1";
+          api_key_env = cfg.opencodeZen.apiKeyEnv;
           auth_backend = "sshenv";
           auth_profile = cfg.opencodeZen.authProfile;
-          auth_vault_path = cfg.opencodeZen.authVaultPath;
           timeout_ms = 60000;
         };
       };
@@ -529,6 +529,12 @@ in
         description = "Add OpenRouter as a cloud upstream (aggregates many model providers).";
       };
 
+      apiKeyEnv = mkOption {
+        type = types.str;
+        default = "OPENROUTER_API_KEY";
+        description = "Environment variable brouter reads for the OpenRouter API key (injected by sshenv vault).";
+      };
+
       authProfile = mkOption {
         type = types.str;
         default = "openrouter";
@@ -587,13 +593,13 @@ in
 
       fastModel = mkOption {
         type = types.str;
-        default = "opencode/big-pickle";
+        default = "big-pickle";
         description = "OpenCode Zen model for fast routing.";
       };
 
       strongModel = mkOption {
         type = types.str;
-        default = "opencode/big-pickle";
+        default = "big-pickle";
         description = "OpenCode Zen model for strong routing.";
       };
     };
