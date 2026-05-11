@@ -42,6 +42,51 @@ let
     }) providerNames
   );
 
+  # Auto-discover provider models from provider JSON files.
+  # Each provider JSON can optionally define baseUrl, apiKey, and models
+  # to register it in Pi's model registry.
+  mkProviderModelsEntry =
+    name:
+    let
+      descriptor = builtins.fromJSON (builtins.readFile (providersDir + "/${name}.json"));
+      hasModels = descriptor ? models && descriptor.models != [ ];
+    in
+    if descriptor ? baseUrl then
+      {
+        providers.${name} = {
+          baseUrl = descriptor.baseUrl;
+          api = descriptor.api or "openai-completions";
+          apiKey = descriptor.apiKey or "";
+          compat = descriptor.compat or { };
+          models =
+            if hasModels then
+              descriptor.models
+            else
+              [
+                {
+                  id = lib.last (lib.splitString "/" descriptor.model);
+                  name = lib.last (lib.splitString "/" descriptor.model);
+                  reasoning = descriptor.reasoning or false;
+                  thinkingLevelMap =
+                    descriptor.thinkingLevelMap or {
+                      off = "none";
+                      minimal = "minimal";
+                      low = "low";
+                      medium = "medium";
+                      high = "high";
+                      xhigh = "max";
+                    };
+                  input = [ "text" ];
+                  contextWindow = descriptor.contextWindow or 131072;
+                  maxTokens = descriptor.maxTokens or 8192;
+                }
+              ];
+        };
+      }
+    else
+      { };
+  discoveredProviderModels = map mkProviderModelsEntry providerNames;
+
   # Reuse OpenCode permission files so Pi follows the same plan/build rules.
   permissionsDir = ../../../configs/opencode/permissions;
   allPermissionFiles = builtins.attrNames (builtins.readDir permissionsDir);
@@ -338,6 +383,7 @@ let
     ++ (optional (brouterCfg.enable && brouterCfg.enablePiIntegration) {
       providers.${brouterCfg.providerName} = brouterModelsEntry;
     })
+    ++ discoveredProviderModels
   );
 
   # Base settings.json + module-derived keys + extraSettings + overrides

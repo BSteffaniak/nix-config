@@ -4,7 +4,7 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 
 const STATUS_KEY = "brouter-route";
-const PROVIDER_NAME = "brouter";
+const PROVIDER_NAMES = ["brouter", "brouter-proxy"];
 
 type Headers = Record<string, unknown>;
 
@@ -57,7 +57,7 @@ function routeLabel(route: Route): string {
 }
 
 function updateStatus(ctx: ExtensionContext, route?: Route) {
-    if (ctx.model.provider !== PROVIDER_NAME || !route) {
+    if (!PROVIDER_NAMES.includes(ctx.model.provider) || !route) {
         ctx.ui.setStatus(STATUS_KEY, "");
         return;
     }

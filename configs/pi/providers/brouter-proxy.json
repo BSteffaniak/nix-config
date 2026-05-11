@@ -1,0 +1,6 @@
+{
+    "provider": "brouter-proxy",
+    "model": "brouter-proxy/auto",
+    "baseUrl": "http://127.0.0.1:8581/v1",
+    "apiKey": "brouter"
+}
