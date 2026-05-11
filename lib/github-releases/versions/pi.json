@@ -1,27 +1,27 @@
 {
-    "version": "0.72.1",
-    "tag": "v0.72.1",
+    "version": "0.74.0",
+    "tag": "v0.74.0",
     "platforms": {
         "aarch64-darwin": {
-            "url": "https://github.com/badlogic/pi-mono/releases/download/v0.72.1/pi-darwin-arm64.tar.gz",
-            "sha256": "40b2f027fc0f581317072921bf2e7ddfec871c3a4e94b73c39d73fc2abc5e517"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.74.0/pi-darwin-arm64.tar.gz",
+            "sha256": "3063179823c6a985634312240c57015024316f7fe6661edd41f14c77d8b15e10"
         },
         "aarch64-linux": {
-            "url": "https://github.com/badlogic/pi-mono/releases/download/v0.72.1/pi-linux-arm64.tar.gz",
-            "sha256": "79c4c585765cfda01624bde1ef529c6e55081bcdde3058e64ebe8fdfdc14b4a8"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.74.0/pi-linux-arm64.tar.gz",
+            "sha256": "261aa912878ca983c903d9c4a0408310dd8637b583085651d9b5ddb70c9df572"
         },
         "x86_64-darwin": {
-            "url": "https://github.com/badlogic/pi-mono/releases/download/v0.72.1/pi-darwin-x64.tar.gz",
-            "sha256": "59aa55b483cd42d78079f1a3b6244f8baebb63ea4dec8208d72eb0bf2df69aa2"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.74.0/pi-darwin-x64.tar.gz",
+            "sha256": "fa65c98f2c651ec2f89fb1a8a3dc9b987947bc9b102361a2f178862abacc7560"
         },
         "x86_64-linux": {
-            "url": "https://github.com/badlogic/pi-mono/releases/download/v0.72.1/pi-linux-x64.tar.gz",
-            "sha256": "00fab8b1f194140a8c9dbd2614b38e99726cd5dde3b5b2d607bd5daa6f851d40"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.74.0/pi-linux-x64.tar.gz",
+            "sha256": "d67657a30d49c9faca80868d2a4bdba4dfcac04702893f45a6d14b249345eb8d"
         }
     },
     "runtimeDeps": {
         "npm": {
-            "npmDepsHash": "sha256-6q+XvADfN3I2ynFe93fmRnwVrMhpGGKEts6cAxkGnYE="
+            "npmDepsHash": "sha256-GNXJHW3QwywVXgjaYkr/sbS5XqKnOkBhpDoPF3a6yJw="
         }
     }
 }
