@@ -12,6 +12,9 @@ with lib;
 let
   cfg = config.myConfig.development.opencode;
   brouterCfg = config.myConfig.development.brouter;
+  brouterProxyCfg = config.myConfig.development.brouterProxy;
+
+  brouterOpencode = import ../../lib/brouter-opencode-provider.nix { };
 
   # Auto-discover provider profiles from configs/opencode/providers/
   providersDir = ../../../configs/opencode/providers;
@@ -135,33 +138,17 @@ let
     };
   };
 
-  brouterModel = "${brouterCfg.providerName}/${brouterCfg.defaultModel}";
-  brouterFastModel = "${brouterCfg.providerName}/fast";
-  brouterProviderConfig = {
-    provider.${brouterCfg.providerName} = {
-      npm = "@ai-sdk/openai-compatible";
-      name = "BRouter";
-      options = {
-        baseURL = "http://${brouterCfg.host}:${toString brouterCfg.port}/v1";
-        apiKey = "brouter";
-      };
-      models = {
-        auto.name = "BRouter Auto";
-        fast.name = "BRouter Fast";
-        strong.name = "BRouter Strong";
-      };
-    };
-    model = brouterModel;
-    small_model = brouterFastModel;
-    agent = {
-      build.model = brouterModel;
-      plan.model = brouterModel;
-      explore.model = brouterModel;
-      general.model = brouterModel;
-      title.model = brouterFastModel;
-      summary.model = brouterModel;
-      compaction.model = brouterModel;
-    };
+  brouterProviderConfig = brouterOpencode.mkProvider {
+    providerName = brouterCfg.providerName;
+    baseURL = "http://${brouterCfg.host}:${toString brouterCfg.port}/v1";
+    displayName = "BRouter";
+    defaultModel = brouterCfg.defaultModel;
+  };
+  brouterProxyProviderConfig = brouterOpencode.mkProvider {
+    providerName = brouterProxyCfg.providerName;
+    baseURL = "http://${brouterProxyCfg.host}:${toString brouterProxyCfg.port}/v1";
+    displayName = brouterProxyCfg.displayName;
+    defaultModel = brouterProxyCfg.defaultModel;
   };
 
   # Merge order: base → provider → permissions (alphabetical) → host overrides (in order)
@@ -171,10 +158,21 @@ let
     [ providerConfig ] ++ permissionConfigs ++ overrideConfigs
   );
   mergedConfig =
-    if brouterCfg.enable && brouterCfg.enableOpenCodeIntegration && brouterCfg.makeOpenCodeDefault then
-      myLib.deepMerge mergedConfigBase brouterProviderConfig
+    let
+      withBrouter =
+        if brouterCfg.enable && brouterCfg.enableOpenCodeIntegration && brouterCfg.makeOpenCodeDefault then
+          myLib.deepMerge mergedConfigBase brouterProviderConfig
+        else
+          mergedConfigBase;
+    in
+    if
+      brouterProxyCfg.enable
+      && brouterProxyCfg.enableOpenCodeIntegration
+      && brouterProxyCfg.makeOpenCodeDefault
+    then
+      myLib.deepMerge withBrouter brouterProxyProviderConfig
     else
-      mergedConfigBase;
+      withBrouter;
 
   # Ollama provider config (only when ollama is enabled)
   ollamaCfg = config.myConfig.tools.ai.ollama;
@@ -363,6 +361,16 @@ in
         builtins.toJSON brouterProviderConfig;
       homeModules.shell.shared.functions."opencode-${brouterCfg.providerName}" = ''
         OPENCODE_CONFIG="$HOME/.config/opencode/providers/${brouterCfg.providerName}.json" opencode-dev "$@"
+      '';
+    })
+
+    # Conditional brouter-proxy provider. Available as opencode-brouter-proxy
+    # even when it is not the default OpenCode config.
+    (mkIf (brouterProxyCfg.enable && brouterProxyCfg.enableOpenCodeIntegration) {
+      xdg.configFile."opencode/providers/${brouterProxyCfg.providerName}.json".text =
+        builtins.toJSON brouterProxyProviderConfig;
+      homeModules.shell.shared.functions."opencode-${brouterProxyCfg.providerName}" = ''
+        OPENCODE_CONFIG="$HOME/.config/opencode/providers/${brouterProxyCfg.providerName}.json" opencode-dev "$@"
       '';
     })
   ]);

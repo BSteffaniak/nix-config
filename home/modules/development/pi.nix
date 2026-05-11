@@ -12,7 +12,10 @@ with lib;
 let
   cfg = config.myConfig.development.pi;
   brouterCfg = config.myConfig.development.brouter;
+  brouterProxyCfg = config.myConfig.development.brouterProxy;
   opencodeCfg = config.myConfig.development.opencode;
+
+  brouterPiModels = import ../../lib/brouter-pi-models.nix { inherit lib; };
 
   # Auto-discover provider profiles from configs/pi/providers/
   providersDir = ../../../configs/pi/providers;
@@ -287,101 +290,22 @@ let
     apiKey = "ollama";
     models = map mkOllamaModelEntry ollamaModels;
   };
-  brouterModelsEntry = {
+  brouterModelsEntry = brouterPiModels.mkProvider {
     baseUrl = "http://${brouterCfg.host}:${toString brouterCfg.port}/v1";
-    api = "openai-completions";
-    apiKey = "brouter";
-    compat = {
-      supportsDeveloperRole = false;
-      supportsReasoningEffort = true;
-    };
-    models = [
-      {
-        id = "auto";
-        name = "BRouter Auto";
-        reasoning = true;
-        thinkingLevelMap = {
-          off = "none";
-          minimal = "minimal";
-          low = "low";
-          medium = "medium";
-          high = "high";
-          xhigh = "max";
-        };
-        input = [ "text" ];
-        contextWindow = 131072;
-        maxTokens = 8192;
-      }
-      {
-        id = "fast";
-        name = "BRouter Fast";
-        reasoning = true;
-        thinkingLevelMap = {
-          off = "none";
-          minimal = "minimal";
-          low = "low";
-          medium = "medium";
-          high = "high";
-          xhigh = "max";
-        };
-        input = [ "text" ];
-        contextWindow = 131072;
-        maxTokens = 8192;
-      }
-      {
-        id = "strong";
-        name = "BRouter Strong";
-        reasoning = true;
-        thinkingLevelMap = {
-          off = "none";
-          minimal = "minimal";
-          low = "low";
-          medium = "medium";
-          high = "high";
-          xhigh = "max";
-        };
-        input = [ "text" ];
-        contextWindow = 131072;
-        maxTokens = 8192;
-      }
-      {
-        id = "standard";
-        name = "BRouter Standard";
-        reasoning = true;
-        thinkingLevelMap = {
-          off = "none";
-          minimal = "minimal";
-          low = "low";
-          medium = "medium";
-          high = "high";
-          xhigh = "max";
-        };
-        input = [ "text" ];
-        contextWindow = 131072;
-        maxTokens = 8192;
-      }
-      {
-        id = "priority";
-        name = "BRouter Priority";
-        reasoning = true;
-        thinkingLevelMap = {
-          off = "none";
-          minimal = "minimal";
-          low = "low";
-          medium = "medium";
-          high = "high";
-          xhigh = "max";
-        };
-        input = [ "text" ];
-        contextWindow = 131072;
-        maxTokens = 8192;
-      }
-    ];
   };
+  brouterProxyModelsEntry = brouterPiModels.mkProvider {
+    baseUrl = "http://${brouterProxyCfg.host}:${toString brouterProxyCfg.port}/v1";
+    nameSuffix = " (proxy)";
+  };
+  brouterDefaultEnabledModels = map (m: m.id) brouterPiModels.defaultModelDefs;
+
   mergedModelsConfig = foldl' myLib.deepMerge baseModelsConfig (
     (optional ollamaCfg.enable { providers.ollama = ollamaModelsEntry; })
     ++ (optional (brouterCfg.enable && brouterCfg.enablePiIntegration) {
       providers.${brouterCfg.providerName} = brouterModelsEntry;
+    })
+    ++ (optional (brouterProxyCfg.enable && brouterProxyCfg.enablePiIntegration) {
+      providers.${brouterProxyCfg.providerName} = brouterProxyModelsEntry;
     })
     ++ discoveredProviderModels
   );
@@ -401,13 +325,15 @@ let
     {
       defaultProvider = brouterCfg.providerName;
       defaultModel = brouterCfg.defaultModel;
-      enabledModels = [
-        "auto"
-        "fast"
-        "strong"
-        "standard"
-        "priority"
-      ];
+      enabledModels = brouterDefaultEnabledModels;
+    }
+  )
+  // (optionalAttrs
+    (brouterProxyCfg.enable && brouterProxyCfg.enablePiIntegration && brouterProxyCfg.makePiDefault)
+    {
+      defaultProvider = brouterProxyCfg.providerName;
+      defaultModel = brouterProxyCfg.defaultModel;
+      enabledModels = brouterDefaultEnabledModels;
     }
   );
 
@@ -575,6 +501,13 @@ in
     (mkIf (brouterCfg.enable && brouterCfg.enablePiIntegration) {
       homeModules.shell.shared.functions.pi-brouter = ''
         pi --provider ${escapeShellArg brouterCfg.providerName} --model ${escapeShellArg brouterCfg.defaultModel} "$@"
+      '';
+    })
+
+    # Conditional brouter-proxy wrapper. The provider is registered in models.json above.
+    (mkIf (brouterProxyCfg.enable && brouterProxyCfg.enablePiIntegration) {
+      homeModules.shell.shared.functions.pi-brouter-proxy = ''
+        pi --provider ${escapeShellArg brouterProxyCfg.providerName} --model ${escapeShellArg brouterProxyCfg.defaultModel} "$@"
       '';
     })
 

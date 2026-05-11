@@ -14,6 +14,7 @@
     ./lazygit.nix
     ./act.nix
     ./brouter.nix
+    ./brouter-proxy.nix
     ./opencode.nix
     ./pi.nix
     ./lspmux.nix
