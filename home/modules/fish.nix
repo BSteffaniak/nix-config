@@ -237,6 +237,12 @@ in
   };
 
   config = mkIf config.homeModules.fish.enable {
+    # home-manager's fish module force-enables `programs.man.generateCaches`
+    # via `mkDefault true` to back `man <tab>` completion with `apropos`.
+    # That rebuilds the man-db `whatis` index on every switch, which is slow
+    # and noisy. Disable it; `man <name>` still works without the cache.
+    programs.man.generateCaches = false;
+
     programs.fish = {
       enable = true;
       shellAliases = config.homeModules.shell.resolvedAliases // config.homeModules.fish.aliases;
