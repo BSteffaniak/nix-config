@@ -10,6 +10,7 @@
     ./aerospace.nix
     ./applications.nix
     ./awake.nix
+    ./cloudflare-warp.nix
     ./figma.nix
     ./ghostty.nix
     ./google-chrome.nix
