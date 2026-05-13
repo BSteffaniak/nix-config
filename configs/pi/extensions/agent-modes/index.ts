@@ -29,7 +29,7 @@ type Rule = {
     specificity: number;
 };
 
-const CONFIG_PATH = `${homedir()}/.pi/agent/opencode-permissions.json`;
+const CONFIG_PATH = `${homedir()}/.pi/agent/agent-permissions.json`;
 const READ_TOOLS = ["read", "grep", "find", "ls"];
 const MUTATING_TOOLS = new Set(["write", "edit"]);
 const DEFAULT_CONFIG: PermissionConfig = {
@@ -181,10 +181,10 @@ function messageText(message: unknown): string {
 
 function isStaleModeMessage(message: unknown, activeMode: ModeName): boolean {
     const customType = (message as { customType?: unknown }).customType;
-    if (activeMode === "build" && customType === "opencode-plan-mode-context") {
+    if (activeMode === "build" && customType === "agent-plan-mode-context") {
         return true;
     }
-    if (activeMode === "plan" && customType === "opencode-build-mode-context") {
+    if (activeMode === "plan" && customType === "agent-build-mode-context") {
         return true;
     }
 
@@ -212,7 +212,7 @@ async function maybeAsk(
     return choice === "Allow";
 }
 
-export default function opencodeModes(pi: ExtensionAPI): void {
+export default function agentModes(pi: ExtensionAPI): void {
     let config = loadConfig();
     let mode: ModeName = "build";
     let draftMode: ModeName = mode;
@@ -231,7 +231,7 @@ export default function opencodeModes(pi: ExtensionAPI): void {
     }
 
     function updateStatus(ctx?: ExtensionContext): void {
-        ctx?.ui.setStatus("opencode-mode", statusText());
+        ctx?.ui.setStatus("agent-mode", statusText());
     }
 
     function applyMode(ctx?: ExtensionContext): void {
@@ -246,8 +246,8 @@ export default function opencodeModes(pi: ExtensionAPI): void {
         mode = nextMode;
         draftMode = nextMode;
         applyMode(ctx);
-        ctx.ui.notify(`OpenCode ${mode} mode enabled`, "info");
-        pi.appendEntry("opencode-mode", { mode });
+        ctx.ui.notify(`Agent ${mode} mode enabled`, "info");
+        pi.appendEntry("agent-mode", { mode });
     }
 
     function setDraftMode(nextMode: ModeName, ctx: ExtensionContext): void {
@@ -263,7 +263,7 @@ export default function opencodeModes(pi: ExtensionAPI): void {
         if (draftMode === mode) return;
         mode = draftMode;
         applyMode(ctx);
-        pi.appendEntry("opencode-mode", { mode });
+        pi.appendEntry("agent-mode", { mode });
     }
 
     function toggleMode(ctx: ExtensionContext): void {
@@ -318,7 +318,7 @@ export default function opencodeModes(pi: ExtensionAPI): void {
             .filter(
                 (entry: any) =>
                     entry.type === "custom" &&
-                    entry.customType === "opencode-mode",
+                    entry.customType === "agent-mode",
             )
             .pop() as { data?: { mode?: ModeName } } | undefined;
 

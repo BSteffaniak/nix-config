@@ -122,7 +122,7 @@ let
   tuiConfig = ../../../configs/opencode/tui.json;
   permissionConfig = agentPermissions.mkPermissions {
     inherit permissionsDir;
-    cfg = cfg.permissions;
+    cfg = agentsCfg.permissions;
     overrides = agentsCfg.permissions.overrides ++ cfg.overrides;
   };
   mergedConfigBase = foldl' myLib.deepMerge baseConfig [
@@ -231,37 +231,6 @@ in
       description = "Additional opencode-<name> wrapper commands for provider and credential variants";
     };
 
-    permissions = {
-      autoDiscover = mkOption {
-        type = types.bool;
-        default = agentsCfg.permissions.autoDiscover;
-        description = "Deprecated alias for myConfig.development.agents.permissions.autoDiscover.";
-      };
-
-      include = mkOption {
-        type = types.listOf types.str;
-        default = agentsCfg.permissions.include;
-        description = "Deprecated alias for myConfig.development.agents.permissions.include.";
-      };
-
-      exclude = mkOption {
-        type = types.listOf types.str;
-        default = agentsCfg.permissions.exclude;
-        description = "Deprecated alias for myConfig.development.agents.permissions.exclude.";
-      };
-
-      restricted = mkOption {
-        type = types.listOf types.str;
-        default = agentsCfg.permissions.restricted;
-        description = "Deprecated alias for myConfig.development.agents.permissions.restricted.";
-      };
-
-      yolo = mkOption {
-        type = types.listOf types.str;
-        default = agentsCfg.permissions.yolo;
-        description = "Deprecated alias for myConfig.development.agents.permissions.yolo.";
-      };
-    };
   };
 
   config = mkIf cfg.enable (mkMerge [

@@ -128,7 +128,7 @@ let
 
   mergedPermissions = agentPermissions.mkPermissions {
     inherit permissionsDir;
-    cfg = cfg.permissions;
+    cfg = agentsCfg.permissions;
     inherit basePermissionConfig;
     overrides = agentsCfg.permissions.overrides ++ opencodeCfg.overrides ++ cfg.permissionOverrides;
   };
@@ -321,12 +321,12 @@ let
 
   mergedSettings = mergedSettingsBase // {
     # settings.json paths resolve relative to ~/.pi/agent, where this module
-    # deploys the generated OpenCode-compatible skill root below. Add this after
-    # overrides so host-local skill settings don't accidentally drop OpenCode skills.
-    skills = unique ((mergedSettingsBase.skills or [ ]) ++ [ "opencode-skills" ]);
+    # deploys the generated shared agent skill root below. Add this after
+    # overrides so host-local skill settings don't accidentally drop shared skills.
+    skills = unique ((mergedSettingsBase.skills or [ ]) ++ [ "agent-skills" ]);
 
     # Load Pi-native packages that provide structured questions and subagent
-    # delegation for imported OpenCode skills.
+    # delegation for imported shared skills.
     packages = unique ((mergedSettingsBase.packages or [ ]) ++ piPackageSources);
 
     npmCommand =
@@ -366,40 +366,9 @@ in
     permissionOverrides = mkOption {
       type = types.listOf types.path;
       default = [ ];
-      description = "Additional Pi-only shared-agent permission JSON files merged after inherited shared/OpenCode overrides.";
+      description = "Additional Pi-only shared-agent permission JSON files merged after shared and OpenCode config overrides.";
     };
 
-    permissions = {
-      autoDiscover = mkOption {
-        type = types.bool;
-        default = agentsCfg.permissions.autoDiscover;
-        description = "Deprecated alias for myConfig.development.agents.permissions.autoDiscover.";
-      };
-
-      include = mkOption {
-        type = types.listOf types.str;
-        default = agentsCfg.permissions.include;
-        description = "Deprecated alias for myConfig.development.agents.permissions.include.";
-      };
-
-      exclude = mkOption {
-        type = types.listOf types.str;
-        default = agentsCfg.permissions.exclude;
-        description = "Deprecated alias for myConfig.development.agents.permissions.exclude.";
-      };
-
-      restricted = mkOption {
-        type = types.listOf types.str;
-        default = agentsCfg.permissions.restricted;
-        description = "Deprecated alias for myConfig.development.agents.permissions.restricted.";
-      };
-
-      yolo = mkOption {
-        type = types.listOf types.str;
-        default = agentsCfg.permissions.yolo;
-        description = "Deprecated alias for myConfig.development.agents.permissions.yolo.";
-      };
-    };
   };
 
   config = mkIf cfg.enable (mkMerge [
@@ -425,14 +394,14 @@ in
       # Register custom provider models that Pi's built-in registry may not know yet.
       home.file.".pi/agent/models.json".text = builtins.toJSON mergedModelsConfig;
 
-      # Free Tab for the opencode-modes shortcut; Ctrl+Space keeps autocomplete available.
+      # Free Tab for the agent-modes shortcut; Ctrl+Space keeps autocomplete available.
       home.file.".pi/agent/keybindings.json".source = keybindingsConfig;
 
-      # Shared OpenCode-compatible permission config consumed by the local Pi extension.
-      home.file.".pi/agent/opencode-permissions.json".text = builtins.toJSON mergedPermissions;
+      # Shared agent permission config consumed by the local Pi extension.
+      home.file.".pi/agent/agent-permissions.json".text = builtins.toJSON mergedPermissions;
 
       # Shared agent skills made available to Pi via settings.json `skills`.
-      home.file.".pi/agent/opencode-skills".source = sharedAgentSkillsForPi;
+      home.file.".pi/agent/agent-skills".source = sharedAgentSkillsForPi;
 
       # User-writable npm prefix for Pi package installs under Nix.
       home.file.".pi/agent/npm/.keep".text = "";
