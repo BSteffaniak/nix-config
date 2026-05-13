@@ -11,10 +11,12 @@ with lib;
 
 let
   cfg = config.myConfig.development.opencode;
+  agentsCfg = config.myConfig.development.agents;
   brouterCfg = config.myConfig.development.brouter;
   brouterProxyCfg = config.myConfig.development.brouterProxy;
 
   brouterOpencode = import ../../lib/brouter-opencode-provider.nix { };
+  agentPermissions = import ../../lib/agent-permissions.nix { inherit lib myLib; };
 
   # Auto-discover provider profiles from configs/opencode/providers/
   providersDir = ../../../configs/opencode/providers;
@@ -54,47 +56,11 @@ let
   # Read and parse the selected provider config
   providerConfig = builtins.fromJSON (builtins.readFile (providersDir + "/${cfg.provider}.json"));
 
-  # Auto-discover permission files from configs/opencode/permissions/
-  permissionsDir = ../../../configs/opencode/permissions;
-  allPermissionFiles = builtins.attrNames (builtins.readDir permissionsDir);
-  jsonPermissionFiles = builtins.filter (f: hasSuffix ".json" f) allPermissionFiles;
-  allNames = map (f: removeSuffix ".json" f) jsonPermissionFiles;
+  # Auto-discover shared agent permission files from configs/agents/permissions/
+  permissionsDir = ../../../configs/agents/permissions;
 
-  # Base names are those that don't end in -restricted or -yolo
-  isVariant = name: hasSuffix "-restricted" name || hasSuffix "-yolo" name;
-  baseNames = builtins.filter (name: !(isVariant name)) allNames;
-
-  # Resolve each base name to the correct variant file
-  # Priority: yolo > restricted > default
-  resolvePermissionFile =
-    name:
-    if builtins.elem name cfg.permissions.yolo then
-      "${name}-yolo"
-    else if builtins.elem name cfg.permissions.restricted then
-      "${name}-restricted"
-    else
-      name;
-
-  # Filter based on autoDiscover / include / exclude
-  discoveredNames =
-    let
-      base = if cfg.permissions.autoDiscover then baseNames else cfg.permissions.include;
-    in
-    builtins.filter (name: !(builtins.elem name cfg.permissions.exclude)) base;
-
-  # Resolve to actual file names (applying restricted/yolo variants)
-  resolvedNames = map resolvePermissionFile discoveredNames;
-
-  # Read and parse each active permission file
-  permissionConfigs = map (
-    name: builtins.fromJSON (builtins.readFile (permissionsDir + "/${name}.json"))
-  ) (builtins.sort (a: b: a < b) resolvedNames);
-
-  # Read and parse host-specific overrides
-  overrideConfigs = map (f: builtins.fromJSON (builtins.readFile f)) cfg.overrides;
-
-  # Auto-discover skill directories from configs/opencode/skills/
-  skillsDir = ../../../configs/opencode/skills;
+  # Auto-discover shared agent skill directories from configs/agents/skills/
+  skillsDir = ../../../configs/agents/skills;
   skillEntries = builtins.attrNames (builtins.readDir skillsDir);
 
   # Filter to actual skill directories (exclude _shared and non-skill entries)
@@ -151,12 +117,18 @@ let
     defaultModel = brouterProxyCfg.defaultModel;
   };
 
-  # Merge order: base → provider → permissions (alphabetical) → host overrides (in order)
+  # Merge order: base → provider → shared permissions → host overrides (in order)
   baseConfig = builtins.fromJSON (builtins.readFile ../../../configs/opencode/opencode.json);
   tuiConfig = ../../../configs/opencode/tui.json;
-  mergedConfigBase = foldl' myLib.deepMerge baseConfig (
-    [ providerConfig ] ++ permissionConfigs ++ overrideConfigs
-  );
+  permissionConfig = agentPermissions.mkPermissions {
+    inherit permissionsDir;
+    cfg = cfg.permissions;
+    overrides = agentsCfg.permissions.overrides ++ cfg.overrides;
+  };
+  mergedConfigBase = foldl' myLib.deepMerge baseConfig [
+    providerConfig
+    permissionConfig
+  ];
   mergedConfig =
     let
       withBrouter =
@@ -262,32 +234,32 @@ in
     permissions = {
       autoDiscover = mkOption {
         type = types.bool;
-        default = true;
-        description = "Auto-discover and merge all permission files from configs/opencode/permissions/";
+        default = agentsCfg.permissions.autoDiscover;
+        description = "Deprecated alias for myConfig.development.agents.permissions.autoDiscover.";
       };
 
       include = mkOption {
         type = types.listOf types.str;
-        default = [ ];
-        description = "When autoDiscover is false, explicitly list which permission files to include (without .json)";
+        default = agentsCfg.permissions.include;
+        description = "Deprecated alias for myConfig.development.agents.permissions.include.";
       };
 
       exclude = mkOption {
         type = types.listOf types.str;
-        default = [ ];
-        description = "Permission files to exclude from auto-discovery (without .json)";
+        default = agentsCfg.permissions.exclude;
+        description = "Deprecated alias for myConfig.development.agents.permissions.exclude.";
       };
 
       restricted = mkOption {
         type = types.listOf types.str;
-        default = [ ];
-        description = "Use <name>-restricted.json instead of <name>.json for these programs (denies all write ops in build agent)";
+        default = agentsCfg.permissions.restricted;
+        description = "Deprecated alias for myConfig.development.agents.permissions.restricted.";
       };
 
       yolo = mkOption {
         type = types.listOf types.str;
-        default = [ ];
-        description = "Use <name>-yolo.json instead of <name>.json for these programs (no build agent restrictions)";
+        default = agentsCfg.permissions.yolo;
+        description = "Deprecated alias for myConfig.development.agents.permissions.yolo.";
       };
     };
   };
@@ -298,7 +270,7 @@ in
       xdg.configFile."opencode/tui.json".source = tuiConfig;
     }
 
-    # Auto-discover and deploy all skill directories from configs/opencode/skills/
+    # Auto-discover and deploy all shared agent skill directories from configs/agents/skills/
     {
       xdg.configFile = builtins.listToAttrs (
         map (name: {

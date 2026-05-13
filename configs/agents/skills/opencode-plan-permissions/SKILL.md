@@ -6,7 +6,7 @@ allowed-tools: Bash(git:*), Bash(python3:*), Question(*)
 
 ## Purpose
 
-`opencode-plan-permissions` helps you design safe, precise read-only command allowlists for the plan agent by using either the current conversation context or a direct ad-hoc request, comparing proposals against existing `configs/opencode/permissions/*.json` patterns, and producing an exact handoff plan for later execution in the build agent.
+`opencode-plan-permissions` helps you design safe, precise read-only command allowlists for the plan agent by using either the current conversation context or a direct ad-hoc request, comparing proposals against existing `configs/agents/permissions/*.json` patterns, and producing an exact handoff plan for later execution in the build agent.
 
 ## Steps
 
@@ -58,8 +58,8 @@ Do not assume the current working directory is the nix config repo. Resolve the 
 Use this priority order:
 
 1. If invocation text includes an explicit repo path, use it.
-2. Else, if current directory is inside a git repo that contains `configs/opencode/permissions/`, use that repo.
-3. Else, probe common locations (`~/.config/nix`, `~/.config/nixos`) and keep only those that contain `configs/opencode/permissions/`.
+2. Else, if current directory is inside a git repo that contains `configs/agents/permissions/`, use that repo.
+3. Else, probe common locations (`~/.config/nix`, `~/.config/nixos`) and keep only those that contain `configs/agents/permissions/`.
 4. If multiple valid candidates remain, ask the user to choose.
 5. If none are found, ask the user for the path.
 
@@ -75,17 +75,17 @@ def git_root():
     except Exception:
         return None
 
-def is_opencode_repo(path: Path) -> bool:
-    return (path / "configs" / "opencode" / "permissions").is_dir()
+def is_agent_config_repo(path: Path) -> bool:
+    return (path / "configs" / "agents" / "permissions").is_dir()
 
 candidates = []
 
 cwd_root = git_root()
-if cwd_root and is_opencode_repo(cwd_root):
+if cwd_root and is_agent_config_repo(cwd_root):
     candidates.append(cwd_root)
 
 for p in [Path.home()/".config"/"nix", Path.home()/".config"/"nixos"]:
-    if is_opencode_repo(p):
+    if is_agent_config_repo(p):
         candidates.append(p)
 
 # Deduplicate while preserving order
@@ -114,11 +114,11 @@ If exactly one candidate is found, set it as `REPO_ROOT`. Otherwise, use the **Q
       "options": [
         {
           "label": "~/.config/nix",
-          "description": "Contains configs/opencode/permissions"
+          "description": "Contains configs/agents/permissions"
         },
         {
           "label": "~/.config/nixos",
-          "description": "Contains configs/opencode/permissions"
+          "description": "Contains configs/agents/permissions"
         }
       ]
     }
@@ -131,7 +131,7 @@ If exactly one candidate is found, set it as `REPO_ROOT`. Otherwise, use the **Q
 After `REPO_ROOT` is selected, enumerate plan-agent bash rules from:
 
 - `configs/opencode/opencode.json`
-- `configs/opencode/permissions/*.json`
+- `configs/agents/permissions/*.json`
 
 and build a baseline map of defaults, current allows, and current denies.
 
@@ -194,7 +194,7 @@ Present each candidate permission pattern individually, with context and rationa
 
 For each item, show:
 
-- target file (for example `configs/opencode/permissions/binary-tools.json`)
+- target file (for example `configs/agents/permissions/binary-tools.json`)
 - exact JSON key/value proposal
 - why it is considered read-only
 - what risk is reduced by its precision
@@ -234,7 +234,7 @@ After review is complete, output a precise implementation handoff the user can r
 The handoff must include:
 
 1. **Selected repo root** (absolute path)
-2. **Files to update** under `configs/opencode/permissions/`
+2. **Files to update** under `configs/agents/permissions/`
 3. **Approved rule set** (only approved items)
 4. **Merge intent** (add/replace/remove per key)
 5. **Validation plan**:

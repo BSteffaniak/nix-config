@@ -95,7 +95,7 @@
       sshenvProfile = "xai";
       ignorePersistedAuth = true;
     };
-    development.opencode.permissions.restricted = [
+    development.agents.permissions.restricted = [
       "git"
       "brew"
     ];

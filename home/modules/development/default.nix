@@ -15,6 +15,7 @@
     ./act.nix
     ./brouter.nix
     ./brouter-proxy.nix
+    ./agents.nix
     ./opencode.nix
     ./pi.nix
     ./lspmux.nix

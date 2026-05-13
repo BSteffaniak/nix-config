@@ -19,4 +19,4 @@ Flags:
 
 - `--plan` starts a session in plan mode.
 
-The permission source of truth is `configs/opencode/permissions/*.json`.
+The permission source of truth is `configs/agents/permissions/*.json`.

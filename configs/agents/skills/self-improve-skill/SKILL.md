@@ -12,10 +12,10 @@ Review how a skill execution actually went — in the current conversation or a 
 
 Skills are managed as nix config and deployed via symlinks:
 
-- **Source of truth**: `~/.config/nix/configs/opencode/skills/<name>/SKILL.md`
+- **Source of truth**: `~/.config/nix/configs/agents/skills/<name>/SKILL.md`
 - **Symlinked to**: `~/.config/opencode/skills/<name>/SKILL.md` (managed by nix, read-only)
 
-**NEVER read from or write to `~/.config/opencode/skills/`.** That directory is a nix-managed symlink target. Any changes written there will be silently overwritten on the next nix rebuild. Always operate on the source at `~/.config/nix/configs/opencode/skills/`.
+**NEVER read from or write to `~/.config/opencode/skills/`.** That directory is a nix-managed symlink target. Any changes written there will be silently overwritten on the next nix rebuild. Always operate on the source at `~/.config/nix/configs/agents/skills/`.
 
 ## Steps
 
@@ -72,7 +72,7 @@ else:
 Once the skill name is determined, verify the source file exists:
 
 ```bash
-ls ~/.config/nix/configs/opencode/skills/<name>/SKILL.md
+ls ~/.config/nix/configs/agents/skills/<name>/SKILL.md
 ```
 
 If it doesn't exist, warn the user and ask for correction.
@@ -155,14 +155,14 @@ Read the skill's source file from the **nix repo** (never the symlink):
 
 ```bash
 # Correct — nix repo source
-cat ~/.config/nix/configs/opencode/skills/<name>/SKILL.md
+cat ~/.config/nix/configs/agents/skills/<name>/SKILL.md
 ```
 
 Use the Read tool to read the full SKILL.md. Also check for and read any `_shared/` references:
 
 ```bash
 # Check if the SKILL.md references any _shared/ files
-grep -o '_shared/[a-z0-9-]*\.md' ~/.config/nix/configs/opencode/skills/<name>/SKILL.md
+grep -o '_shared/[a-z0-9-]*\.md' ~/.config/nix/configs/agents/skills/<name>/SKILL.md
 ```
 
 If shared files are referenced, read those too — issues may be in the shared content rather than the skill itself.
@@ -275,7 +275,7 @@ Approved: 3 changes (2 critical, 1 important)
 Skipped: 1 change (1 minor)
 
 Ready to apply approved changes to:
-  ~/.config/nix/configs/opencode/skills/<name>/SKILL.md
+  ~/.config/nix/configs/agents/skills/<name>/SKILL.md
 ```
 
 ### 6. Apply approved changes
@@ -284,14 +284,14 @@ Apply all approved changes to the SKILL.md source file:
 
 1. Read the current SKILL.md one more time to ensure it hasn't changed since Step 3
 2. Apply each approved change in order (from bottom of file to top, to preserve line numbers)
-3. Write the updated file to `~/.config/nix/configs/opencode/skills/<name>/SKILL.md`
+3. Write the updated file to `~/.config/nix/configs/agents/skills/<name>/SKILL.md`
 
 **Never write to `~/.config/opencode/skills/`** — that is a nix-managed symlink.
 
 After writing, show the git diff:
 
 ```bash
-git -C ~/.config/nix diff configs/opencode/skills/<name>/SKILL.md
+git -C ~/.config/nix diff configs/agents/skills/<name>/SKILL.md
 ```
 
 If `_shared/` files were also modified, show those diffs too.
@@ -299,7 +299,7 @@ If `_shared/` files were also modified, show those diffs too.
 Report completion:
 
 ```
-Applied 3 changes to configs/opencode/skills/<name>/SKILL.md
+Applied 3 changes to configs/agents/skills/<name>/SKILL.md
 
 Changes take effect after nix rebuild:
   darwin-rebuild switch --flake ~/.config/nix    # macOS
@@ -311,7 +311,7 @@ Or for immediate testing, the source file can be read directly.
 
 ## Rules
 
-- **Never modify `~/.config/opencode/skills/`.** That directory is managed by nix via symlinks. Always read from and write to `~/.config/nix/configs/opencode/skills/`. Modifying the symlink target is silently overwritten on rebuild and achieves nothing.
+- **Never modify `~/.config/opencode/skills/`.** That directory is managed by nix via symlinks. Always read from and write to `~/.config/nix/configs/agents/skills/`. Modifying the symlink target is silently overwritten on rebuild and achieves nothing.
 - **Only fix what was observably wrong.** Every proposed change must be backed by evidence from the execution — a command that failed, a step that was skipped, an error that occurred. Do not refactor for style, restructure the skill, or make speculative improvements.
 - **Show diffs for every proposed change.** Never write to the SKILL.md without the user having reviewed the before/after for each change. The per-item review loop in Step 5 is mandatory.
 - **Process findings one at a time.** Present each finding individually with its own Question gate. Never batch multiple findings into a single approval.

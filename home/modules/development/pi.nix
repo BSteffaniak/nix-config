@@ -11,11 +11,13 @@ with lib;
 
 let
   cfg = config.myConfig.development.pi;
+  agentsCfg = config.myConfig.development.agents;
   brouterCfg = config.myConfig.development.brouter;
   brouterProxyCfg = config.myConfig.development.brouterProxy;
   opencodeCfg = config.myConfig.development.opencode;
 
   brouterPiModels = import ../../lib/brouter-pi-models.nix { inherit lib; };
+  agentPermissions = import ../../lib/agent-permissions.nix { inherit lib myLib; };
 
   # Auto-discover provider profiles from configs/pi/providers/
   providersDir = ../../../configs/pi/providers;
@@ -90,39 +92,8 @@ let
       { };
   discoveredProviderModels = map mkProviderModelsEntry providerNames;
 
-  # Reuse OpenCode permission files so Pi follows the same plan/build rules.
-  permissionsDir = ../../../configs/opencode/permissions;
-  allPermissionFiles = builtins.attrNames (builtins.readDir permissionsDir);
-  jsonPermissionFiles = builtins.filter (f: hasSuffix ".json" f) allPermissionFiles;
-  allPermissionNames = map (f: removeSuffix ".json" f) jsonPermissionFiles;
-
-  isPermissionVariant = name: hasSuffix "-restricted" name || hasSuffix "-yolo" name;
-  basePermissionNames = builtins.filter (name: !(isPermissionVariant name)) allPermissionNames;
-
-  resolvePermissionFile =
-    name:
-    if builtins.elem name cfg.permissions.yolo then
-      "${name}-yolo"
-    else if builtins.elem name cfg.permissions.restricted then
-      "${name}-restricted"
-    else
-      name;
-
-  discoveredPermissionNames =
-    let
-      base = if cfg.permissions.autoDiscover then basePermissionNames else cfg.permissions.include;
-    in
-    builtins.filter (name: !(builtins.elem name cfg.permissions.exclude)) base;
-
-  resolvedPermissionNames = map resolvePermissionFile discoveredPermissionNames;
-
-  permissionConfigs = map (
-    name: builtins.fromJSON (builtins.readFile (permissionsDir + "/${name}.json"))
-  ) (builtins.sort (a: b: a < b) resolvedPermissionNames);
-
-  permissionOverrideConfigs = map (f: builtins.fromJSON (builtins.readFile f)) (
-    opencodeCfg.overrides ++ cfg.permissionOverrides
-  );
+  # Reuse shared agent permission files so Pi follows the same plan/build rules.
+  permissionsDir = ../../../configs/agents/permissions;
 
   basePermissionConfig = {
     agent = {
@@ -155,9 +126,12 @@ let
     };
   };
 
-  mergedPermissions = foldl' myLib.deepMerge basePermissionConfig (
-    permissionConfigs ++ permissionOverrideConfigs
-  );
+  mergedPermissions = agentPermissions.mkPermissions {
+    inherit permissionsDir;
+    cfg = cfg.permissions;
+    inherit basePermissionConfig;
+    overrides = agentsCfg.permissions.overrides ++ opencodeCfg.overrides ++ cfg.permissionOverrides;
+  };
 
   # Auto-discover skill directories from configs/pi/skills/
   skillsDir = ../../../configs/pi/skills;
@@ -172,13 +146,13 @@ let
     isDir && builtins.pathExists full && builtins.hasAttr "SKILL.md" (builtins.readDir full);
   skillNames = builtins.filter isSkillDir skillEntries;
 
-  # Reuse the OpenCode skill set for Pi. Keep it in a separate resource root
+  # Reuse the shared agent skill set for Pi. Keep it in a separate resource root
   # so Pi-native skills in ~/.pi/agent/skills/ can coexist and override by name.
   # The whole tree is copied so relative references like ../_shared/*.md keep working.
-  opencodeSkillsDir = ../../../configs/opencode/skills;
-  opencodeSkillsForPi = pkgs.runCommand "pi-opencode-skills" { } ''
+  sharedAgentSkillsDir = ../../../configs/agents/skills;
+  sharedAgentSkillsForPi = pkgs.runCommand "pi-shared-agent-skills" { } ''
         mkdir -p "$out"
-        cp -R ${opencodeSkillsDir}/. "$out/"
+        cp -R ${sharedAgentSkillsDir}/. "$out/"
         rm -rf "$out/tone-clone"
         cp -R ${inputs.tone-clone-src}/skills/tone-clone "$out/tone-clone"
         chmod -R u+w "$out"
@@ -392,38 +366,38 @@ in
     permissionOverrides = mkOption {
       type = types.listOf types.path;
       default = [ ];
-      description = "Additional Pi-only OpenCode-style permission JSON files merged after inherited OpenCode overrides.";
+      description = "Additional Pi-only shared-agent permission JSON files merged after inherited shared/OpenCode overrides.";
     };
 
     permissions = {
       autoDiscover = mkOption {
         type = types.bool;
-        default = opencodeCfg.permissions.autoDiscover;
-        description = "Auto-discover and merge all permission files from configs/opencode/permissions/; defaults to OpenCode's setting.";
+        default = agentsCfg.permissions.autoDiscover;
+        description = "Deprecated alias for myConfig.development.agents.permissions.autoDiscover.";
       };
 
       include = mkOption {
         type = types.listOf types.str;
-        default = opencodeCfg.permissions.include;
-        description = "When autoDiscover is false, explicitly list which permission files to include (without .json); defaults to OpenCode's setting.";
+        default = agentsCfg.permissions.include;
+        description = "Deprecated alias for myConfig.development.agents.permissions.include.";
       };
 
       exclude = mkOption {
         type = types.listOf types.str;
-        default = opencodeCfg.permissions.exclude;
-        description = "Permission files to exclude from auto-discovery (without .json); defaults to OpenCode's setting.";
+        default = agentsCfg.permissions.exclude;
+        description = "Deprecated alias for myConfig.development.agents.permissions.exclude.";
       };
 
       restricted = mkOption {
         type = types.listOf types.str;
-        default = opencodeCfg.permissions.restricted;
-        description = "Use <name>-restricted.json instead of <name>.json for these programs; defaults to OpenCode's setting.";
+        default = agentsCfg.permissions.restricted;
+        description = "Deprecated alias for myConfig.development.agents.permissions.restricted.";
       };
 
       yolo = mkOption {
         type = types.listOf types.str;
-        default = opencodeCfg.permissions.yolo;
-        description = "Use <name>-yolo.json instead of <name>.json for these programs; defaults to OpenCode's setting.";
+        default = agentsCfg.permissions.yolo;
+        description = "Deprecated alias for myConfig.development.agents.permissions.yolo.";
       };
     };
   };
@@ -454,11 +428,11 @@ in
       # Free Tab for the opencode-modes shortcut; Ctrl+Space keeps autocomplete available.
       home.file.".pi/agent/keybindings.json".source = keybindingsConfig;
 
-      # OpenCode-compatible permission config consumed by the local Pi extension.
+      # Shared OpenCode-compatible permission config consumed by the local Pi extension.
       home.file.".pi/agent/opencode-permissions.json".text = builtins.toJSON mergedPermissions;
 
-      # OpenCode skills made available to Pi via settings.json `skills`.
-      home.file.".pi/agent/opencode-skills".source = opencodeSkillsForPi;
+      # Shared agent skills made available to Pi via settings.json `skills`.
+      home.file.".pi/agent/opencode-skills".source = sharedAgentSkillsForPi;
 
       # User-writable npm prefix for Pi package installs under Nix.
       home.file.".pi/agent/npm/.keep".text = "";

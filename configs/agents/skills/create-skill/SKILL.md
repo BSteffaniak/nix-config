@@ -6,20 +6,20 @@ allowed-tools: Bash(git:*), Bash(find:*), Bash(ls:*), Question(*), Write(*)
 
 ## Purpose
 
-Create a new OpenCode skill by gathering requirements, selecting the appropriate structural pattern from established conventions, drafting the SKILL.md content, and writing the files to the correct location in the nix config repo. This skill encodes all the patterns and conventions used across existing skills so that new skills are consistent, well-structured, and correctly deployed.
+Create a new shared agent skill by gathering requirements, selecting the appropriate structural pattern from established conventions, drafting the SKILL.md content, and writing the files to the correct location in the nix config repo. This skill encodes all the patterns and conventions used across existing skills so that new skills are consistent, well-structured, and correctly deployed.
 
 ## Repo Structure
 
 Skills are managed as part of a nix configuration repo and deployed to `~/.config/opencode/skills/` via home-manager's `xdg.configFile`. Understanding this deployment model is critical:
 
-- **Source of truth**: `configs/opencode/skills/<skill-name>/SKILL.md` in the nix config repo
-- **Deployed to**: `~/.config/opencode/skills/<skill-name>/SKILL.md` by nix (via `xdg.configFile`)
-- **Auto-discovered**: The nix module scans `configs/opencode/skills/` and deploys every directory it finds. Creating a new skill directory is sufficient — no nix config edits are needed.
+- **Source of truth**: `configs/agents/skills/<skill-name>/SKILL.md` in the nix config repo
+- **Deployed to**: `~/.config/opencode/skills/<skill-name>/SKILL.md` by nix (via `xdg.configFile`) and imported into Pi's shared skill root
+- **Auto-discovered**: The nix modules scan `configs/agents/skills/` and deploy every directory they find. Creating a new skill directory is sufficient — no nix config edits are needed.
 - **NEVER create files directly in `~/.config/opencode/skills/`** — that directory is managed by nix and will be overwritten on rebuild.
 
 ### Finding the repo root
 
-The nix config repo is the one containing the `configs/opencode/skills/` directory. Locate it:
+The nix config repo is the one containing the `configs/agents/skills/` directory. Locate it:
 
 ```bash
 git rev-parse --show-toplevel
@@ -28,20 +28,20 @@ git rev-parse --show-toplevel
 Then verify the skills directory exists:
 
 ```bash
-ls configs/opencode/skills/
+ls configs/agents/skills/
 ```
 
 If the current working directory is not inside the nix config repo, search for it by checking common locations or ask the user for the path.
 
 ### The `_shared/` directory
 
-`configs/opencode/skills/_shared/` contains reference documents shared across **multiple** skill files. Examples:
+`configs/agents/skills/_shared/` contains reference documents shared across **multiple** skill files. Examples:
 
 - `commit-rules.md` — Used by `commit-message`, `commit-message-write`, `commit-message-staged`, `commit-message-staged-write`
 - `code-comment-format.md` — Used by `pr-review` and `pr-annotate`
 - `pr-description-rules.md` — Used by `pr-description` and `pr-description-write`
 
-**Only add content to `_shared/` when it is genuinely referenced by 2 or more skill files.** Do not put single-skill content there. If a skill has internal reference material that only it uses, put it inline in the SKILL.md or in a subdirectory of the skill itself (e.g., `configs/opencode/skills/<name>/references/`).
+**Only add content to `_shared/` when it is genuinely referenced by 2 or more skill files.** Do not put single-skill content there. If a skill has internal reference material that only it uses, put it inline in the SKILL.md or in a subdirectory of the skill itself (e.g., `configs/agents/skills/<name>/references/`).
 
 ## SKILL.md Conventions
 
@@ -449,25 +449,25 @@ After all content is approved, write the files:
 2. Verify the target directory doesn't already exist:
 
    ```bash
-   ls configs/opencode/skills/<skill-name>/ 2>/dev/null
+   ls configs/agents/skills/<skill-name>/ 2>/dev/null
    ```
 
    If it exists, warn the user and ask whether to overwrite.
 
 3. Write the SKILL.md:
-   - Path: `<repo-root>/configs/opencode/skills/<skill-name>/SKILL.md`
+   - Path: `<repo-root>/configs/agents/skills/<skill-name>/SKILL.md`
 
 4. Write any shared resources:
-   - Path: `<repo-root>/configs/opencode/skills/_shared/<name>.md`
+   - Path: `<repo-root>/configs/agents/skills/_shared/<name>.md`
 
 5. Write any additional variant SKILL.md files:
-   - Path: `<repo-root>/configs/opencode/skills/<variant-name>/SKILL.md`
+   - Path: `<repo-root>/configs/agents/skills/<variant-name>/SKILL.md`
 
 6. Confirm creation:
 
    ```
    Created:
-   - configs/opencode/skills/<skill-name>/SKILL.md
+   - configs/agents/skills/<skill-name>/SKILL.md
 
    The skill will be auto-discovered and deployed on next nix rebuild.
    No other files need editing.
@@ -495,8 +495,8 @@ If the user provides custom text, apply the edits to the already-written files.
 
 ## Rules
 
-- **Never create files in `~/.config/opencode/skills/`.** That directory is managed by nix. Always write to `configs/opencode/skills/` in the nix config repo.
-- **No nix config edits needed.** Skills are auto-discovered from `configs/opencode/skills/`. Creating the directory and SKILL.md is sufficient.
+- **Never create files in `~/.config/opencode/skills/`.** That directory is managed by nix. Always write to `configs/agents/skills/` in the nix config repo.
+- **No nix config edits needed.** Shared agent skills are auto-discovered from `configs/agents/skills/`. Creating the directory and SKILL.md is sufficient.
 - **Only add to `_shared/` when genuinely shared.** Content must be referenced by 2 or more skill files. Single-skill reference material goes inline in the SKILL.md or in a subdirectory of the skill itself.
 - **`allowed-tools` must be minimal.** Only include tools the skill's instructions explicitly use. Over-permissioning is a security concern.
 - **Cross-platform by default.** Use `python3` for date math, SQLite, and scripting. Never use macOS-only (`date -v`) or GNU-only (`date -d`) commands without a cross-platform alternative.
