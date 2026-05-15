@@ -28,17 +28,65 @@ let
   # Build shell function bodies for pi-<name> wrappers. Each wrapper pins a
   # provider + model (and optionally thinking level) by forwarding to `pi`
   # with the appropriate CLI flags.
+  #
+  # If the provider descriptor contains an `sshenv` block, the wrapper instead
+  # routes auth through the sshenv-auth extension (see
+  # configs/pi/extensions/sshenv-auth/) by:
+  #   - pointing PI_CODING_AGENT_DIR at ~/.pi/<agentSubdir>/agent
+  #   - symlinking shared static config from ~/.pi/agent/
+  #   - exporting PI_SSHENV_PROFILE / PI_SSHENV_API_KEYS_JSON / PI_SSHENV_OAUTH_KEYS_JSON
+  # The extension reads creds from the named sshenv profile at session_start
+  # and round-trips refreshed OAuth blobs back to it.
   mkWrapper =
     name:
     let
       descriptor = builtins.fromJSON (builtins.readFile (providersDir + "/${name}.json"));
       thinkingFlag =
         if descriptor ? thinking then " --thinking ${escapeShellArg descriptor.thinking}" else "";
-      apiKeyFlag = if descriptor ? apiKeyEnv then " --api-key \"$" + descriptor.apiKeyEnv + "\"" else "";
+      hasSshenv = descriptor ? sshenv;
+      sshenvSpec = descriptor.sshenv or { };
+      sshenvProfile = sshenvSpec.profile or name;
+      sshenvAgentSubdir = sshenvSpec.agentSubdir or sshenvProfile;
+      sshenvApiKeysJson = builtins.toJSON (sshenvSpec.apiKeys or { });
+      sshenvOAuthJson = builtins.toJSON (sshenvSpec.oauth or { });
+      sshenvAgentDir = "${config.home.homeDirectory}/.pi/${sshenvAgentSubdir}/agent";
+      sharedAgentDir = "${config.home.homeDirectory}/.pi/agent";
+      apiKeyFlag =
+        if descriptor ? apiKeyEnv && !hasSshenv then " --api-key \"$" + descriptor.apiKeyEnv + "\"" else "";
     in
-    ''
-      pi --provider ${escapeShellArg descriptor.provider} --model ${escapeShellArg descriptor.model}${apiKeyFlag}${thinkingFlag} "$@"
-    '';
+    if hasSshenv then
+      ''
+        _agent_dir=${escapeShellArg sshenvAgentDir}
+        _shared=${escapeShellArg sharedAgentDir}
+        mkdir -p "$_agent_dir/sessions"
+        chmod 700 "$_agent_dir" 2>/dev/null || true
+        for _f in settings.json models.json keybindings.json agent-permissions.json SYSTEM.md APPEND_SYSTEM.md; do
+          if [ -e "$_shared/$_f" ]; then
+            ln -sfn "$_shared/$_f" "$_agent_dir/$_f"
+          fi
+        done
+        for _f in extensions skills agent-skills prompts themes npm bun tools git; do
+          if [ -e "$_shared/$_f" ]; then
+            ln -sfn "$_shared/$_f" "$_agent_dir/$_f"
+          fi
+        done
+        if [ "''${PI_SSHENV_LOCK:-0}" = "1" ]; then
+          exec 9>"$_agent_dir/.sshenv.lock"
+          if ! ${pkgs.flock}/bin/flock -n 9; then
+            echo "pi-${name}: another instance is running, waiting for it to exit..." >&2
+            ${pkgs.flock}/bin/flock 9
+          fi
+        fi
+        PI_CODING_AGENT_DIR="$_agent_dir" \
+        PI_SSHENV_PROFILE=${escapeShellArg sshenvProfile} \
+        PI_SSHENV_API_KEYS_JSON=${escapeShellArg sshenvApiKeysJson} \
+        PI_SSHENV_OAUTH_KEYS_JSON=${escapeShellArg sshenvOAuthJson} \
+          pi --provider ${escapeShellArg descriptor.provider} --model ${escapeShellArg descriptor.model}${thinkingFlag} "$@"
+      ''
+    else
+      ''
+        pi --provider ${escapeShellArg descriptor.provider} --model ${escapeShellArg descriptor.model}${apiKeyFlag}${thinkingFlag} "$@"
+      '';
 
   providerWrapperCommands = builtins.listToAttrs (
     map (name: {

@@ -1,5 +1,11 @@
 {
     "provider": "xai",
     "model": "grok-4.3",
-    "apiKeyEnv": "XAI_API_KEY"
+    "sshenv": {
+        "profile": "xai",
+        "agentSubdir": "xai",
+        "apiKeys": {
+            "xai": "XAI_API_KEY"
+        }
+    }
 }

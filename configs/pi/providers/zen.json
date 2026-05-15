@@ -2,5 +2,11 @@
     "provider": "opencode",
     "model": "big-pickle",
     "thinking": "high",
-    "apiKeyEnv": "OPENCODE_API_KEY"
+    "sshenv": {
+        "profile": "opencode-zen",
+        "agentSubdir": "zen",
+        "apiKeys": {
+            "opencode": "OPENCODE_API_KEY"
+        }
+    }
 }

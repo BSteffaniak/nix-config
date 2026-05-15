@@ -1,5 +1,11 @@
 {
     "provider": "openrouter",
     "model": "openrouter/z-ai/glm-5.1",
-    "apiKeyEnv": "OPENROUTER_API_KEY"
+    "sshenv": {
+        "profile": "openrouter",
+        "agentSubdir": "openrouter",
+        "apiKeys": {
+            "openrouter": "OPENROUTER_API_KEY"
+        }
+    }
 }

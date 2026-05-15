@@ -33,25 +33,23 @@ let
         ) value
       );
 
-  # Base bindings automatically provided when sshenv + autoBindings are enabled
+  # Base bindings automatically provided when sshenv + autoBindings are enabled.
+  # Pi entries are intentionally NOT bound here — pi resolves its own auth via
+  # the sshenv-auth extension at ~/.config/nix/configs/pi/extensions/sshenv-auth/,
+  # configured per-profile by ~/.config/nix/configs/pi/providers/*.json. Keeping
+  # pi-* shims here would shadow the provider wrappers from pi.nix.
   autoSshenvBindings = {
     "00-sshenv-auto" = {
       openai-api = [
-        "pi-openai-api"
-        "pi-openai"
         "opencode-openai-api"
       ];
       openrouter = [
-        "pi-openrouter"
         "opencode-openrouter"
       ];
       opencode-zen = [
-        "pi-zen"
         "opencode-zen"
       ];
       xai = [
-        "pi-grok-4.3"
-        "pi-grok-code-fast"
         "opencode-grok-4-3"
         "opencode-grok-code-fast"
       ];

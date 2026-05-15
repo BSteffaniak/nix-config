@@ -1,0 +1,348 @@
+import { execFileSync, spawnSync } from "node:child_process";
+import {
+    chmodSync,
+    existsSync,
+    mkdirSync,
+    readFileSync,
+    renameSync,
+    writeFileSync,
+} from "node:fs";
+import { join } from "node:path";
+
+import {
+    getAgentDir,
+    type ExtensionAPI,
+    type ExtensionContext,
+} from "@mariozechner/pi-coding-agent";
+
+// Env-var contract (set by the per-profile shell wrapper in pi.nix):
+//   PI_SSHENV_PROFILE             sshenv profile name (required to activate)
+//   PI_SSHENV_API_KEYS_JSON       JSON: { providerId: SSHENV_VAR_NAME }
+//   PI_SSHENV_OAUTH_KEYS_JSON     JSON: { providerId: SSHENV_VAR_NAME }   value is base64(JSON({...auth.json provider entry...}))
+//   PI_SSHENV_FLUSH_DEBOUNCE_MS   debounce window for OAuth round-trip (default 5000)
+//   PI_SSHENV_SSHENV_BIN          override sshenv binary path (default "sshenv" via PATH)
+
+type ProviderVarMap = Record<string, string>;
+
+type ConfigBlock = {
+    profile: string;
+    apiKeys: ProviderVarMap;
+    oauth: ProviderVarMap;
+    sshenvBin: string;
+    debounceMs: number;
+};
+
+type AuthEntry = Record<string, unknown>;
+type AuthFile = Record<string, AuthEntry>;
+
+function readEnvConfig(): ConfigBlock | null {
+    const profile = process.env.PI_SSHENV_PROFILE;
+    if (!profile) return null;
+
+    let apiKeys: ProviderVarMap = {};
+    let oauth: ProviderVarMap = {};
+    try {
+        apiKeys = JSON.parse(process.env.PI_SSHENV_API_KEYS_JSON ?? "{}");
+    } catch {
+        apiKeys = {};
+    }
+    try {
+        oauth = JSON.parse(process.env.PI_SSHENV_OAUTH_KEYS_JSON ?? "{}");
+    } catch {
+        oauth = {};
+    }
+
+    const debounceMs = Number.parseInt(
+        process.env.PI_SSHENV_FLUSH_DEBOUNCE_MS ?? "5000",
+        10,
+    );
+
+    return {
+        profile,
+        apiKeys,
+        oauth,
+        sshenvBin: process.env.PI_SSHENV_SSHENV_BIN ?? "sshenv",
+        debounceMs: Number.isFinite(debounceMs) ? debounceMs : 5000,
+    };
+}
+
+function snapshotProfile(cfg: ConfigBlock): Map<string, string> {
+    // `sshenv export <profile>` prints `export VAR=value` lines. Use stdio
+    // inheritance for stderr so any ssh-agent / passphrase prompts surface to
+    // the user; capture stdout for parsing.
+    let stdout = "";
+    try {
+        stdout = execFileSync(cfg.sshenvBin, ["export", cfg.profile], {
+            encoding: "utf8",
+            stdio: ["ignore", "pipe", "inherit"],
+        });
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new Error(
+            `sshenv-auth: failed to read profile '${cfg.profile}' via '${cfg.sshenvBin} export': ${msg}`,
+        );
+    }
+
+    const out = new Map<string, string>();
+    for (const rawLine of stdout.split("\n")) {
+        const line = rawLine.replace(/^export\s+/, "").trim();
+        if (!line || !line.includes("=")) continue;
+        const eq = line.indexOf("=");
+        const key = line.slice(0, eq);
+        let value = line.slice(eq + 1);
+        // Strip a single layer of surrounding quotes if present.
+        if (
+            (value.startsWith("'") && value.endsWith("'")) ||
+            (value.startsWith('"') && value.endsWith('"'))
+        ) {
+            value = value.slice(1, -1);
+        }
+        out.set(key, value);
+    }
+    return out;
+}
+
+function readAuth(authPath: string): AuthFile {
+    if (!existsSync(authPath)) return {};
+    try {
+        const txt = readFileSync(authPath, "utf8");
+        const parsed = JSON.parse(txt) as unknown;
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            return parsed as AuthFile;
+        }
+    } catch {
+        // fall through
+    }
+    return {};
+}
+
+function writeAuthAtomic(authPath: string, data: AuthFile): void {
+    const dir = authPath.endsWith("/auth.json")
+        ? authPath.slice(0, -"/auth.json".length)
+        : authPath;
+    mkdirSync(dir, { recursive: true });
+    const tmp = `${authPath}.sshenv-auth.tmp`;
+    writeFileSync(tmp, JSON.stringify(data, null, 2));
+    chmodSync(tmp, 0o600);
+    renameSync(tmp, authPath);
+}
+
+function decodeOAuthBlob(b64: string): AuthEntry | null {
+    if (!b64) return null;
+    try {
+        const json = Buffer.from(b64, "base64").toString("utf8");
+        const parsed = JSON.parse(json) as unknown;
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            return parsed as AuthEntry;
+        }
+    } catch {
+        // fall through
+    }
+    return null;
+}
+
+function encodeOAuthBlob(entry: AuthEntry): string {
+    return Buffer.from(JSON.stringify(entry), "utf8").toString("base64");
+}
+
+function materializeAuthFromSshenv(
+    cfg: ConfigBlock,
+    snapshot: Map<string, string>,
+    authPath: string,
+): { wrote: boolean; missing: string[] } {
+    const before = readAuth(authPath);
+    const after: AuthFile = { ...before };
+    const missing: string[] = [];
+
+    for (const [providerId, varName] of Object.entries(cfg.apiKeys)) {
+        const v = snapshot.get(varName);
+        if (v && v.length > 0) {
+            after[providerId] = { type: "api_key", key: v };
+        } else if (!(providerId in after)) {
+            missing.push(`${providerId} (api_key from ${varName})`);
+        }
+    }
+
+    for (const [providerId, varName] of Object.entries(cfg.oauth)) {
+        const blob = snapshot.get(varName);
+        const decoded = blob ? decodeOAuthBlob(blob) : null;
+        if (decoded) {
+            after[providerId] = decoded;
+        } else if (!(providerId in after)) {
+            missing.push(`${providerId} (oauth from ${varName})`);
+        }
+    }
+
+    const wrote = JSON.stringify(before) !== JSON.stringify(after);
+    if (wrote) writeAuthAtomic(authPath, after);
+    return { wrote, missing };
+}
+
+function flushOAuthToSshenv(
+    cfg: ConfigBlock,
+    authPath: string,
+    lastFlushed: Map<string, string>,
+): { updated: string[]; errors: string[] } {
+    const auth = readAuth(authPath);
+    const updated: string[] = [];
+    const errors: string[] = [];
+
+    for (const [providerId, varName] of Object.entries(cfg.oauth)) {
+        const entry = auth[providerId];
+        if (!entry || typeof entry !== "object") continue;
+        const encoded = encodeOAuthBlob(entry);
+        if (lastFlushed.get(varName) === encoded) continue;
+        const result = spawnSync(
+            cfg.sshenvBin,
+            ["set", cfg.profile, varName, "--value", encoded],
+            { stdio: ["ignore", "ignore", "pipe"] },
+        );
+        if (result.status === 0) {
+            lastFlushed.set(varName, encoded);
+            updated.push(varName);
+        } else {
+            const stderr = result.stderr?.toString() ?? "";
+            errors.push(
+                `${varName}: ${stderr.trim() || `exit ${result.status}`}`,
+            );
+        }
+    }
+    return { updated, errors };
+}
+
+export default async function (pi: ExtensionAPI): Promise<void> {
+    const cfg = readEnvConfig();
+    if (!cfg) return; // No-op when not invoked via a sshenv-aware wrapper.
+
+    const agentDir = getAgentDir();
+    const authPath = join(agentDir, "auth.json");
+
+    // Track what we last successfully flushed so we don't no-op write.
+    const lastFlushed = new Map<string, string>();
+
+    // 1. Snapshot the sshenv profile and materialize auth.json BEFORE any
+    //    provider request runs. The async extension factory is awaited by pi
+    //    before session_start and before the first AuthStorage read, so this
+    //    is the right place to do it.
+    let snapshot: Map<string, string>;
+    try {
+        snapshot = snapshotProfile(cfg);
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        // Don't crash pi — the user can still use providers with creds already
+        // in auth.json or env vars. Just log loudly.
+        // eslint-disable-next-line no-console
+        console.error(`sshenv-auth: ${msg}`);
+        return;
+    }
+
+    const { wrote, missing } = materializeAuthFromSshenv(
+        cfg,
+        snapshot,
+        authPath,
+    );
+
+    // Seed lastFlushed from what we just wrote so the first refresh genuinely
+    // diffs against the on-disk state.
+    for (const [providerId, varName] of Object.entries(cfg.oauth)) {
+        const entry = readAuth(authPath)[providerId];
+        if (entry && typeof entry === "object") {
+            lastFlushed.set(varName, encodeOAuthBlob(entry));
+        }
+    }
+
+    // 2. Debounced flush on each provider response. Captures mid-session OAuth
+    //    refresh writes by pi's AuthStorage. Skipped entirely when oauth map
+    //    is empty.
+    let flushTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleFlush = (): void => {
+        if (Object.keys(cfg.oauth).length === 0) return;
+        if (flushTimer) clearTimeout(flushTimer);
+        flushTimer = setTimeout(() => {
+            flushTimer = null;
+            const { errors } = flushOAuthToSshenv(cfg, authPath, lastFlushed);
+            if (errors.length > 0) {
+                // eslint-disable-next-line no-console
+                console.error(
+                    `sshenv-auth: flush errors for profile '${cfg.profile}': ${errors.join("; ")}`,
+                );
+            }
+        }, cfg.debounceMs);
+    };
+
+    pi.on("after_provider_response", async () => {
+        scheduleFlush();
+    });
+
+    // 3. Final synchronous flush on shutdown, then optional plaintext wipe.
+    pi.on("session_shutdown", async () => {
+        if (flushTimer) {
+            clearTimeout(flushTimer);
+            flushTimer = null;
+        }
+        const { errors } = flushOAuthToSshenv(cfg, authPath, lastFlushed);
+        if (errors.length > 0) {
+            // eslint-disable-next-line no-console
+            console.error(
+                `sshenv-auth: shutdown flush errors for profile '${cfg.profile}': ${errors.join("; ")}`,
+            );
+        }
+    });
+
+    // 4. Status command for visibility.
+    pi.registerCommand("sshenv-status", {
+        description:
+            "Show sshenv-auth status: profile, tracked providers, last sync state",
+        handler: async (_args: string, ctx: ExtensionContext) => {
+            const apiKeyList = Object.keys(cfg.apiKeys).join(", ") || "(none)";
+            const oauthList = Object.keys(cfg.oauth).join(", ") || "(none)";
+            const flushed =
+                Array.from(lastFlushed.keys()).join(", ") || "(none)";
+            ctx.ui.notify(
+                [
+                    `sshenv profile: ${cfg.profile}`,
+                    `agent dir:      ${agentDir}`,
+                    `api_key providers: ${apiKeyList}`,
+                    `oauth providers:   ${oauthList}`,
+                    `last flushed vars: ${flushed}`,
+                    wrote
+                        ? "auth.json was updated from sshenv on startup."
+                        : "auth.json already matched sshenv on startup.",
+                    missing.length > 0
+                        ? `missing creds (run /login or sshenv set): ${missing.join(", ")}`
+                        : "all configured providers have credentials.",
+                ].join("\n"),
+                "info",
+            );
+        },
+    });
+
+    pi.registerCommand("sshenv-flush", {
+        description:
+            "Force an immediate flush of auth.json OAuth credentials back to sshenv",
+        handler: async (_args: string, ctx: ExtensionContext) => {
+            if (flushTimer) {
+                clearTimeout(flushTimer);
+                flushTimer = null;
+            }
+            const { updated, errors } = flushOAuthToSshenv(
+                cfg,
+                authPath,
+                lastFlushed,
+            );
+            if (errors.length > 0) {
+                ctx.ui.notify(
+                    `sshenv-auth: flush errors: ${errors.join("; ")}`,
+                    "warning",
+                );
+            } else if (updated.length === 0) {
+                ctx.ui.notify("sshenv-auth: nothing to flush.", "info");
+            } else {
+                ctx.ui.notify(
+                    `sshenv-auth: flushed ${updated.join(", ")} to profile '${cfg.profile}'.`,
+                    "info",
+                );
+            }
+        },
+    });
+}
