@@ -1,4 +1,4 @@
-import { execFileSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import {
     chmodSync,
     existsSync,
@@ -66,22 +66,49 @@ function readEnvConfig(): ConfigBlock | null {
     };
 }
 
-function snapshotProfile(cfg: ConfigBlock): Map<string, string> {
-    // `sshenv export <profile>` prints `export VAR=value` lines. Use stdio
-    // inheritance for stderr so any ssh-agent / passphrase prompts surface to
-    // the user; capture stdout for parsing.
-    let stdout = "";
-    try {
-        stdout = execFileSync(cfg.sshenvBin, ["export", cfg.profile], {
-            encoding: "utf8",
-            stdio: ["ignore", "pipe", "inherit"],
-        });
-    } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
+function snapshotProfile(cfg: ConfigBlock): {
+    snapshot: Map<string, string>;
+    profileExists: boolean;
+} {
+    // `sshenv export <profile>` prints `export VAR=value` lines on stdout.
+    // When the profile does not exist yet (e.g. first run, before any `/login`
+    // or `sshenv set`), it exits non-zero with stderr like
+    //   error: no such profile: <name>
+    // We treat that as "empty snapshot, profile will be created on first
+    // flush" rather than a hard failure — sshenv-set auto-creates the profile
+    // when we round-trip refreshed creds back later.
+    const result = spawnSync(cfg.sshenvBin, ["export", cfg.profile], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+    });
+    if (result.error) {
         throw new Error(
-            `sshenv-auth: failed to read profile '${cfg.profile}' via '${cfg.sshenvBin} export': ${msg}`,
+            `sshenv-auth: failed to spawn '${cfg.sshenvBin} export ${cfg.profile}': ${result.error.message}`,
         );
     }
+    const stderr = (result.stderr ?? "").toString();
+    if (result.status !== 0) {
+        if (/no such profile/i.test(stderr)) {
+            // Surface the underlying stderr lines that aren't the
+            // "no such profile" line itself (e.g. ssh-agent prompts), so the
+            // user sees them but we still continue.
+            const otherStderr = stderr
+                .split("\n")
+                .filter((l) => l.trim() && !/no such profile/i.test(l))
+                .join("\n");
+            if (otherStderr) process.stderr.write(otherStderr + "\n");
+            return { snapshot: new Map(), profileExists: false };
+        }
+        // Real error: vault locked, sshenv binary missing, etc. Surface and
+        // throw so the caller can decide whether to abort or continue.
+        if (stderr) process.stderr.write(stderr);
+        throw new Error(
+            `sshenv-auth: '${cfg.sshenvBin} export ${cfg.profile}' exited ${result.status ?? "?"}`,
+        );
+    }
+    // Pass-through any stderr (e.g. ssh-agent unlock prompts) on success.
+    if (stderr) process.stderr.write(stderr);
+    const stdout = (result.stdout ?? "").toString();
 
     const out = new Map<string, string>();
     for (const rawLine of stdout.split("\n")) {
@@ -99,7 +126,7 @@ function snapshotProfile(cfg: ConfigBlock): Map<string, string> {
         }
         out.set(key, value);
     }
-    return out;
+    return { snapshot: out, profileExists: true };
 }
 
 function readAuth(authPath: string): AuthFile {
@@ -224,16 +251,28 @@ export default async function (pi: ExtensionAPI): Promise<void> {
     //    provider request runs. The async extension factory is awaited by pi
     //    before session_start and before the first AuthStorage read, so this
     //    is the right place to do it.
+    //
+    //    If the profile doesn't exist yet, we proceed with an empty snapshot.
+    //    The first OAuth refresh / `sshenv-flush` will create the profile via
+    //    `sshenv set`, which auto-creates missing profiles + vars.
     let snapshot: Map<string, string>;
+    let profileExists: boolean;
     try {
-        snapshot = snapshotProfile(cfg);
+        ({ snapshot, profileExists } = snapshotProfile(cfg));
     } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        // Don't crash pi — the user can still use providers with creds already
-        // in auth.json or env vars. Just log loudly.
+        // Real error (vault locked, binary missing, etc.). Don't crash pi — the
+        // user can still use providers with creds already in auth.json or env
+        // vars. Just log loudly and skip the round-trip hooks.
         // eslint-disable-next-line no-console
-        console.error(`sshenv-auth: ${msg}`);
+        console.error(msg);
         return;
+    }
+    if (!profileExists) {
+        // eslint-disable-next-line no-console
+        console.error(
+            `sshenv-auth: profile '${cfg.profile}' not found in vault yet — will be created on first flush after /login or credential refresh.`,
+        );
     }
 
     const { wrote, missing } = materializeAuthFromSshenv(
@@ -305,11 +344,13 @@ export default async function (pi: ExtensionAPI): Promise<void> {
                     `api_key providers: ${apiKeyList}`,
                     `oauth providers:   ${oauthList}`,
                     `last flushed vars: ${flushed}`,
-                    wrote
-                        ? "auth.json was updated from sshenv on startup."
-                        : "auth.json already matched sshenv on startup.",
+                    profileExists
+                        ? wrote
+                            ? "auth.json was updated from sshenv on startup."
+                            : "auth.json already matched sshenv on startup."
+                        : `profile '${cfg.profile}' will be created in the vault on first flush.`,
                     missing.length > 0
-                        ? `missing creds (run /login or sshenv set): ${missing.join(", ")}`
+                        ? `missing creds (run /login): ${missing.join(", ")}`
                         : "all configured providers have credentials.",
                 ].join("\n"),
                 "info",

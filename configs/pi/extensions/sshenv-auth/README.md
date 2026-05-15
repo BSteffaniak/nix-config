@@ -84,25 +84,22 @@ jq 'del(."openai-codex")' ~/.pi/agent/auth.json > ~/.pi/agent/auth.json.tmp \
 ### ChatGPT subscription profile (`openai`, plus host-only accounts via `extraProviders`)
 
 ```sh
-# 1. Make sure the sshenv profile exists with an empty OAuth placeholder.
-sshenv set openai OPENAI_CODEX_AUTH_JSON_B64 --value ""
-
-# 2. Launch pi via the new wrapper.
+# 1. Launch pi via the new wrapper. No setup needed; the extension creates the
+#    sshenv profile + var on the first flush after /login.
 pi-openai
 
-# 3. Inside pi:
+# 2. Inside pi:
 > /login openai-codex          # browser OAuth
 > /sshenv-flush                # immediate write-back to vault
 > /q
 
-# 4. Confirm the vault now holds the OAuth blob.
+# 3. Confirm the vault now holds the OAuth blob.
 sshenv list openai             # should include OPENAI_CODEX_AUTH_JSON_B64
 ```
 
 Repeat for any host-specific account defined via `extraProviders` (e.g. `openai-nds` on `bs-mbpro`):
 
 ```sh
-sshenv set openai-nds OPENAI_CODEX_AUTH_JSON_B64 --value ""
 pi-openai-nds
 > /login openai-codex
 > /sshenv-flush
