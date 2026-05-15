@@ -44,14 +44,22 @@ let
   # provider + model (and optionally thinking level) by forwarding to `pi`
   # with the appropriate CLI flags.
   #
-  # If the descriptor contains an `sshenv` block, the wrapper instead routes
-  # auth through the sshenv-auth extension (see
-  # configs/pi/extensions/sshenv-auth/) by:
-  #   - pointing PI_CODING_AGENT_DIR at ~/.pi/<agentSubdir>/agent
-  #   - symlinking shared static config from ~/.pi/agent/
-  #   - exporting PI_SSHENV_PROFILE / PI_SSHENV_API_KEYS_JSON / PI_SSHENV_OAUTH_KEYS_JSON
-  # The extension reads creds from the named sshenv profile at session_start
-  # and round-trips refreshed OAuth blobs back to it.
+  # The descriptor's optional `sshenv` block has two modes:
+  #
+  #   1. auth.json mode (default when sshenv is set):
+  #      Routes auth through the sshenv-auth extension (see
+  #      configs/pi/extensions/sshenv-auth/) by:
+  #        - pointing PI_CODING_AGENT_DIR at ~/.pi/<agentSubdir>/agent
+  #        - symlinking shared static config from ~/.pi/agent/
+  #        - exporting PI_SSHENV_PROFILE / PI_SSHENV_API_KEYS_JSON / PI_SSHENV_OAUTH_KEYS_JSON
+  #      The extension reads creds from the named sshenv profile at
+  #      session_start and round-trips refreshed OAuth blobs back to it.
+  #
+  #   2. envOnly mode (sshenv.envOnly = true):
+  #      Wraps `pi` in `sshenv run <profile> --` so the profile's env vars
+  #      reach pi's process unchanged. Useful for providers that pull creds
+  #      from arbitrary env vars (AWS SDK chain, Vertex AI ADC, etc.) rather
+  #      than auth.json. No per-profile agent dir, no extension activation.
   mkWrapper =
     name:
     let
@@ -60,6 +68,7 @@ let
         if descriptor ? thinking then " --thinking ${escapeShellArg descriptor.thinking}" else "";
       hasSshenv = descriptor ? sshenv;
       sshenvSpec = descriptor.sshenv or { };
+      sshenvEnvOnly = sshenvSpec.envOnly or false;
       sshenvProfile = sshenvSpec.profile or name;
       sshenvAgentSubdir = sshenvSpec.agentSubdir or sshenvProfile;
       sshenvApiKeysJson = builtins.toJSON (sshenvSpec.apiKeys or { });
@@ -69,7 +78,11 @@ let
       apiKeyFlag =
         if descriptor ? apiKeyEnv && !hasSshenv then " --api-key \"$" + descriptor.apiKeyEnv + "\"" else "";
     in
-    if hasSshenv then
+    if hasSshenv && sshenvEnvOnly then
+      ''
+        exec ${pkgs.sshenv}/bin/sshenv run ${escapeShellArg sshenvProfile} -- pi --provider ${escapeShellArg descriptor.provider} --model ${escapeShellArg descriptor.model}${thinkingFlag} "$@"
+      ''
+    else if hasSshenv then
       ''
         _agent_dir=${escapeShellArg sshenvAgentDir}
         _shared=${escapeShellArg sharedAgentDir}
