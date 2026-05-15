@@ -20,17 +20,32 @@ let
   agentPermissions = import ../../lib/agent-permissions.nix { inherit lib myLib; };
 
   # Auto-discover provider profiles from configs/pi/providers/
+  # Provider descriptors come from two sources:
+  #   - JSON files in configs/pi/providers/   (public, in-repo)
+  #   - inline `extraProviders` attrs        (typically defined in encrypted
+  #                                            host home.nix files)
+  # Both produce a pi-<name> wrapper and (when baseUrl is set) a models.json
+  # entry. On name collisions the inline option wins.
   providersDir = ../../../configs/pi/providers;
   allProviderFiles = builtins.attrNames (builtins.readDir providersDir);
   jsonProviderFiles = builtins.filter (f: hasSuffix ".json" f) allProviderFiles;
-  providerNames = map (f: removeSuffix ".json" f) jsonProviderFiles;
+  jsonProviderNames = map (f: removeSuffix ".json" f) jsonProviderFiles;
+  jsonProviderDescriptors = listToAttrs (
+    map (n: {
+      name = n;
+      value = builtins.fromJSON (builtins.readFile (providersDir + "/${n}.json"));
+    }) jsonProviderNames
+  );
+
+  providerDescriptors = jsonProviderDescriptors // cfg.extraProviders;
+  providerNames = builtins.attrNames providerDescriptors;
 
   # Build shell function bodies for pi-<name> wrappers. Each wrapper pins a
   # provider + model (and optionally thinking level) by forwarding to `pi`
   # with the appropriate CLI flags.
   #
-  # If the provider descriptor contains an `sshenv` block, the wrapper instead
-  # routes auth through the sshenv-auth extension (see
+  # If the descriptor contains an `sshenv` block, the wrapper instead routes
+  # auth through the sshenv-auth extension (see
   # configs/pi/extensions/sshenv-auth/) by:
   #   - pointing PI_CODING_AGENT_DIR at ~/.pi/<agentSubdir>/agent
   #   - symlinking shared static config from ~/.pi/agent/
@@ -40,7 +55,7 @@ let
   mkWrapper =
     name:
     let
-      descriptor = builtins.fromJSON (builtins.readFile (providersDir + "/${name}.json"));
+      descriptor = providerDescriptors.${name};
       thinkingFlag =
         if descriptor ? thinking then " --thinking ${escapeShellArg descriptor.thinking}" else "";
       hasSshenv = descriptor ? sshenv;
@@ -95,13 +110,13 @@ let
     }) providerNames
   );
 
-  # Auto-discover provider models from provider JSON files.
-  # Each provider JSON can optionally define baseUrl, apiKey, and models
-  # to register it in Pi's model registry.
+  # Auto-discover provider models from provider descriptors.
+  # Each descriptor can optionally define baseUrl, apiKey, and models to
+  # register it in Pi's model registry.
   mkProviderModelsEntry =
     name:
     let
-      descriptor = builtins.fromJSON (builtins.readFile (providersDir + "/${name}.json"));
+      descriptor = providerDescriptors.${name};
       hasModels = descriptor ? models && descriptor.models != [ ];
     in
     if descriptor ? baseUrl then
@@ -415,6 +430,32 @@ in
       type = types.listOf types.path;
       default = [ ];
       description = "Additional Pi-only shared-agent permission JSON files merged after shared and OpenCode config overrides.";
+    };
+
+    extraProviders = mkOption {
+      type = types.attrsOf types.attrs;
+      default = { };
+      example = literalExpression ''
+        {
+          openai-nds = {
+            provider = "openai-codex";
+            model = "gpt-5.5-fast";
+            thinking = "high";
+            sshenv = {
+              profile = "openai-nds";
+              agentSubdir = "openai-nds";
+              oauth.openai-codex = "OPENAI_CODEX_AUTH_JSON_B64";
+            };
+          };
+        }
+      '';
+      description = ''
+        Inline provider descriptors merged with the JSON files in
+        configs/pi/providers/. Each entry produces a pi-<name> wrapper. Use
+        this from encrypted host home.nix files to keep work-only / private
+        profiles out of the public tree. Inline entries win on name
+        collisions with the in-repo JSON descriptors.
+      '';
     };
 
   };

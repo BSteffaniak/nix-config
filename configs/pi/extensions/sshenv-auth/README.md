@@ -40,7 +40,12 @@ For heavy parallel use of one ChatGPT subscription, route through brouter (`pi-b
 
 ## Provider descriptor format
 
-In `configs/pi/providers/<name>.json`:
+Descriptors live in two places:
+
+- `configs/pi/providers/<name>.json` — in-repo, public.
+- `myConfig.development.pi.extraProviders.<name>` in a host home.nix — inline. Useful for encrypted hosts (`hosts/bs-mbpro/` is git-sshripped) so private profiles never appear in plaintext on GitHub. Inline entries win on name collisions.
+
+Both use the same shape:
 
 ```json
 {
@@ -76,7 +81,7 @@ jq 'del(."openai-codex")' ~/.pi/agent/auth.json > ~/.pi/agent/auth.json.tmp \
   && mv ~/.pi/agent/auth.json.tmp ~/.pi/agent/auth.json
 ```
 
-### ChatGPT subscription profile (`openai`, `openai-nds`)
+### ChatGPT subscription profile (`openai`, plus host-only accounts via `extraProviders`)
 
 ```sh
 # 1. Make sure the sshenv profile exists with an empty OAuth placeholder.
@@ -94,7 +99,7 @@ pi-openai
 sshenv list openai             # should include OPENAI_CODEX_AUTH_JSON_B64
 ```
 
-Repeat for `openai-nds` (work account):
+Repeat for any host-specific account defined via `extraProviders` (e.g. `openai-nds` on `bs-mbpro`):
 
 ```sh
 sshenv set openai-nds OPENAI_CODEX_AUTH_JSON_B64 --value ""
