@@ -2,15 +2,22 @@
 # Theme
 # ---------------------------------------------------------------------------
 [plugins.settings."bmux.theme"]
-# Compose bundled theme components through the bmux.theme plugin. The
-# performance theme owns CPU/MEM diagnostics, while rainbow-snake contributes
-# the snake decoration component layered between the performance border and
-# header text.
-themes = ["performance", "rainbow-snake", "mode-aware"]
-persistence = "persist_between_connects"
+# Keep performance diagnostics and mode-aware colors as the stable base, while
+# stacking fun decoration component packs independently per pane.
+appearance_themes = ["performance", "mode-aware"]
+component_themes  = ["performance", "pong", "rainbow-snake"]
+persistence       = "persist_between_connects"
+
+[plugins.settings."bmux.theme".component_targets]
+"performance.*" = { kind = "all-panes" }
+"pong.*"        = { kind = "unfocused-panes" }
+"snake"         = { kind = "focused-pane" }
 
 [plugins.settings."bmux.theme".components.snake]
 above = ["performance.border"]
+below = ["performance.header"]
+
+[plugins.settings."bmux.theme".components."pong.score"]
 below = ["performance.header"]
 
 [composition]
