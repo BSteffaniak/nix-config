@@ -54,8 +54,9 @@ let
   #        - exporting PI_SSHENV_PROFILE / PI_SSHENV_API_KEYS_JSON / PI_SSHENV_OAUTH_KEYS_JSON
   #      The extension reads creds from the named sshenv profile at
   #      session_start and round-trips refreshed OAuth blobs back to it.
-  #      Sessions are explicitly pointed back at the shared ~/.pi/agent/sessions
-  #      tree so history stays project-scoped instead of provider-scoped.
+  #      The per-profile agent dir's sessions/ path is symlinked back to
+  #      shared ~/.pi/agent/sessions so pi keeps its normal per-working-
+  #      directory organization while sharing history across profiles.
   #
   #   2. envOnly mode (sshenv.envOnly = true):
   #      Wraps `pi` in `sshenv run <profile> --` so the profile's env vars
@@ -88,9 +89,14 @@ let
       ''
         _agent_dir=${escapeShellArg sshenvAgentDir}
         _shared=${escapeShellArg sharedAgentDir}
-        _session_dir="''${PI_CODING_AGENT_SESSION_DIR:-$_shared/sessions}"
-        mkdir -p "$_agent_dir" "$_session_dir"
-        chmod 700 "$_agent_dir" "$_session_dir" 2>/dev/null || true
+        mkdir -p "$_agent_dir" "$_shared/sessions"
+        chmod 700 "$_agent_dir" "$_shared/sessions" 2>/dev/null || true
+        if [ -z "''${PI_CODING_AGENT_SESSION_DIR:-}" ]; then
+          if [ -e "$_agent_dir/sessions" ] && [ ! -L "$_agent_dir/sessions" ]; then
+            mv "$_agent_dir/sessions" "$_agent_dir/sessions.before-shared-link.$(date +%Y%m%d%H%M%S)"
+          fi
+          ln -sfn "$_shared/sessions" "$_agent_dir/sessions"
+        fi
         for _f in settings.json models.json keybindings.json agent-permissions.json SYSTEM.md APPEND_SYSTEM.md; do
           if [ -e "$_shared/$_f" ]; then
             ln -sfn "$_shared/$_f" "$_agent_dir/$_f"
@@ -109,7 +115,6 @@ let
           fi
         fi
         PI_CODING_AGENT_DIR="$_agent_dir" \
-        PI_CODING_AGENT_SESSION_DIR="$_session_dir" \
         PI_SSHENV_PROFILE=${escapeShellArg sshenvProfile} \
         PI_SSHENV_API_KEYS_JSON=${escapeShellArg sshenvApiKeysJson} \
         PI_SSHENV_OAUTH_KEYS_JSON=${escapeShellArg sshenvOAuthJson} \
@@ -531,6 +536,76 @@ in
           rm -rf "$bun_global/node_modules"
         fi
         ln -sfn "$npm_node_modules" "$bun_global/node_modules"
+      '';
+
+      # Pi stores sessions below a cwd-derived subdirectory when using its
+      # default session path. The previous per-profile wrapper briefly set
+      # PI_CODING_AGENT_SESSION_DIR directly, which caused sessions to be
+      # written at the root. Move those back under their cwd-derived dirs.
+      home.activation.migratePiRootSessions = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+                session_root="${config.home.homeDirectory}/.pi/agent/sessions"
+                if [ -d "$session_root" ]; then
+                  ${pkgs.python3}/bin/python3 - "$session_root" <<'PY'
+        import json
+        import shutil
+        import sys
+        from pathlib import Path
+
+        root = Path(sys.argv[1])
+
+
+        def session_dir_name(cwd: str) -> str:
+            return "--" + cwd.strip("/").replace("/", "-") + "--"
+
+
+        def append_and_unlink(source: Path, target: Path) -> None:
+            with source.open("rb") as src, target.open("ab") as dst:
+                dst.write(src.read())
+            source.unlink()
+
+
+        for session in sorted(root.glob("*.jsonl")):
+            try:
+                with session.open("r", encoding="utf-8") as handle:
+                    first_line = handle.readline()
+                header = json.loads(first_line) if first_line else {}
+
+                if header.get("type") == "session" and isinstance(header.get("cwd"), str) and header["cwd"]:
+                    destination_dir = root / session_dir_name(header["cwd"])
+                    destination_dir.mkdir(mode=0o700, exist_ok=True)
+                    destination = destination_dir / session.name
+
+                    if destination.exists():
+                        append_and_unlink(session, destination)
+                    else:
+                        shutil.move(str(session), str(destination))
+
+                    companion = root / session.stem
+                    if companion.exists():
+                        companion_destination = destination_dir / companion.name
+                        if companion_destination.exists():
+                            for child in companion.iterdir():
+                                child_destination = companion_destination / child.name
+                                if not child_destination.exists():
+                                    shutil.move(str(child), str(child_destination))
+                            try:
+                                companion.rmdir()
+                            except OSError:
+                                pass
+                        else:
+                            shutil.move(str(companion), str(companion_destination))
+                    continue
+
+                # If an old live process recreates a root-level fragment after the
+                # header-bearing file was already moved, append it to the unique matching
+                # migrated session file.
+                migrated_matches = [candidate for candidate in root.glob(f"*/{session.name}") if candidate.is_file()]
+                if len(migrated_matches) == 1:
+                    append_and_unlink(session, migrated_matches[0])
+            except Exception as exc:
+                print(f"warning: failed to migrate {session}: {exc}", file=sys.stderr)
+        PY
+                fi
       '';
     }
 
