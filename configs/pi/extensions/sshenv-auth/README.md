@@ -2,7 +2,7 @@
 
 Resolve pi's `auth.json` from an [`sshenv`](https://github.com/BSteffaniak/sshenv) vault at session start, and round-trip refreshed OAuth credentials back to the vault. Activated when the per-profile shell wrapper sets `PI_SSHENV_PROFILE`; otherwise the extension is a no-op.
 
-The Nix module at `home/modules/development/pi.nix` reads `configs/pi/providers/*.json`. When a descriptor includes an `sshenv` block, the generated `pi-<name>` wrapper points pi at a per-profile `PI_CODING_AGENT_DIR` and exports the env-var contract this extension consumes. Descriptors without an `sshenv` block keep their original behavior (raw `pi --provider … --model …`).
+The Nix module at `home/modules/development/pi.nix` reads `configs/pi/providers/*.json`. When a descriptor includes an `sshenv` block, the generated `pi-<name>` wrapper points pi at a per-profile `PI_CODING_AGENT_DIR` for auth/config and a shared `PI_CODING_AGENT_SESSION_DIR` for project-scoped session history, then exports the env-var contract this extension consumes. Descriptors without an `sshenv` block keep their original behavior (raw `pi --provider … --model …`).
 
 ## What it does
 
@@ -16,18 +16,19 @@ The Nix module at `home/modules/development/pi.nix` reads `configs/pi/providers/
 
 ## Env-var contract (set by the wrapper)
 
-| Variable                      | Purpose                                                                                                                                      |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PI_SSHENV_PROFILE`           | sshenv profile name. Activates the extension.                                                                                                |
-| `PI_SSHENV_API_KEYS_JSON`     | JSON `{ providerId: SSHENV_VAR_NAME }` for raw API keys.                                                                                     |
-| `PI_SSHENV_OAUTH_KEYS_JSON`   | JSON `{ providerId: SSHENV_VAR_NAME }` for OAuth blobs.                                                                                      |
-| `PI_SSHENV_FLUSH_DEBOUNCE_MS` | Optional. Default `5000`.                                                                                                                    |
-| `PI_SSHENV_SSHENV_BIN`        | Optional. Path to the `sshenv` binary. Defaults to `sshenv` from PATH.                                                                       |
-| `PI_CODING_AGENT_DIR`         | Standard pi env var. The wrapper points it at a per-profile dir under `~/.pi/<name>/agent` so different profiles never share an `auth.json`. |
+| Variable                      | Purpose                                                                                                                                                                                               |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PI_SSHENV_PROFILE`           | sshenv profile name. Activates the extension.                                                                                                                                                         |
+| `PI_SSHENV_API_KEYS_JSON`     | JSON `{ providerId: SSHENV_VAR_NAME }` for raw API keys.                                                                                                                                              |
+| `PI_SSHENV_OAUTH_KEYS_JSON`   | JSON `{ providerId: SSHENV_VAR_NAME }` for OAuth blobs.                                                                                                                                               |
+| `PI_SSHENV_FLUSH_DEBOUNCE_MS` | Optional. Default `5000`.                                                                                                                                                                             |
+| `PI_SSHENV_SSHENV_BIN`        | Optional. Path to the `sshenv` binary. Defaults to `sshenv` from PATH.                                                                                                                                |
+| `PI_CODING_AGENT_DIR`         | Standard pi env var. The wrapper points it at a per-profile dir under `~/.pi/<name>/agent` so different profiles never share an `auth.json`.                                                          |
+| `PI_CODING_AGENT_SESSION_DIR` | Standard pi env var. The wrapper points it at shared `~/.pi/agent/sessions` by default so sessions remain organized by working directory, not provider/auth profile. Honors an existing env override. |
 
 ## Concurrency
 
-By construction, two pi instances on different profiles use different agent dirs, different `auth.json` files, and different sshenv profiles — no interaction.
+By construction, two pi instances on different profiles use different agent dirs, different `auth.json` files, and different sshenv profiles. They intentionally share the same session root (`~/.pi/agent/sessions` by default), so `/resume` and `pi -c` see the same project history across provider wrappers.
 
 Two pi instances on the **same** profile share `auth.json`. The common case (neither refreshes during their session) works fine; OpenAI doesn't reject parallel use of the same access token. The rare case (both refresh simultaneously) is a brief race that pi's own retry logic handles. The extension does **not** lock by default. Set `PI_SSHENV_LOCK=1` in the wrapper environment to opt into serialization (handled in the wrapper, not here).
 
@@ -128,4 +129,5 @@ pi-grok-code-fast
 
 - Plaintext `auth.json` exists only inside `~/.pi/<profile>/agent/` (mode 0600), and only while the wrapper is running.
 - The vault file (`~/.sshenv/vault`) is the durable store. Refreshed OAuth tokens are flushed back to it during the session and on exit.
-- Sessions, run history, and per-model thinking config persist in `~/.pi/<profile>/agent/sessions/` etc. They are not symlinked back to the default `~/.pi/agent/`, so each profile has its own session history.
+- Sessions persist in shared `~/.pi/agent/sessions/` by default, still organized by working directory. Set `PI_CODING_AGENT_SESSION_DIR` before invoking a wrapper if you want a different shared or isolated session root.
+- Per-profile auth remains in `~/.pi/<profile>/agent/auth.json`; shared static config is symlinked from `~/.pi/agent/` into the per-profile agent dir.

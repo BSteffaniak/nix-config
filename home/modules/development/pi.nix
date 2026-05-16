@@ -54,6 +54,8 @@ let
   #        - exporting PI_SSHENV_PROFILE / PI_SSHENV_API_KEYS_JSON / PI_SSHENV_OAUTH_KEYS_JSON
   #      The extension reads creds from the named sshenv profile at
   #      session_start and round-trips refreshed OAuth blobs back to it.
+  #      Sessions are explicitly pointed back at the shared ~/.pi/agent/sessions
+  #      tree so history stays project-scoped instead of provider-scoped.
   #
   #   2. envOnly mode (sshenv.envOnly = true):
   #      Wraps `pi` in `sshenv run <profile> --` so the profile's env vars
@@ -86,8 +88,9 @@ let
       ''
         _agent_dir=${escapeShellArg sshenvAgentDir}
         _shared=${escapeShellArg sharedAgentDir}
-        mkdir -p "$_agent_dir/sessions"
-        chmod 700 "$_agent_dir" 2>/dev/null || true
+        _session_dir="''${PI_CODING_AGENT_SESSION_DIR:-$_shared/sessions}"
+        mkdir -p "$_agent_dir" "$_session_dir"
+        chmod 700 "$_agent_dir" "$_session_dir" 2>/dev/null || true
         for _f in settings.json models.json keybindings.json agent-permissions.json SYSTEM.md APPEND_SYSTEM.md; do
           if [ -e "$_shared/$_f" ]; then
             ln -sfn "$_shared/$_f" "$_agent_dir/$_f"
@@ -106,6 +109,7 @@ let
           fi
         fi
         PI_CODING_AGENT_DIR="$_agent_dir" \
+        PI_CODING_AGENT_SESSION_DIR="$_session_dir" \
         PI_SSHENV_PROFILE=${escapeShellArg sshenvProfile} \
         PI_SSHENV_API_KEYS_JSON=${escapeShellArg sshenvApiKeysJson} \
         PI_SSHENV_OAUTH_KEYS_JSON=${escapeShellArg sshenvOAuthJson} \
