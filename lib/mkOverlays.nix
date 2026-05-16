@@ -34,6 +34,22 @@
           {
             unstable = unstablePkgs;
             fish = unstablePkgs.fish;
+            ollama =
+              if prev.stdenv.isDarwin then
+                prev.ollama.overrideAttrs (old: {
+                  doCheck = false;
+                  postPatch =
+                    builtins.replaceStrings
+                      [
+                        "rm model/models/nemotronh/model_omni_test.go"
+                      ]
+                      [
+                        "rm -f model/models/nemotronh/model_omni_test.go"
+                      ]
+                      old.postPatch;
+                })
+              else
+                prev.ollama;
             fishPlugins =
               if prev.stdenv.isDarwin then
                 prev.fishPlugins
