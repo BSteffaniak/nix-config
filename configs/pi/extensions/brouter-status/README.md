@@ -20,6 +20,7 @@ Set `BROUTER_EXTENSION_ALWAYS=1` to inject metadata into every provider payload;
 
 - `/brouter-status` — show brouter URL, Pi session id, active preference, last route, and event id.
 - `/brouter-route` — show detailed latest route headers.
+- `/brouter-why` — fetch the latest route-decision event and show router reasons, judge trigger/result/rationale, controls sources, top candidates, and exclusions.
 - `/brouter-timeline [session-id]` — show recent brouter events for this Pi session, or for an explicit session id.
 - `/brouter-choice` — interactively choose `balanced`, `stronger`, `faster`, `cheaper`, `slower`, `local`, `conserve_quota`, or clear.
 - `/brouter-choice stronger` — set a preference directly.

@@ -149,39 +149,135 @@ async function fetchJson(path: string): Promise<unknown> {
     return response.json();
 }
 
+type RoutingEvent = {
+    timestamp_ms?: number;
+    kind?: string;
+    request_id?: string;
+    event_id?: string;
+    payload?: Record<string, unknown>;
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === "object"
+        ? (value as Record<string, unknown>)
+        : {};
+}
+
+function asArray(value: unknown): unknown[] {
+    return Array.isArray(value) ? value : [];
+}
+
 function timelineLines(events: unknown): string[] {
     if (!Array.isArray(events) || events.length === 0)
         return ["No brouter events."];
-    return events.slice(-25).map((event) => {
-        const item = event as {
-            timestamp_ms?: number;
-            kind?: string;
-            request_id?: string;
-            event_id?: string;
-            payload?: Record<string, unknown>;
-        };
+    return events.slice(-25).flatMap((event) => {
+        const item = event as RoutingEvent;
         const payload = item.payload ?? {};
         if (item.kind === "route_decision") {
-            const controls = (payload.request_controls ?? {}) as Record<
-                string,
-                unknown
-            >;
-            const features = (payload.features ?? {}) as Record<
-                string,
-                unknown
-            >;
-            return [
-                `${item.timestamp_ms ?? ""} route`,
-                String(payload.selected_model ?? "<unknown>"),
-                `tier=${String(controls.service_tier ?? "default")}`,
-                `reasoning=${String(controls.reasoning_effort ?? "default")}`,
-                `intent=${String(features.intent ?? "unknown")}/${String(features.reasoning ?? "unknown")}`,
-            ].join("  ");
+            const controls = asRecord(payload.request_controls);
+            const features = asRecord(payload.features);
+            const judgeTrigger = asRecord(payload.judge_trigger);
+            const judge = asRecord(payload.judge);
+            const lines = [
+                [
+                    `${item.timestamp_ms ?? ""} route`,
+                    String(payload.selected_model ?? "<unknown>"),
+                    `tier=${String(controls.service_tier ?? "default")}`,
+                    `reasoning=${String(controls.reasoning_effort ?? "default")}`,
+                    `intent=${String(features.intent ?? "unknown")}/${String(features.reasoning ?? "unknown")}`,
+                    `judge=${judgeTrigger.fired ? "fired" : "skipped"}`,
+                ].join("  "),
+            ];
+            if (judge.rationale) {
+                lines.push(`  judge why: ${String(judge.rationale)}`);
+            }
+            const top = asArray(payload.candidates)
+                .slice(0, 2)
+                .map((candidate) =>
+                    String(asRecord(candidate).model_id ?? "<unknown>"),
+                )
+                .join(" vs ");
+            if (top) lines.push(`  candidates: ${top}`);
+            return lines;
         }
         if (item.kind === "provider_attempt") {
-            return `${item.timestamp_ms ?? ""} attempt  ${String(payload.model_id ?? "<unknown>")} status=${String(payload.status_code ?? "error")}`;
+            return [
+                `${item.timestamp_ms ?? ""} attempt  ${String(payload.model_id ?? "<unknown>")} status=${String(payload.status_code ?? "error")} fallback=${String(payload.fallback_used ?? false)}`,
+            ];
         }
-        return `${item.timestamp_ms ?? ""} ${item.kind ?? "event"} ${item.event_id ?? ""}`;
+        return [
+            `${item.timestamp_ms ?? ""} ${item.kind ?? "event"} ${item.event_id ?? ""}`,
+        ];
+    });
+}
+
+function whyLines(event: unknown): string[] {
+    const item = event as RoutingEvent;
+    const payload = item.payload ?? {};
+    const controls = asRecord(payload.request_controls);
+    const features = asRecord(payload.features);
+    const sources = asRecord(payload.control_sources);
+    const judgeTrigger = asRecord(payload.judge_trigger);
+    const judge = asRecord(payload.judge);
+    const lines = [
+        `selected: ${String(payload.selected_model ?? "<unknown>")}`,
+        `provider: ${String(payload.provider ?? "<unknown>")}`,
+        `upstream: ${String(payload.upstream_model ?? "<unknown>")}`,
+        `intent/reasoning: ${String(features.intent ?? "unknown")}/${String(features.reasoning ?? "unknown")}`,
+        `controls: service_tier=${String(controls.service_tier ?? "default")} (${String(sources.service_tier ?? "unknown")}), reasoning_effort=${String(controls.reasoning_effort ?? "default")} (${String(sources.reasoning_effort ?? "unknown")})`,
+        `judge: ${judgeTrigger.fired ? "fired" : "skipped"} gap=${String(judgeTrigger.score_gap ?? "unknown")} reason=${String(judgeTrigger.reason ?? "unknown")}`,
+    ];
+    const reasons = asArray(payload.reasons).map(String).filter(Boolean);
+    if (reasons.length > 0) lines.push(`router why: ${reasons.join("; ")}`);
+    if (Object.keys(judge).length > 0) {
+        lines.push(
+            `judge result: ${String(judge.model ?? "unknown")} chose ${String(judge.chosen_model ?? "unknown")} overridden=${String(judge.overridden ?? false)}`,
+        );
+        if (judge.rationale)
+            lines.push(`judge why: ${String(judge.rationale)}`);
+    }
+    const candidates = asArray(payload.candidates).slice(0, 4);
+    if (candidates.length > 0) {
+        lines.push("top candidates:");
+        const first = asRecord(candidates[0]);
+        const topScore = Number(first.score ?? 0);
+        for (const candidateValue of candidates) {
+            const candidate = asRecord(candidateValue);
+            const score = Number(candidate.score ?? 0);
+            const delta = score - topScore;
+            const reasons = asArray(candidate.reasons).map(String).join("; ");
+            lines.push(
+                `  ${String(candidate.model_id ?? "<unknown>")}: score=${score.toFixed(2)} Δ=${delta.toFixed(2)} cost=${String(candidate.estimated_cost ?? "?")} ${reasons}`,
+            );
+        }
+    }
+    const excluded = asArray(payload.excluded_candidates).slice(0, 5);
+    if (excluded.length > 0) {
+        lines.push("excluded:");
+        for (const excludedValue of excluded) {
+            const item = asRecord(excludedValue);
+            lines.push(
+                `  ${String(item.model_id ?? "<unknown>")}: ${String(item.reason ?? "unknown")}`,
+            );
+        }
+    }
+    return lines;
+}
+
+async function latestRouteDecisionEvent(
+    session: string,
+    requestId?: string,
+): Promise<unknown | undefined> {
+    const events = await fetchJson(
+        `/v1/brouter/sessions/${encodeURIComponent(session)}/events`,
+    );
+    if (!Array.isArray(events)) return undefined;
+    return [...events].reverse().find((event) => {
+        const item = event as RoutingEvent;
+        return (
+            item.kind === "route_decision" &&
+            (!requestId || item.request_id === requestId)
+        );
     });
 }
 
@@ -295,6 +391,29 @@ export default function brouterStatus(pi: ExtensionAPI) {
             "info",
         );
     }
+
+    pi.registerCommand("brouter-why", {
+        description:
+            "Show why brouter selected the latest model/tier/reasoning",
+        handler: async (_args, ctx) => {
+            try {
+                const event = await latestRouteDecisionEvent(
+                    sessionId(ctx),
+                    lastRoute?.requestId,
+                );
+                if (!event) {
+                    ctx.ui.notify(
+                        "No brouter route decision has been observed yet.",
+                        "info",
+                    );
+                    return;
+                }
+                ctx.ui.notify(whyLines(event).join("\n"), "info");
+            } catch (error) {
+                ctx.ui.notify(String(error), "warning");
+            }
+        },
+    });
 
     pi.registerCommand("brouter-choice", {
         description:
