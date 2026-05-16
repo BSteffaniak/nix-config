@@ -104,9 +104,20 @@ function isBrouterPayload(
 }
 
 function routeLabel(route: Route): string {
-    const badges = route.badges.length > 0 ? ` ${route.badges.join(" ")}` : "";
-    const tier = route.serviceTier ? ` ${route.serviceTier}` : "";
-    const reasoning = route.reasoningEffort ? ` ${route.reasoningEffort}` : "";
+    const controlValues = new Set(
+        [route.serviceTier, route.reasoningEffort].filter(
+            (value): value is string => Boolean(value),
+        ),
+    );
+    const displayBadges = route.badges.filter(
+        (badge) => !controlValues.has(badge),
+    );
+    const badges =
+        displayBadges.length > 0 ? ` ${displayBadges.join(" ")}` : "";
+    const tier = route.serviceTier ? ` tier=${route.serviceTier}` : "";
+    const reasoning = route.reasoningEffort
+        ? ` reasoning=${route.reasoningEffort}`
+        : "";
     const fallback = route.fallbackUsed ? " fallback" : "";
     return `↗ ${route.upstreamModel}${badges}${tier}${reasoning}${fallback}`;
 }
