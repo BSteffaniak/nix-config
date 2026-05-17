@@ -201,7 +201,6 @@ let
   baseSettings = {
     server = {
       inherit (cfg) host port;
-      max_request_body_bytes = cfg.maxRequestBodyBytes;
     };
 
     router = {
@@ -389,12 +388,6 @@ in
       type = types.port;
       default = 8080;
       description = "Port for the local brouter HTTP server.";
-    };
-
-    maxRequestBodyBytes = mkOption {
-      type = types.int;
-      default = 1048576;
-      description = "Maximum request body size accepted by brouter.";
     };
 
     enableService = mkOption {
