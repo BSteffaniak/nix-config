@@ -366,6 +366,7 @@ let
   };
 
   finalSettings = recursiveUpdate baseSettings cfg.extraSettings;
+  generatedConfig = tomlFormat.generate "brouter.toml" finalSettings;
 in
 {
   options.myConfig.development.brouter = {
@@ -615,7 +616,7 @@ in
 
       home.packages = [ cfg.package ] ++ optional (cfg.sshenvProfile != null) pkgs.sshenv;
 
-      xdg.configFile."brouter/brouter.toml".source = tomlFormat.generate "brouter.toml" finalSettings;
+      xdg.configFile."brouter/brouter.toml".source = generatedConfig;
 
       home.activation.createBrouterStateDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         mkdir -p ${escapeShellArg stateDir}
@@ -656,6 +657,24 @@ in
           StandardErrorPath = "${logsDir}/brouter.launchd.err.log";
         };
       };
+      home.activation.restartBrouterAfterConfigChange = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        state_dir=${escapeShellArg stateDir}
+        marker="$state_dir/config-source"
+        current_source=${escapeShellArg generatedConfig}
+        previous_source=""
+
+        mkdir -p "$state_dir"
+        if [ -f "$marker" ]; then
+          previous_source="$(cat "$marker")"
+        fi
+
+        if [ "$previous_source" != "$current_source" ]; then
+          printf '%s\n' "$current_source" > "$marker"
+          if launchctl print "gui/$(id -u)/com.braden.brouter" >/dev/null 2>&1; then
+            run launchctl kickstart -k "gui/$(id -u)/com.braden.brouter" || true
+          fi
+        fi
+      '';
     })
 
     (mkIf (cfg.enableService && pkgs.stdenv.isLinux) {
