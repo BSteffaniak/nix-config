@@ -367,6 +367,12 @@ let
 
   finalSettings = recursiveUpdate baseSettings cfg.extraSettings;
   generatedConfig = tomlFormat.generate "brouter.toml" finalSettings;
+  restartSource = pkgs.writeText "brouter-restart-source" ''
+    config=${generatedConfig}
+    brouter=${cfg.package}/bin/brouter
+    sshenv=${optionalString (cfg.sshenvProfile != null) "${pkgs.sshenv}/bin/sshenv"}
+    sshenv_profile=${optionalString (cfg.sshenvProfile != null) cfg.sshenvProfile}
+  '';
 in
 {
   options.myConfig.development.brouter = {
@@ -659,8 +665,8 @@ in
       };
       home.activation.restartBrouterAfterConfigChange = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         state_dir=${escapeShellArg stateDir}
-        marker="$state_dir/config-source"
-        current_source=${escapeShellArg generatedConfig}
+        marker="$state_dir/restart-source"
+        current_source=${escapeShellArg restartSource}
         previous_source=""
 
         mkdir -p "$state_dir"
