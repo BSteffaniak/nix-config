@@ -10,25 +10,37 @@ Create a new shared agent skill by gathering requirements, selecting the appropr
 
 ## Repo Structure
 
-Skills are managed as part of a nix configuration repo and deployed to `~/.config/opencode/skills/` via home-manager's `xdg.configFile`. Understanding this deployment model is critical:
+Skills are managed as part of a nix configuration repo and deployed by home-manager. There are two skill roots with different purposes:
 
-- **Source of truth**: `configs/agents/skills/<skill-name>/SKILL.md` in the nix config repo
-- **Deployed to**: `~/.config/opencode/skills/<skill-name>/SKILL.md` by nix (via `xdg.configFile`) and imported into Pi's shared skill root
-- **Auto-discovered**: The nix modules scan `configs/agents/skills/` and deploy every directory they find. Creating a new skill directory is sufficient — no nix config edits are needed.
-- **NEVER create files directly in `~/.config/opencode/skills/`** — that directory is managed by nix and will be overwritten on rebuild.
+- **Shared agent skills source of truth**: `configs/agents/skills/<skill-name>/SKILL.md` in the nix config repo
+- **Shared agent skills deploy to OpenCode**: `~/.config/opencode/skills/<skill-name>/SKILL.md` by nix (via `xdg.configFile`)
+- **Shared agent skills import into Pi**: copied into Pi's shared `agent-skills` root and loaded alongside Pi-native skills
+- **Pi-only skills source of truth**: `configs/pi/skills/<skill-name>/SKILL.md`
+- **Pi-only skills deploy to Pi**: `~/.pi/agent/skills/<skill-name>/SKILL.md`
+- **Default choice**: create shared skills under `configs/agents/skills/` unless the workflow is genuinely Pi-specific and should not be shared with OpenCode
+- **Auto-discovered**: The nix modules scan these source directories and deploy every directory they find. Creating a new skill directory is sufficient — no nix config edits are needed.
+- **NEVER create files directly in `~/.config/opencode/skills/`, `~/.pi/agent/skills/`, or `~/.pi/agent/agent-skills/`** — those directories are managed by nix and will be overwritten on rebuild.
+
+Use `configs/pi/skills/` only for skills that depend on Pi-specific behavior, such as Pi's JSONL session layout, Pi-only tools/extensions, or Pi workflows that do not apply to OpenCode. For general agent workflows, Git/GitHub workflows, writing helpers, reviews, planning, and reusable procedures, use `configs/agents/skills/` so both OpenCode and Pi can use the skill.
 
 ### Finding the repo root
 
-The nix config repo is the one containing the `configs/agents/skills/` directory. Locate it:
+The nix config repo is the one containing the `configs/agents/skills/` and `configs/pi/skills/` directories. Locate it:
 
 ```bash
 git rev-parse --show-toplevel
 ```
 
-Then verify the skills directory exists:
+Then verify the relevant skills directory exists:
 
 ```bash
 ls configs/agents/skills/
+```
+
+For an approved Pi-only skill, also verify:
+
+```bash
+ls configs/pi/skills/
 ```
 
 If the current working directory is not inside the nix config repo, search for it by checking common locations or ask the user for the path.
@@ -330,6 +342,7 @@ Ask the following, skipping any that can be inferred from the user's description
 
 Based on the answers, determine:
 
+- Whether this is a shared skill or a Pi-only skill; default to shared unless the workflow genuinely depends on Pi-specific behavior
 - The skill name (kebab-case)
 - The structural pattern to use
 - The `allowed-tools` set
@@ -344,6 +357,7 @@ Based on the gathered requirements and the selected structural pattern, compose 
 ## Design: <skill-name>
 
 **Pattern**: <pattern name>
+**Target root**: <configs/agents/skills / configs/pi/skills>
 **allowed-tools**: <tool list>
 **Shared resources**: <none / _shared/<name>.md>
 
@@ -452,22 +466,27 @@ After all content is approved, write the files:
    ls configs/agents/skills/<skill-name>/ 2>/dev/null
    ```
 
+   For an approved Pi-only skill, check `configs/pi/skills/<skill-name>/` instead.
+
    If it exists, warn the user and ask whether to overwrite.
 
 3. Write the SKILL.md:
-   - Path: `<repo-root>/configs/agents/skills/<skill-name>/SKILL.md`
+   - Shared skill path: `<repo-root>/configs/agents/skills/<skill-name>/SKILL.md`
+   - Pi-only skill path: `<repo-root>/configs/pi/skills/<skill-name>/SKILL.md`
 
 4. Write any shared resources:
    - Path: `<repo-root>/configs/agents/skills/_shared/<name>.md`
+   - Do not create shared resources under `configs/pi/skills/`; Pi-only skills should keep single-skill reference material inline or in their own subdirectory.
 
 5. Write any additional variant SKILL.md files:
-   - Path: `<repo-root>/configs/agents/skills/<variant-name>/SKILL.md`
+   - Shared variant path: `<repo-root>/configs/agents/skills/<variant-name>/SKILL.md`
+   - Pi-only variant path: `<repo-root>/configs/pi/skills/<variant-name>/SKILL.md`
 
 6. Confirm creation:
 
    ```
    Created:
-   - configs/agents/skills/<skill-name>/SKILL.md
+   - <configs/agents/skills or configs/pi/skills>/<skill-name>/SKILL.md
 
    The skill will be auto-discovered and deployed on next nix rebuild.
    No other files need editing.
@@ -495,8 +514,9 @@ If the user provides custom text, apply the edits to the already-written files.
 
 ## Rules
 
-- **Never create files in `~/.config/opencode/skills/`.** That directory is managed by nix. Always write to `configs/agents/skills/` in the nix config repo.
-- **No nix config edits needed.** Shared agent skills are auto-discovered from `configs/agents/skills/`. Creating the directory and SKILL.md is sufficient.
+- **Never create files in managed deployment directories.** Do not write directly to `~/.config/opencode/skills/`, `~/.pi/agent/skills/`, or `~/.pi/agent/agent-skills/`. Always write to the nix repo source directories.
+- **Default to shared skills.** Write new skills to `configs/agents/skills/` unless the approved design is explicitly Pi-only because it depends on Pi-specific session layout, tools, extensions, or workflows.
+- **Pi-only skills go in `configs/pi/skills/`.** Use this directory only when the skill should be deployed to `~/.pi/agent/skills/` and not shared with OpenCode.
 - **Only add to `_shared/` when genuinely shared.** Content must be referenced by 2 or more skill files. Single-skill reference material goes inline in the SKILL.md or in a subdirectory of the skill itself.
 - **`allowed-tools` must be minimal.** Only include tools the skill's instructions explicitly use. Over-permissioning is a security concern.
 - **Cross-platform by default.** Use `python3` for date math, SQLite, and scripting. Never use macOS-only (`date -v`) or GNU-only (`date -d`) commands without a cross-platform alternative.
