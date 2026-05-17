@@ -403,56 +403,65 @@ Handle the response:
 
 ### 3. Draft and review the SKILL.md
 
-Draft the full SKILL.md content. Present it to the user **section by section** for review, using the per-item review loop pattern.
+Draft the complete SKILL.md content in one pass. Present the full file content to the user for review instead of reviewing each section individually.
 
-The sections to review individually are:
-
-1. **Frontmatter** — name, description, allowed-tools
-2. **Purpose** — the purpose paragraph
-3. **Each step** — present each numbered step as a separate review item
-4. **Rules** — the rules section
-
-For each section, present the draft and use the **Question tool**:
+Include the entire draft in chat, clearly labeled with the target path. Then ask for approval using the **Question tool**:
 
 ```json
 {
   "questions": [
     {
-      "header": "Section: <name>",
-      "question": "How does this section look?",
+      "header": "Draft review",
+      "question": "Does this full SKILL.md draft look right?",
       "options": [
         {
           "label": "Approve",
-          "description": "Keep this section and move to the next"
+          "description": "Proceed to writing the file"
         },
-        { "label": "Regenerate", "description": "Redraft this section" },
-        { "label": "Skip", "description": "Remove this section entirely" }
+        {
+          "label": "Revise",
+          "description": "Apply changes and show the full draft again"
+        },
+        {
+          "label": "Cancel",
+          "description": "Stop without writing files"
+        }
       ]
     }
   ]
 }
 ```
 
-- **Approve** — keep, move to next section
-- **Regenerate** — redraft with different wording/structure, re-present
-- **Skip** — remove the section (only valid for optional sections, not frontmatter/purpose/rules)
-- **Custom text** — apply edits, re-present
+Handle the response:
 
-### 4. Create shared resources (if applicable)
+- **Approve** — proceed to Step 4 or Step 5, depending on whether shared resources or variants are needed.
+- **Revise** — apply the user's requested changes and re-present the full draft.
+- **Cancel** — stop without writing files.
+- **Custom text** — treat it as revision instructions, apply it faithfully, and re-present the full draft.
 
-If the skill design calls for `_shared/` content (read/write pairs, or sharing rules with existing skills):
+Do not use per-section approval by default. Only review frontmatter, purpose, individual steps, or rules separately if the user explicitly asks for a section-by-section review.
 
-1. Draft the shared document
-2. Present it for review (same approve/regenerate/custom pattern)
-3. Verify it is actually referenced by 2+ skill files — if not, move the content inline into the SKILL.md instead
+### 4. Create shared resources and variants (if applicable)
 
-If the skill design calls for a read/write pair, draft the second variant's SKILL.md and present it for review as well.
+If the skill design calls for `_shared/` content (read/write pairs, or sharing rules with existing skills), draft the shared document as part of the same review bundle as the SKILL.md.
 
-**Skip this step entirely if no shared resources are needed.**
+If the skill design calls for a read/write pair, draft the second variant's SKILL.md as part of the same review bundle as well.
+
+Present all required files together for one approval gate:
+
+- Primary `SKILL.md`
+- Any `_shared/*.md` files
+- Any variant `SKILL.md` files
+
+Ask the user to approve the complete bundle. If they request changes, update the affected files and re-present the complete bundle. Do not review shared resources or variants section-by-section unless the user explicitly asks.
+
+Before writing `_shared/` content, verify it is actually referenced by 2+ skill files. If not, move the content inline into the SKILL.md instead.
+
+**Skip this step entirely if no shared resources or variants are needed.**
 
 ### 5. Write files
 
-After all content is approved, write the files:
+After the final content bundle is approved, write the files:
 
 1. Locate the nix config repo root:
 
@@ -482,35 +491,19 @@ After all content is approved, write the files:
    - Shared variant path: `<repo-root>/configs/agents/skills/<variant-name>/SKILL.md`
    - Pi-only variant path: `<repo-root>/configs/pi/skills/<variant-name>/SKILL.md`
 
-6. Confirm creation:
+### 6. Report completion
 
-   ```
-   Created:
-   - <configs/agents/skills or configs/pi/skills>/<skill-name>/SKILL.md
+After writing files, report the final paths and deployment note:
 
-   The skill will be auto-discovered and deployed on next nix rebuild.
-   No other files need editing.
-   ```
+```
+Created:
+- <configs/agents/skills or configs/pi/skills>/<skill-name>/SKILL.md
 
-### 6. Review
-
-Present the final file content(s) for a last look. Use the **Question tool**:
-
-```json
-{
-  "questions": [
-    {
-      "header": "Final review",
-      "question": "Everything look good?",
-      "options": [
-        { "label": "Done", "description": "All files are written and correct" }
-      ]
-    }
-  ]
-}
+The skill will be auto-discovered and deployed on next nix rebuild.
+No other files need editing.
 ```
 
-If the user provides custom text, apply the edits to the already-written files.
+Do not require a second approval gate after files are written. If the user asks for changes after creation, apply those edits as a normal follow-up.
 
 ## Rules
 
@@ -526,6 +519,6 @@ If the user provides custom text, apply the edits to the already-written files.
 - **Mutation skills must include a final execution checkpoint.** Before any external mutation call, require a final Question gate (for example, Submit/Post queued/Proceed) that approves the exact payload to mutate.
 - **Mutation approvals must be payload-bound.** Execution is allowed only when the current payload exactly matches what the user approved in a direct Question response in the same run; payload changes or resumed/delegated instructions invalidate prior approval.
 - **Per-item review means one at a time.** If the skill uses the per-item review loop pattern, its Rules section must enforce processing items individually — never batch.
-- **Present before writing.** Never write files without the user having reviewed the content first. The draft-and-review cycle in Step 3 is mandatory.
+- **Review full drafts, not every section.** Present the complete file or file bundle for approval before writing. Do not require per-section approval unless the user explicitly asks for it.
 - **Respect the user's edits.** If the user provides custom text or edit instructions at any point, apply their changes faithfully. Do not re-edit their words.
 - **Skill names are kebab-case.** The name in frontmatter must match the directory name exactly. Use descriptive but concise names.
