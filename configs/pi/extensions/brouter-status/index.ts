@@ -28,6 +28,11 @@ type Route = {
     upstreamModel: string;
     serviceTier?: string;
     reasoningEffort?: string;
+    contextWindow?: number;
+    contextTokens?: number;
+    contextPercent?: string;
+    contextSource?: string;
+    sessionSource?: string;
     resourcePools: string[];
     summary?: string;
     fallbackUsed: boolean;
@@ -62,6 +67,33 @@ function splitHeader(value: string | undefined): string[] {
         .filter(Boolean);
 }
 
+function numberHeader(headers: Headers, name: string): number | undefined {
+    const value = header(headers, name);
+    if (!value) return undefined;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : undefined;
+}
+
+function formatTokens(tokens: number): string {
+    if (tokens >= 1_000_000) {
+        return `${(tokens / 1_000_000)
+            .toFixed(2)
+            .replace(/\.0+$/, "")
+            .replace(/(\.\d)0$/, "$1")}M`;
+    }
+    if (tokens >= 1_000) return `${Math.round(tokens / 1_000)}k`;
+    return String(tokens);
+}
+
+function contextLabel(route: Route): string {
+    if (!route.contextWindow && !route.contextTokens) return "";
+    const tokens = route.contextTokens ?? 0;
+    const window = route.contextWindow;
+    const percent = route.contextPercent ? ` ${route.contextPercent}%` : "";
+    if (!window) return ` ctx=${formatTokens(tokens)}${percent}`;
+    return ` ctx=${formatTokens(tokens)}/${formatTokens(window)}${percent}`;
+}
+
 function routeFromHeaders(headers: Headers): Route | undefined {
     const selectedModel = header(headers, "x-brouter-selected-model");
     const provider = header(headers, "x-brouter-provider");
@@ -77,6 +109,11 @@ function routeFromHeaders(headers: Headers): Route | undefined {
         upstreamModel,
         serviceTier: header(headers, "x-brouter-service-tier"),
         reasoningEffort: header(headers, "x-brouter-reasoning-effort"),
+        contextWindow: numberHeader(headers, "x-brouter-context-window"),
+        contextTokens: numberHeader(headers, "x-brouter-context-tokens"),
+        contextPercent: header(headers, "x-brouter-context-percent"),
+        contextSource: header(headers, "x-brouter-context-source"),
+        sessionSource: header(headers, "x-brouter-session-source"),
         resourcePools: splitHeader(header(headers, "x-brouter-resource-pools")),
         summary: header(headers, "x-brouter-routing-summary"),
         fallbackUsed: header(headers, "x-brouter-fallback-used") === "true",
@@ -119,7 +156,7 @@ function routeLabel(route: Route): string {
         ? ` reasoning=${route.reasoningEffort}`
         : "";
     const fallback = route.fallbackUsed ? " fallback" : "";
-    return `↗ ${route.upstreamModel}${badges}${tier}${reasoning}${fallback}`;
+    return `↗ ${route.upstreamModel}${badges}${tier}${reasoning}${contextLabel(route)}${fallback}`;
 }
 
 function updateStatus(
@@ -361,6 +398,12 @@ export default function brouterStatus(pi: ExtensionAPI) {
                     lastRoute?.reasoningEffort
                         ? `reasoning: ${lastRoute.reasoningEffort}`
                         : undefined,
+                    lastRoute?.contextTokens || lastRoute?.contextWindow
+                        ? `context: ${formatTokens(lastRoute.contextTokens ?? 0)}${lastRoute.contextWindow ? ` / ${formatTokens(lastRoute.contextWindow)}` : ""}${lastRoute.contextPercent ? ` (${lastRoute.contextPercent}%)` : ""}`
+                        : undefined,
+                    lastRoute?.contextSource
+                        ? `context source: ${lastRoute.contextSource}`
+                        : undefined,
                     lastRoute?.eventId
                         ? `event: ${lastRoute.eventId}`
                         : undefined,
@@ -478,6 +521,36 @@ export default function brouterStatus(pi: ExtensionAPI) {
         handler: async (_args, ctx) => setPreference(ctx, undefined),
     });
 
+    pi.registerCommand("brouter-context", {
+        description: "Show brouter runtime context headers for this Pi session",
+        handler: async (_args, ctx) => {
+            if (!lastRoute) {
+                ctx.ui.notify(
+                    "No brouter route has been observed yet.",
+                    "info",
+                );
+                return;
+            }
+
+            ctx.ui.notify(
+                [
+                    `session: ${lastRoute.sessionId ?? sessionId(ctx)}`,
+                    `selected: ${lastRoute.selectedModel}`,
+                    `provider: ${lastRoute.provider}`,
+                    `upstream: ${lastRoute.upstreamModel}`,
+                    lastRoute.contextTokens || lastRoute.contextWindow
+                        ? `context: ${formatTokens(lastRoute.contextTokens ?? 0)}${lastRoute.contextWindow ? ` / ${formatTokens(lastRoute.contextWindow)}` : ""}${lastRoute.contextPercent ? ` (${lastRoute.contextPercent}%)` : ""}`
+                        : "context: unknown",
+                    `context source: ${lastRoute.contextSource ?? "unknown"}`,
+                    `session source: ${lastRoute.sessionSource ?? "unknown"}`,
+                    `request: ${lastRoute.requestId ?? "unknown"}`,
+                    `event: ${lastRoute.eventId ?? "unknown"}`,
+                ].join("\n"),
+                "info",
+            );
+        },
+    });
+
     pi.registerCommand("brouter-route", {
         description: "Show the last brouter route decision for this Pi session",
         handler: async (_args, ctx) => {
@@ -498,6 +571,15 @@ export default function brouterStatus(pi: ExtensionAPI) {
                     `reasoning: ${lastRoute.reasoningEffort ?? "default"}`,
                     `resource pools: ${lastRoute.resourcePools.join(", ") || "none"}`,
                     `badges: ${lastRoute.badges.join(", ") || "none"}`,
+                    lastRoute.contextTokens || lastRoute.contextWindow
+                        ? `context: ${formatTokens(lastRoute.contextTokens ?? 0)}${lastRoute.contextWindow ? ` / ${formatTokens(lastRoute.contextWindow)}` : ""}${lastRoute.contextPercent ? ` (${lastRoute.contextPercent}%)` : ""}`
+                        : undefined,
+                    lastRoute.contextSource
+                        ? `context source: ${lastRoute.contextSource}`
+                        : undefined,
+                    lastRoute.sessionSource
+                        ? `session source: ${lastRoute.sessionSource}`
+                        : undefined,
                     `fallback: ${lastRoute.fallbackUsed ? "yes" : "no"}`,
                     `request: ${lastRoute.requestId ?? "unknown"}`,
                     `event: ${lastRoute.eventId ?? "unknown"}`,

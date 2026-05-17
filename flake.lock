@@ -36,11 +36,11 @@
     "brouter-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1778967591,
-        "narHash": "sha256-Z+1IdYHX3PdCJSYc8V/pF2o0oDjLUixBsT3NVQGQHqw=",
+        "lastModified": 1778976594,
+        "narHash": "sha256-4J07xW7oCqNR+c7Jh1Z2BFebu88AQwVUhm8dvrJUNS8=",
         "owner": "BSteffaniak",
         "repo": "brouter",
-        "rev": "25a5118b9c8d5b78f007912a622e9cb9cf1c246e",
+        "rev": "2afd3f821dfd2aeffa06aa396a9826b8243238c9",
         "type": "github"
       },
       "original": {

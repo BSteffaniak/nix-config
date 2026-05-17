@@ -16,22 +16,32 @@ let
     {
       id = "auto";
       name = "BRouter Auto";
+      contextWindow = 1050000;
+      maxTokens = 128000;
     }
     {
       id = "fast";
       name = "BRouter Fast";
+      contextWindow = 1050000;
+      maxTokens = 128000;
     }
     {
       id = "strong";
       name = "BRouter Strong";
+      contextWindow = 1050000;
+      maxTokens = 128000;
     }
     {
       id = "standard";
       name = "BRouter Standard";
+      contextWindow = 1050000;
+      maxTokens = 128000;
     }
     {
       id = "priority";
       name = "BRouter Priority";
+      contextWindow = 1050000;
+      maxTokens = 128000;
     }
   ];
 
@@ -43,8 +53,8 @@ let
       reasoning = true;
       thinkingLevelMap = defaultThinkingLevelMap;
       input = [ "text" ];
-      contextWindow = 131072;
-      maxTokens = 8192;
+      contextWindow = m.contextWindow or 1050000;
+      maxTokens = m.maxTokens or 128000;
     }
     // optionalAttrs (m ? cost) { inherit (m) cost; };
 in
