@@ -10,14 +10,12 @@
   flakeInputs,
   # Complex overlays that need explicit input wiring
   rust-overlay ? null,
-  zellij-fork ? null,
   cronstrue-src ? null,
   firefox-darwin ? null,
   # Optional overlay configuration
   enableRust ? true,
   enableGithubReleases ? true,
   enableSourceBuilds ? true,
-  enableZellijFork ? false,
   enableCronstrue ? true,
   enableFirefoxDarwin ? true,
   enableMinecraftPlugins ? true,
@@ -30,7 +28,6 @@ let
     inherit
       nixpkgs-unstable
       rust-overlay
-      zellij-fork
       firefox-darwin
       ;
     cronstrue = cronstrue-src;
@@ -46,7 +43,6 @@ let
     rust = import ./overlays/rust.nix;
     github-releases = import ./overlays/github-releases.nix;
     source-builds = import ./overlays/source-builds.nix;
-    zellij = import ./overlays/zellij.nix;
     cronstrue = import ./overlays/cronstrue.nix;
     firefox-darwin = import ./overlays/firefox-darwin.nix;
     minecraft-plugins = import ./overlays/minecraft-plugins.nix;
@@ -66,7 +62,6 @@ mkOverlaysLib.mkOverlays {
     enableRust
     enableGithubReleases
     enableSourceBuilds
-    enableZellijFork
     enableCronstrue
     enableFirefoxDarwin
     enableMinecraftPlugins

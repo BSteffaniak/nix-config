@@ -167,7 +167,7 @@ nix flake lock
 | `cargoLockFile`   | No       | Path to repo-managed lockfile for repos without `Cargo.lock`                 |
 | `complex`         | No       | Set to `true` to skip auto-discovery (use a standalone overlay file instead) |
 
-**Complex builds:** Packages that need custom toolchains, build phases, `nativeBuildInputs`, etc. should set `"complex": true` in their config and use a standalone overlay file in `lib/overlays/`. See `lib/overlays/zellij.nix` and `lib/overlays/cronstrue.nix` for examples.
+**Complex builds:** Packages that need custom toolchains, build phases, `nativeBuildInputs`, etc. should set `"complex": true` in their config and use a standalone overlay file in `lib/overlays/`. See `lib/overlays/cronstrue.nix` for an example.
 
 **Directory structure:**
 
@@ -175,10 +175,8 @@ nix flake lock
 lib/source-builds/
   configs/              # Per-package config (committed)
     my-tool.json        # { flakeInput, buildSystem, pname, hashField, ... }
-    zellij.json         # { ..., "complex": true } — uses standalone overlay
   hashes/               # Auto-generated hash data (committed)
     my-tool.json        # { rev, cargoHash }
-    zellij.json         # { rev, cargoHash }
 ```
 
 **Important:** The `hashes/` directory contains pinned dependency hashes that Nix reads at evaluation time. These files must be committed to git so all machines use the same hashes.

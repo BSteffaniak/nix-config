@@ -86,10 +86,10 @@ in
       + builtins.readFile ../../../configs/bmux/bmux.toml;
     };
 
-    # Zellij - use custom package when available
+    # Zellij
     programs.zellij = mkIf cfg.zellij.enable {
       enable = true;
-      package = pkgs.zellij-custom or pkgs.zellij;
+      package = pkgs.unstable.zellij;
     };
     xdg.configFile."zellij/config.kdl" = mkIf cfg.zellij.enable {
       text =

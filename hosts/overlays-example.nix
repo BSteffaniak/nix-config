@@ -8,7 +8,6 @@
   nixpkgs-unstable,
   flakeInputs,
   rust-overlay ? null,
-  zellij-fork ? null,
   cronstrue-src ? null,
   firefox-darwin ? null,
 }:
@@ -20,7 +19,6 @@ import ../lib/overlays.nix {
     nixpkgs-unstable
     flakeInputs
     rust-overlay
-    zellij-fork
     cronstrue-src
     firefox-darwin
     ;
@@ -28,7 +26,6 @@ import ../lib/overlays.nix {
   enableRust = false;
   enableGithubReleases = true;
   enableSourceBuilds = true;
-  enableZellijFork = false;
   enableCronstrue = true;
   enableFirefoxDarwin = true;
   enableMinecraftPlugins = true;
@@ -40,7 +37,6 @@ import ../lib/overlays.nix {
 #   enableRust = false;
 #   enableGithubReleases = false;
 #   enableSourceBuilds = false;
-#   enableZellijFork = false;
 #   enableCronstrue = false;
 #   enableFirefoxDarwin = false;
 #   enableMinecraftPlugins = false;
@@ -48,11 +44,11 @@ import ../lib/overlays.nix {
 
 # Example 3: enable everything (default behavior)
 # import ../lib/overlays.nix {
-#   inherit lib nixpkgs-unstable flakeInputs rust-overlay zellij-fork cronstrue-src firefox-darwin;
+#   inherit lib nixpkgs-unstable flakeInputs rust-overlay cronstrue-src firefox-darwin;
 #   enableRust = true;
 #   enableGithubReleases = true;
 #   enableSourceBuilds = true;
-#   enableZellijFork = true;
+#   enableCronstrue = true;
 #   enableCronstrue = true;
 #   enableFirefoxDarwin = true;
 #   enableMinecraftPlugins = true;

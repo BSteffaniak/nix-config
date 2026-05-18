@@ -14,7 +14,6 @@
       enableRust ? true,
       enableGithubReleases ? true,
       enableSourceBuilds ? true,
-      enableZellijFork ? false,
       enableCronstrue ? true,
       enableFirefoxDarwin ? true,
       enableMinecraftPlugins ? true,
@@ -78,10 +77,6 @@
         {
           enable = enableSourceBuilds;
           overlay = overlayFunctions.source-builds;
-        }
-        {
-          enable = enableZellijFork;
-          overlay = overlayFunctions.zellij;
         }
         {
           enable = enableCronstrue;

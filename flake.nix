@@ -73,10 +73,6 @@
       url = "git+https://codeberg.org/p2502/lspmux";
       flake = false;
     };
-    zellij-fork = {
-      url = "github:BSteffaniak/zellij/toggle-session";
-      flake = false;
-    };
     cronstrue = {
       url = "github:bradymholt/cronstrue";
       flake = false;
@@ -168,13 +164,11 @@
           flakeInputs = inputs;
           # Complex overlays that need explicit input wiring
           rust-overlay = inputs.rust-overlay;
-          zellij-fork = inputs.zellij-fork;
           cronstrue-src = inputs.cronstrue;
           firefox-darwin = inputs.nixpkgs-firefox-darwin;
           enableRust = true;
           enableGithubReleases = true;
           enableSourceBuilds = true;
-          enableZellijFork = true;
           enableCronstrue = true;
           enableFirefoxDarwin = true;
           enableMinecraftPlugins = true;

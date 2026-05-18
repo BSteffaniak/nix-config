@@ -508,8 +508,7 @@
         "sshenv-src": "sshenv-src",
         "swww": "swww",
         "tone-clone-src": "tone-clone-src",
-        "worktree-setup-src": "worktree-setup-src",
-        "zellij-fork": "zellij-fork"
+        "worktree-setup-src": "worktree-setup-src"
       }
     },
     "rust-overlay": {
@@ -649,23 +648,6 @@
       "original": {
         "owner": "BSteffaniak",
         "repo": "worktree-setup",
-        "type": "github"
-      }
-    },
-    "zellij-fork": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1765888200,
-        "narHash": "sha256-YI5yEsyMk3rYiOVsOzlyXlm/bnARiO8Ql+cI2TlYxbo=",
-        "owner": "BSteffaniak",
-        "repo": "zellij",
-        "rev": "dc54645cf4474063af2fd797a79213493672d894",
-        "type": "github"
-      },
-      "original": {
-        "owner": "BSteffaniak",
-        "ref": "toggle-session",
-        "repo": "zellij",
         "type": "github"
       }
     }
