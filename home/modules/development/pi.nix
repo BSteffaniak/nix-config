@@ -76,6 +76,10 @@ let
       sshenvAgentSubdir = sshenvSpec.agentSubdir or sshenvProfile;
       sshenvApiKeysJson = builtins.toJSON (sshenvSpec.apiKeys or { });
       sshenvOAuthJson = builtins.toJSON (sshenvSpec.oauth or { });
+      sshenvInitRecipientKey = sshenvSpec.initRecipientKey or null;
+      sshenvVaultPath =
+        sshenvSpec.vaultPath
+          or "${config.home.homeDirectory}/.local/state/pi/sshenv/${sshenvProfile}/vault";
       sshenvAgentDir = "${config.home.homeDirectory}/.pi/${sshenvAgentSubdir}/agent";
       sharedAgentDir = "${config.home.homeDirectory}/.pi/agent";
       apiKeyFlag =
@@ -89,8 +93,10 @@ let
       ''
         _agent_dir=${escapeShellArg sshenvAgentDir}
         _shared=${escapeShellArg sharedAgentDir}
-        mkdir -p "$_agent_dir" "$_shared/sessions"
-        chmod 700 "$_agent_dir" "$_shared/sessions" 2>/dev/null || true
+        _vault_path=${escapeShellArg sshenvVaultPath}
+        _vault_dir="$(dirname "$_vault_path")"
+        mkdir -p "$_agent_dir" "$_shared/sessions" "$_vault_dir"
+        chmod 700 "$_agent_dir" "$_shared/sessions" "$_vault_dir" 2>/dev/null || true
         if [ -z "''${PI_CODING_AGENT_SESSION_DIR:-}" ]; then
           if [ -e "$_agent_dir/sessions" ] && [ ! -L "$_agent_dir/sessions" ]; then
             mv "$_agent_dir/sessions" "$_agent_dir/sessions.before-shared-link.$(date +%Y%m%d%H%M%S)"
@@ -115,9 +121,13 @@ let
           fi
         fi
         PI_CODING_AGENT_DIR="$_agent_dir" \
+        SSHENV_VAULT="$_vault_path" \
         PI_SSHENV_PROFILE=${escapeShellArg sshenvProfile} \
         PI_SSHENV_API_KEYS_JSON=${escapeShellArg sshenvApiKeysJson} \
         PI_SSHENV_OAUTH_KEYS_JSON=${escapeShellArg sshenvOAuthJson} \
+        ${optionalString (
+          sshenvInitRecipientKey != null
+        ) ''PI_SSHENV_INIT_RECIPIENT_KEY=${escapeShellArg sshenvInitRecipientKey} \''}
           pi --provider ${escapeShellArg descriptor.provider} --model ${escapeShellArg descriptor.model}${thinkingFlag} "$@"
       ''
     else

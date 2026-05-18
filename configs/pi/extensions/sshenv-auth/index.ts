@@ -3,6 +3,7 @@ import {
     chmodSync,
     existsSync,
     mkdirSync,
+    readdirSync,
     readFileSync,
     renameSync,
     writeFileSync,
@@ -21,6 +22,7 @@ import {
 //   PI_SSHENV_OAUTH_KEYS_JSON     JSON: { providerId: SSHENV_VAR_NAME }   value is base64(JSON({...auth.json provider entry...}))
 //   PI_SSHENV_FLUSH_DEBOUNCE_MS   debounce window for OAuth round-trip (default 5000)
 //   PI_SSHENV_SSHENV_BIN          override sshenv binary path (default "sshenv" via PATH)
+//   PI_SSHENV_INIT_RECIPIENT_KEY  optional recipient pubkey path/value override for non-interactive `sshenv init`
 
 type ProviderVarMap = Record<string, string>;
 
@@ -30,10 +32,119 @@ type ConfigBlock = {
     oauth: ProviderVarMap;
     sshenvBin: string;
     debounceMs: number;
+    initRecipientKey: string | null;
 };
 
 type AuthEntry = Record<string, unknown>;
 type AuthFile = Record<string, AuthEntry>;
+
+function isMissingVaultError(stderr: string): boolean {
+    return (
+        /failed to read vault file/i.test(stderr) &&
+        /(no such file|os error 2)/i.test(stderr)
+    );
+}
+
+function isTruncatedVaultError(stderr: string): boolean {
+    return /vault file is truncated/i.test(stderr);
+}
+
+function extractVaultPath(stderr: string): string | null {
+    const m = stderr.match(/failed to read vault file\s+([^\n]+)/i);
+    if (!m) return null;
+    const path = m[1]?.trim();
+    return path && path.length > 0 ? path : null;
+}
+
+function expandHome(path: string): string {
+    if (path === "~") return process.env.HOME ?? path;
+    if (path.startsWith("~/")) {
+        const home = process.env.HOME;
+        if (home) return join(home, path.slice(2));
+    }
+    return path;
+}
+
+function findRecipientKeyFromSshConfig(): string | null {
+    const home = process.env.HOME;
+    if (!home) return null;
+    const sshConfig = join(home, ".ssh", "config");
+    if (!existsSync(sshConfig)) return null;
+
+    let configText = "";
+    try {
+        configText = readFileSync(sshConfig, "utf8");
+    } catch {
+        return null;
+    }
+
+    for (const rawLine of configText.split("\n")) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith("#")) continue;
+        const m = line.match(/^IdentityFile\s+(.+)$/i);
+        if (!m) continue;
+        const ident = m[1].trim().replace(/^"|"$/g, "");
+        const pubPath = expandHome(
+            ident.endsWith(".pub") ? ident : `${ident}.pub`,
+        );
+        if (existsSync(pubPath)) return pubPath;
+    }
+    return null;
+}
+
+function findRecipientKeyFromSshDir(): string | null {
+    const home = process.env.HOME;
+    if (!home) return null;
+    const sshDir = join(home, ".ssh");
+    if (!existsSync(sshDir)) return null;
+
+    for (const name of ["id_ed25519.pub", "id_rsa.pub", "github.pub"]) {
+        const p = join(sshDir, name);
+        if (existsSync(p)) return p;
+    }
+
+    try {
+        const entries = readdirSync(sshDir);
+        const pub = entries.find((e) => e.endsWith(".pub"));
+        return pub ? join(sshDir, pub) : null;
+    } catch {
+        return null;
+    }
+}
+
+function resolveInitRecipientKey(cfg: ConfigBlock): string | null {
+    if (cfg.initRecipientKey && cfg.initRecipientKey.trim().length > 0) {
+        const raw = cfg.initRecipientKey.trim();
+        if (raw.startsWith("ssh-")) return raw;
+        return expandHome(raw);
+    }
+    return findRecipientKeyFromSshConfig() ?? findRecipientKeyFromSshDir();
+}
+
+function initVaultWithSshenv(cfg: ConfigBlock): {
+    ok: boolean;
+    stderr: string;
+} {
+    const recipientKey = resolveInitRecipientKey(cfg);
+    if (!recipientKey) {
+        return {
+            ok: false,
+            stderr: "no SSH recipient key found; set PI_SSHENV_INIT_RECIPIENT_KEY or configure ~/.ssh/config IdentityFile",
+        };
+    }
+    const result = spawnSync(
+        cfg.sshenvBin,
+        ["init", "--recipient-key", recipientKey],
+        {
+            stdio: ["ignore", "ignore", "pipe"],
+            encoding: "utf8",
+        },
+    );
+    return {
+        ok: result.status === 0,
+        stderr: (result.stderr ?? "").toString(),
+    };
+}
 
 function readEnvConfig(): ConfigBlock | null {
     const profile = process.env.PI_SSHENV_PROFILE;
@@ -63,12 +174,14 @@ function readEnvConfig(): ConfigBlock | null {
         oauth,
         sshenvBin: process.env.PI_SSHENV_SSHENV_BIN ?? "sshenv",
         debounceMs: Number.isFinite(debounceMs) ? debounceMs : 5000,
+        initRecipientKey: process.env.PI_SSHENV_INIT_RECIPIENT_KEY ?? null,
     };
 }
 
 function snapshotProfile(cfg: ConfigBlock): {
     snapshot: Map<string, string>;
     profileExists: boolean;
+    vaultExists: boolean;
 } {
     // `sshenv export <profile>` prints `export VAR=value` lines on stdout.
     // When the profile does not exist yet (e.g. first run, before any `/login`
@@ -88,6 +201,24 @@ function snapshotProfile(cfg: ConfigBlock): {
     }
     const stderr = (result.stderr ?? "").toString();
     if (result.status !== 0) {
+        const missingVault = isMissingVaultError(stderr);
+        if (missingVault) {
+            const otherStderr = stderr
+                .split("\n")
+                .filter(
+                    (l) =>
+                        l.trim() &&
+                        !/failed to read vault file/i.test(l) &&
+                        !/(no such file|os error 2)/i.test(l),
+                )
+                .join("\n");
+            if (otherStderr) process.stderr.write(otherStderr + "\n");
+            return {
+                snapshot: new Map(),
+                profileExists: false,
+                vaultExists: false,
+            };
+        }
         if (/no such profile/i.test(stderr)) {
             // Surface the underlying stderr lines that aren't the
             // "no such profile" line itself (e.g. ssh-agent prompts), so the
@@ -97,7 +228,11 @@ function snapshotProfile(cfg: ConfigBlock): {
                 .filter((l) => l.trim() && !/no such profile/i.test(l))
                 .join("\n");
             if (otherStderr) process.stderr.write(otherStderr + "\n");
-            return { snapshot: new Map(), profileExists: false };
+            return {
+                snapshot: new Map(),
+                profileExists: false,
+                vaultExists: true,
+            };
         }
         // Real error: vault locked, sshenv binary missing, etc. Surface and
         // throw so the caller can decide whether to abort or continue.
@@ -126,7 +261,7 @@ function snapshotProfile(cfg: ConfigBlock): {
         }
         out.set(key, value);
     }
-    return { snapshot: out, profileExists: true };
+    return { snapshot: out, profileExists: true, vaultExists: true };
 }
 
 function readAuth(authPath: string): AuthFile {
@@ -229,9 +364,42 @@ function flushOAuthToSshenv(
             updated.push(varName);
         } else {
             const stderr = result.stderr?.toString() ?? "";
-            errors.push(
-                `${varName}: ${stderr.trim() || `exit ${result.status}`}`,
-            );
+            if (isMissingVaultError(stderr)) {
+                const init = initVaultWithSshenv(cfg);
+                if (!init.ok) {
+                    const vaultPath = extractVaultPath(stderr);
+                    const initErr = init.stderr.trim() || "unknown init error";
+                    errors.push(
+                        `${varName}: missing vault${vaultPath ? ` (${vaultPath})` : ""}; failed to initialize vault via '${cfg.sshenvBin} init --recipient-key <auto>': ${initErr}`,
+                    );
+                    continue;
+                }
+
+                const retry = spawnSync(
+                    cfg.sshenvBin,
+                    ["set", cfg.profile, varName, "--value", encoded],
+                    { stdio: ["ignore", "ignore", "pipe"] },
+                );
+                if (retry.status === 0) {
+                    lastFlushed.set(varName, encoded);
+                    updated.push(varName);
+                } else {
+                    const retryStderr = retry.stderr?.toString() ?? "";
+                    errors.push(
+                        `${varName}: ${retryStderr.trim() || `exit ${retry.status}`} (after vault bootstrap)`,
+                    );
+                }
+            } else {
+                if (isTruncatedVaultError(stderr)) {
+                    errors.push(
+                        `${varName}: ${stderr.trim()} (vault is corrupted/truncated; repair by moving it aside and running '${cfg.sshenvBin} init')`,
+                    );
+                    continue;
+                }
+                errors.push(
+                    `${varName}: ${stderr.trim() || `exit ${result.status}`}`,
+                );
+            }
         }
     }
     return { updated, errors };
@@ -257,8 +425,9 @@ export default async function (pi: ExtensionAPI): Promise<void> {
     //    `sshenv set`, which auto-creates missing profiles + vars.
     let snapshot: Map<string, string>;
     let profileExists: boolean;
+    let vaultExists: boolean;
     try {
-        ({ snapshot, profileExists } = snapshotProfile(cfg));
+        ({ snapshot, profileExists, vaultExists } = snapshotProfile(cfg));
     } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         // Real error (vault locked, binary missing, etc.). Don't crash pi — the
@@ -268,18 +437,23 @@ export default async function (pi: ExtensionAPI): Promise<void> {
         console.error(msg);
         return;
     }
-    if (!profileExists) {
-        // eslint-disable-next-line no-console
-        console.error(
-            `sshenv-auth: profile '${cfg.profile}' not found in vault yet — will be created on first flush after /login or credential refresh.`,
-        );
-    }
-
     const { wrote, missing } = materializeAuthFromSshenv(
         cfg,
         snapshot,
         authPath,
     );
+
+    if (!vaultExists && missing.length > 0) {
+        // eslint-disable-next-line no-console
+        console.error(
+            "sshenv-auth: vault file not found yet — it will be created automatically on first flush after /login.",
+        );
+    } else if (!profileExists && missing.length > 0) {
+        // eslint-disable-next-line no-console
+        console.error(
+            `sshenv-auth: profile '${cfg.profile}' not found in vault yet — it will be created automatically on first flush after /login.`,
+        );
+    }
 
     // Seed lastFlushed from what we just wrote so the first refresh genuinely
     // diffs against the on-disk state.
@@ -344,11 +518,13 @@ export default async function (pi: ExtensionAPI): Promise<void> {
                     `api_key providers: ${apiKeyList}`,
                     `oauth providers:   ${oauthList}`,
                     `last flushed vars: ${flushed}`,
-                    profileExists
-                        ? wrote
-                            ? "auth.json was updated from sshenv on startup."
-                            : "auth.json already matched sshenv on startup."
-                        : `profile '${cfg.profile}' will be created in the vault on first flush.`,
+                    vaultExists
+                        ? profileExists
+                            ? wrote
+                                ? "auth.json was updated from sshenv on startup."
+                                : "auth.json already matched sshenv on startup."
+                            : `profile '${cfg.profile}' will be created in the vault on first flush.`
+                        : "vault file will be created on first flush.",
                     missing.length > 0
                         ? `missing creds (run /login): ${missing.join(", ")}`
                         : "all configured providers have credentials.",
