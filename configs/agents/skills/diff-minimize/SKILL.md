@@ -277,7 +277,7 @@ Use the Question tool:
 ```json
 {
   "header": "Select minimization opportunity",
-  "question": "Which single opportunity should I deep-dive and potentially implement?",
+  "question": "Which opportunity should I deep-dive and potentially implement?",
   "options": [
     {
       "label": "O1 — Move duplicated selection state into the existing filter owner",
@@ -290,6 +290,10 @@ Use the Question tool:
     {
       "label": "O3 — Avoid changing the shared API type by adapting at the route boundary",
       "description": "high confidence, medium risk, large diff impact"
+    },
+    {
+      "label": "Apply all",
+      "description": "Process every listed opportunity in ranked order in this run"
     },
     {
       "label": "Stop",
@@ -306,9 +310,10 @@ Use the Question tool:
 Handle responses:
 
 - **An opportunity** — proceed to deep-dive only that opportunity.
+- **Apply all** — proceed in ranked order through every shortlisted opportunity. Fuse Steps 6 and 7 into a single combined plan + edit payload that covers all opportunities, and gate on a single approval before any file edits. After approval, apply edits opportunity-by-opportunity without re-prompting between them. Skip any opportunity whose preconditions no longer hold after earlier edits and report the skip in the final summary.
 - **Stop** — exit without edits.
 - **Rescan** — ask what angle to focus on, then repeat the analysis.
-- **Custom text** — treat as guidance, such as “focus on state duplication” or “avoid touching tests,” then re-rank or rescan.
+- **Custom text** — treat as guidance, such as “focus on state duplication,” “avoid touching tests,” or “do all of them.” Re-rank, rescan, or treat as an unambiguous opt-in to **Apply all** when the user clearly authorizes batch execution.
 
 ### 6. Deep-dive the selected opportunity
 
@@ -524,12 +529,12 @@ If project-specific validation commands are not obvious, do not invent them. Sug
 - **Evidence is required.** Every opportunity must cite concrete diff evidence and repository context.
 - **Prefer existing patterns.** Reuse established helpers, owners, components, hooks, APIs, and test patterns before introducing new ones.
 - **Avoid fake simplicity.** Do not merely move complexity elsewhere, hide important logic behind premature abstraction, or make future maintenance harder.
-- **One opportunity per run.** The user selects one opportunity to deep-dive and implement. Do not batch multiple opportunities into one edit pass.
+- **One opportunity per run, unless the user opts into batch mode.** By default the user selects one opportunity to deep-dive and implement. If the user explicitly chooses **Apply all** at the shortlist gate, or unambiguously authorizes batch execution in chat (e.g. “do all of them”, “run through everything”), process the full shortlist in ranked order under a single combined plan + payload approval. Do not silently batch without that explicit choice.
 - **No opportunistic cleanup.** Do not reformat, rename, reorganize, or refactor code outside the selected approved opportunity.
 - **Never act without user confirmation.** Any transition from analysis to implementation requires explicit user approval through the documented gates.
 - **Never skip a gate.** Scope selection when ambiguous, opportunity selection, plan approval, and final execution approval must happen in order.
 - **Default to draft-only mode.** Analysis, recommendations, plans, and edit payloads are drafts until the user explicitly approves mutation.
-- **Two-turn mutation barrier.** Plan approval only authorizes preparing the exact edit payload. A separate final execution checkpoint is required before editing files.
+- **Two-turn mutation barrier (single-opportunity mode).** In default single-opportunity mode, plan approval only authorizes preparing the exact edit payload, and a separate final execution checkpoint is required before editing files. In batch mode, the combined plan and final edit payload are presented together and a single approval gate authorizes execution across all listed opportunities. The payload-bound rule still applies: any deviation from the approved batch payload requires re-approval.
 - **“Recommended” is not approval.** A recommended option, assistant suggestion, or inferred preference never counts as permission to mutate files.
 - **Non-interactive fallback.** If the user cannot complete an approval gate, stop after presenting the draft plan or payload and do not edit files.
 - **Strict approval provenance required.** Mutation approval must come from the user’s direct response to the Question tool in the same run.
