@@ -166,7 +166,6 @@ keybinds clear-defaults=true {
         bind "Ctrl k" { FocusPreviousPane; }
         bind "Alt k" { MoveFocus "up"; }
         bind "Ctrl l" { ToggleTab; }
-        bind "Alt l" { ToggleSession; }
         bind "Alt n" { NewPane; }
         bind "Alt o" { MoveTab "right"; }
         bind "Alt p" { TogglePaneInGroup; }
