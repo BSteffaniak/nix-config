@@ -15,6 +15,7 @@ let
   tomlFormat = pkgs.formats.toml { };
 
   permissionsDir = ../../../configs/agents/permissions;
+  skillsDir = ../../../configs/agents/skills;
 
   bcodeBasePermissionConfig = {
     agent = {
@@ -144,5 +145,6 @@ in
     home.packages = optional (cfg.package != null) cfg.package;
 
     xdg.configFile."bcode/bcode.toml".source = tomlFormat.generate "bcode.toml" finalSettings;
+    xdg.configFile."bcode/skills".source = skillsDir;
   };
 }
