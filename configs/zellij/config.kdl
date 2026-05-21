@@ -439,7 +439,7 @@ scroll_buffer_size 10000
 //   - true (default)
 //   - false
 //
-// auto_layout false
+auto_layout false
 
 // Whether sessions should be serialized to the cache folder (including their tabs/panes, cwds and running commands) so that they can later be resurrected
 // Options:
@@ -534,7 +534,7 @@ serialization_interval 300
 // Whether to stack panes when resizing beyond a certain size
 // Default: true
 //
-// stacked_resize false
+stacked_resize false
 
 // Whether to show tips on startup
 // Default: true
@@ -548,7 +548,7 @@ show_startup_tips false
 
 // Whether to enable mouse hover effects and pane grouping functionality
 // default is true
-// advanced_mouse_actions false
+advanced_mouse_actions false
 
 // The ip address the web server should listen on when it starts
 // Default: "127.0.0.1"
