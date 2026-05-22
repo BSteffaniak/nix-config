@@ -99,6 +99,12 @@ let
       "bcode.bedrock"
     ];
 
+    tui.keybindings.chat = {
+      enter = "tui.input.newLine";
+      return = "tui.input.newLine";
+      "ctrl+enter" = "tui.input.submit";
+    };
+
     # Keep plain `bcode` credential-free. Provider-specific wrappers such as
     # `bcode-openai` and host-private profile wrappers point BCODE_CONFIG at
     # generated provider configs that contain their own scoped auth profiles.
