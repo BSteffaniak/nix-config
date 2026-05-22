@@ -42,6 +42,7 @@ let
     "00-sshenv-auto" = {
       openai-api = [
         "opencode-openai-api"
+        "opencode-openai-api-fast"
       ];
       openrouter = [
         "opencode-openrouter"

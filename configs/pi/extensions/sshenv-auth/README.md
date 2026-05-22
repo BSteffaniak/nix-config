@@ -53,7 +53,7 @@ Both use the same shape:
 ```json
 {
   "provider": "openai-codex",
-  "model": "gpt-5.5-fast",
+  "model": "gpt-5.5",
   "thinking": "high",
   "sshenv": {
     "profile": "openai",
@@ -105,10 +105,11 @@ pi-openai
 sshenv list openai             # should include OPENAI_CODEX_AUTH_JSON_B64
 ```
 
-Repeat for any host-specific account defined via `extraProviders` (e.g. `openai-nds` on `bs-mbpro`):
+Repeat for any host-specific account defined via `extraProviders` (e.g. `openai-nds` on `bs-mbpro`). Use the `-fast` wrapper variant when you want the priority-tier alias:
 
 ```sh
 pi-openai-nds
+# or: pi-openai-nds-fast
 > /login openai-codex
 > /sshenv-flush
 > /q

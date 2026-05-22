@@ -22,7 +22,28 @@ let
   providersDir = ../../../configs/opencode/providers;
   allProviderFiles = builtins.attrNames (builtins.readDir providersDir);
   jsonProviderFiles = builtins.filter (f: hasSuffix ".json" f) allProviderFiles;
-  providerNames = map (f: removeSuffix ".json" f) jsonProviderFiles;
+  jsonProviderNames = map (f: removeSuffix ".json" f) jsonProviderFiles;
+  jsonProviderConfigs = listToAttrs (
+    map (name: {
+      inherit name;
+      value = builtins.fromJSON (builtins.readFile (providersDir + "/${name}.json"));
+    }) jsonProviderNames
+  );
+  generatedProviderConfigs = optionalAttrs (jsonProviderConfigs ? openai) {
+    openai-fast = myLib.deepMerge jsonProviderConfigs.openai {
+      model = "openai/gpt-5.5-fast";
+      agent = {
+        build.model = "openai/gpt-5.5-fast";
+        plan.model = "openai/gpt-5.5-fast";
+        explore.model = "openai/gpt-5.5-fast";
+        general.model = "openai/gpt-5.5-fast";
+        summary.model = "openai/gpt-5.5-fast";
+        compaction.model = "openai/gpt-5.5-fast";
+      };
+    };
+  };
+  providerConfigs = jsonProviderConfigs // generatedProviderConfigs;
+  providerNames = builtins.attrNames providerConfigs;
 
   providerWrapperCommands = builtins.listToAttrs (
     map (name: {
@@ -54,7 +75,7 @@ let
   }) cfg.aliases;
 
   # Read and parse the selected provider config
-  providerConfig = builtins.fromJSON (builtins.readFile (providersDir + "/${cfg.provider}.json"));
+  providerConfig = providerConfigs.${cfg.provider};
 
   # Auto-discover shared agent permission files from configs/agents/permissions/
   permissionsDir = ../../../configs/agents/permissions;
@@ -269,16 +290,21 @@ in
       xdg.configFile = localSkillCommands // toneCloneCommand;
     }
 
-    # Deploy raw provider files for per-provider wrapper commands (opencode-bedrock, opencode-copilot, etc.)
+    # Deploy raw/generated provider files for per-provider wrapper commands (opencode-bedrock, opencode-copilot, etc.)
     {
-      xdg.configFile = builtins.listToAttrs (
-        map (name: {
+      xdg.configFile =
+        (builtins.listToAttrs (
+          map (name: {
+            name = "opencode/providers/${name}.json";
+            value = {
+              source = providersDir + "/${name}.json";
+            };
+          }) jsonProviderNames
+        ))
+        // (mapAttrs' (name: providerConfig: {
           name = "opencode/providers/${name}.json";
-          value = {
-            source = providersDir + "/${name}.json";
-          };
-        }) providerNames
-      );
+          value.text = builtins.toJSON providerConfig;
+        }) generatedProviderConfigs);
     }
 
     # Cross-shell wrapper commands for switching provider profiles

@@ -80,6 +80,11 @@
       sshenvProfile = "openai-api";
       ignorePersistedAuth = true;
     };
+    development.opencode.aliases.openai-api-fast = {
+      provider = "openai-fast";
+      sshenvProfile = "openai-api";
+      ignorePersistedAuth = true;
+    };
     development.opencode.aliases.openrouter = {
       provider = "openrouter";
       sshenvProfile = "openrouter";

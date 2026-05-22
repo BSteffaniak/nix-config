@@ -237,6 +237,13 @@ let
       dialect = "chatgpt_codex";
     };
 
+    openai-fast = mkOpenAiOverlay {
+      model = cfg.providers.openai.fastModel;
+      authProfile = cfg.providers.openai.authProfile;
+      authProvider = "openai";
+      dialect = "chatgpt_codex";
+    };
+
     codex = mkOpenAiOverlay {
       model = cfg.providers.codex.model;
       authProfile = cfg.providers.codex.authProfile;
@@ -281,6 +288,7 @@ let
     {
       bedrock = cfg.providers.bedrock.sshenv;
       openai = cfg.providers.openai.sshenv;
+      openai-fast = cfg.providers.openai.sshenv;
       codex = cfg.providers.codex.sshenv;
       xai = cfg.providers.xai.sshenv;
       "grok-4-3" = cfg.providers.xai.sshenv;
@@ -405,8 +413,14 @@ in
       openai = {
         model = mkOption {
           type = types.str;
-          default = "gpt-5.5-fast";
+          default = "gpt-5.5";
           description = "OpenAI/ChatGPT model used by bcode-openai.";
+        };
+
+        fastModel = mkOption {
+          type = types.str;
+          default = "gpt-5.5-fast";
+          description = "Priority-tier OpenAI/ChatGPT model alias used by bcode-openai-fast.";
         };
 
         authProfile = mkOption {

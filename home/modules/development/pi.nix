@@ -37,7 +37,13 @@ let
     }) jsonProviderNames
   );
 
-  providerDescriptors = jsonProviderDescriptors // cfg.extraProviders;
+  generatedProviderDescriptors = optionalAttrs (jsonProviderDescriptors ? openai) {
+    openai-fast = jsonProviderDescriptors.openai // {
+      model = "gpt-5.5-fast";
+    };
+  };
+
+  providerDescriptors = jsonProviderDescriptors // generatedProviderDescriptors // cfg.extraProviders;
   providerNames = builtins.attrNames providerDescriptors;
 
   # Build shell function bodies for pi-<name> wrappers. Each wrapper pins a
@@ -471,7 +477,7 @@ in
         {
           openai-nds = {
             provider = "openai-codex";
-            model = "gpt-5.5-fast";
+            model = "gpt-5.5";
             thinking = "high";
             sshenv = {
               profile = "openai-nds";

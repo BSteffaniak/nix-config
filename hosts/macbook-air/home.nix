@@ -81,6 +81,11 @@
       sshenvProfile = "openai-api";
       ignorePersistedAuth = true;
     };
+    development.opencode.aliases.openai-api-fast = {
+      provider = "openai-fast";
+      sshenvProfile = "openai-api";
+      ignorePersistedAuth = true;
+    };
     development.agents.permissions.restricted = [
       "git"
       "brew"

@@ -1,6 +1,6 @@
 {
     "provider": "openai-codex",
-    "model": "gpt-5.5-fast",
+    "model": "gpt-5.5",
     "thinking": "high",
     "sshenv": {
         "profile": "openai",
