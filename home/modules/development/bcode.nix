@@ -101,7 +101,6 @@ let
 
     tui.keybindings.chat = {
       enter = "tui.input.newLine";
-      return = "tui.input.newLine";
       "ctrl+enter" = "tui.input.submit";
     };
 
