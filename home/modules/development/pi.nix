@@ -475,13 +475,13 @@ in
       default = { };
       example = literalExpression ''
         {
-          openai-nds = {
+          private-openai = {
             provider = "openai-codex";
             model = "gpt-5.5";
             thinking = "high";
             sshenv = {
-              profile = "openai-nds";
-              agentSubdir = "openai-nds";
+              profile = "private-openai";
+              agentSubdir = "private-openai";
               oauth.openai-codex = "OPENAI_CODEX_AUTH_JSON_B64";
             };
           };

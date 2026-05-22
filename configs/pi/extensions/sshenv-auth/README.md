@@ -105,11 +105,11 @@ pi-openai
 sshenv list openai             # should include OPENAI_CODEX_AUTH_JSON_B64
 ```
 
-Repeat for any host-specific account defined via `extraProviders` (e.g. `openai-nds` on `bs-mbpro`). Use the `-fast` wrapper variant when you want the priority-tier alias:
+Repeat for any host-specific account defined via `extraProviders`. Use the `-fast` wrapper variant when you want the priority-tier alias:
 
 ```sh
-pi-openai-nds
-# or: pi-openai-nds-fast
+pi-<private-profile>
+# or: pi-<private-profile>-fast
 > /login openai-codex
 > /sshenv-flush
 > /q

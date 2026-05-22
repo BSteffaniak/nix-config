@@ -128,39 +128,107 @@ let
 
   finalSettings = recursiveUpdate (recursiveUpdate baseSettings bcodePermissions) cfg.extraSettings;
 
-  mkOpenAiOverlay =
+  openAiFastAlias = {
+    "gpt-5.5-fast" = {
+      provider_plugin_id = "bcode.openai-compatible";
+      model_id = "gpt-5.5";
+      request.service_tier = "priority";
+    };
+  };
+
+  mkProfileOverlay =
+    name: profile:
+    let
+      authProfile = profile.authProfile or null;
+      authConfig = profile.auth or null;
+      settings = profile.settings or { };
+      aliases = profile.aliases or { };
+      plugins = profile.plugins or [ profile.providerPluginId ];
+      baseOverlay = {
+        plugins.enabled = plugins;
+        model = {
+          provider_plugin_id = profile.providerPluginId;
+          model_id = profile.model;
+          profile = "default";
+          profiles.default = {
+            provider_plugin_id = profile.providerPluginId;
+            model_id = profile.model;
+            inherit settings;
+          }
+          // optionalAttrs (authProfile != null) { auth_profile = authProfile; };
+          inherit aliases;
+        };
+      }
+      // optionalAttrs (authProfile != null && authConfig != null) {
+        auth.profiles.${authProfile} = authConfig;
+      };
+    in
+    recursiveUpdate baseOverlay (profile.extraConfig or { });
+
+  profileWithoutVariants = profile: removeAttrs profile [ "variants" ];
+
+  mergeProfileVariant = profile: variant: recursiveUpdate (profileWithoutVariants profile) variant;
+
+  expandProfileOverlays =
+    name: profile:
+    let
+      baseProfile = profileWithoutVariants profile;
+      variants = profile.variants or { };
+    in
+    {
+      ${name} = mkProfileOverlay name baseProfile;
+    }
+    // mapAttrs' (variantName: variant: {
+      name = "${name}-${variantName}";
+      value = mkProfileOverlay "${name}-${variantName}" (mergeProfileVariant profile variant);
+    }) variants;
+
+  mkProfileOverlays =
+    profiles:
+    foldl' (acc: name: acc // expandProfileOverlays name profiles.${name}) { } (attrNames profiles);
+
+  expandProfileSshenv =
+    name: profile:
+    let
+      baseProfile = profileWithoutVariants profile;
+      variants = profile.variants or { };
+      base = optionalAttrs (baseProfile ? sshenv && baseProfile.sshenv != null) {
+        ${name} = baseProfile.sshenv;
+      };
+    in
+    base
+    // concatMapAttrs (
+      variantName: variant:
+      let
+        merged = mergeProfileVariant profile variant;
+      in
+      optionalAttrs (merged ? sshenv && merged.sshenv != null) {
+        "${name}-${variantName}" = merged.sshenv;
+      }
+    ) variants;
+
+  mkProfileSshenv =
+    profiles:
+    foldl' (acc: name: acc // expandProfileSshenv name profiles.${name}) { } (attrNames profiles);
+
+  mkOpenAiProfile =
     {
       model,
-      authProfile ? null,
+      authProfile,
+      fastModel ? null,
       authProvider ? "openai",
       baseUrl ? null,
       dialect ? null,
+      variants ? { },
     }:
     {
-      plugins.enabled = [ "bcode.openai-compatible" ];
-      model = {
-        provider_plugin_id = "bcode.openai-compatible";
-        model_id = model;
-        profile = "default";
-        profiles.default = {
-          provider_plugin_id = "bcode.openai-compatible";
-          model_id = model;
-          settings =
-            optionalAttrs (baseUrl != null) {
-              base_url = baseUrl;
-            }
-            // optionalAttrs (dialect != null) { inherit dialect; };
-        }
-        // optionalAttrs (authProfile != null) { auth_profile = authProfile; };
-        aliases."gpt-5.5-fast" = {
-          provider_plugin_id = "bcode.openai-compatible";
-          model_id = "gpt-5.5";
-          request.service_tier = "priority";
-        };
-      };
-    }
-    // optionalAttrs (authProfile != null) {
-      auth.profiles.${authProfile} = {
+      providerPluginId = "bcode.openai-compatible";
+      inherit model authProfile;
+      settings =
+        optionalAttrs (baseUrl != null) { base_url = baseUrl; }
+        // optionalAttrs (dialect != null) { inherit dialect; };
+      aliases = openAiFastAlias;
+      auth = {
         backend = "sshenv";
         settings = {
           provider = authProvider;
@@ -170,6 +238,11 @@ let
         // optionalAttrs (authProvider == "openai") { mode = "chatgpt"; }
         // optionalAttrs (baseUrl != null) { base_url = baseUrl; };
       };
+      variants =
+        variants
+        // optionalAttrs (fastModel != null) {
+          fast.model = fastModel;
+        };
     };
 
   mkSshenvOption =
@@ -200,23 +273,15 @@ let
       '';
     };
 
-  providerOverlays = {
+  builtinProfiles = {
     bedrock = {
-      plugins.enabled = [ "bcode.bedrock" ];
-      model = {
-        provider_plugin_id = "bcode.bedrock";
-        model_id = cfg.providers.bedrock.model;
-        profile = "default";
-        profiles.default = {
-          provider_plugin_id = "bcode.bedrock";
-          model_id = cfg.providers.bedrock.model;
-          auth_profile = "bedrock";
-          settings = optionalAttrs (cfg.providers.bedrock.region != null) {
-            region = cfg.providers.bedrock.region;
-          };
-        };
+      providerPluginId = "bcode.bedrock";
+      model = cfg.providers.bedrock.model;
+      authProfile = "bedrock";
+      settings = optionalAttrs (cfg.providers.bedrock.region != null) {
+        region = cfg.providers.bedrock.region;
       };
-      auth.profiles.bedrock = {
+      auth = {
         backend = "sshenv";
         settings = {
           provider = "aws";
@@ -228,75 +293,80 @@ let
         }
         // optionalAttrs (cfg.providers.bedrock.region != null) { region = cfg.providers.bedrock.region; };
       };
+      sshenv = cfg.providers.bedrock.sshenv;
     };
 
-    openai = mkOpenAiOverlay {
+    openai = mkOpenAiProfile {
       model = cfg.providers.openai.model;
+      fastModel = cfg.providers.openai.fastModel;
       authProfile = cfg.providers.openai.authProfile;
       authProvider = "openai";
       dialect = "chatgpt_codex";
     };
 
-    openai-fast = mkOpenAiOverlay {
-      model = cfg.providers.openai.fastModel;
-      authProfile = cfg.providers.openai.authProfile;
-      authProvider = "openai";
-      dialect = "chatgpt_codex";
-    };
-
-    codex = mkOpenAiOverlay {
+    codex = mkOpenAiProfile {
       model = cfg.providers.codex.model;
       authProfile = cfg.providers.codex.authProfile;
       authProvider = "openai";
       dialect = "chatgpt_codex";
     };
 
-    brouter = mkOpenAiOverlay {
+    brouter = {
+      providerPluginId = "bcode.openai-compatible";
       model = cfg.providers.brouter.model;
-      baseUrl = "http://${brouterCfg.host}:${toString brouterCfg.port}/v1";
+      settings.base_url = "http://${brouterCfg.host}:${toString brouterCfg.port}/v1";
+      aliases = openAiFastAlias;
+      sshenv = cfg.providers.brouter.sshenv;
     };
 
-    xai = mkOpenAiOverlay {
-      model = cfg.providers.xai.model;
-      authProfile = "xai";
-      authProvider = "xai";
-      baseUrl = "https://api.x.ai/v1";
-    };
+    xai =
+      mkOpenAiProfile {
+        model = cfg.providers.xai.model;
+        authProfile = "xai";
+        authProvider = "xai";
+        baseUrl = "https://api.x.ai/v1";
+      }
+      // {
+        sshenv = cfg.providers.xai.sshenv;
+      };
 
-    grok-4-3 = mkOpenAiOverlay {
-      model = cfg.providers.xai.model;
-      authProfile = "xai";
-      authProvider = "xai";
-      baseUrl = "https://api.x.ai/v1";
-    };
+    grok-4-3 =
+      mkOpenAiProfile {
+        model = cfg.providers.xai.model;
+        authProfile = "xai";
+        authProvider = "xai";
+        baseUrl = "https://api.x.ai/v1";
+      }
+      // {
+        sshenv = cfg.providers.xai.sshenv;
+      };
 
-    grok-code-fast = mkOpenAiOverlay {
-      model = cfg.providers.xai.codeFastModel;
-      authProfile = "xai";
-      authProvider = "xai";
-      baseUrl = "https://api.x.ai/v1";
-    };
+    grok-code-fast =
+      mkOpenAiProfile {
+        model = cfg.providers.xai.codeFastModel;
+        authProfile = "xai";
+        authProvider = "xai";
+        baseUrl = "https://api.x.ai/v1";
+      }
+      // {
+        sshenv = cfg.providers.xai.sshenv;
+      };
 
-    brouter-proxy = mkOpenAiOverlay {
+    brouter-proxy = {
+      providerPluginId = "bcode.openai-compatible";
       model = cfg.providers.brouterProxy.model;
-      baseUrl = "http://${brouterProxyCfg.host}:${toString brouterProxyCfg.port}/v1";
+      settings.base_url = "http://${brouterProxyCfg.host}:${toString brouterProxyCfg.port}/v1";
+      aliases = openAiFastAlias;
+      sshenv = cfg.providers.brouterProxy.sshenv;
     };
-  }
-  // cfg.extraProviderOverlays;
+  };
+
+  allProfiles = builtinProfiles // cfg.profiles;
+
+  providerOverlays = mkProfileOverlays allProfiles // cfg.extraProviderOverlays;
 
   providerSshenv = filterAttrs (_name: spec: spec != null) (
-    {
-      bedrock = cfg.providers.bedrock.sshenv;
-      openai = cfg.providers.openai.sshenv;
-      openai-fast = cfg.providers.openai.sshenv;
-      codex = cfg.providers.codex.sshenv;
-      xai = cfg.providers.xai.sshenv;
-      "grok-4-3" = cfg.providers.xai.sshenv;
-      "grok-code-fast" = cfg.providers.xai.sshenv;
-      brouter = cfg.providers.brouter.sshenv;
-      "brouter-proxy" = cfg.providers.brouterProxy.sshenv;
-    }
-    // cfg.extraProviderSshenv
+    mkProfileSshenv allProfiles // cfg.extraProviderSshenv
   );
 
   providerNames = builtins.attrNames providerOverlays;
@@ -357,10 +427,24 @@ in
       description = "Additional Bcode TOML settings merged after generated shared agent permissions.";
     };
 
+    profiles = mkOption {
+      type = types.attrsOf types.attrs;
+      default = { };
+      description = ''
+        Generic generated Bcode provider profiles, keyed by wrapper name without the `bcode-` prefix.
+
+        Each profile supports fields like `providerPluginId`, `model`, `authProfile`, `auth`,
+        `settings`, `aliases`, `variants`, `plugins`, `sshenv`, and `extraConfig`. Variants are
+        generated as `bcode-<name>-<variant>` wrappers. This is the preferred extension point for
+        host-private provider/account profiles because names and auth profile IDs stay in the host
+        file that defines them.
+      '';
+    };
+
     extraProviderOverlays = mkOption {
       type = types.attrsOf types.attrs;
       default = { };
-      description = "Additional Bcode provider overlay TOML settings, keyed by wrapper/provider name.";
+      description = "Raw Bcode provider overlay TOML settings, keyed by wrapper/provider name. Prefer `profiles` for generated provider configs.";
     };
 
     extraProviderSshenv = mkOption {
