@@ -386,12 +386,6 @@ in
       description = "Optional Bcode package to install. Set to null when Bcode is installed outside this Nix configuration.";
     };
 
-    authProfile = mkOption {
-      type = types.str;
-      default = "openai";
-      description = "Deprecated compatibility option. Plain `bcode` is intentionally credential-free; use providers.openai.authProfile or a generated profile entry for wrapper-scoped auth.";
-    };
-
     authVaultPath = mkOption {
       type = types.str;
       default = "${config.home.homeDirectory}/.local/state/bcode/auth/vault";
