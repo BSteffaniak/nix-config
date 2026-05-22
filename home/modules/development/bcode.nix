@@ -308,6 +308,13 @@ let
       };
       auth = {
         backend = "sshenv";
+        scheme = "aws_credentials";
+        map = {
+          access_key_id.env = "AWS_ACCESS_KEY_ID";
+          secret_access_key.env = "AWS_SECRET_ACCESS_KEY";
+          session_token.env = "AWS_SESSION_TOKEN";
+          bearer_token.env = "AWS_BEARER_TOKEN_BEDROCK";
+        };
         settings = {
           provider = "aws";
           profile =
