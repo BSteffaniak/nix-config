@@ -239,6 +239,7 @@ let
       dialect ? "chat_completions",
       aliases ? { },
       variants ? { },
+      sshenv ? null,
     }:
     {
       providerPluginId = "bcode.openai-compatible";
@@ -264,7 +265,8 @@ let
           base_url = baseUrl;
         };
       };
-    };
+    }
+    // optionalAttrs (sshenv != null) { inherit sshenv; };
 
   mkSshenvOption =
     defaultProfile: defaultValue:
@@ -347,6 +349,7 @@ let
       baseUrl = cfg.providers.openrouter.baseUrl;
       apiKeyEnv = cfg.providers.openrouter.apiKeyEnv;
       authVaultPath = cfg.providers.openrouter.authVaultPath;
+      sshenv = cfg.providers.openrouter.sshenv;
     };
 
     zen = mkOpenAiCompatibleApiProfile {
@@ -356,6 +359,7 @@ let
       baseUrl = cfg.providers.zen.baseUrl;
       apiKeyEnv = cfg.providers.zen.apiKeyEnv;
       authVaultPath = cfg.providers.zen.authVaultPath;
+      sshenv = cfg.providers.zen.sshenv;
     };
 
     xai =
@@ -614,6 +618,11 @@ in
           default = "OPENROUTER_API_KEY";
           description = "API key environment variable loaded from the bcode-openrouter sshenv profile.";
         };
+
+        sshenv = mkSshenvOption "openrouter" {
+          profile = "openrouter";
+          envOnly = true;
+        };
       };
 
       zen = {
@@ -645,6 +654,11 @@ in
           type = types.str;
           default = "OPENCODE_API_KEY";
           description = "API key environment variable loaded from the bcode-zen sshenv profile.";
+        };
+
+        sshenv = mkSshenvOption "opencode-zen" {
+          profile = "opencode-zen";
+          envOnly = true;
         };
       };
 
