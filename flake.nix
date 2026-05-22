@@ -97,6 +97,10 @@
       url = "git+ssh://git@github.com/BSteffaniak/bmux";
       flake = false;
     };
+    bcode-src = {
+      url = "git+ssh://git@github.com/BSteffaniak/bcode";
+      flake = false;
+    };
     sshenv-src = {
       url = "github:BSteffaniak/sshenv";
       flake = false;

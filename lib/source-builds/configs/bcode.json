@@ -1,0 +1,10 @@
+{
+    "flakeInput": "bcode-src",
+    "buildSystem": "rust",
+    "pname": "bcode",
+    "hashField": "cargoHash",
+    "doCheck": false,
+    "nativeBuildInputs": ["pkg-config"],
+    "buildInputs": ["openssl", "libiconv"],
+    "cargoBuildFlags": ["--package", "bcode"]
+}
