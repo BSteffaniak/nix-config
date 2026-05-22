@@ -99,30 +99,13 @@ let
       "bcode.bedrock"
     ];
 
-    model = {
+    # Keep plain `bcode` credential-free. Provider-specific wrappers such as
+    # `bcode-openai` and host-private profile wrappers point BCODE_CONFIG at
+    # generated provider configs that contain their own scoped auth profiles.
+    model.aliases."gpt-5.5-fast" = {
       provider_plugin_id = "bcode.openai-compatible";
-      profile = "openai";
-      profiles.openai = {
-        provider_plugin_id = "bcode.openai-compatible";
-        model_id = cfg.providers.openai.model;
-        auth_profile = cfg.authProfile;
-        settings.dialect = "chatgpt_codex";
-      };
-      aliases."gpt-5.5-fast" = {
-        provider_plugin_id = "bcode.openai-compatible";
-        model_id = "gpt-5.5";
-        request.service_tier = "priority";
-      };
-    };
-
-    auth.profiles.${cfg.authProfile} = {
-      backend = "sshenv";
-      settings = {
-        provider = "openai";
-        profile = cfg.authProfile;
-        vault = cfg.authVaultPath;
-        mode = "chatgpt";
-      };
+      model_id = "gpt-5.5";
+      request.service_tier = "priority";
     };
   };
 
@@ -406,7 +389,7 @@ in
     authProfile = mkOption {
       type = types.str;
       default = "openai";
-      description = "Shared sshenv profile used for default Bcode OpenAI/ChatGPT authentication.";
+      description = "Deprecated compatibility option. Plain `bcode` is intentionally credential-free; use providers.openai.authProfile or a generated profile entry for wrapper-scoped auth.";
     };
 
     authVaultPath = mkOption {
