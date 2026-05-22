@@ -228,6 +228,44 @@ let
         };
     };
 
+  mkOpenAiCompatibleApiProfile =
+    {
+      model,
+      authProfile,
+      authProvider,
+      baseUrl,
+      apiKeyEnv,
+      authVaultPath ? cfg.authVaultPath,
+      dialect ? "chat_completions",
+      aliases ? { },
+      variants ? { },
+    }:
+    {
+      providerPluginId = "bcode.openai-compatible";
+      inherit
+        model
+        authProfile
+        aliases
+        variants
+        ;
+      settings = {
+        base_url = baseUrl;
+        api_key_env = apiKeyEnv;
+        inherit dialect;
+      };
+      auth = {
+        backend = "sshenv";
+        settings = {
+          provider = authProvider;
+          profile = authProfile;
+          vault = authVaultPath;
+          mode = "api_key";
+          api_key_env = apiKeyEnv;
+          base_url = baseUrl;
+        };
+      };
+    };
+
   mkSshenvOption =
     defaultProfile: defaultValue:
     mkOption {
@@ -300,6 +338,24 @@ let
       settings.base_url = "http://${brouterCfg.host}:${toString brouterCfg.port}/v1";
       aliases = openAiFastAlias;
       sshenv = cfg.providers.brouter.sshenv;
+    };
+
+    openrouter = mkOpenAiCompatibleApiProfile {
+      model = cfg.providers.openrouter.model;
+      authProfile = cfg.providers.openrouter.authProfile;
+      authProvider = "openrouter";
+      baseUrl = cfg.providers.openrouter.baseUrl;
+      apiKeyEnv = cfg.providers.openrouter.apiKeyEnv;
+      authVaultPath = cfg.providers.openrouter.authVaultPath;
+    };
+
+    zen = mkOpenAiCompatibleApiProfile {
+      model = cfg.providers.zen.model;
+      authProfile = cfg.providers.zen.authProfile;
+      authProvider = "opencode";
+      baseUrl = cfg.providers.zen.baseUrl;
+      apiKeyEnv = cfg.providers.zen.apiKeyEnv;
+      authVaultPath = cfg.providers.zen.authVaultPath;
     };
 
     xai =
@@ -525,6 +581,70 @@ in
         sshenv = mkSshenvOption "xai" {
           profile = "xai";
           envOnly = true;
+        };
+      };
+
+      openrouter = {
+        model = mkOption {
+          type = types.str;
+          default = "z-ai/glm-5.1";
+          description = "OpenRouter model used by bcode-openrouter.";
+        };
+
+        baseUrl = mkOption {
+          type = types.str;
+          default = "https://openrouter.ai/api/v1";
+          description = "OpenRouter OpenAI-compatible API base URL.";
+        };
+
+        authProfile = mkOption {
+          type = types.str;
+          default = "openrouter";
+          description = "sshenv auth profile used by bcode-openrouter.";
+        };
+
+        authVaultPath = mkOption {
+          type = types.str;
+          default = cfg.authVaultPath;
+          description = "sshenv vault path used by bcode-openrouter.";
+        };
+
+        apiKeyEnv = mkOption {
+          type = types.str;
+          default = "OPENROUTER_API_KEY";
+          description = "API key environment variable loaded from the bcode-openrouter sshenv profile.";
+        };
+      };
+
+      zen = {
+        model = mkOption {
+          type = types.str;
+          default = "big-pickle";
+          description = "OpenCode Zen model used by bcode-zen.";
+        };
+
+        baseUrl = mkOption {
+          type = types.str;
+          default = "https://opencode.ai/zen/v1";
+          description = "OpenCode Zen OpenAI-compatible API base URL.";
+        };
+
+        authProfile = mkOption {
+          type = types.str;
+          default = "opencode-zen";
+          description = "sshenv auth profile used by bcode-zen.";
+        };
+
+        authVaultPath = mkOption {
+          type = types.str;
+          default = cfg.authVaultPath;
+          description = "sshenv vault path used by bcode-zen.";
+        };
+
+        apiKeyEnv = mkOption {
+          type = types.str;
+          default = "OPENCODE_API_KEY";
+          description = "API key environment variable loaded from the bcode-zen sshenv profile.";
         };
       };
 
