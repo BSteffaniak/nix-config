@@ -256,6 +256,8 @@ let
       };
       auth = {
         backend = "sshenv";
+        scheme = "api_key";
+        map.api_key.env = apiKeyEnv;
         settings = {
           provider = authProvider;
           profile = authProfile;
