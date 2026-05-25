@@ -27,6 +27,10 @@ let
           "filesystem.write" = true;
           "filesystem.edit" = true;
           "shell.run" = true;
+          "web.search" = true;
+          "web.fetch" = true;
+          "web.status" = true;
+          "web.inspect" = true;
         };
         permission = {
           bash = {
@@ -38,6 +42,9 @@ let
           edit = {
             "**" = "allow";
           };
+          web = {
+            "*" = "allow";
+          };
           external_directory = "allow";
         };
       };
@@ -48,10 +55,17 @@ let
           "filesystem.write" = false;
           "filesystem.edit" = false;
           "shell.run" = true;
+          "web.search" = true;
+          "web.fetch" = true;
+          "web.status" = true;
+          "web.inspect" = true;
         };
         permission = {
           bash = {
             "*" = "deny";
+          };
+          web = {
+            "*" = "allow";
           };
           external_directory = "allow";
         };
