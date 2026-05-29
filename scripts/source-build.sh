@@ -24,6 +24,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CONFIGS_DIR="$REPO_ROOT/lib/source-builds/configs"
 HASHES_DIR="$REPO_ROOT/lib/source-builds/hashes"
+CARGO_VENDOR_PYTHONPATH="$REPO_ROOT/lib/source-builds/cargo-vendor-sitecustomize"
 FLAKE_LOCK="$REPO_ROOT/flake.lock"
 
 # ── Colors ──────────────────────────────────────────────────────────
@@ -215,8 +216,29 @@ compute_cargo_hash() {
   local pname
   pname=$(jq -r '.pname' "$config_file")
 
+  local current_system nixpkgs_input nixpkgs_path
+  current_system=$(nix eval --raw --impure --expr builtins.currentSystem)
+  if [[ "$current_system" == *-darwin ]]; then
+    nixpkgs_input="nixpkgs-darwin"
+  else
+    nixpkgs_input="nixpkgs"
+  fi
+  nixpkgs_path=$(get_input_store_path "$nixpkgs_input") || return 1
+
   local nix_expr
-  nix_expr="(import <nixpkgs> {}).rustPlatform.fetchCargoVendor { src = $vendor_src; name = \"${pname}-vendor\"; hash = \"\"; }"
+  nix_expr=$(cat <<EOF
+let
+  pkgs = import $nixpkgs_path { system = builtins.currentSystem; };
+  cargoVendorPythonPath = builtins.toString $CARGO_VENDOR_PYTHONPATH;
+in
+pkgs.rustPlatform.fetchCargoVendor {
+  src = $vendor_src;
+  name = "${pname}-vendor";
+  hash = "";
+  env.PYTHONPATH = cargoVendorPythonPath;
+}
+EOF
+  )
 
   info "Fetching cargo dependencies (single download)..." >&2
   local build_output

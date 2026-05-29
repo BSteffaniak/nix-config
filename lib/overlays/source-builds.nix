@@ -21,6 +21,7 @@ else
   let
     configDir = ../source-builds/configs;
     hashesDir = ../source-builds/hashes;
+    cargoVendorPythonPath = ../source-builds/cargo-vendor-sitecustomize;
     lockData = builtins.fromJSON (builtins.readFile ../../flake.lock);
 
     # Discover all config files
@@ -89,6 +90,9 @@ else
                 inherit src;
                 ${config.hashField} = hashData.${config.hashField};
                 inherit doCheck;
+                depsExtraArgs = {
+                  env.PYTHONPATH = builtins.toString cargoVendorPythonPath;
+                };
               }
               // (if cargoBuildFlags != [ ] then { inherit cargoBuildFlags; } else { })
               // (if nativeBuildInputs != [ ] then { inherit nativeBuildInputs; } else { })
