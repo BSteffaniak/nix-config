@@ -22,92 +22,154 @@ let
     text = ''
       set -euo pipefail
 
+      wallpaper_source=${escapeShellArg cfg.source}
       wallpaper_dir=${escapeShellArg cfg.directory}
-      market=${escapeShellArg cfg.market}
-      resolution=${escapeShellArg cfg.resolution}
+      market=${escapeShellArg cfg.bing.market}
+      resolution=${escapeShellArg cfg.bing.resolution}
+      wallhaven_query=${escapeShellArg cfg.wallhaven.query}
+      wallhaven_categories=${escapeShellArg cfg.wallhaven.categories}
+      wallhaven_purity=${escapeShellArg cfg.wallhaven.purity}
+      wallhaven_ratios=${escapeShellArg (concatStringsSep "," cfg.wallhaven.ratios)}
+      wallhaven_atleast=${escapeShellArg cfg.wallhaven.atleast}
+      wallhaven_sorting=${escapeShellArg cfg.wallhaven.sorting}
       retention_days=${toString cfg.retentionDays}
       set_desktop=${if cfg.setDesktop then "1" else "0"}
 
       mkdir -p "$wallpaper_dir"
 
-      metadata_file="$wallpaper_dir/.bing-daily.json"
-      metadata_tmp="$metadata_file.tmp"
+      curl_common=(
+        --fail
+        --location
+        --silent
+        --show-error
+        --retry 3
+        --connect-timeout 10
+      )
 
-      curl \
-        --fail \
-        --location \
-        --silent \
-        --show-error \
-        --retry 3 \
-        --connect-timeout 10 \
-        "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=$market" \
-        --output "$metadata_tmp"
-      mv "$metadata_tmp" "$metadata_file"
+      image_path=""
 
-      startdate="$(jq -r '.images[0].startdate // empty' "$metadata_file")"
-      title="$(jq -r '.images[0].title // .images[0].copyright // "bing daily"' "$metadata_file")"
-      urlbase="$(jq -r '.images[0].urlbase // empty' "$metadata_file")"
-      fallback_url="$(jq -r '.images[0].url // empty' "$metadata_file")"
+      fetch_wallhaven() {
+        local metadata_file metadata_tmp encoded_query api_url count selected_index
+        local wallhaven_id image_url extension image_tmp
 
-      if [[ -z "$startdate" ]]; then
-        startdate="$(date +%Y%m%d)"
-      fi
+        metadata_file="$wallpaper_dir/.wallhaven.json"
+        metadata_tmp="$metadata_file.tmp"
+        encoded_query="$(printf '%s' "$wallhaven_query" | jq -sRr @uri)"
+        api_url="https://wallhaven.cc/api/v1/search?q=$encoded_query&categories=$wallhaven_categories&purity=$wallhaven_purity&sorting=$wallhaven_sorting&ratios=$wallhaven_ratios&atleast=$wallhaven_atleast"
 
-      safe_title="$(printf '%s' "$title" \
-        | tr -cs '[:alnum:]._-' '-' \
-        | sed 's/^-//; s/-$//; s/--*/-/g' \
-        | cut -c1-80)"
-      if [[ -z "$safe_title" ]]; then
-        safe_title="bing-daily"
-      fi
+        curl "''${curl_common[@]}" "$api_url" --output "$metadata_tmp"
+        mv "$metadata_tmp" "$metadata_file"
 
-      image_path="$wallpaper_dir/bing-$startdate-$safe_title.jpg"
-      image_tmp="$image_path.tmp"
-
-      if [[ ! -s "$image_path" ]]; then
-        if [[ -n "$urlbase" ]]; then
-          image_url="https://www.bing.com''${urlbase}_''${resolution}.jpg"
-        elif [[ "$fallback_url" == http* ]]; then
-          image_url="$fallback_url"
-        else
-          image_url="https://www.bing.com$fallback_url"
+        count="$(jq '.data | length' "$metadata_file")"
+        if [[ "$count" -lt 1 ]]; then
+          echo "Wallhaven returned no wallpapers for query: $wallhaven_query" >&2
+          exit 1
         fi
 
-        if ! curl \
-          --fail \
-          --location \
-          --silent \
-          --show-error \
-          --retry 3 \
-          --connect-timeout 10 \
-          "$image_url" \
-          --output "$image_tmp"; then
-          rm -f "$image_tmp"
+        selected_index=0
+        if [[ "$count" -gt 1 ]]; then
+          selected_index="$((RANDOM % count))"
+        fi
 
-          if [[ -z "$fallback_url" ]]; then
-            echo "Bing metadata did not include a fallback image URL." >&2
-            exit 1
-          fi
+        wallhaven_id="$(jq -r --argjson index "$selected_index" '.data[$index].id // empty' "$metadata_file")"
+        image_url="$(jq -r --argjson index "$selected_index" '.data[$index].path // empty' "$metadata_file")"
 
-          if [[ "$fallback_url" == http* ]]; then
-            fallback_image_url="$fallback_url"
+        if [[ -z "$wallhaven_id" || -z "$image_url" ]]; then
+          echo "Wallhaven metadata did not include an image URL." >&2
+          exit 1
+        fi
+
+        extension="''${image_url##*.}"
+        extension="$(printf '%s' "$extension" | tr '[:upper:]' '[:lower:]')"
+        case "$extension" in
+          jpg | jpeg | png) ;;
+          *) extension="jpg" ;;
+        esac
+
+        image_path="$wallpaper_dir/wallhaven-$wallhaven_id.$extension"
+        image_tmp="$image_path.tmp"
+
+        if [[ ! -s "$image_path" ]]; then
+          curl "''${curl_common[@]}" "$image_url" --output "$image_tmp"
+          mv "$image_tmp" "$image_path"
+        fi
+      }
+
+      fetch_bing_daily() {
+        local metadata_file metadata_tmp startdate title urlbase fallback_url safe_title
+        local image_tmp image_url fallback_image_url
+
+        metadata_file="$wallpaper_dir/.bing-daily.json"
+        metadata_tmp="$metadata_file.tmp"
+
+        curl \
+          "''${curl_common[@]}" \
+          "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=$market" \
+          --output "$metadata_tmp"
+        mv "$metadata_tmp" "$metadata_file"
+
+        startdate="$(jq -r '.images[0].startdate // empty' "$metadata_file")"
+        title="$(jq -r '.images[0].title // .images[0].copyright // "bing daily"' "$metadata_file")"
+        urlbase="$(jq -r '.images[0].urlbase // empty' "$metadata_file")"
+        fallback_url="$(jq -r '.images[0].url // empty' "$metadata_file")"
+
+        if [[ -z "$startdate" ]]; then
+          startdate="$(date +%Y%m%d)"
+        fi
+
+        safe_title="$(printf '%s' "$title" \
+          | tr -cs '[:alnum:]._-' '-' \
+          | sed 's/^-//; s/-$//; s/--*/-/g' \
+          | cut -c1-80)"
+        if [[ -z "$safe_title" ]]; then
+          safe_title="bing-daily"
+        fi
+
+        image_path="$wallpaper_dir/bing-$startdate-$safe_title.jpg"
+        image_tmp="$image_path.tmp"
+
+        if [[ ! -s "$image_path" ]]; then
+          if [[ -n "$urlbase" ]]; then
+            image_url="https://www.bing.com''${urlbase}_''${resolution}.jpg"
+          elif [[ "$fallback_url" == http* ]]; then
+            image_url="$fallback_url"
           else
-            fallback_image_url="https://www.bing.com$fallback_url"
+            image_url="https://www.bing.com$fallback_url"
           fi
 
-          curl \
-            --fail \
-            --location \
-            --silent \
-            --show-error \
-            --retry 3 \
-            --connect-timeout 10 \
-            "$fallback_image_url" \
-            --output "$image_tmp"
-        fi
+          if ! curl "''${curl_common[@]}" "$image_url" --output "$image_tmp"; then
+            rm -f "$image_tmp"
 
-        mv "$image_tmp" "$image_path"
-      fi
+            if [[ -z "$fallback_url" ]]; then
+              echo "Bing metadata did not include a fallback image URL." >&2
+              exit 1
+            fi
+
+            if [[ "$fallback_url" == http* ]]; then
+              fallback_image_url="$fallback_url"
+            else
+              fallback_image_url="https://www.bing.com$fallback_url"
+            fi
+
+            curl "''${curl_common[@]}" "$fallback_image_url" --output "$image_tmp"
+          fi
+
+          mv "$image_tmp" "$image_path"
+        fi
+      }
+
+      case "$wallpaper_source" in
+        wallhaven)
+          fetch_wallhaven
+          ;;
+        bing-daily)
+          fetch_bing_daily
+          ;;
+        *)
+          echo "Unsupported wallpaper source: $wallpaper_source" >&2
+          exit 1
+          ;;
+      esac
 
       if [[ "$set_desktop" == "1" ]]; then
         /usr/bin/osascript - "$image_path" <<'APPLESCRIPT'
@@ -126,7 +188,7 @@ let
         find "$wallpaper_dir" \
           -maxdepth 1 \
           -type f \
-          -name 'bing-*.jpg' \
+          \( -name 'wallhaven-*' -o -name 'bing-*.jpg' \) \
           -mtime +"$retention_days" \
           -delete
       fi
@@ -140,31 +202,92 @@ in
     enable = mkEnableOption "inspiring macOS wallpapers";
 
     source = mkOption {
-      type = types.enum [ "bing-daily" ];
-      default = "bing-daily";
+      type = types.enum [
+        "wallhaven"
+        "bing-daily"
+      ];
+      default = "wallhaven";
       description = "Wallpaper source to use.";
     };
 
     directory = mkOption {
       type = types.str;
-      default = "${config.home.homeDirectory}/Pictures/Wallpapers/Bing Daily";
+      default = "${config.home.homeDirectory}/Pictures/Wallpapers/Wallhaven";
       description = "Directory where downloaded wallpapers are cached.";
     };
 
-    market = mkOption {
-      type = types.str;
-      default = "en-US";
-      description = "Bing image market/locale used for the daily wallpaper feed.";
+    wallhaven = {
+      query = mkOption {
+        type = types.str;
+        default = "nature landscape mountains forest ocean -flag -flags -politics -political -logo -text -weapon -war";
+        description = "Wallhaven search query. Negative terms are used to avoid noisy or political imagery.";
+      };
+
+      categories = mkOption {
+        type = types.enum [
+          "100"
+          "101"
+          "110"
+          "111"
+        ];
+        default = "100";
+        description = "Wallhaven category mask. Default is general wallpapers only.";
+      };
+
+      purity = mkOption {
+        type = types.enum [
+          "100"
+          "110"
+        ];
+        default = "100";
+        description = "Wallhaven purity mask. Default is SFW only.";
+      };
+
+      ratios = mkOption {
+        type = types.listOf types.str;
+        default = [
+          "16x9"
+          "16x10"
+        ];
+        description = "Preferred Wallhaven aspect ratios.";
+      };
+
+      atleast = mkOption {
+        type = types.str;
+        default = "3840x2160";
+        description = "Minimum Wallhaven image resolution.";
+      };
+
+      sorting = mkOption {
+        type = types.enum [
+          "random"
+          "relevance"
+          "date_added"
+          "views"
+          "favorites"
+          "toplist"
+        ];
+        default = "random";
+        description = "Wallhaven result sorting mode.";
+      };
     };
 
-    resolution = mkOption {
-      type = types.enum [
-        "UHD"
-        "1920x1080"
-        "1366x768"
-      ];
-      default = "UHD";
-      description = "Preferred Bing image resolution. Falls back to Bing's default URL if unavailable.";
+    bing = {
+      market = mkOption {
+        type = types.str;
+        default = "en-US";
+        description = "Bing image market/locale used for the daily wallpaper feed.";
+      };
+
+      resolution = mkOption {
+        type = types.enum [
+          "UHD"
+          "1920x1080"
+          "1366x768"
+        ];
+        default = "UHD";
+        description = "Preferred Bing image resolution. Falls back to Bing's default URL if unavailable.";
+      };
     };
 
     refreshHour = mkOption {
@@ -194,10 +317,6 @@ in
 
   config = mkIf cfg.enable {
     assertions = [
-      {
-        assertion = cfg.source == "bing-daily";
-        message = "myConfig.desktop.wallpaper.source currently supports only bing-daily.";
-      }
       {
         assertion = pkgs.stdenv.isDarwin;
         message = "myConfig.desktop.wallpaper is currently only supported on macOS.";
