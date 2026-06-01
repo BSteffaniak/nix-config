@@ -245,6 +245,16 @@ local servers = {
   terraformls = {},
 }
 
+-- Opt into biome's LSP whenever it's resolvable on PATH. The intent is that
+-- biome lives in the repo's own toolchain (e.g. node_modules/.bin/biome via
+-- bun, exposed through direnv `PATH_add node_modules/.bin`) rather than as a
+-- global package. lspconfig's built-in biome config root-gates itself on
+-- biome.json / biome.jsonc, so this still only attaches in repos that
+-- actually use biome.
+if vim.fn.executable("biome") == 1 then
+  servers.biome = {}
+end
+
 require("config.lsp.none-ls").setup(lsp_on_attach)
 require("config.lsp.installer").setup(servers)
 

@@ -31,6 +31,16 @@ local eslint_config_files = {
   ".eslintrc",
 }
 
+local biome_config_files = { "biome.json", "biome.jsonc" }
+
+local without_root_file = function(builtin, file)
+  return builtin.with({
+    condition = function(utils)
+      return not utils.root_has_file(file)
+    end,
+  })
+end
+
 require("mason-null-ls").setup({
   -- Each of one of these needs to be added in the configuration for none-ls.nvim
   ensure_installed = {
@@ -54,7 +64,9 @@ require("mason-null-ls").setup({
 local sources = {
   -- formatting
   b.formatting.nixfmt,
-  b.formatting.prettierd,
+  -- prettierd steps aside in repos that use biome to avoid both formatters
+  -- fighting over the same buffer when biome's LSP is also attached.
+  without_root_file(b.formatting.prettierd, biome_config_files),
   b.formatting.stylua,
   b.formatting.shfmt.with({ extra_args = { "-i", "4" } }),
   b.formatting.black.with({ extra_args = { "--fast" } }),
