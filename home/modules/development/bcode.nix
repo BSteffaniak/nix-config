@@ -537,7 +537,7 @@ in
       bedrock = {
         model = mkOption {
           type = types.str;
-          default = "global.anthropic.claude-opus-4-7";
+          default = "global.anthropic.claude-opus-4-8";
           description = "Bedrock model used by bcode-bedrock.";
         };
 

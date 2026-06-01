@@ -1,28 +1,28 @@
 {
     "$schema": "https://opencode.ai/config.json",
-    "model": "amazon-bedrock/global.anthropic.claude-opus-4-7",
+    "model": "amazon-bedrock/global.anthropic.claude-opus-4-8",
     "small_model": "amazon-bedrock/anthropic.claude-3-5-haiku-20241022-v1:0",
     "agent": {
         "build": {
-            "model": "amazon-bedrock/global.anthropic.claude-opus-4-7"
+            "model": "amazon-bedrock/global.anthropic.claude-opus-4-8"
         },
         "plan": {
-            "model": "amazon-bedrock/global.anthropic.claude-opus-4-7"
+            "model": "amazon-bedrock/global.anthropic.claude-opus-4-8"
         },
         "explore": {
-            "model": "amazon-bedrock/global.anthropic.claude-opus-4-7"
+            "model": "amazon-bedrock/global.anthropic.claude-opus-4-8"
         },
         "general": {
-            "model": "amazon-bedrock/global.anthropic.claude-opus-4-7"
+            "model": "amazon-bedrock/global.anthropic.claude-opus-4-8"
         },
         "title": {
             "model": "amazon-bedrock/anthropic.claude-3-5-haiku-20241022-v1:0"
         },
         "summary": {
-            "model": "amazon-bedrock/global.anthropic.claude-opus-4-7"
+            "model": "amazon-bedrock/global.anthropic.claude-opus-4-8"
         },
         "compaction": {
-            "model": "amazon-bedrock/global.anthropic.claude-opus-4-7"
+            "model": "amazon-bedrock/global.anthropic.claude-opus-4-8"
         }
     }
 }
