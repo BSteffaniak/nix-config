@@ -1,27 +1,27 @@
 {
-    "version": "0.74.0",
-    "tag": "v0.74.0",
+    "version": "0.78.0",
+    "tag": "v0.78.0",
     "platforms": {
         "aarch64-darwin": {
-            "url": "https://github.com/earendil-works/pi/releases/download/v0.74.0/pi-darwin-arm64.tar.gz",
-            "sha256": "3063179823c6a985634312240c57015024316f7fe6661edd41f14c77d8b15e10"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.78.0/pi-darwin-arm64.tar.gz",
+            "sha256": "68ebbe4f56a136a1c7bace3393eca4ad0aa1fd9f253b797fd370058bd39fe070"
         },
         "aarch64-linux": {
-            "url": "https://github.com/earendil-works/pi/releases/download/v0.74.0/pi-linux-arm64.tar.gz",
-            "sha256": "261aa912878ca983c903d9c4a0408310dd8637b583085651d9b5ddb70c9df572"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.78.0/pi-linux-arm64.tar.gz",
+            "sha256": "49155173682473720d9decf4deecbed754fae84925ef003c0b66aac31d5f9005"
         },
         "x86_64-darwin": {
-            "url": "https://github.com/earendil-works/pi/releases/download/v0.74.0/pi-darwin-x64.tar.gz",
-            "sha256": "fa65c98f2c651ec2f89fb1a8a3dc9b987947bc9b102361a2f178862abacc7560"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.78.0/pi-darwin-x64.tar.gz",
+            "sha256": "66074b271260068199f47738a172397f1e0b5a3334697dd2acea35bbd3470b1c"
         },
         "x86_64-linux": {
-            "url": "https://github.com/earendil-works/pi/releases/download/v0.74.0/pi-linux-x64.tar.gz",
-            "sha256": "d67657a30d49c9faca80868d2a4bdba4dfcac04702893f45a6d14b249345eb8d"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.78.0/pi-linux-x64.tar.gz",
+            "sha256": "8ac03343d1e1228106e8172157f32d6b882829e46b34feaf577f171a5f1387cc"
         }
     },
     "runtimeDeps": {
         "npm": {
-            "npmDepsHash": "sha256-GNXJHW3QwywVXgjaYkr/sbS5XqKnOkBhpDoPF3a6yJw="
+            "npmDepsHash": "sha256-1gh4n523aQkyBBmmapJjM8m+3I/yYWo9gYCfaRxIUJk="
         }
     }
 }

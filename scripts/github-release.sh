@@ -222,7 +222,15 @@ update_npm_runtime_deps() {
     return 1
   fi
 
-  artifact_package_json=$(find "$extract_dir" -path "*/$artifact_package_json_path" -type f | head -n 1)
+  # Pick the shortest matching path so the artifact's top-level package.json
+  # wins over any bundled node_modules/**/package.json copies.
+  artifact_package_json=$(
+    find "$extract_dir" -path "*/$artifact_package_json_path" -type f \
+      | awk '{print length, $0}' \
+      | sort -n \
+      | head -n 1 \
+      | cut -d' ' -f2-
+  )
   if [ -z "$artifact_package_json" ]; then
     err "Could not find '$artifact_package_json_path' in $source_platform artifact"
     return 1
