@@ -34,8 +34,62 @@ let
       wallhaven_sorting=${escapeShellArg cfg.wallhaven.sorting}
       retention_days=${toString cfg.retentionDays}
       set_desktop=${if cfg.setDesktop then "1" else "0"}
+      state_dir=${escapeShellArg "${config.home.homeDirectory}/Library/Application Support/inspiring-wallpaper"}
+      state_file="$state_dir/current"
+      mode="refresh"
 
-      mkdir -p "$wallpaper_dir"
+      case "''${1:-}" in
+        "" | --refresh)
+          mode="refresh"
+          ;;
+        --apply-current)
+          mode="apply-current"
+          ;;
+        -h | --help)
+          echo "Usage: inspiring-wallpaper [--refresh|--apply-current]"
+          exit 0
+          ;;
+        *)
+          echo "Unknown argument: $1" >&2
+          exit 2
+          ;;
+      esac
+
+      mkdir -p "$wallpaper_dir" "$state_dir"
+
+      apply_wallpaper() {
+        local image_path=$1
+
+        if [[ ! -s "$image_path" ]]; then
+          echo "Wallpaper image does not exist or is empty: $image_path" >&2
+          exit 1
+        fi
+
+        /usr/bin/osascript - "$image_path" <<'APPLESCRIPT'
+      on run argv
+        set imagePath to item 1 of argv
+        tell application "System Events"
+          repeat with aDesktop in desktops
+            set picture of aDesktop to imagePath
+          end repeat
+        end tell
+      end run
+      APPLESCRIPT
+      }
+
+      if [[ "$mode" == "apply-current" ]]; then
+        if [[ ! -s "$state_file" ]]; then
+          echo "No current wallpaper state found; refreshing instead." >&2
+          mode="refresh"
+        else
+          image_path="$(cat "$state_file")"
+          if [[ "$set_desktop" == "1" ]]; then
+            apply_wallpaper "$image_path"
+          fi
+          echo "$image_path"
+          exit 0
+        fi
+      fi
 
       curl_common=(
         --fail
@@ -171,17 +225,10 @@ let
           ;;
       esac
 
+      printf '%s\n' "$image_path" > "$state_file"
+
       if [[ "$set_desktop" == "1" ]]; then
-        /usr/bin/osascript - "$image_path" <<'APPLESCRIPT'
-      on run argv
-        set imagePath to item 1 of argv
-        tell application "System Events"
-          repeat with aDesktop in desktops
-            set picture of aDesktop to imagePath
-          end repeat
-        end tell
-      end run
-      APPLESCRIPT
+        apply_wallpaper "$image_path"
       fi
 
       if [[ "$retention_days" -gt 0 ]]; then
@@ -194,6 +241,46 @@ let
       fi
 
       echo "$image_path"
+    '';
+  };
+
+  displayWatcher = pkgs.writeShellApplication {
+    name = "inspiring-wallpaper-display-watcher";
+    runtimeInputs = with pkgs; [ coreutils ];
+    text = ''
+      set -euo pipefail
+
+      poll_seconds=${toString cfg.monitorWatcher.pollSeconds}
+      wallpaper_bin=${inspiringWallpaper}/bin/inspiring-wallpaper
+
+      fingerprint_displays() {
+        /usr/sbin/ioreg -r -c AppleDisplayConnectionManager -l -w0 2>/dev/null | cksum || true
+      }
+
+      apply_current_wallpaper() {
+        # macOS can take a few seconds to create Spaces/desktops for a newly
+        # attached display, especially through docks. Retry so the new monitor
+        # is present when System Events enumerates desktops.
+        sleep 2
+        "$wallpaper_bin" --apply-current || true
+        sleep 8
+        "$wallpaper_bin" --apply-current || true
+        sleep 20
+        "$wallpaper_bin" --apply-current || true
+      }
+
+      previous_fingerprint="$(fingerprint_displays)"
+
+      while true; do
+        sleep "$poll_seconds"
+        current_fingerprint="$(fingerprint_displays)"
+
+        if [[ -n "$current_fingerprint" && "$current_fingerprint" != "$previous_fingerprint" ]]; then
+          previous_fingerprint="$current_fingerprint"
+          echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') display topology changed; applying current wallpaper"
+          apply_current_wallpaper
+        fi
+      done
     '';
   };
 in
@@ -313,6 +400,20 @@ in
       default = true;
       description = "Set the downloaded image as the desktop wallpaper.";
     };
+
+    monitorWatcher = {
+      enable = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Reapply the current wallpaper when macOS display topology changes.";
+      };
+
+      pollSeconds = mkOption {
+        type = types.ints.between 1 3600;
+        default = 15;
+        description = "Seconds between display topology checks.";
+      };
+    };
   };
 
   config = mkIf cfg.enable {
@@ -323,7 +424,10 @@ in
       }
     ];
 
-    home.packages = [ inspiringWallpaper ];
+    home.packages = [
+      inspiringWallpaper
+      displayWatcher
+    ];
 
     launchd.agents.inspiring-wallpaper = {
       enable = true;
@@ -337,6 +441,21 @@ in
         };
         StandardOutPath = "${config.home.homeDirectory}/Library/Logs/inspiring-wallpaper.log";
         StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/inspiring-wallpaper.err.log";
+      };
+    };
+
+    launchd.agents.inspiring-wallpaper-display-watcher = mkIf cfg.monitorWatcher.enable {
+      enable = true;
+      config = {
+        Label = "com.braden.inspiring-wallpaper-display-watcher";
+        ProgramArguments = [ "${displayWatcher}/bin/inspiring-wallpaper-display-watcher" ];
+        RunAtLoad = true;
+        KeepAlive = {
+          Crashed = true;
+          SuccessfulExit = false;
+        };
+        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/inspiring-wallpaper-display-watcher.log";
+        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/inspiring-wallpaper-display-watcher.err.log";
       };
     };
   };
