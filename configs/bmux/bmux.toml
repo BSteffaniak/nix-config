@@ -145,28 +145,16 @@ q = "quit"
 # Recording defaults
 # ---------------------------------------------------------------------------
 [recording]
-# Enable hidden rolling recording at server start.
-enabled = true
-
-# Keep the most recent 5 minutes in rolling storage.
+# Keep the most recent 5 minutes available for on-demand cuts.
+# Rolling recording is enabled by default; this is the only rolling setting
+# needed unless you want to change capture categories.
 rolling_window_secs = 300
 
-# Manual recording defaults (also used as rolling fallbacks).
-capture_input = true
-capture_output = true
-capture_events = true
-
-# Rolling capture overrides: enable every capture category.
-rolling_capture_input = true
-rolling_capture_output = true
-rolling_capture_events = true
+# Include rich data in rolling captures beyond the default input/output/events.
 rolling_capture_protocol_replies = true
 rolling_capture_images = true
 
-# Auto-export GIFs when user-initiated recordings stop/cut.
-auto_export = true
-
-# Write auto-exported GIFs to ~/bmux-recordings.
+# Write user-facing GIF exports here. Setting this also enables auto-export.
 auto_export_dir = "~/bmux-recordings"
 
 # Default GIF frame rate for recording exports and prompted cuts.
@@ -180,7 +168,7 @@ fps = 24
 
 [[plugins.settings."bmux.prompted_actions".actions]]
 name = "recording-cut"
-command = "plugin:bmux.plugin_cli:recording-cut --last-seconds {seconds} --export-fps {fps}"
+command = "plugin:bmux.recording:recording-cut --last-seconds {seconds} --export-fps {fps}"
 
 [[plugins.settings."bmux.prompted_actions".actions.prompts]]
 key = "seconds"
