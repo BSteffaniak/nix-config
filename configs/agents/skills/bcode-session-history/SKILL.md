@@ -1,19 +1,19 @@
 ---
 name: bcode-session-history
-description: Browse, search, understand, and troubleshoot Bcode session history from the local Bcode state directory. Use this to list sessions, inspect event timelines, export JSONL, diagnose corrupt indexes/logs, inspect trace artifacts, and understand imported pi/opencode sessions.
+description: Browse, search, understand, and troubleshoot Bcode session history from the local Bcode session databases. Use this to list sessions, inspect event timelines, export JSONL, query read-only DB tables, inspect trace artifacts, and understand imported pi/opencode sessions.
 ---
 
 ## Purpose
 
-Use this skill when the user asks to find, recall, inspect, search, export, or troubleshoot Bcode sessions. Bcode stores canonical session history as append-only binary event logs under the Bcode state directory, with sidecar indexes and trace artifacts. Prefer Bcode CLI/API commands over ad-hoc parsing.
+Use this skill when the user asks to find, recall, inspect, search, export, or troubleshoot Bcode sessions. Bcode stores session history in a DB-backed architecture under the Bcode state directory. Prefer Bcode CLI/API commands first, then use read-only database queries for focused inspection when useful.
 
 Use this for requests like:
 
 - "find my previous Bcode session about X"
 - "what did we do in that session?"
 - "why won't this session load?"
-- "diagnose/reindex/repair session history"
 - "inspect the tool calls, permissions, runtime work, or traces for a session"
+- "search Bcode sessions for a keyword"
 
 ## Storage Reference
 
@@ -25,26 +25,61 @@ Bcode's default state directory is resolved in this order:
 2. `$XDG_STATE_HOME/bcode`
 3. `~/.local/state/bcode`
 
-Important subdirectories:
+Helpful shell variable:
 
-```text
-<state-dir>/sessions/     # canonical session event logs + derived indexes
-<state-dir>/traces/       # trace blob artifacts referenced by TraceEvent/tool outputs
-<state-dir>/daemons/      # daemon metadata and log paths
-<state-dir>/logs/         # daemon/runtime logs when configured there
+```bash
+STATE="${BCODE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/bcode}"
 ```
 
-### Session files
-
-Canonical session event logs are stored as:
+Important paths:
 
 ```text
-<state-dir>/sessions/<session-id>.events
+<state-dir>/sessions/catalog.db                 # global session catalog database
+<state-dir>/sessions/<session-id>/session.db    # per-session event/projection database
+<state-dir>/traces/                             # trace blob artifacts referenced by trace/tool events
+<state-dir>/daemons/                            # daemon metadata and log paths
+<state-dir>/logs/                               # daemon/runtime logs when configured there
 ```
 
-These are **binary framed append-only event logs**, not JSONL. Do not hand-parse them with JSON tools. Use Bcode commands to read, export, diagnose, reindex, or repair them.
+### Database model
 
-Sidecar/index data may exist next to the logs. Treat indexes as derived state: if they are stale or corrupt, rebuild them from canonical `.events` logs.
+Bcode uses one global catalog database plus one database per session.
+
+#### Global catalog: `<state-dir>/sessions/catalog.db`
+
+Primary table:
+
+| Table      | Purpose                                                                                                              |
+| ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| `sessions` | One row per known session, including title, working directory, activity time, DB path, state, and projection status. |
+
+Useful `sessions` columns:
+
+- `session_id`
+- `db_path`
+- `title`
+- `working_directory`
+- `created_at_ms`
+- `updated_at_ms`
+- `state`
+- `projection_status`
+
+#### Per-session DB: `<state-dir>/sessions/<session-id>/session.db`
+
+Useful tables:
+
+| Table                    | Purpose                                                                                |
+| ------------------------ | -------------------------------------------------------------------------------------- |
+| `events`                 | Durable event stream rows with sequence, type, timestamps, and JSON payload.           |
+| `session_state`          | Current projected session state such as title, working directory, model, and provider. |
+| `input_messages`         | User input history projection.                                                         |
+| `transcript`             | Conversation/transcript projection.                                                    |
+| `tool_runs`              | Tool invocation lifecycle projection.                                                  |
+| `runtime_work`           | Runtime work lifecycle projection.                                                     |
+| `projection_checkpoints` | Projection progress/checkpoint metadata.                                               |
+| `snapshots`              | Stored projection snapshots.                                                           |
+
+The `events.payload` column is JSON text for the durable event. Projection tables are optimized views for browsing, searching, and diagnostics.
 
 ## Operations
 
@@ -57,6 +92,14 @@ bcode session list
 ```
 
 Output includes the display name, session ID, and connected client count. Always preserve the session ID for follow-up commands.
+
+Read-only DB alternative:
+
+```bash
+STATE="${BCODE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/bcode}"
+sqlite3 "$STATE/sessions/catalog.db" \
+  "select session_id, coalesce(title, ''), working_directory, datetime(updated_at_ms/1000, 'unixepoch') from sessions order by updated_at_ms desc limit 20;"
+```
 
 ### 2. Read a session's event history
 
@@ -97,83 +140,101 @@ bcode session diagnose <session-id>
 bcode session diagnose <session-id> --json
 ```
 
-Use JSON mode when you need exact event counts, latest event kinds, trace payloads, or structured troubleshooting output.
+Use JSON mode when you need exact event counts, latest event kinds, trace payloads, or scriptable output.
 
-### 6. Doctor session storage
+### 6. Inspect session DB tables read-only
 
-```bash
-bcode session doctor
-bcode session doctor <session-id>
-bcode session doctor --json
-```
-
-Use doctor when the user reports missing sessions, unreadable history, schema/index problems, or broken session loading.
-
-### 7. Rebuild derived indexes
-
-Indexes are derived from canonical event logs. If list/history/diagnose suggests stale or corrupt index data, reindex:
+Set the paths:
 
 ```bash
-bcode session reindex
-bcode session reindex <session-id>
+STATE="${BCODE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/bcode}"
+SESSION_ID="<session-id>"
+SESSION_DB="$STATE/sessions/$SESSION_ID/session.db"
 ```
 
-Reindexing should not rewrite canonical session events.
-
-### 8. Repair an unreadable event-log tail
-
-If a session has a corrupt or truncated tail, use the official repair command:
+List tables:
 
 ```bash
-bcode session repair <session-id>
+sqlite3 "$SESSION_DB" ".tables"
 ```
 
-This repairs unreadable tail data and backs up the original log. Do not manually edit `.events` files.
-
-### 9. Inspect runtime work
-
-Runtime work captures durable long-running operations such as tool/plugin/service work:
+Inspect event sequence and types:
 
 ```bash
-bcode runtime-work list <session-id>
-bcode runtime-work history <session-id> --limit 100
+sqlite3 "$SESSION_DB" \
+  "select event_seq, event_type, datetime(created_at_ms/1000, 'unixepoch') from events order by event_seq limit 100;"
 ```
 
-Use this when a turn appears stuck, cancelled, partially completed, or tool/plugin behavior needs reconstruction.
+Search durable event payloads:
+
+```bash
+sqlite3 "$SESSION_DB" \
+  "select event_seq, event_type, substr(payload, 1, 300) from events where payload like '%keyword%' order by event_seq;"
+```
+
+Inspect transcript rows:
+
+```bash
+sqlite3 "$SESSION_DB" \
+  "select * from transcript order by event_seq_start limit 100;"
+```
+
+Inspect user input history:
+
+```bash
+sqlite3 "$SESSION_DB" \
+  "select input_seq, event_seq, datetime(created_at_ms/1000, 'unixepoch'), substr(text, 1, 300) from input_messages order by input_seq desc limit 50;"
+```
+
+Inspect tool runs:
+
+```bash
+sqlite3 "$SESSION_DB" \
+  "select tool_call_id, event_seq_start, event_seq_end, status, tool_name, is_error from tool_runs order by event_seq_start desc limit 50;"
+```
+
+Inspect runtime work:
+
+```bash
+sqlite3 "$SESSION_DB" \
+  "select work_id, event_seq_start, event_seq_end, kind, label, status, parent_work_id, datetime(started_at_ms/1000, 'unixepoch'), datetime(finished_at_ms/1000, 'unixepoch'), message from runtime_work order by event_seq_start desc limit 50;"
+```
 
 ## Searching Across Sessions
 
-Because canonical `.events` files are binary, do **not** rely on raw `grep` over `*.events` except as rough last-resort triage. Prefer exporting candidate sessions and searching the JSONL.
+Prefer the CLI when a session is known. For broad search, query the catalog first, then inspect likely session DBs.
 
-Typical workflow:
+List recent session DB paths:
 
-1. Run `bcode session list`.
-2. Identify candidate sessions by name/recency.
-3. Export each candidate:
+```bash
+STATE="${BCODE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/bcode}"
+sqlite3 "$STATE/sessions/catalog.db" \
+  "select session_id, db_path, coalesce(title, ''), working_directory from sessions order by updated_at_ms desc limit 50;"
+```
 
-   ```bash
-   bcode session export <session-id> --format jsonl
-   ```
+Search durable payloads across all session DBs:
 
-4. Search exported JSONL with `grep`, `jq`, or a small script.
-5. Use `history`, `timeline`, or `diagnose --json` on the best match.
+```bash
+STATE="${BCODE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/bcode}"
+KEYWORD="keyword"
+find "$STATE/sessions" -name session.db -print0 | while IFS= read -r -d '' db; do
+  session_id="$(basename "$(dirname "$db")")"
+  sqlite3 "$db" "select '$session_id', event_seq, event_type, substr(payload, 1, 240) from events where payload like '%$KEYWORD%' order by event_seq limit 10;"
+done
+```
 
-If many sessions must be searched, write a temporary script that collects IDs from `bcode session list`, exports each session, and searches exported JSON. Keep it read-only.
+For exact JSON matching, export a specific session and use `jq` after identifying candidate session IDs.
 
-## Event Model Reference
+## Common Event Types
 
-Common durable event kinds to recognize:
+You may see these event types in `events.event_type`, CLI history, timeline, or exported JSONL:
 
-- `SessionCreated` — session start, optional name, working directory.
-- `SessionRenamed` — display name changed.
-- `ClientAttached` / `ClientDetached` — TUI/CLI clients connected or disconnected.
-- `UserMessage` — user-authored input.
-- `AssistantDelta` / `AssistantMessage` — assistant response content.
-- `AssistantReasoningDelta` / `AssistantReasoningMessage` — provider-exposed reasoning content if available.
-- `ToolCallRequested` — tool name and JSON arguments.
-- `ToolCallFinished` — tool result, error flag, optional trace artifact reference.
-- `ToolInvocationStream` — incremental tool events while a tool runs.
-- `PermissionRequested` / `PermissionResolved` — permission gate lifecycle.
+- `SessionCreated` — session initialized.
+- `UserMessage` — user-authored prompt/input.
+- `AssistantMessage` / `AssistantMessageDelta` — assistant response content.
+- `AssistantReasoningDelta` — provider reasoning content.
+- `ToolCallRequested` / `ToolCallFinished` / `ToolInvocationStream` — tool lifecycle and streamed output.
+- `PermissionRequested` / `PermissionResolved` — permission flow.
 - `ModelChanged` — active provider/model changed.
 - `AgentChanged` — active agent changed.
 - `SystemMessage` — durable system/status message.
@@ -194,16 +255,20 @@ Common durable event kinds to recognize:
    ```bash
    echo "${BCODE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/bcode}"
    ```
-2. List session files:
+2. Check the catalog DB exists:
    ```bash
-   ls -la "${BCODE_STATE_DIR:-$HOME/.local/state/bcode}/sessions"
+   STATE="${BCODE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/bcode}"
+   ls -la "$STATE/sessions/catalog.db"
    ```
-3. Run:
+3. Query the catalog directly:
    ```bash
-   bcode session doctor --json
-   bcode session reindex
+   sqlite3 "$STATE/sessions/catalog.db" \
+     "select session_id, coalesce(title, ''), state, projection_status, datetime(updated_at_ms/1000, 'unixepoch') from sessions order by updated_at_ms desc limit 50;"
    ```
-4. If using a daemon, verify daemon status/logs before assuming data is gone.
+4. Verify daemon status/logs before assuming data is gone:
+   ```bash
+   bcode server status --verbose
+   ```
 
 ### Session history fails to load
 
@@ -211,15 +276,20 @@ Common durable event kinds to recognize:
    ```bash
    bcode session diagnose <session-id> --json
    ```
-2. If the issue points at indexes, run:
+2. Confirm the per-session DB exists:
    ```bash
-   bcode session reindex <session-id>
+   STATE="${BCODE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/bcode}"
+   ls -la "$STATE/sessions/<session-id>/session.db"
    ```
-3. If the issue points at an unreadable/truncated event tail, run:
+3. Inspect core tables read-only:
    ```bash
-   bcode session repair <session-id>
+   sqlite3 "$STATE/sessions/<session-id>/session.db" ".tables"
+   sqlite3 "$STATE/sessions/<session-id>/session.db" \
+     "select count(*), min(event_seq), max(event_seq) from events;"
+   sqlite3 "$STATE/sessions/<session-id>/session.db" \
+     "select * from session_state;"
    ```
-4. Re-run `diagnose` and then `history`.
+4. Check daemon logs if the CLI/API path is failing.
 
 ### Need to understand what happened in a long session
 
@@ -227,20 +297,22 @@ Common durable event kinds to recognize:
 2. Run `bcode session export <session-id> --format jsonl` for structured search.
 3. Identify key sequences around user messages, tool calls, permission decisions, runtime work, and trace events.
 4. Use `history` for human-readable reconstruction.
+5. Use read-only DB queries against `transcript`, `tool_runs`, and `runtime_work` for focused inspection.
 
 ### Need to troubleshoot tool/plugin behavior
 
 1. Search for `ToolCallRequested`, `ToolCallFinished`, and `ToolInvocationStream` events.
-2. Check `is_error`, `result`, arguments JSON, and any artifact path.
-3. Inspect `TraceEvent` payloads and trace blob references under `<state-dir>/traces/` if needed.
-4. Check runtime work history:
+2. Inspect `tool_runs` for status, tool name, sequence range, and error status.
+3. Check event payload JSON for arguments, results, and artifact paths.
+4. Inspect `TraceEvent` payloads and trace blob references under `<state-dir>/traces/` if needed.
+5. Check runtime work history:
    ```bash
    bcode runtime-work history <session-id> --limit 100
    ```
 
 ### Need to identify imported sessions
 
-Look for `SessionImported` in exported JSONL or human-readable history. It includes:
+Look for `SessionImported` in exported JSONL, human-readable history, or event payloads. It includes:
 
 - `source_id` such as `pi` or `opencode`
 - `source_display_name`
@@ -260,9 +332,8 @@ Use source-specific skills, such as `pi-session-history` or `opencode-session-hi
 
 ## Rules
 
-- **Read-only by default.** Do not modify session state unless the user explicitly asks to repair/reindex, or the operation is clearly diagnostic and official (`bcode session reindex`, `doctor --fix`, `repair`).
-- **Do not manually edit `.events` files.** They are binary canonical logs.
-- **Do not manually delete indexes or traces** unless the user explicitly asks and understands the consequence.
-- **Use Bcode commands before raw filesystem parsing.** The CLI knows the event schema and framing.
-- **Treat indexes as derived and event logs as canonical.** Rebuild indexes instead of trusting stale sidecars.
-- **Preserve evidence.** If repairing, mention backup paths produced by Bcode.
+- **Read-only by default.** Do not modify session state unless the user explicitly asks for a supported mutating operation.
+- **Prefer Bcode commands before raw database queries.** The CLI/API knows the event schema and product semantics.
+- **Use read-only SQL inspection only.** Do not run `insert`, `update`, `delete`, `drop`, `alter`, `vacuum`, or other mutating database commands.
+- **Do not manually edit session databases, traces, daemon metadata, or logs.**
+- **Preserve evidence.** When troubleshooting, record the exact command/query used and the observed result.
