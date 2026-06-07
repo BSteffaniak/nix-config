@@ -115,7 +115,8 @@ let
 
     tui.keybindings.chat = {
       enter = "tui.input.newLine";
-      "ctrl+enter" = "tui.input.submit";
+      "ctrl+enter" = "tui.input.submitSteering";
+      "ctrl+shift+enter" = "tui.input.submitFollowUp";
     };
 
     # Keep plain `bcode` credential-free. Provider-specific wrappers such as
