@@ -22,6 +22,7 @@ let
   bcodeBasePermissionConfig = {
     agent = {
       build = {
+        accent = "#22d3ee";
         tools = {
           "filesystem.read" = true;
           "filesystem.write" = true;
@@ -50,6 +51,7 @@ let
       };
 
       plan = {
+        accent = "#6b7280";
         tools = {
           "filesystem.read" = true;
           "filesystem.write" = false;
