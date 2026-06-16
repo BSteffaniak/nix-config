@@ -1,22 +1,22 @@
 {
-    "version": "1.14.50",
-    "tag": "v1.14.50",
+    "version": "1.17.7",
+    "tag": "v1.17.7",
     "platforms": {
         "aarch64-darwin": {
-            "url": "https://github.com/anomalyco/opencode/releases/download/v1.14.50/opencode-darwin-arm64.zip",
-            "sha256": "a5c6d9440d45e18ac7d9c7162b83709d82ec1b2c28e677d3107c1bea369f72cf"
+            "url": "https://github.com/anomalyco/opencode/releases/download/v1.17.7/opencode-darwin-arm64.zip",
+            "sha256": "7a63aeb5a15b29da2681ac2b8c74d4cb3a64fa13b61198a3c7dc771243c23972"
         },
         "aarch64-linux": {
-            "url": "https://github.com/anomalyco/opencode/releases/download/v1.14.50/opencode-linux-arm64.tar.gz",
-            "sha256": "60ef777dcbf8b1080d10e615ff0544da975cd72b906d00f5ee7578bdb3cd38d4"
+            "url": "https://github.com/anomalyco/opencode/releases/download/v1.17.7/opencode-linux-arm64.tar.gz",
+            "sha256": "ac80ea0ee7e3f10483bd98298654b6aaddc305c880b162667a03e742d9843fe6"
         },
         "x86_64-darwin": {
-            "url": "https://github.com/anomalyco/opencode/releases/download/v1.14.50/opencode-darwin-x64.zip",
-            "sha256": "b999cd3439f4b4b747ac2ee1decf6c6c7221471f695109b368165284b32f3ed3"
+            "url": "https://github.com/anomalyco/opencode/releases/download/v1.17.7/opencode-darwin-x64.zip",
+            "sha256": "4953e7c3c8db8c623ea726d8ecb6657ba04806b7b4d906c078fc072fb172cfe0"
         },
         "x86_64-linux": {
-            "url": "https://github.com/anomalyco/opencode/releases/download/v1.14.50/opencode-linux-x64.tar.gz",
-            "sha256": "144a8ced503e81dad0b23ad1827377fdecdebcc9bd5b3257661f0ebc7a9de891"
+            "url": "https://github.com/anomalyco/opencode/releases/download/v1.17.7/opencode-linux-x64.tar.gz",
+            "sha256": "60fe5a92dc9af64ec079348fedde17e12da6a867efe7e8353be8038480607924"
         }
     }
 }
