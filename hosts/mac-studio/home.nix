@@ -72,6 +72,7 @@
     };
 
     # Development tool configs
+    development.bcode.enable = true;
     development.lazygit.enable = true;
     development.act.enable = true;
     development.opencode.enable = true;
