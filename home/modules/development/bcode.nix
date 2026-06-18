@@ -121,6 +121,8 @@ let
       "ctrl+shift+enter" = "tui.input.submitFollowUp";
     };
 
+    model.metadata."gpt-5.5".reasoning.default_effort = "none";
+
     # Keep plain `bcode` credential-free. Provider-specific wrappers such as
     # `bcode-openai` and host-private profile wrappers point BCODE_CONFIG at
     # generated provider configs that contain their own scoped auth profiles.
