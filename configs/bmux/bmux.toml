@@ -190,3 +190,9 @@ title = "GIF Frame Rate"
 placeholder = "24"
 default = "24"
 validation = "positive_integer"
+
+# ---------------------------------------------------------------------------
+# Clipboard remote sync diagnostics
+# ---------------------------------------------------------------------------
+[diagnostics.components."clipboard.remote_sync"]
+min_level = "debug"
