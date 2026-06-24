@@ -84,6 +84,42 @@ let
 
   bcodePermissions = mergedPermissions;
 
+  renameBcodePermissionCategory =
+    permissions:
+    if permissions ? bash then
+      let
+        withoutBash = removeAttrs permissions [ "bash" ];
+        commandRules =
+          if permissions ? command then
+            myLib.deepMerge permissions.command permissions.bash
+          else
+            permissions.bash;
+      in
+      withoutBash // { command = commandRules; }
+    else
+      permissions;
+
+  renameBcodeToolKey =
+    tools:
+    if tools ? bash then (removeAttrs tools [ "bash" ]) // { "shell.run" = tools.bash; } else tools;
+
+  normalizeBcodeAgent =
+    agent:
+    agent
+    // optionalAttrs (agent ? permission && builtins.isAttrs agent.permission) {
+      permission = renameBcodePermissionCategory agent.permission;
+    }
+    // optionalAttrs (agent ? tools && builtins.isAttrs agent.tools) {
+      tools = renameBcodeToolKey agent.tools;
+    };
+
+  normalizeBcodeAgentConfig =
+    settings:
+    settings
+    // optionalAttrs (settings ? agent && builtins.isAttrs settings.agent) {
+      agent = mapAttrs (_name: agent: normalizeBcodeAgent agent) settings.agent;
+    };
+
   baseSettings = {
     plugins.enabled = [
       "bcode.openai-compatible"
@@ -108,7 +144,8 @@ let
     };
   };
 
-  finalSettings = recursiveUpdate (recursiveUpdate baseSettings bcodePermissions) cfg.extraSettings;
+  finalSettingsRaw = recursiveUpdate (recursiveUpdate baseSettings bcodePermissions) cfg.extraSettings;
+  finalSettings = normalizeBcodeAgentConfig finalSettingsRaw;
 
   openAiFastAlias = {
     "gpt-5.5-fast" = {
