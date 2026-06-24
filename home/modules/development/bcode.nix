@@ -34,7 +34,7 @@ let
           "web.inspect" = true;
         };
         permission = {
-          bash = {
+          command = {
             "*" = "allow";
           };
           write = {
@@ -63,7 +63,7 @@ let
           "web.inspect" = true;
         };
         permission = {
-          bash = {
+          command = {
             "*" = "deny";
           };
           web = {
