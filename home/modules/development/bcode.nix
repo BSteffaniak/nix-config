@@ -82,37 +82,7 @@ let
     overrides = agentsCfg.permissions.overrides ++ cfg.permissionOverrides;
   };
 
-  toolAliases = {
-    bash = "shell.run";
-    read = "filesystem.read";
-    grep = "filesystem.grep";
-    find = "filesystem.find";
-    ls = "filesystem.list";
-    stat = "filesystem.stat";
-    write = "filesystem.write";
-    edit = "filesystem.edit";
-    "worktree.read" = "worktree.list";
-  };
-
-  normalizeTools =
-    tools:
-    builtins.listToAttrs (
-      mapAttrsToList (name: enabled: {
-        name = toolAliases.${name} or name;
-        value = enabled;
-      }) tools
-    );
-
-  normalizeAgent =
-    agentConfig:
-    agentConfig
-    // optionalAttrs (agentConfig ? tools) {
-      tools = normalizeTools agentConfig.tools;
-    };
-
-  bcodePermissions = mergedPermissions // {
-    agent = mapAttrs (_name: normalizeAgent) (mergedPermissions.agent or { });
-  };
+  bcodePermissions = mergedPermissions;
 
   baseSettings = {
     plugins.enabled = [
