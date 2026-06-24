@@ -85,8 +85,13 @@ let
   toolAliases = {
     bash = "shell.run";
     read = "filesystem.read";
+    grep = "filesystem.grep";
+    find = "filesystem.find";
+    ls = "filesystem.list";
+    stat = "filesystem.stat";
     write = "filesystem.write";
     edit = "filesystem.edit";
+    "worktree.read" = "worktree.list";
   };
 
   normalizeTools =
