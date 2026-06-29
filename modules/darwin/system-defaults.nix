@@ -49,6 +49,10 @@ let
   '';
 
   needsDisplayCtl = cfg.disableAutoBrightness || cfg.disableTrueTone;
+
+  keyboardRepeatScript = pkgs.writeShellScript "apply-keyboard-repeat" ''
+    /usr/bin/hidutil property --set '{"HIDInitialKeyRepeat":166666667,"HIDKeyRepeat":16666667}' >/dev/null
+  '';
 in
 {
   options.myConfig.darwin.systemDefaults = {
@@ -120,7 +124,8 @@ in
 
       menuExtraClock.ShowSeconds = cfg.showClockSeconds;
       NSGlobalDomain.KeyRepeat = mkIf cfg.fastKeyRepeat 1;
-      NSGlobalDomain.InitialKeyRepeat = mkIf cfg.fastKeyRepeat 50;
+      NSGlobalDomain.InitialKeyRepeat = mkIf cfg.fastKeyRepeat 2;
+      NSGlobalDomain.ApplePressAndHoldEnabled = mkIf cfg.fastKeyRepeat false;
 
       CustomUserPreferences.".GlobalPreferences"."com.apple.mouse.scaling" = mkIf (
         cfg.mouseSpeed != null
@@ -136,12 +141,26 @@ in
 
     power.sleep.display = mkIf cfg.preventSleep "never";
 
+    launchd.user.agents.keyboard-repeat = mkIf cfg.fastKeyRepeat {
+      serviceConfig = {
+        Label = "com.braden.keyboard-repeat";
+        ProgramArguments = [ "${keyboardRepeatScript}" ];
+        RunAtLoad = true;
+        StandardOutPath = "/Users/${config.myConfig.username}/Library/Logs/keyboard-repeat.log";
+        StandardErrorPath = "/Users/${config.myConfig.username}/Library/Logs/keyboard-repeat.err.log";
+      };
+    };
+
     # Use pmset directly to prevent display sleep on all power sources (AC, battery, UPS)
     # systemsetup -setDisplaySleep is unreliable on newer macOS versions
     system.activationScripts.postActivation.text = lib.concatStrings [
       (optionalString cfg.preventSleep ''
         echo "configuring display sleep prevention (all power sources)..." >&2
         pmset -a displaysleep 0
+      '')
+      (optionalString cfg.fastKeyRepeat ''
+        echo "configuring live keyboard repeat rate..." >&2
+        ${keyboardRepeatScript} || true
       '')
       # Use display-ctl (Objective-C CLI) to toggle auto-brightness and True Tone
       # via Apple's private CoreBrightness/DisplayServices framework APIs.

@@ -15,8 +15,7 @@ function isFigmaToolName(name: string): boolean {
 
 function isFigmaHintMessage(message: unknown): boolean {
     const maybeMessage = message as
-        | { customType?: unknown; content?: unknown }
-        | undefined;
+        { customType?: unknown; content?: unknown } | undefined;
 
     return (
         maybeMessage?.customType === "figma-mcp-hint" ||
