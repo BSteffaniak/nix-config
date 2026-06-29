@@ -51,7 +51,7 @@ let
   needsDisplayCtl = cfg.disableAutoBrightness || cfg.disableTrueTone;
 
   keyboardRepeatScript = pkgs.writeShellScript "apply-keyboard-repeat" ''
-    /usr/bin/hidutil property --set '{"HIDInitialKeyRepeat":166666667,"HIDKeyRepeat":16666667}' >/dev/null
+    /usr/bin/hidutil property --set '{"HIDInitialKeyRepeat":166666667,"HIDKeyRepeat":8333333}' >/dev/null
   '';
 in
 {
