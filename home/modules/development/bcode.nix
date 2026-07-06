@@ -27,6 +27,8 @@ let
           "filesystem.read" = true;
           "filesystem.write" = true;
           "filesystem.edit" = true;
+          "vim_edit.preview" = true;
+          "vim_edit.apply" = true;
           "shell.run" = true;
           "web.search" = true;
           "web.fetch" = true;
@@ -56,6 +58,8 @@ let
           "filesystem.read" = true;
           "filesystem.write" = false;
           "filesystem.edit" = false;
+          "vim_edit.preview" = true;
+          "vim_edit.apply" = false;
           "shell.run" = true;
           "web.search" = true;
           "web.fetch" = true;
@@ -124,6 +128,7 @@ let
     plugins.enabled = [
       "bcode.openai-compatible"
       "bcode.bedrock"
+      "bcode.vim-edit"
     ];
 
     tui.keybindings.chat = {
