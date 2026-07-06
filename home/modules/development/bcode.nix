@@ -174,7 +174,8 @@ let
             model_id = profile.model;
             inherit settings;
           }
-          // optionalAttrs (authProfile != null) { auth_profile = authProfile; };
+          // optionalAttrs (authProfile != null) { auth_profile = authProfile; }
+          // optionalAttrs (profile ? authPool && profile.authPool != null) { auth_pool = profile.authPool; };
           inherit aliases;
         };
       }
@@ -239,10 +240,16 @@ let
       baseUrl ? null,
       dialect ? null,
       variants ? { },
+      subscriptionPriming ? cfg.providers.openai.subscriptionPriming.enable,
+      authPool ? "openai",
     }:
+    let
+      enableSubscriptionPriming = authProvider == "openai" && subscriptionPriming;
+    in
     {
       providerPluginId = "bcode.openai-compatible";
       inherit model authProfile;
+      authPool = if enableSubscriptionPriming then authPool else null;
       settings =
         optionalAttrs (baseUrl != null) { base_url = baseUrl; }
         // optionalAttrs (dialect != null) { inherit dialect; };
@@ -256,6 +263,12 @@ let
         }
         // optionalAttrs (authProvider == "openai") { mode = "chatgpt"; }
         // optionalAttrs (baseUrl != null) { base_url = baseUrl; };
+      };
+      extraConfig = optionalAttrs enableSubscriptionPriming {
+        auth.pools.${authPool} = {
+          provider_plugin_id = "bcode.openai-compatible";
+          priming.enabled = true;
+        };
       };
       variants =
         variants
@@ -596,6 +609,14 @@ in
         };
 
         sshenv = mkSshenvOption "openai" null;
+
+        subscriptionPriming = {
+          enable = mkOption {
+            type = types.bool;
+            default = true;
+            description = "Enable Bcode's OpenAI/Codex subscription priming defaults for bcode-openai.";
+          };
+        };
       };
 
       codex = {
