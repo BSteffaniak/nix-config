@@ -131,6 +131,8 @@ let
       "bcode.vim-edit"
     ];
 
+    worktree.setup.direnv_allow = true;
+
     tui.keybindings.chat = {
       enter = "tui.input.newLine";
       "ctrl+enter" = "tui.input.submitSteering";
