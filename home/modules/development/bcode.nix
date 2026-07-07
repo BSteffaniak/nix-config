@@ -133,6 +133,15 @@ let
 
     worktree.setup.direnv_allow = true;
 
+    metrics = {
+      enabled = true;
+      persist_events = true;
+      segment_max_bytes = 8 * 1024 * 1024;
+      total_max_bytes = 128 * 1024 * 1024;
+      recent_read_max_bytes = 16 * 1024 * 1024;
+      max_recent_events = 10000;
+    };
+
     tui.keybindings.chat = {
       enter = "tui.input.newLine";
       "ctrl+enter" = "tui.input.submitSteering";
