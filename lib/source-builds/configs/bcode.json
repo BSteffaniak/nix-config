@@ -4,7 +4,12 @@
     "pname": "bcode",
     "hashField": "cargoHash",
     "doCheck": false,
-    "nativeBuildInputs": ["pkg-config"],
+    "nativeBuildInputs": ["pkg-config", "cmake"],
     "buildInputs": ["openssl", "libiconv"],
-    "cargoBuildFlags": ["--package", "bcode"]
+    "rustToolchain": "stable",
+    "env": {
+        "BCODE_TESSERACT_ARTIFACT_CACHE": "/tmp/bcode-tesseract-artifacts",
+        "BCODE_TESSERACT_SOURCE_CACHE": "/tmp/bcode-tesseract-sources"
+    },
+    "cargoBuildFlags": ["--package", "bcode", "--features", "app"]
 }

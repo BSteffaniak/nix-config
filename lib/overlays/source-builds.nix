@@ -73,6 +73,19 @@ else
             # Optional config fields with defaults
             doCheck = config.doCheck or true;
             cargoBuildFlags = config.cargoBuildFlags or [ ];
+            rustPlatform =
+              if config.rustToolchain or null == "stable" then
+                final.makeRustPlatform {
+                  cargo = final.rustStable;
+                  rustc = final.rustStable;
+                }
+              else if config.rustToolchain or null == "nightly" then
+                final.makeRustPlatform {
+                  cargo = final.rustNightly;
+                  rustc = final.rustNightly;
+                }
+              else
+                final.rustPlatform;
             nativeBuildInputs = map (pkgName: final.${pkgName}) (config.nativeBuildInputs or [ ]);
             buildInputs = map (pkgName: final.${pkgName}) (config.buildInputs or [ ]);
             hooksDir = ../source-builds/hooks;
@@ -81,9 +94,10 @@ else
                 builtins.readFile (hooksDir + "/${config.postInstallFile}")
               else
                 null;
+            env = config.env or { };
           in
           {
-            ${config.pname} = final.rustPlatform.buildRustPackage (
+            ${config.pname} = rustPlatform.buildRustPackage (
               {
                 pname = config.pname;
                 version = "unstable";
@@ -98,6 +112,7 @@ else
               // (if nativeBuildInputs != [ ] then { inherit nativeBuildInputs; } else { })
               // (if buildInputs != [ ] then { inherit buildInputs; } else { })
               // (if postInstall != null then { inherit postInstall; } else { })
+              // env
             );
           };
   in
