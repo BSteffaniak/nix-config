@@ -148,11 +148,18 @@ let
       "ctrl+shift+enter" = "tui.input.submitFollowUp";
     };
 
+    model.metadata."gpt-5.6-sol".reasoning.default_effort = "none";
     model.metadata."gpt-5.5".reasoning.default_effort = "none";
 
     # Keep plain `bcode` credential-free. Provider-specific wrappers such as
     # `bcode-openai` and host-private profile wrappers point BCODE_CONFIG at
     # generated provider configs that contain their own scoped auth profiles.
+    model.aliases."gpt-5.6-sol-fast" = {
+      provider_plugin_id = "bcode.openai-compatible";
+      model_id = "gpt-5.6-sol";
+      request.service_tier = "priority";
+    };
+
     model.aliases."gpt-5.5-fast" = {
       provider_plugin_id = "bcode.openai-compatible";
       model_id = "gpt-5.5";
@@ -164,6 +171,12 @@ let
   finalSettings = normalizeBcodeAgentConfig finalSettingsRaw;
 
   openAiFastAlias = {
+    "gpt-5.6-sol-fast" = {
+      provider_plugin_id = "bcode.openai-compatible";
+      model_id = "gpt-5.6-sol";
+      request.service_tier = "priority";
+    };
+
     "gpt-5.5-fast" = {
       provider_plugin_id = "bcode.openai-compatible";
       model_id = "gpt-5.5";
@@ -608,13 +621,13 @@ in
       openai = {
         model = mkOption {
           type = types.str;
-          default = "gpt-5.5";
+          default = "gpt-5.6-sol";
           description = "OpenAI/ChatGPT model used by bcode-openai.";
         };
 
         fastModel = mkOption {
           type = types.str;
-          default = "gpt-5.5-fast";
+          default = "gpt-5.6-sol-fast";
           description = "Priority-tier OpenAI/ChatGPT model alias used by bcode-openai-fast.";
         };
 
