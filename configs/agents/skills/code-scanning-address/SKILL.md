@@ -4,6 +4,10 @@ description: Address GitHub code scanning alerts. Interactive - fetches open ale
 allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Read(*), Glob(*), Grep(*), Edit(*), Question(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Address GitHub Code Scanning findings end-to-end: fetch open alerts, analyze alert context in code, classify each finding, and then (with explicit user approval per alert) either apply a fix in the codebase or dismiss the alert with a documented rationale.
@@ -24,7 +28,7 @@ Determine which repository and alert set to process.
   - state (`open` default)
 - Verify GitHub auth first:
   ```bash
-  gh auth status
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh auth status
   ```
 
 If repo context cannot be resolved, stop and request a valid repo reference.
@@ -34,7 +38,7 @@ If repo context cannot be resolved, stop and request a valid repo reference.
 Fetch and summarize alert inventory.
 
 ```bash
-gh api --paginate "repos/{owner}/{repo}/code-scanning/alerts?state=open&tool_name=CodeQL&per_page=100"
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api --paginate "repos/{owner}/{repo}/code-scanning/alerts?state=open&tool_name=CodeQL&per_page=100"
 ```
 
 For each alert, capture:
@@ -53,8 +57,8 @@ Present a grouped overview by rule and severity before any action.
 For each alert in scope, fetch details and instance context:
 
 ```bash
-gh api "repos/{owner}/{repo}/code-scanning/alerts/{number}"
-gh api "repos/{owner}/{repo}/code-scanning/alerts/{number}/instances?per_page=100"
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api "repos/{owner}/{repo}/code-scanning/alerts/{number}"
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api "repos/{owner}/{repo}/code-scanning/alerts/{number}/instances?per_page=100"
 ```
 
 Then read local code context around the flagged location (`Read`, `Grep`, `Glob`) and classify into one of:
@@ -125,7 +129,7 @@ If user chooses **Dismiss alert**:
 3. Require a final **Question** confirmation for this exact reason/comment, then dismiss:
 
 ```bash
-gh api -X PATCH "repos/{owner}/{repo}/code-scanning/alerts/{number}" \
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api -X PATCH "repos/{owner}/{repo}/code-scanning/alerts/{number}" \
   -f state='dismissed' \
   -f dismissed_reason='{reason}' \
   -f dismissed_comment='{comment}'

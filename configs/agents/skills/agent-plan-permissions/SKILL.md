@@ -4,6 +4,10 @@ description: Plan precise read-only plan-agent permission updates from current c
 allowed-tools: Bash(git:*), Bash(python3:*), Question(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 `agent-plan-permissions` helps you design safe, precise read-only command allowlists for the plan agent by using either the current conversation context or a direct ad-hoc request, comparing proposals against existing `configs/agents/permissions/*.json` patterns, and producing an exact handoff plan for later execution in the build agent.

@@ -4,6 +4,10 @@ description: Generate a PR title and description for the current branch's change
 allowed-tools: Bash(git:*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Generate a PR title and description for the current branch. Output as markdown text for the user to copy. Do not write any files.

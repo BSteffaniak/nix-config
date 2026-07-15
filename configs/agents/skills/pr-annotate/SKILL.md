@@ -4,6 +4,10 @@ description: Analyze a PR's changes and post concise guiding comments to help re
 allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Bash(sqlite3:*), Bash(tone-clone:*), Question(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Analyze a pull request's diff, identify areas where a reviewer would benefit from author-provided context, draft concise guiding comments, and post them as individual review comments on the PR. The goal is to preemptively answer "why?" questions and steer reviewer attention — not to narrate the diff.
@@ -15,12 +19,12 @@ Analyze a pull request's diff, identify areas where a reviewer would benefit fro
 - If the user provides a PR number or URL as an argument, use that.
 - Otherwise, auto-detect from the current branch:
   ```bash
-  gh pr view --json number,url,title,headRefName,baseRefName,headRefOid
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view --json number,url,title,headRefName,baseRefName,headRefOid
   ```
 - If no PR is found for the current branch, inform the user and stop.
 - Extract `owner` and `repo` from the repo context:
   ```bash
-  gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"'
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"'
   ```
 - Store the `headRefOid` (HEAD commit SHA) — this is needed for posting comments.
 
@@ -29,14 +33,14 @@ Analyze a pull request's diff, identify areas where a reviewer would benefit fro
 #### Get the diff
 
 ```bash
-gh pr diff $PR_NUMBER
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr diff $PR_NUMBER
 ```
 
 #### Get changed file list and commit history
 
 ```bash
-gh pr view $PR_NUMBER --json files,commits --jq '.files[].path'
-git log $(git merge-base HEAD $BASE_BRANCH)..HEAD --oneline
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view $PR_NUMBER --json files,commits --jq '.files[].path'
+git --no-pager log $(git merge-base HEAD $BASE_BRANCH)..HEAD --oneline
 ```
 
 #### Read full file context
@@ -238,7 +242,7 @@ Use the GitHub REST API to post individual review comments:
 **Single-line comment:**
 
 ```bash
-gh api repos/{owner}/{repo}/pulls/{number}/comments \
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api repos/{owner}/{repo}/pulls/{number}/comments \
   -f body="$BODY" \
   -f commit_id="$HEAD_SHA" \
   -f path="$FILE_PATH" \
@@ -249,7 +253,7 @@ gh api repos/{owner}/{repo}/pulls/{number}/comments \
 **Multi-line comment (spanning a range):**
 
 ```bash
-gh api repos/{owner}/{repo}/pulls/{number}/comments \
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api repos/{owner}/{repo}/pulls/{number}/comments \
   -f body="$BODY" \
   -f commit_id="$HEAD_SHA" \
   -f path="$FILE_PATH" \

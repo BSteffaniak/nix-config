@@ -4,6 +4,10 @@ description: Review your own pull request to find issues and produce a prioritiz
 allowed-tools: Bash(gh:*), Bash(git:*), Read(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Review your own pull request before external review. Analyze the full PR delta, identify concrete issues and risks, and return a prioritized plan of fixes. This skill is strictly internal: it never drafts comments and never submits anything to GitHub.
@@ -17,11 +21,11 @@ Resolve the target PR and review depth.
 - If the user provides a PR URL, parse `owner/repo` and PR number from `github.com/{owner}/{repo}/pull/{number}`.
 - If the user provides a PR number only, resolve repository from current directory:
   ```bash
-  gh repo view --json nameWithOwner --jq .nameWithOwner
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo view --json nameWithOwner --jq .nameWithOwner
   ```
 - If the user provides neither, auto-detect from the current branch:
   ```bash
-  gh pr view --json number,url,title,headRefName,baseRefName
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view --json number,url,title,headRefName,baseRefName
   ```
 
 Parse depth:
@@ -32,7 +36,7 @@ Parse depth:
 Determine local vs remote context:
 
 ```bash
-gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null
 ```
 
 - If current repo matches the PR repo, use `local` context and read files from the checkout.
@@ -45,10 +49,10 @@ If no PR can be resolved, stop and clearly report what is missing.
 Collect all inputs needed for a full self-review.
 
 ```bash
-gh pr view {number} -R {owner}/{repo} --json number,url,title,body,author,headRefName,baseRefName,headRefOid,additions,deletions,changedFiles
-gh pr diff {number} -R {owner}/{repo}
-gh pr diff {number} -R {owner}/{repo} --name-only
-gh pr view {number} -R {owner}/{repo} --json commits
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view {number} -R {owner}/{repo} --json number,url,title,body,author,headRefName,baseRefName,headRefOid,additions,deletions,changedFiles
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr diff {number} -R {owner}/{repo}
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr diff {number} -R {owner}/{repo} --name-only
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view {number} -R {owner}/{repo} --json commits
 ```
 
 Review all commits in scope, not only the latest commit.
@@ -65,7 +69,7 @@ Context source rules:
 - `local`: read files directly from local checkout.
 - `remote`: read files via GitHub API; do not clone:
   ```bash
-  gh api "repos/{owner}/{repo}/contents/{path}?ref={headRefName}" --jq '.content' | base64 -d
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api "repos/{owner}/{repo}/contents/{path}?ref={headRefName}" --jq '.content' | base64 -d
   ```
 
 ### 4. Identify findings

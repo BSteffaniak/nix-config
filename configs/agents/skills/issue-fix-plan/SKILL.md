@@ -4,6 +4,10 @@ description: Read a GitHub issue, analyze it against the local codebase, and pro
 allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Question(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Investigate a GitHub issue with `gh`, map the reported behavior to relevant code paths in the current repository, and produce a concrete implementation plan without making code changes.
@@ -33,20 +37,20 @@ Collect every available context source before planning.
 Primary issue fetch:
 
 ```bash
-gh issue view <issue> --repo <owner>/<repo> --comments --json number,title,body,state,author,url,labels,assignees,milestone,projectItems,comments
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh issue view <issue> --repo <owner>/<repo> --comments --json number,title,body,state,author,url,labels,assignees,milestone,projectItems,comments
 ```
 
 Timeline and events:
 
 ```bash
-gh api repos/<owner>/<repo>/issues/<number>/timeline
-gh api repos/<owner>/<repo>/issues/<number>/events
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api repos/<owner>/<repo>/issues/<number>/timeline
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api repos/<owner>/<repo>/issues/<number>/events
 ```
 
 Related artifacts (linked PRs, commits, and cross-references) when needed:
 
 ```bash
-gh api graphql -f query='\
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql -f query='\
 query($owner: String!, $repo: String!, $number: Int!) {\
   repository(owner: $owner, name: $repo) {\
     issue(number: $number) {\
@@ -100,9 +104,9 @@ Translate issue signals into repository search targets:
 Use git-native commands:
 
 ```bash
-git grep -n "<pattern>"
-git log --oneline -- <path>
-git blame -L <start>,<end> <file>
+git --no-pager grep -n "<pattern>"
+git --no-pager log --oneline -- <path>
+git --no-pager blame -L <start>,<end> <file>
 ```
 
 Identify candidate files/modules, related tests, and likely regression windows.

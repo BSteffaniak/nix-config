@@ -4,6 +4,10 @@ description: Debug failed GitHub Actions workflow runs that use the Clippier CI 
 allowed-tools: Bash(gh:*), Bash(jq:*), Bash(cat:*), Bash(find:*), Bash(ls:*), Bash(rm:*), Bash(mktemp:*), Read(*), Grep(*), Glob(*), Question(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Debug and fix failed GitHub Actions workflow runs that use the [Clippier CI action](https://github.com/MoosicBox/MoosicBox/.github/actions/clippier). Clippier orchestrates CI by analyzing workspaces, generating feature-combination matrices, and running build/test/lint steps across those combinations. When a workflow fails, Clippier produces structured artifacts designed for LLM consumption: a `workflow-failures-summary` artifact containing a markdown summary of all failures with error output and reproduction commands, plus per-job `test-results-*` artifacts with structured JSON. This skill downloads those artifacts, presents the failures, analyzes them against the local codebase, and proposes concrete fixes.
@@ -25,13 +29,13 @@ Accept the workflow run identifier. Supported input formats:
 echo "$input" | grep -oP 'github\.com/([^/]+/[^/]+)/actions/runs/(\d+)'
 
 # Detect repo from local git remote if not provided
-gh repo view --json nameWithOwner --jq '.nameWithOwner'
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo view --json nameWithOwner --jq '.nameWithOwner'
 ```
 
 After extracting `OWNER/REPO` and `RUN_ID`, validate the run exists and check its status:
 
 ```bash
-gh run view $RUN_ID --repo $REPO --json status,conclusion,workflowName,headBranch,headSha,event,url,jobs
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh run view $RUN_ID --repo $REPO --json status,conclusion,workflowName,headBranch,headSha,event,url,jobs
 ```
 
 If the run is still `in_progress`, warn the user and ask whether to proceed (artifacts may be incomplete) or wait. If the run `conclusion` is `success`, inform the user there are no failures to debug.
@@ -43,7 +47,7 @@ Store the full JSON response for use in subsequent steps.
 From the JSON response obtained in Step 1, extract the job-level information:
 
 ```bash
-gh run view $RUN_ID --repo $REPO --json jobs --jq '.jobs[] | {name, conclusion, databaseId}'
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh run view $RUN_ID --repo $REPO --json jobs --jq '.jobs[] | {name, conclusion, databaseId}'
 ```
 
 Classify each failed job:
@@ -79,7 +83,7 @@ TMPDIR=$(mktemp -d -t clippier-debug-XXXXXX)
 #### 3a. Clippier failures: Download `workflow-failures-summary`
 
 ```bash
-gh run download $RUN_ID --repo $REPO --name workflow-failures-summary --dir "$TMPDIR/summary"
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh run download $RUN_ID --repo $REPO --name workflow-failures-summary --dir "$TMPDIR/summary"
 ```
 
 This artifact contains:
@@ -96,7 +100,7 @@ If the artifact doesn't exist (e.g., the `Generate Workflow Failures Summary` jo
 For each failed job that is not a clippier matrix job, fetch the relevant log output:
 
 ```bash
-gh run view $RUN_ID --repo $REPO --log --job $JOB_DATABASE_ID 2>&1
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh run view $RUN_ID --repo $REPO --log --job $JOB_DATABASE_ID 2>&1
 ```
 
 The logs can be verbose. Extract the relevant error section by looking for failure markers like `FAILED`, `error`, non-zero exit codes, or the last N lines of the failing step (identified from the job's step list where `conclusion == "failure"`).

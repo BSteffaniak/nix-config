@@ -4,6 +4,10 @@ description: Generate a commit message from staged changes only and write it so 
 allowed-tools: Bash(git:*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Generate a commit message from currently staged changes ONLY, and write it to the repo so it's automatically pre-filled for lazygit's commit panel via `LAZYGIT_PENDING_COMMIT`.

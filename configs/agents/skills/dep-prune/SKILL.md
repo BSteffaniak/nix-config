@@ -4,6 +4,10 @@ description: Audit project dependencies and plan their removal. Interactive — 
 allowed-tools: Bash(git:*), Bash(cargo:*), Bash(npm:*), Bash(npx:*), Bash(yarn:*), Bash(pnpm:*), Bash(go:*), Bash(pip:*), Bash(python3:*), Bash(jq:*), Bash(rg:*), Bash(wc:*), Bash(cat:*), Bash(sort:*), Bash(head:*), Read(*), Glob(*), Grep(*), Question(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Audit a project's third-party dependencies and produce actionable removal plans. The driving principle: if a dependency is core to the functionality of your project, you should own that logic yourself — you cannot depend on core functionality you don't control.

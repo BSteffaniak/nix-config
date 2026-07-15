@@ -4,6 +4,10 @@ description: Address existing PR review feedback — validate reviewer comments 
 allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Bash(mktemp:*), Bash(sqlite3:*), Bash(tone-clone:*), Question(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Fetch all existing review feedback on a pull request you authored (or are responsible for), categorize each comment as actionable or non-actionable, validate actionable comments against the actual codebase to catch incorrect or context-blind feedback, skip resolved/outdated threads, present a structured plan with validity assessments, and then either reply to comments, make code changes, or both — based on the user's choice.
@@ -18,13 +22,13 @@ Determine whether the current working directory is a local checkout of the PR's 
 - If the user provides a PR number (no URL), the current directory **must** be the target repo — run `gh repo view --json nameWithOwner --jq .nameWithOwner` to extract `owner/repo`.
 - If neither is provided, auto-detect from the current branch:
   ```bash
-  gh pr view --json number,url,title,headRefName,baseRefName
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view --json number,url,title,headRefName,baseRefName
   ```
 
 After identifying the PR, determine whether the current directory is a checkout of the target repo:
 
 ```bash
-gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null
 ```
 
 Compare the result (case-insensitive) against the `owner/repo` extracted from the PR. Record the result as one of:
@@ -41,11 +45,11 @@ If no PR is found, inform the user and stop.
 - Extract `owner` and `repo` from the context determined in Step 1.
 - If not already obtained, fetch PR metadata:
   ```bash
-  gh pr view --json number,url,title,headRefName,baseRefName
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view --json number,url,title,headRefName,baseRefName
   ```
 - Extract `owner` and `repo` from the repo context:
   ```bash
-  gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"'
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"'
   ```
 
 ### 3. Fetch all review data
@@ -55,7 +59,7 @@ Use a **single GraphQL query** via `gh api graphql` to fetch all review threads,
 #### Initial query
 
 ```bash
-gh api graphql -f query='
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql -f query='
   query($owner: String!, $repo: String!, $number: Int!, $threadCursor: String, $commentCursor: String, $reviewCursor: String) {
     repository(owner: $owner, name: $repo) {
       pullRequest(number: $number) {
@@ -163,13 +167,13 @@ Read files via the GitHub API. **Do NOT clone the repo for validation.** The Git
 - **Read a specific file at the PR's head ref:**
 
   ```bash
-  gh api "repos/{owner}/{repo}/contents/{path}?ref={headRefName}" --jq '.content' | base64 -d
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api "repos/{owner}/{repo}/contents/{path}?ref={headRefName}" --jq '.content' | base64 -d
   ```
 
 - **Get the full PR diff for context:**
 
   ```bash
-  gh pr diff {number} -R {owner}/{repo}
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr diff {number} -R {owner}/{repo}
   ```
 
 - **Read a file at a specific line range** (fetch the file, then extract the relevant lines from the decoded output).
@@ -177,14 +181,14 @@ Read files via the GitHub API. **Do NOT clone the repo for validation.** The Git
 - **Search for patterns across the repo** (for Deep validation):
 
   ```bash
-  gh api search/code -X GET -f q='{pattern}+repo:{owner}/{repo}' --jq '.items[].path'
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api search/code -X GET -f q='{pattern}+repo:{owner}/{repo}' --jq '.items[].path'
   ```
 
   Then read the matching files individually via the contents API.
 
 - **Check git blame for a file:**
   ```bash
-  gh api repos/{owner}/{repo}/commits?path={file}&sha={headRefName} --jq '.[0]'
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api repos/{owner}/{repo}/commits?path={file}&sha={headRefName} --jq '.[0]'
   ```
 
 All remote reads should use the PR's `headRefName` as the ref to ensure you're reading the current state of the PR branch, not the default branch.
@@ -431,7 +435,7 @@ Before making any code changes, a local checkout of the PR branch is required. T
 
 - Ensure you are on the PR's branch:
   ```bash
-  gh pr checkout {number}
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr checkout {number}
   ```
 - Proceed to Step 8a.
 
@@ -440,11 +444,11 @@ Before making any code changes, a local checkout of the PR branch is required. T
 - The user selected code changes, so a local clone is now necessary. Clone to a temporary directory:
   ```bash
   WORK_DIR=$(mktemp -d)/{repo}
-  gh repo clone {owner}/{repo} "$WORK_DIR"
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo clone {owner}/{repo} "$WORK_DIR"
   ```
 - Check out the PR branch (run from within `$WORK_DIR`):
   ```bash
-  gh pr checkout {number}
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr checkout {number}
   ```
 - Inform the user:
   > "Cloned {owner}/{repo} to `{WORK_DIR}` and checked out the PR branch. All file changes will be made there."
@@ -762,7 +766,7 @@ For approved replies, use the GitHub GraphQL API:
 **Reply to a review thread:**
 
 ```bash
-gh api graphql -f query='
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql -f query='
   mutation($threadId: ID!, $body: String!) {
     addPullRequestReviewThreadReply(input: {
       pullRequestReviewThreadId: $threadId,
@@ -777,7 +781,7 @@ gh api graphql -f query='
 **Resolve a review thread (if user approved):**
 
 ```bash
-gh api graphql -f query='
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql -f query='
   mutation($threadId: ID!) {
     resolveReviewThread(input: {threadId: $threadId}) {
       thread { isResolved }
@@ -789,7 +793,7 @@ gh api graphql -f query='
 **Reply to an issue-level comment (not in a review thread):**
 
 ```bash
-gh api repos/{owner}/{repo}/issues/{number}/comments -f body="$REPLY_BODY"
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api repos/{owner}/{repo}/issues/{number}/comments -f body="$REPLY_BODY"
 ```
 
 After posting, confirm each reply was posted successfully and show the URL of the posted comment.

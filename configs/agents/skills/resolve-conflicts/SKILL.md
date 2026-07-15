@@ -4,6 +4,10 @@ description: Resolve Git conflicts across merge, rebase, cherry-pick, revert, an
 allowed-tools: Bash(git:*), Bash(bun:*), Question(*), Read(*), Edit(*), Write(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Resolve Git conflicts safely across merge, rebase, cherry-pick, revert, and stash workflows by first understanding both sides of every conflict, including the chronology and intent behind each change. The skill presents a concrete resolution plan before editing, applies only approved file changes, validates the current conflict wave, and then pauses while the user manually stages and continues the Git operation. For rebases and other multi-commit sequences, it repeats this loop until every replayed commit is clean.
@@ -15,12 +19,12 @@ Resolve Git conflicts safely across merge, rebase, cherry-pick, revert, and stas
 Start by identifying the repository, the active Git operation, and every unmerged path. If the current directory is not a Git worktree, stop and tell the user.
 
 ```bash
-git rev-parse --show-toplevel
-git rev-parse --git-dir
-git status --short --branch
-git status
-git ls-files -u
-git diff --name-only --diff-filter=U
+git --no-pager rev-parse --show-toplevel
+git --no-pager rev-parse --git-dir
+git --no-pager status --short --branch
+git --no-pager status
+git --no-pager ls-files -u
+git --no-pager diff --name-only --diff-filter=U
 ```
 
 Use the Git directory from `git rev-parse --git-dir` to detect operation metadata in both normal repos and worktrees:
@@ -50,12 +54,12 @@ If there are no unmerged paths, do not edit files. Report whether Git still appe
 For each conflicted path, inspect the merge stages and nearby history before proposing a resolution. Prefer Git's staged blobs over only reading conflict markers, because markers can omit context and delete/rename conflicts may not have useful inline markers.
 
 ```bash
-git diff --merge -- <path>
-git diff --ours -- <path>
-git diff --theirs -- <path>
-git show :1:<path>  # base, when present
-git show :2:<path>  # ours
-git show :3:<path>  # theirs
+git --no-pager diff --merge -- <path>
+git --no-pager diff --ours -- <path>
+git --no-pager diff --theirs -- <path>
+git --no-pager show :1:<path>  # base, when present
+git --no-pager show :2:<path>  # ours
+git --no-pager show :3:<path>  # theirs
 ```
 
 If a stage is absent, note what that means for the conflict type instead of treating it as an error. For binary files or generated files, inspect metadata and generation sources rather than inventing a manual text merge.
@@ -63,9 +67,9 @@ If a stage is absent, note what that means for the conflict type instead of trea
 When rebasing or cherry-picking, identify the commit currently being replayed:
 
 ```bash
-git show --stat --oneline REBASE_HEAD 2>/dev/null || true
-git show --stat --oneline CHERRY_PICK_HEAD 2>/dev/null || true
-git rebase --show-current-patch 2>/dev/null || true
+git --no-pager show --stat --oneline REBASE_HEAD 2>/dev/null || true
+git --no-pager show --stat --oneline CHERRY_PICK_HEAD 2>/dev/null || true
+git --no-pager rebase --show-current-patch 2>/dev/null || true
 ```
 
 When rebasing, also read rebase metadata when present:
@@ -81,8 +85,8 @@ cat "$GIT_DIR/rebase-apply/patch" 2>/dev/null || true
 Use commit history to understand timing:
 
 ```bash
-git log --oneline --decorate --graph --max-count=40 --all --boundary
-git log --oneline --decorate -- <path>
+git --no-pager log --oneline --decorate --graph --max-count=40 --all --boundary
+git --no-pager log --oneline --decorate -- <path>
 ```
 
 Interpret `ours` and `theirs` by operation type:
@@ -136,9 +140,9 @@ Never run `git add`, `git rm`, `git commit`, `git merge --continue`, `git rebase
 After applying edits, validate only the current conflict wave. Start with Git checks:
 
 ```bash
-git diff --check
-git status --short
-git diff --name-only --diff-filter=U
+git --no-pager diff --check
+git --no-pager status --short
+git --no-pager diff --name-only --diff-filter=U
 ```
 
 Treat any remaining unmerged path or conflict-marker warning as unresolved. Go back to Step 2 or Step 3 as appropriate.

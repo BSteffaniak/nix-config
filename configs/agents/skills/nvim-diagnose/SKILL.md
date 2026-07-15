@@ -4,6 +4,10 @@ description: Diagnose neovim startup errors and runtime issues. Interactive — 
 allowed-tools: Bash(nvim:*), Bash(git:*), Bash(ls:*), Read(*), Grep(*), Glob(*), Question(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Troubleshoot neovim startup errors, plugin failures, and runtime issues by capturing
@@ -187,7 +191,7 @@ config source files.
 The neovim config lives in the nix config repo. Find the repo root:
 
 ```bash
-git rev-parse --show-toplevel
+git --no-pager rev-parse --show-toplevel
 ```
 
 Key config files to examine based on error category:

@@ -4,6 +4,10 @@ description: Generate a git commit message and write it so it's pre-filled when 
 allowed-tools: Bash(git:*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Generate a commit message for the current staged or unstaged changes, and write it to the repo so it's automatically pre-filled for `git commit` via the `prepare-commit-msg` hook reading `PREPARED_MSG`.

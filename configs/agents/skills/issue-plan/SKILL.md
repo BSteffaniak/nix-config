@@ -4,6 +4,10 @@ description: Read a GitHub issue and plan how to address it. Interactive — fet
 allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Read(*), Glob(*), Grep(*), Question(*), Task(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Read a GitHub issue by URL or reference, fetch its full context (title, body, labels, comments), explore the local codebase for relevant code, and produce a high-level plan for addressing the issue. The plan covers what needs to change and why, identifies key files and areas of the codebase involved, and surfaces risks or open questions. This skill is read-only — it does not modify code or create commits.
@@ -23,7 +27,7 @@ Supported formats:
 If only a number is provided, detect the repo from the local git remote:
 
 ```bash
-gh repo view --json nameWithOwner --jq .nameWithOwner
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo view --json nameWithOwner --jq .nameWithOwner
 ```
 
 Parse the URL with pattern matching:
@@ -42,19 +46,19 @@ Fetch the full issue context using the GitHub CLI.
 #### Issue metadata
 
 ```bash
-gh issue view {number} -R {owner}/{repo} --json title,body,state,labels,assignees,milestone,createdAt,author,url
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh issue view {number} -R {owner}/{repo} --json title,body,state,labels,assignees,milestone,createdAt,author,url
 ```
 
 #### Issue comments
 
 ```bash
-gh issue view {number} -R {owner}/{repo} --json comments --jq '.comments[] | {author: .author.login, createdAt: .createdAt, body: .body}'
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh issue view {number} -R {owner}/{repo} --json comments --jq '.comments[] | {author: .author.login, createdAt: .createdAt, body: .body}'
 ```
 
 #### Linked pull requests (if any)
 
 ```bash
-gh api graphql -f query='
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql -f query='
   query($owner: String!, $repo: String!, $number: Int!) {
     repository(owner: $owner, name: $repo) {
       issue(number: $number) {

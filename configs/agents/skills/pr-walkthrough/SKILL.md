@@ -4,6 +4,10 @@ description: Walk through a large pull request. Interactive — maps scope, cont
 allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Bash(python3:*), Read(*), Question(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Walk through a large pull request as a review guide before doing a detailed line-by-line review. Gather the PR description, diff, commits, existing discussion, linked issues, and CI signals; synthesize the point of the PR; identify the main review paths and risky areas; then guide the user through focused visual drill-downs instead of dumping the entire diff.
@@ -22,18 +26,18 @@ Resolve the target PR and determine how to read code context.
 - If the user provides a PR URL, parse `owner/repo` and PR number from `github.com/{owner}/{repo}/pull/{number}`.
 - If the user provides a PR number only, resolve the repository from the current directory:
   ```bash
-  gh repo view --json nameWithOwner --jq .nameWithOwner
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo view --json nameWithOwner --jq .nameWithOwner
   ```
 - If the user provides neither, auto-detect the PR for the current branch:
   ```bash
-  gh pr view --json number,url,title,headRefName,baseRefName
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view --json number,url,title,headRefName,baseRefName
   ```
 - If no PR can be resolved, clearly report what is missing and stop.
 
 Determine local vs remote context:
 
 ```bash
-gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null
 ```
 
 Record one of:
@@ -53,7 +57,7 @@ For remote context, prefer GitHub API reads and `gh pr diff`. Only consider clon
 
 ```bash
 TMP_PARENT=$(python3 -c 'import tempfile; print(tempfile.mkdtemp(prefix="pr-walkthrough-"))')
-git clone --depth 1 --single-branch --branch "{headRefName}" "https://github.com/{owner}/{repo}.git" "$TMP_PARENT/{repo}"
+git --no-pager clone --depth 1 --single-branch --branch "{headRefName}" "https://github.com/{owner}/{repo}.git" "$TMP_PARENT/{repo}"
 ```
 
 Never perform a full clone, never clone without a direct Question approval, and never push or edit files in the clone.
@@ -65,14 +69,14 @@ Gather all evidence needed for the walkthrough. Prefer read-only GitHub API call
 #### PR metadata
 
 ```bash
-gh pr view {number} -R {owner}/{repo} --json number,url,title,body,author,headRefName,baseRefName,headRefOid,additions,deletions,changedFiles,commits,files
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view {number} -R {owner}/{repo} --json number,url,title,body,author,headRefName,baseRefName,headRefOid,additions,deletions,changedFiles,commits,files
 ```
 
 #### Diff and changed files
 
 ```bash
-gh pr diff {number} -R {owner}/{repo}
-gh pr diff {number} -R {owner}/{repo} --name-only
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr diff {number} -R {owner}/{repo}
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr diff {number} -R {owner}/{repo} --name-only
 ```
 
 #### Existing reviews, review threads, and PR comments
@@ -80,7 +84,7 @@ gh pr diff {number} -R {owner}/{repo} --name-only
 Use GraphQL so review threads, reviews, and issue-level PR comments can be fetched together. Paginate every connection that reports `hasNextPage: true`.
 
 ```bash
-gh api graphql -f query='
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql -f query='
   query($owner: String!, $repo: String!, $number: Int!, $threadCursor: String, $commentCursor: String, $reviewCursor: String) {
     repository(owner: $owner, name: $repo) {
       pullRequest(number: $number) {
@@ -119,13 +123,13 @@ gh api graphql -f query='
 #### CI and checks
 
 ```bash
-gh pr checks {number} -R {owner}/{repo}
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr checks {number} -R {owner}/{repo}
 ```
 
 If `gh pr checks` is unavailable or incomplete, query check suites for the head SHA:
 
 ```bash
-gh api repos/{owner}/{repo}/commits/{head_sha}/check-runs --jq '.check_runs[] | {name, status, conclusion, html_url}'
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api repos/{owner}/{repo}/commits/{head_sha}/check-runs --jq '.check_runs[] | {name, status, conclusion, html_url}'
 ```
 
 #### Linked issues
@@ -133,7 +137,7 @@ gh api repos/{owner}/{repo}/commits/{head_sha}/check-runs --jq '.check_runs[] | 
 Extract issue references from the PR title, body, commit messages, and comments: `#123`, `GH-123`, `fixes #123`, `closes owner/repo#123`, and full GitHub issue URLs. Fetch each unique issue:
 
 ```bash
-gh issue view {issue_number} -R {owner}/{repo} --json number,title,state,body,author,url,labels
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh issue view {issue_number} -R {owner}/{repo} --json number,title,state,body,author,url,labels
 ```
 
 For cross-repo issue references, use the referenced `owner/repo`.

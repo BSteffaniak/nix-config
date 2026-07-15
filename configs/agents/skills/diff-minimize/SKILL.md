@@ -4,6 +4,10 @@ description: Minimize a code diff while preserving behavior. Interactive — ide
 allowed-tools: Bash(git:*), Bash(gh:*), Bash(jq:*), Question(*), Read(*), Edit(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Analyze a branch, PR, commit, commit range, or working-tree diff to find ways to make the change smaller, cleaner, and more maintainable without changing its intended behavior. This skill focuses on staff-engineer-style diff minimization: reusing existing repository patterns, moving logic to the right owner, deleting duplicated state or implementation paths, narrowing broad changes, and simplifying the PR to the conceptual root cause. It is not a general bug review skill, though it must reject any simplification that would introduce bugs or compromise the intended behavior.
@@ -34,16 +38,16 @@ Match against these patterns:
 To detect the default branch:
 
 ```bash
-git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null
+git --no-pager symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null
 ```
 
 If that fails, check common branch names:
 
 ```bash
-git rev-parse --verify origin/main 2>/dev/null
-git rev-parse --verify origin/master 2>/dev/null
-git rev-parse --verify main 2>/dev/null
-git rev-parse --verify master 2>/dev/null
+git --no-pager rev-parse --verify origin/main 2>/dev/null
+git --no-pager rev-parse --verify origin/master 2>/dev/null
+git --no-pager rev-parse --verify main 2>/dev/null
+git --no-pager rev-parse --verify master 2>/dev/null
 ```
 
 #### PR scope
@@ -51,9 +55,9 @@ git rev-parse --verify master 2>/dev/null
 If the user provides a PR URL or number, resolve repository context:
 
 ```bash
-gh repo view --json nameWithOwner --jq .nameWithOwner
-gh pr view <number> --json number,url,title,body,headRefName,baseRefName,author,commits,files
-gh pr diff <number>
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo view --json nameWithOwner --jq .nameWithOwner
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view <number> --json number,url,title,body,headRefName,baseRefName,author,commits,files
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr diff <number>
 ```
 
 Use `jq` only when needed to inspect or transform GitHub JSON that cannot be handled directly with `gh --jq`.
@@ -98,26 +102,26 @@ Collect enough information to understand what the change is trying to accomplish
 For git scopes, gather:
 
 ```bash
-git status --short
-git diff --stat <scope>
-git diff --name-only <scope>
-git diff -U5 <scope>
+git --no-pager status --short
+git --no-pager diff --stat <scope>
+git --no-pager diff --name-only <scope>
+git --no-pager diff -U5 <scope>
 ```
 
 For staged changes:
 
 ```bash
-git diff --cached --stat
-git diff --cached --name-only
-git diff --cached -U5
+git --no-pager diff --cached --stat
+git --no-pager diff --cached --name-only
+git --no-pager diff --cached -U5
 ```
 
 For unstaged changes:
 
 ```bash
-git diff --stat
-git diff --name-only
-git diff -U5
+git --no-pager diff --stat
+git --no-pager diff --name-only
+git --no-pager diff -U5
 ```
 
 For combined uncommitted changes, gather both staged and unstaged diffs.
@@ -127,13 +131,13 @@ For combined uncommitted changes, gather both staged and unstaged diffs.
 If the scope includes commits, read commit messages:
 
 ```bash
-git log --format="%h %s%n%b" <scope>
+git --no-pager log --format="%h %s%n%b" <scope>
 ```
 
 If the scope is a PR, read the PR title, body, base branch, head branch, commit list, and changed files:
 
 ```bash
-gh pr view <number> --json title,body,baseRefName,headRefName,commits,files
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view <number> --json title,body,baseRefName,headRefName,commits,files
 ```
 
 Use this intent data to distinguish necessary behavior changes from accidental implementation complexity.
@@ -158,9 +162,9 @@ Before recording opportunities, search for existing patterns that could make the
 Use changed identifiers, component names, hooks, utility names, API names, route names, state keys, and domain terms from the diff to search the repository:
 
 ```bash
-git grep -n "<identifier-or-domain-term>"
-git grep -n "<similar-helper-name>"
-git grep -n "<existing-state-key-or-action>"
+git --no-pager grep -n "<identifier-or-domain-term>"
+git --no-pager grep -n "<similar-helper-name>"
+git --no-pager grep -n "<existing-state-key-or-action>"
 ```
 
 Look specifically for:
@@ -334,9 +338,9 @@ Before proposing edits, verify:
 Use targeted repository search as needed:
 
 ```bash
-git grep -n "<selected-api-or-helper>"
-git grep -n "<state-key-or-domain-term>"
-git grep -n "<component-or-hook-name>"
+git --no-pager grep -n "<selected-api-or-helper>"
+git --no-pager grep -n "<state-key-or-domain-term>"
+git --no-pager grep -n "<component-or-hook-name>"
 ```
 
 #### Build the implementation plan
@@ -481,9 +485,9 @@ After edits, summarize exactly what changed and how to validate it.
 Gather post-edit status:
 
 ```bash
-git status --short
-git diff --stat
-git diff --name-only
+git --no-pager status --short
+git --no-pager diff --stat
+git --no-pager diff --name-only
 ```
 
 Return:

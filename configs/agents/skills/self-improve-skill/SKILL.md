@@ -4,6 +4,10 @@ description: Analyze how a skill execution went and propose fixes to the SKILL.m
 allowed-tools: Bash(git:*), Bash(python3:*), Read(*), Write(*), Question(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Review how a skill execution actually went — in the current conversation or a past session — and propose targeted fixes to the skill's SKILL.md source file. The skill looks for command failures, platform incompatibilities, missing steps, unnecessary steps, incorrect assumptions, and other discrepancies between what the SKILL.md prescribed and what actually happened. Each proposed change is reviewed individually before being written to the nix repo source.
@@ -291,7 +295,7 @@ Apply all approved changes to the SKILL.md source file:
 After writing, show the git diff:
 
 ```bash
-git -C ~/.config/nix diff configs/agents/skills/<name>/SKILL.md
+git --no-pager -C ~/.config/nix diff configs/agents/skills/<name>/SKILL.md
 ```
 
 If `_shared/` files were also modified, show those diffs too.

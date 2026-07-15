@@ -4,6 +4,10 @@ description: Identify, rank, and clean up repository slop. Interactive — scans
 allowed-tools: Bash(git:*), Bash(python3:*), Bash(rg:*), Bash(find:*), Bash(wc:*), Read(*), Glob(*), Grep(*), Question(*), Edit(*), Write(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Find the highest-value cleanup opportunities in a repository, rank them by payoff and effort, then focus the session on one selected area until it is either fixed or reduced to a concrete follow-up plan. The skill treats "slop" broadly: code smells, duplicated logic, hardcoded or brittle patterns, stale or low-quality documentation, progress/scratch artifacts, repo hygiene issues, and test maintenance problems. Broad-scan findings are hypotheses, not verdicts; the skill must validate evidence by reading the relevant files before recommending or applying changes.
@@ -54,9 +58,9 @@ Proceed only with the scope chosen in the direct Question response or clearly pr
 Identify the repository root and current working-tree state:
 
 ```bash
-git rev-parse --show-toplevel
-git status --short
-git branch --show-current
+git --no-pager rev-parse --show-toplevel
+git --no-pager status --short
+git --no-pager branch --show-current
 ```
 
 If the working tree already has changes, do not treat them as yours. Summarize the pre-existing modified files and ask whether to continue:
@@ -85,7 +89,7 @@ If the working tree already has changes, do not treat them as yours. Summarize t
 Build the candidate file list from git-tracked files by default:
 
 ```bash
-git ls-files
+git --no-pager ls-files
 ```
 
 If the user explicitly asks to include untracked artifacts, use `find` only as a supplemental scan and keep git-tracked files as the source of truth:
@@ -109,16 +113,16 @@ Useful commands:
 
 ```bash
 # Count tracked files as a quick repo-size signal
-git ls-files | wc -l
+git --no-pager ls-files | wc -l
 
 # List common manifests and configs
-git ls-files | rg '(^|/)(package.json|Cargo.toml|go.mod|pyproject.toml|requirements.txt|flake.nix|Makefile|justfile|Dockerfile|docker-compose.yml|tsconfig.json|vite.config\.|next.config\.)$'
+git --no-pager ls-files | rg '(^|/)(package.json|Cargo.toml|go.mod|pyproject.toml|requirements.txt|flake.nix|Makefile|justfile|Dockerfile|docker-compose.yml|tsconfig.json|vite.config\.|next.config\.)$'
 
 # List documentation files
-git ls-files | rg '(^|/)(README|CHANGELOG|CONTRIBUTING|ARCHITECTURE|docs/|.*\.md$)'
+git --no-pager ls-files | rg '(^|/)(README|CHANGELOG|CONTRIBUTING|ARCHITECTURE|docs/|.*\.md$)'
 
 # List likely test files
-git ls-files | rg '(^|/)(test|tests|spec|__tests__)/|(_test|\.test|\.spec)\.'
+git --no-pager ls-files | rg '(^|/)(test|tests|spec|__tests__)/|(_test|\.test|\.spec)\.'
 ```
 
 Classify files into these buckets:
@@ -179,7 +183,7 @@ Check whether README/docs claims match obvious repo facts from manifests, script
 #### Progress and temporary artifact signals
 
 ```bash
-git ls-files | rg '(^|/)(progress|scratch|notes|tmp|temp|todo|plan|migration).*\.md$|(^|/)progress\.md$|\.bak$|\.orig$|\.tmp$|\.log$'
+git --no-pager ls-files | rg '(^|/)(progress|scratch|notes|tmp|temp|todo|plan|migration).*\.md$|(^|/)progress\.md$|\.bak$|\.orig$|\.tmp$|\.log$'
 ```
 
 #### Repo hygiene signals
@@ -442,9 +446,9 @@ Never batch multiple files or independent actions under one approval unless they
 After applying approved items, run generic validation that stays within the allowed tool surface:
 
 ```bash
-git diff --check
-git status --short
-git diff --stat
+git --no-pager diff --check
+git --no-pager status --short
+git --no-pager diff --stat
 ```
 
 If repo-specific tests, formatters, or linters are obvious but not available under this skill's allowed tools, do not run them. Instead, list the exact commands the user should run, such as `npm test`, `cargo test`, `go test ./...`, `pytest`, or project-specific scripts discovered in manifests.

@@ -4,6 +4,10 @@ description: Review code changes from flexible git scopes (commits, branches, un
 allowed-tools: Bash(git:*), Question(*), Read(*), Edit(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Review code changes against a flexible git scope specified in the invocation. The scope can be a commit range ("last 3 commits"), a branch ("current branch"), uncommitted changes ("staged", "working changes"), or an explicit commit/range. The skill gathers the diff, reads surrounding context, identifies issues across categories (bugs, security, performance, error handling, logic, readability), presents findings for interactive triage, and applies approved fixes directly to the codebase. Optional focus areas can be specified to prioritize specific concern categories without excluding critical findings elsewhere.
@@ -32,13 +36,13 @@ Parse the argument to determine the git diff command. Match against these patter
 To detect the default branch for "current branch" scope:
 
 ```bash
-git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'
+git --no-pager symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'
 ```
 
 If that fails, fall back to checking for `main`, then `master`:
 
 ```bash
-git rev-parse --verify main 2>/dev/null && echo main || echo master
+git --no-pager rev-parse --verify main 2>/dev/null && echo main || echo master
 ```
 
 #### Focus area extraction
@@ -86,10 +90,10 @@ Run the resolved git diff command from Step 1. Also gather:
 
 ```bash
 # List of changed files with stats
-git diff --stat <scope>
+git --no-pager diff --stat <scope>
 
 # Full diff with function context
-git diff -U5 <scope>
+git --no-pager diff -U5 <scope>
 ```
 
 Use `-U5` (5 lines of context) to give enough surrounding code for meaningful analysis.
@@ -97,7 +101,7 @@ Use `-U5` (5 lines of context) to give enough surrounding code for meaningful an
 #### Get the changed file list
 
 ```bash
-git diff --name-only <scope>
+git --no-pager diff --name-only <scope>
 ```
 
 #### Read surrounding context
@@ -115,7 +119,7 @@ For files over 500 lines, focus on reading 50 lines above and below each changed
 If the scope covers specific commits, also read the commit messages for context on intent:
 
 ```bash
-git log --format="%h %s%n%b" <scope>
+git --no-pager log --format="%h %s%n%b" <scope>
 ```
 
 This helps distinguish intentional behavior changes from accidental bugs.
@@ -313,7 +317,7 @@ For each approved fix:
 3. **Show the result** by running:
 
    ```bash
-   git diff -- <file>
+   git --no-pager diff -- <file>
    ```
 
 4. **Confirm** with the user:

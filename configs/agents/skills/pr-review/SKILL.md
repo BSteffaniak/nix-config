@@ -4,6 +4,10 @@ description: Review a pull request — analyze the diff, draft inline review com
 allowed-tools: Bash(gh:*), Bash(git:*), Bash(jq:*), Bash(sqlite3:*), Bash(tone-clone:*), Question(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Review a pull request as a code reviewer. Analyze the diff and surrounding code context, identify issues and areas for improvement, draft inline review comments, and submit them as a single atomic GitHub review — all with user approval before anything is posted.
@@ -18,13 +22,13 @@ Determine whether the current working directory is a local checkout of the PR's 
 - If the user provides a PR number (no URL), the current directory **must** be the target repo — run `gh repo view --json nameWithOwner --jq .nameWithOwner` to extract `owner/repo`.
 - If neither is provided, auto-detect from the current branch:
   ```bash
-  gh pr view --json number,url,title,headRefName,baseRefName
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view --json number,url,title,headRefName,baseRefName
   ```
 
 After identifying the PR, determine whether the current directory is a checkout of the target repo:
 
 ```bash
-gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null
 ```
 
 Compare the result (case-insensitive) against the `owner/repo` extracted from the PR. Record the result as one of:
@@ -54,7 +58,7 @@ Gather all the information needed to perform the review.
 #### PR metadata
 
 ```bash
-gh pr view {number} -R {owner}/{repo} --json number,url,title,body,author,headRefName,baseRefName,headRefOid,additions,deletions,changedFiles
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view {number} -R {owner}/{repo} --json number,url,title,body,author,headRefName,baseRefName,headRefOid,additions,deletions,changedFiles
 ```
 
 Store the `headRefOid` (HEAD commit SHA) — this is needed for posting inline comments.
@@ -62,13 +66,13 @@ Store the `headRefOid` (HEAD commit SHA) — this is needed for posting inline c
 #### PR diff
 
 ```bash
-gh pr diff {number} -R {owner}/{repo}
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr diff {number} -R {owner}/{repo}
 ```
 
 #### Changed files list
 
 ```bash
-gh pr diff {number} -R {owner}/{repo} --name-only
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr diff {number} -R {owner}/{repo} --name-only
 ```
 
 #### Existing reviews and comments
@@ -98,7 +102,7 @@ Write the query to a file first — inline multiline `-f query='...'` strings ca
 #     }
 #   }
 
-gh api graphql \
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql \
   -F query=@/tmp/pr-review-existing.graphql \
   -f owner="$OWNER" -f repo="$REPO" -F number="$PR_NUMBER"
 ```
@@ -122,14 +126,14 @@ Read files via the GitHub API. **Do NOT clone the repo.** This skill never requi
 - **Read a specific file at the PR's head ref** — request raw content directly to skip base64 decoding (avoids the macOS `-D` vs GNU `-d` flag split):
 
   ```bash
-  gh api -H "Accept: application/vnd.github.v3.raw" \
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api -H "Accept: application/vnd.github.v3.raw" \
     "repos/{owner}/{repo}/contents/{path}?ref={headRefName}"
   ```
 
 - **Read a file at the base ref** (to understand what changed):
 
   ```bash
-  gh api -H "Accept: application/vnd.github.v3.raw" \
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api -H "Accept: application/vnd.github.v3.raw" \
     "repos/{owner}/{repo}/contents/{path}?ref={baseRefName}"
   ```
 
@@ -137,7 +141,7 @@ Read files via the GitHub API. **Do NOT clone the repo.** This skill never requi
 
 - **Search for patterns across the repo** (for convention checking):
   ```bash
-  gh api search/code -X GET -f q='{pattern}+repo:{owner}/{repo}' --jq '.items[].path'
+  GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api search/code -X GET -f q='{pattern}+repo:{owner}/{repo}' --jq '.items[].path'
   ```
 
 #### Quick mode
@@ -434,7 +438,7 @@ First, get the PR's GraphQL node ID. Use the Write tool to create the query file
 #     }
 #   }
 
-gh api graphql \
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql \
   -F query=@/tmp/pr-review-id.graphql \
   -f owner="$OWNER" -f repo="$REPO" -F number="$PR_NUMBER" \
   --jq '.data.repository.pullRequest.id'
@@ -461,7 +465,7 @@ Then submit the review. Use the Write tool to create the request body file (here
 # should be quoted. `event` is one of `COMMENT`, `APPROVE`, or
 # `REQUEST_CHANGES`.
 
-gh api graphql --input /tmp/pr-review-request.json
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql --input /tmp/pr-review-request.json
 ```
 
 Where `$EVENT` is one of `COMMENT`, `APPROVE`, or `REQUEST_CHANGES`, and `$COMMENTS_JSON` is a JSON array of objects:
@@ -481,7 +485,7 @@ Where `$EVENT` is one of `COMMENT`, `APPROVE`, or `REQUEST_CHANGES`, and `$COMME
 The `position` field is a 1-indexed offset within the file's diff. It is NOT the line number in the file. To convert a target file line number to a diff position:
 
 ```bash
-gh pr diff {number} -R {owner}/{repo} | python3 -c "
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr diff {number} -R {owner}/{repo} | python3 -c "
 import sys, re
 
 target_file = 'PATH'  # e.g. 'src/foo.ts'
@@ -550,7 +554,7 @@ When the user selects a comment that overlaps with an existing unresolved review
 #   }
 
 # For multi-line bodies, write the body to its own file too and pass via -F:
-gh api graphql \
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql \
   -F query=@/tmp/pr-thread-reply.graphql \
   -f threadId="$THREAD_ID" \
   -F body=@/tmp/reply-body.txt

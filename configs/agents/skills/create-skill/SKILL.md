@@ -4,6 +4,10 @@ description: Create a new OpenCode skill. Interactive — gathers requirements, 
 allowed-tools: Bash(git:*), Bash(find:*), Bash(ls:*), Question(*), Write(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Create a new shared agent skill by gathering requirements, selecting the appropriate structural pattern from established conventions, drafting the SKILL.md content, and writing the files to the correct location in the nix config repo. This skill encodes all the patterns and conventions used across existing skills so that new skills are consistent, well-structured, and correctly deployed.
@@ -28,7 +32,7 @@ Use `configs/pi/skills/` only for skills that depend on Pi-specific behavior, su
 The nix config repo is the one containing the `configs/agents/skills/` and `configs/pi/skills/` directories. Locate it:
 
 ```bash
-git rev-parse --show-toplevel
+git --no-pager rev-parse --show-toplevel
 ```
 
 Then verify the relevant skills directory exists:
@@ -90,6 +94,16 @@ allowed-tools: <comma-separated tool list>
 | Multi-source data gathering  | `Bash(git:*), Bash(gh:*), Bash(linear:*), Bash(python3:*), Bash(jq:*)` |
 | File creation                | `Write(*)`                                                             |
 | Interactive with file output | `Question(*), Write(*), Bash(mktemp:*)`                                |
+
+Any skill that permits `Bash(git:*)` or `Bash(gh:*)` must include this section immediately after its frontmatter:
+
+```markdown
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation.
+```
+
+Its command examples must also show the non-interactive forms (`git --no-pager ...` and `GH_PAGER=cat GH_PROMPT_DISABLED=1 gh ...`) rather than relying only on the linked rule.
 
 ### Document structure
 
@@ -466,7 +480,7 @@ After the final content bundle is approved, write the files:
 1. Locate the nix config repo root:
 
    ```bash
-   git rev-parse --show-toplevel
+   git --no-pager rev-parse --show-toplevel
    ```
 
 2. Verify the target directory doesn't already exist:

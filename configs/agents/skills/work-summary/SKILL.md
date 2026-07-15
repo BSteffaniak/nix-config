@@ -4,6 +4,10 @@ description: Generate a summary of what you accomplished in a given time period.
 allowed-tools: Bash(git:*), Bash(gh:*), Bash(linear:*), Bash(python3:*), Bash(jq:*), Bash(find:*), Bash(mktemp:*), Bash(date:*), Bash(sort:*), Bash(wc:*), Question(*), Write(*)
 ---
 
+## Command execution
+
+Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
+
 ## Purpose
 
 Gather everything the user personally accomplished in a given time period across all available data sources — git commits, GitHub PRs, Linear issues, and OpenCode session history — present the raw findings for curation, then produce a polished, changelog-style summary that is accurate, professional, and ready to paste into a standup, status update, or changelog.
@@ -139,7 +143,7 @@ For each discovered git directory, resolve its **common git directory** and run 
 ```bash
 # From any repo or worktree directory:
 COMMON_DIR="$(git -C "$DIR" rev-parse --git-common-dir)"
-git -C "$DIR" worktree list --porcelain
+git --no-pager -C "$DIR" worktree list --porcelain
 ```
 
 The porcelain output gives structured data:
@@ -224,7 +228,7 @@ For each selected repo group (which may contain many worktrees), use a **two-pas
 **Pass 1: Collect all commits from the main repo** — Run a single `git log --all` from the main repo directory (or any worktree, since `--all` covers all refs). This captures every commit across all branches in one query:
 
 ```bash
-git -C "$MAIN_REPO_DIR" log --all --author="$GIT_AUTHOR_NAME" --since="$SINCE" --no-merges \
+git --no-pager -C "$MAIN_REPO_DIR" log --all --author="$GIT_AUTHOR_NAME" --since="$SINCE" --no-merges \
   --format="%h %ad %s %D" --date=short
 ```
 
@@ -234,7 +238,7 @@ The `%D` format gives ref decorations (branch names, tags) for each commit, whic
 
 ```bash
 # For each worktree branch discovered in Step 2:
-git -C "$MAIN_REPO_DIR" log "$BRANCH_NAME" --author="$GIT_AUTHOR_NAME" --since="$SINCE" --no-merges \
+git --no-pager -C "$MAIN_REPO_DIR" log "$BRANCH_NAME" --author="$GIT_AUTHOR_NAME" --since="$SINCE" --no-merges \
   --format="%h" --date=short
 ```
 
@@ -243,7 +247,7 @@ Build a mapping of commit hash -> branch name(s). If a commit appears on multipl
 **For repos without worktrees** (simple single-directory repos like `worktree-setup` or `nix config`), a plain `git log` suffices:
 
 ```bash
-git -C "$REPO_DIR" log --author="$GIT_AUTHOR_NAME" --since="$SINCE" --no-merges \
+git --no-pager -C "$REPO_DIR" log --author="$GIT_AUTHOR_NAME" --since="$SINCE" --no-merges \
   --format="%h %ad %s" --date=short
 ```
 
@@ -254,7 +258,7 @@ Collect for each commit: hash, date, subject line, repo name, branch name (from 
 Use the GitHub GraphQL API to fetch PRs authored by the user, updated within the time period. Query across all repos the user has access to:
 
 ```bash
-gh api graphql -f query='
+GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql -f query='
   query($since: DateTime!, $author: String!) {
     search(query: "is:pr author:\($author) updated:>=\($since)", type: ISSUE, first: 100) {
       nodes {
