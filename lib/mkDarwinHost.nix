@@ -52,10 +52,21 @@ nix-darwin.lib.darwinSystem {
       {
         config,
         lib,
+        pkgs,
         ...
       }:
       let
         username = config.myConfig.username;
+        # Work around nikitabobko/homebrew-tap#4 changing the minimum macOS
+        # requirement into an exact Ventura-only requirement.
+        patchedHomebrewAerospace = pkgs.runCommand "homebrew-aerospace-patched" { } ''
+          cp -R ${homebrew-aerospace} "$out"
+          chmod -R u+w "$out"
+          substituteInPlace "$out/Casks/aerospace.rb" \
+            --replace-fail \
+            'depends_on macos: :ventura' \
+            'depends_on macos: ">= :ventura"'
+        '';
       in
       {
         myConfig.username = lib.mkDefault meta.username;
@@ -67,7 +78,7 @@ nix-darwin.lib.darwinSystem {
           taps = {
             "homebrew/homebrew-core" = homebrew-core;
             "homebrew/homebrew-cask" = homebrew-cask;
-            "nikitabobko/homebrew-tap" = homebrew-aerospace;
+            "nikitabobko/homebrew-tap" = patchedHomebrewAerospace;
             "FelixKratz/homebrew-formulae" = homebrew-felixkratz;
             "schpet/homebrew-tap" = homebrew-linear;
           };
