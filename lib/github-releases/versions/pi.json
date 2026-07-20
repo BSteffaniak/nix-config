@@ -1,27 +1,27 @@
 {
-    "version": "0.79.5",
-    "tag": "v0.79.5",
+    "version": "0.80.10",
+    "tag": "v0.80.10",
     "platforms": {
         "aarch64-darwin": {
-            "url": "https://github.com/earendil-works/pi/releases/download/v0.79.5/pi-darwin-arm64.tar.gz",
-            "sha256": "0fd8f62cdcf856281179c9c99a1a9643dcc134fbeb8d142538feda9458a2e552"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.80.10/pi-darwin-arm64.tar.gz",
+            "sha256": "4406ed227c486f2e3c16cf14f793dc3ad46b5d01bf69135a2424cffa58a9a34b"
         },
         "aarch64-linux": {
-            "url": "https://github.com/earendil-works/pi/releases/download/v0.79.5/pi-linux-arm64.tar.gz",
-            "sha256": "89a401da95648c2c66dd95c522b7300c76825f0c0e97c233bb3c1ff54347666d"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.80.10/pi-linux-arm64.tar.gz",
+            "sha256": "dfe4340063dfe27406fa64aac99d904726fac079197c4579b9e8155175d05272"
         },
         "x86_64-darwin": {
-            "url": "https://github.com/earendil-works/pi/releases/download/v0.79.5/pi-darwin-x64.tar.gz",
-            "sha256": "305f47ffb7844fd97996d6394575527de2e3403e2e0c8b3ba0de2b351169889c"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.80.10/pi-darwin-x64.tar.gz",
+            "sha256": "892b3f385ae6779299c07a25d9280183897fcf755f7226f6b36c70d268f321be"
         },
         "x86_64-linux": {
-            "url": "https://github.com/earendil-works/pi/releases/download/v0.79.5/pi-linux-x64.tar.gz",
-            "sha256": "1877c0224f48141034523d6432456ec49c31aabb3a6a0d49fe0006ba4658a29e"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.80.10/pi-linux-x64.tar.gz",
+            "sha256": "ab6604f6c3f3d050783e7abbbdd1f79b775b20f3969833ce9721740685d01e13"
         }
     },
     "runtimeDeps": {
         "npm": {
-            "npmDepsHash": "sha256-MS30cPnD6vgigTH3mObJ0CnQZVN6/uv8eCb34FmU1tI="
+            "npmDepsHash": "sha256-U/Uo1Xwdvyy0utZ1uNDHnAN2yS+P1pVLS/dqxReZGIY="
         }
     }
 }

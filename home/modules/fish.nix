@@ -243,6 +243,11 @@ in
     # and noisy. Disable it; `man <name>` still works without the cache.
     programs.man.generateCaches = false;
 
+    # Home Manager otherwise generates Fish completions from every installed
+    # package's man pages. Keep native and explicitly configured completions,
+    # but avoid fragile completion derivations such as age's.
+    programs.fish.generateCompletions = false;
+
     programs.fish = {
       enable = true;
       shellAliases = config.homeModules.shell.resolvedAliases // config.homeModules.fish.aliases;
