@@ -85,6 +85,12 @@ in
       '';
     };
 
+    disableIncrementalCompilation = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Disable Cargo incremental compilation to reduce target directory disk usage";
+    };
+
     cargoTools = {
       includeBinstall = mkOption {
         type = types.bool;
@@ -129,6 +135,14 @@ in
   config = mkIf cfg.enable {
     # Install Rust toolchains and tools via home-manager
     home.packages = rustPackages ++ (optional cfg.bpfLinker pkgs.unstable.bpf-linker);
+
+    # Reduce target directory disk usage unless a host opts out
+    home.file.".cargo/config.toml" = mkIf cfg.disableIncrementalCompilation {
+      text = ''
+        [build]
+        incremental = false
+      '';
+    };
 
     # Add ~/.cargo/bin to PATH for cargo-installed binaries
     home.sessionPath = [ "$HOME/.cargo/bin" ];
