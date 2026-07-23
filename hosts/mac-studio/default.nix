@@ -21,7 +21,7 @@
     development.rust.enable = true;
     development.nodejs.enable = true;
     development.go.enable = true;
-    development.python.enable = false;
+    development.python.enable = true;
     development.android.enable = true;
     development.devops.enable = true;
     development.podman.enable = true;
