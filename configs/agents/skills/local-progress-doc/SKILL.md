@@ -1,114 +1,160 @@
 ---
 name: local-progress-doc
-description: Create a local long-lived markdown progress document for cross-session task tracking. Interactive — gathers scope, drafts a practical checklist, and writes the approved file locally.
-allowed-tools: Question(*), Read(*), Write(*)
+description: Create a local long-lived progress document grounded in the requested product outcome and the repository's proper long-term architecture. Interactive — researches the codebase, drafts an evidence-backed plan, and writes it only after approval.
+allowed-tools: Bash(git:*), Glob(*), Grep(*), Question(*), Read(*), Write(*)
 ---
+
+## Command execution
+
+Follow the [non-interactive Git command rules](../_shared/non-interactive-git.md) for every `git` invocation.
+
+Git access in this skill is strictly read-only. Never stage, commit, restore, reset, checkout, switch, clean, stash, or otherwise mutate repository state.
+
+## Governing contract
+
+Read and follow [the progress-document product and architecture contract](../_shared/progress-doc-completion.md) for implementation, migration, integration, and other product-delivery work.
+
+Its central rule is mandatory:
+
+> Be narrow in requested product scope and uncompromising in production implementation depth. Derive the solution from the actual codebase, complete every required product and architectural layer, and never substitute a shortcut, generic ideal, or speculative abstraction for the repository's proper long-term design.
 
 ## Purpose
 
-Create a local, long-lived markdown progress document that captures the practical context, checklist, decisions, blockers, and handoff notes for a task that may span many agent sessions. Use this when the user wants durable working state that should stay local and generally should not be committed, so future sessions can resume from the document instead of reconstructing progress from chat history.
+Create a local, long-lived markdown progress document that preserves the product intent, repository evidence, proper production architecture, practical work, decisions, blockers, validation, and handoff context for a task spanning multiple sessions.
+
+The document must guide future sessions toward a complete product outcome, not merely a collection of implemented components. It must remain focused on the original request while including every architectural and integration layer genuinely required to deliver it correctly.
+
+For pure investigations or non-product notes, scale the product sections down rather than forcing irrelevant structure.
 
 ## Steps
 
 ### 1. Gather the task scope
 
-Capture the user's task description and determine what the progress document should track. If any of these are missing, ask concise clarifying questions with the Question tool:
+Capture the user's request and determine:
 
-- The overall goal or outcome.
-- The project, feature, migration, investigation, or system being worked on.
-- The desired filename or a short slug to derive one from.
-- Whether this is a new progress document or an update to an existing one.
-- Any known constraints, non-goals, risks, or definitions of "done".
+- The overall outcome.
+- The project, feature, migration, investigation, or system involved.
+- The requested capability.
+- The intended product entry point, when known.
+- The observable result, when known.
+- Explicit constraints, boundaries, and non-goals.
+- The desired filename or a short slug.
+- Whether this is a new document or an update to an existing one.
 
-Use a concise question when helpful:
+If consequential product intent is genuinely missing, ask a concise Question. Do not ask the user to answer architecture or implementation questions that repository research can resolve.
 
-```json
-{
-  "questions": [
-    {
-      "questionTopic": "Progress document scope",
-      "prompt": "What should this progress document track?",
-      "type": "single",
-      "options": [
-        {
-          "value": "use-description",
-          "label": "Use current description",
-          "description": "Draft from the task description already provided.",
-          "recommended": true
-        },
-        {
-          "value": "ask-more",
-          "label": "Ask for more detail",
-          "description": "Gather more context before drafting."
-        }
-      ]
-    }
-  ]
-}
+If the user already provided enough detail, summarize the inferred scope and continue without redundant questions. Do not invent personas, broad acceptance matrices, future use cases, or polish requirements.
+
+### 2. Resolve the document path
+
+If the user provides a path, use it. Otherwise, propose a path in the current working directory using a kebab-case task slug.
+
+If the path exists, read the document in full before planning changes. Preserve valid user-authored requirements, completed outcomes, decisions, rationale, and handoff context, but do not preserve stale status or an incomplete product/architecture model merely because it already exists.
+
+Treat the document as local working state unless the user explicitly says otherwise. Do not edit ignore files or use Git to change tracking state. Remind the user not to stage or commit it.
+
+### 3. Research the actual codebase
+
+For implementation, migration, integration, and product-delivery documents, repository research is mandatory before deciding architecture or checklist contents.
+
+Read applicable repository instructions such as `AGENTS.md` and relevant architecture documentation. Inspect current Git state with read-only commands where useful:
+
+```bash
+git --no-pager status --short --branch
+git --no-pager log --oneline --decorate -n 20
 ```
 
-If the user already provided enough detail, summarize the inferred scope and continue without asking redundant questions.
+Then perform focused research required by the shared contract:
 
-### 2. Choose a local-only file path
+- Trace the existing end-to-end path related to the requested capability.
+- Identify the intended entry point and existing product wiring.
+- Identify the owners of core behavior, state, persistence, lifecycle, errors, and observable results where relevant.
+- Identify canonical sources of truth and architectural boundaries.
+- Inspect analogous production features and established patterns.
+- Inspect relevant tests, configuration, packaging, migrations, compatibility behavior, and integration wiring.
+- Use focused Git history when current code cannot explain an important design decision.
 
-Choose a practical markdown path for the document. Prefer a filename that is easy to recognize as local working state, such as:
+Start from user-provided paths and obvious repository entry points. Expand only as imports, call sites, module wiring, ownership, or data flow require.
 
-- `<task-slug>-progress.md`
-- `<task-slug>-handoff.md`
-- `local-<task-slug>-progress.md`
+Architectural conclusions must cite concrete repository evidence such as paths, symbols, tests, instructions, analogous implementations, or commits. Generic best practices and greenfield ideals are not sufficient.
 
-If the user provides a path, use it. Otherwise, propose a path in the current working directory using a kebab-case task slug. Do not use git commands to verify ignore status. Instead, explicitly tell the user the file is intended to remain local and should not be staged or committed.
+Research must remain proportional to the request. Stop when the current flow, relevant ownership, affected layers, and proper architectural direction can be explained with evidence. Do not conduct a general repository audit.
 
-Before writing, include the proposed path in the outline approval gate.
+If no established pattern exists, verify that fact, identify the nearest boundaries and invariants, and choose the smallest coherent long-term production design that fits them. Do not choose a shortcut and do not invent a generalized framework for hypothetical future needs.
 
-### 3. Inspect available context for complex documents
+If a consequential product or architectural choice remains unresolved after reasonable research, surface it explicitly. Ask the user only when their product decision is required; otherwise record the architectural uncertainty, evidence, and decision point honestly.
 
-For complex migrations, architecture plans, or updates to existing progress documents, read relevant local context before drafting when available:
+### 4. Establish the product and architecture model
 
-- the existing progress document, if updating
-- project instructions such as `AGENTS.md`
-- obvious project docs/manifests such as `README.md`, `Cargo.toml`, package manifests, or plugin manifests
-- user-provided files or paths
+Before drafting workstreams, write down internally:
 
-Use this evidence to resolve decisions up front when practical. Avoid leaving generic "investigate" checklist items if a quick read can answer the question now. If deeper research is not practical, make the remaining item concrete: name what to inspect and what decision or implementation step it should unblock.
+#### Requested product outcome
 
-### 4. Draft the progress document
+- Requested capability.
+- Intended entry point.
+- Observable result.
+- Explicit boundaries and non-goals.
 
-Draft a markdown document that future sessions can use as durable working memory. Keep it high-level and practical: checklist items should represent meaningful workstreams or verifiable outcomes, not tiny mechanical steps.
+#### Completion path
 
-For implementation or migration plans, checklist items must be actionable and verifiable. Prefer items that name the affected area and intended outcome.
+Trace one canonical path:
 
-Avoid vague items such as:
+```text
+intended entry point
+→ existing product wiring
+→ owning architectural layers
+→ requested behavior
+→ observable useful result
+```
 
-- "Investigate runtime behavior"
-- "Think about compatibility"
-- "Improve architecture"
+#### Architectural obligations
 
-Prefer concrete items such as:
+List only obligations genuinely triggered by that path, including as applicable:
 
-- "Inspect `packages/plugin/src/loader.rs` process invocation paths and document how cancellation frames will be routed."
-- "Add tests proving duplicate contribution IDs are rejected in the canonical registry."
-- "Convert Bcode `tui_surfaces` manifest data into app-owned extension payloads."
+- Correct owner and canonical source of truth.
+- Required integration layers.
+- State and lifecycle behavior.
+- Persistence or migration behavior.
+- Compatibility and transition behavior.
+- Error and recovery behavior.
+- Packaging, configuration, or enablement.
+- Cleanup and operational requirements.
+- Appropriate validation coverage.
 
-For large multi-phase plans, structure each phase with:
+Do not treat required production integration as future cleanup. Do not accept a bypass, duplicate source of truth, hardcoded special case, undocumented manual bridge, temporary wiring, or knowingly incomplete integration.
 
-- a short goal
-- implementation checklist
-- exit criteria
-- validation notes when relevant
+A real compatibility adapter or staged migration mechanism may be required production architecture. Include its ownership, lifecycle, and completion/removal conditions rather than rejecting it merely because it is transitional.
 
-Avoid checklist-only plans when sequencing, compatibility, or migration risk matters.
+### 5. Derive the practical plan
 
-For architecture or migration docs, separate locked decisions from open questions. If the user can decide an item now, ask and record the decision instead of leaving it as an ambiguous blocker.
+Build checklist items from the requested outcome, completion path, architectural obligations, and repository evidence.
 
-Use this structure unless the user's task calls for a simpler document:
+Every item must satisfy the shared checklist admission rule: requested behavior, product integration, a genuinely triggered architectural/operational obligation, or verification of those outcomes.
+
+Exclude unrelated cleanup, speculative extensibility, broad redesign, hypothetical future use cases, and unrequested polish.
+
+Keep items high-level enough to survive across sessions but specific enough to be actionable and verifiable. Name affected areas and intended outcomes. Do not use vague placeholders when current research can resolve them.
+
+For large plans, organize work into dependency-aware phases with:
+
+- A concise goal.
+- Implementation outcomes.
+- Relevant repository evidence or affected areas.
+- Exit criteria.
+- Required validation and expected results.
+
+Always retain separate completion gates for product closure and architectural integrity. Validation is required for product-delivery work; it is not optional “when relevant.”
+
+### 6. Draft the progress document
+
+Use a simpler structure for investigations or notes. For implementation-oriented work, use this structure unless the task clearly requires an equivalent custom organization:
 
 ```markdown
 # <Task title> Progress
 
 ## Purpose
 
-<One short paragraph describing what this document tracks and why it exists.>
+<What this document tracks and why.>
 
 ## Current status
 
@@ -116,146 +162,154 @@ Use this structure unless the user's task calls for a simpler document:
 - **Last updated:** <YYYY-MM-DD or "update when edited">
 - **Owner/session:** Local working notes
 
+## Requested product outcome
+
+- **Capability:** <What must become possible>
+- **Intended entry point:** <Existing product surface>
+- **Observable result:** <What proves the capability worked>
+- **Boundaries / non-goals:** <Explicit exclusions>
+
+## Codebase findings
+
+- **Existing flow:** <Current relevant end-to-end behavior>
+- **Owners and boundaries:** <Responsible modules/layers>
+- **Canonical source of truth:** <Owner, or "not applicable">
+- **Analogous implementation:** <Relevant pattern, or evidence that none exists>
+- **Evidence:** <Paths, symbols, tests, instructions, or commits>
+
+## Completion path
+
+1. <Entry through the intended product surface>
+2. <Canonical wiring and owning layers>
+3. <Requested behavior>
+4. <Observable useful result>
+
+## Architectural obligations
+
+- [ ] <Required production obligation and evidence>
+- [ ] <Required lifecycle, persistence, migration, compatibility, error, cleanup, or operational outcome>
+
 ## Definition of done
 
-- [ ] <High-level outcome that means the task is complete>
-- [ ] <Another completion criterion>
+### Product closure
 
-## Scope
+- [ ] The requested capability works through its intended product entry point.
+- [ ] Every required layer in the completion path is connected.
+- [ ] The complete path produces the intended observable result without undocumented manual bridging.
+- [ ] The result is a real product capability, not only an isolated component or demonstration.
 
-### In scope
+### Architectural integrity
 
-- <Included area>
-
-### Out of scope / non-goals
-
-- <Excluded area or "None noted yet">
-
-## Locked decisions
-
-- <YYYY-MM-DD> — <Decision and rationale>
+- [ ] The implementation follows the repository's proper long-term production architecture.
+- [ ] Ownership, boundaries, and canonical sources of truth remain correct.
+- [ ] No bypass, duplicated ownership, hardcoded special case, temporary wiring, or knowingly incomplete integration remains.
+- [ ] All triggered lifecycle, persistence, migration, compatibility, error, cleanup, and operational obligations are complete.
+- [ ] Required production work has not been deferred as optional cleanup or follow-up.
 
 ## Practical checklist
 
-### <Workstream 1>
+### <Workstream>
 
-- [ ] <High-level practical task>
-- [ ] <High-level practical task>
+- [ ] <Evidence-backed, actionable, verifiable outcome>
 
-### <Workstream 2>
+## Product completion verification
 
-- [ ] <High-level practical task>
-- [ ] <High-level practical task>
+- [ ] <Focused demonstration of the canonical completion path and expected result>
+- [ ] <Repository-required and architecture-appropriate validation>
 
-## Decisions
+## Locked decisions
 
-- <YYYY-MM-DD> — <New decision made while executing the plan>
+- <YYYY-MM-DD> — <Decision, rationale, and repository evidence>
 
 ## Blockers and questions
 
-- [ ] <Open question, blocker, or dependency>
+- [ ] <Only unresolved blocker, dependency, or consequential decision>
 
 ## Session handoff notes
 
-- <Most important context for the next session>
-- <Where to resume>
+- <Durable context for a later session>
 
 ## Update rules for future sessions
 
-- Read this file before starting related work.
-- Update checkboxes as work is completed.
-- Add decisions with dates and short rationale.
-- Add blockers/questions instead of losing them in chat.
+- Reconcile completion against the original product outcome, product closure, and architectural integrity—not checkbox count alone.
+- Never accept or defer an architectural shortcut to make the feature appear complete.
+- Update codebase findings and decisions when repository evidence changes.
+- Treat required integration and architectural obligations as completion work, not optional polish.
+- Preserve narrow product scope; do not add speculative generalization or unrelated cleanup.
 - Keep this file local unless the user explicitly decides to commit it.
 ```
 
-If updating an existing progress document, read it first and preserve its existing structure and user edits. Preserve completed checkboxes, locked decisions, user wording, current phase structure, and handoff notes. Add missing sections only when useful, and never reset completed checkboxes or rewrite structure unless the user explicitly asks.
+Do not include boilerplate that is irrelevant to the task. Adapt labels while preserving the substantive product and architecture guarantees.
 
-### 5. Get approval before writing
+### 7. Run the pre-approval gates
 
-Present a concise outline before creating or overwriting any file. Include:
+Before presenting the draft, verify:
+
+#### Research gate
+
+- The relevant existing flow was traced.
+- Owners, boundaries, and canonical sources of truth are identified.
+- Analogous implementations and affected layers were inspected.
+- Architectural claims have concrete repository evidence.
+- Remaining assumptions are explicit.
+
+#### Product-closure gate
+
+- The requested capability, entry point, and observable result are clear.
+- The complete canonical product path is represented.
+- No required integration layer is absent from the plan.
+- Completion cannot be claimed from isolated component functionality alone.
+
+#### Architectural-integrity gate
+
+- The plan follows proper long-term repository architecture.
+- No shortcut, bypass, duplicate ownership, hardcoded integration, temporary wiring, or deferred required work is accepted.
+- Required lifecycle, persistence, migration, compatibility, error, cleanup, and operational behavior is included where triggered.
+- The plan does not introduce speculative frameworks or unrelated redesign.
+
+Resolve researchable gaps before previewing. Surface genuinely consequential unresolved decisions instead of hiding them.
+
+### 8. Get approval before writing
+
+Present:
 
 - The proposed path.
-- The inferred task goal.
-- The document sections.
-- A preview of the high-level checklist.
+- The requested product outcome.
+- A concise summary of codebase evidence and proposed architecture.
+- The completion path.
+- Architectural obligations.
+- The high-level checklist.
+- Product-closure and architectural-integrity criteria.
+- Explicit uncertainties.
 
-Before asking for approval on complex documents, do a brief ambiguity review:
+Ask the user to approve, revise, or cancel. Approval applies only to the presented draft and path. If the user requests revisions, incorporate them and present the updated draft for approval again.
 
-- Are any checklist items vague or non-actionable?
-- Are any "research" tasks answerable from available context now?
-- Are decisions, non-goals, blockers, and validation separated clearly?
-- Do later phases reflect earlier locked decisions?
+Never write or overwrite the document without direct approval in the current run.
 
-Ask for approval with the Question tool:
+### 9. Write and report
 
-```json
-{
-  "questions": [
-    {
-      "questionTopic": "Progress document approval",
-      "prompt": "Create this local progress document?",
-      "type": "single",
-      "options": [
-        {
-          "value": "approve",
-          "label": "Create",
-          "description": "Write the markdown file at the proposed path.",
-          "recommended": true
-        },
-        {
-          "value": "revise",
-          "label": "Revise",
-          "description": "Adjust the outline before writing."
-        },
-        {
-          "value": "cancel",
-          "label": "Cancel",
-          "description": "Do not write a file."
-        }
-      ]
-    }
-  ]
-}
-```
+After approval, write the approved document. Report:
 
-Handle the response:
+- The created or updated path.
+- That it is intended to remain local.
+- That it should generally not be staged or committed.
 
-- **Create** — write the file exactly as approved.
-- **Revise** — apply the user's requested changes and present the updated outline again.
-- **Cancel** — stop without writing.
-- **Custom text** — apply the requested edits and present the updated outline again.
-
-### 6. Write the file and report next steps
-
-After the user approves the exact document content and path, write the markdown file with the Write tool. If the target file already exists, do not overwrite it silently; ask whether to update, replace, or choose a different path.
-
-After writing, report:
-
-- The file path.
-- That it is intended as local working state.
-- That the user should avoid staging or committing it unless they explicitly decide otherwise.
-- How to use it in future sessions, for example: "Read `<path>` and continue from the session handoff notes, updating checkboxes and decisions as you work."
-
-### 7. Maintain the document in later sessions
-
-When the user asks to continue work using an existing progress document:
-
-1. Read the file before planning or making changes.
-2. Treat checked boxes, decisions, and handoff notes as current working context.
-3. Update checkboxes as meaningful outcomes are completed.
-4. Add new decisions, blockers, and handoff notes as the work evolves.
-5. Preserve the user's wording and structure unless they ask for cleanup.
-6. Keep updates high-level enough that the document remains useful across many sessions.
+Do not begin implementation as part of this skill.
 
 ## Rules
 
-- **Never write without approval.** Present the path, outline, and checklist preview before creating or overwriting a file.
-- **Never skip a gate.** If the workflow reaches an approval point, wait for a direct user response before continuing.
-- **Local working state only.** Treat the document as long-lived local task memory, not committed project documentation, unless the user explicitly says otherwise.
-- **Warn about staging.** Remind the user that the file should generally not be staged or committed.
-- **Actionable implementation plans.** For implementation or migration documents, checklist items should name affected areas and verifiable outcomes. Avoid vague investigation-only items when available context can answer the question now.
-- **Preserve existing progress.** When updating an existing document, read it first and keep completed checkboxes, locked decisions, phase structure, handoff notes, and user edits intact unless the user explicitly asks to change them.
-- **Respect user edits.** If the user supplies custom wording, paths, sections, or checklist items, preserve them faithfully.
-- **No hidden repository mutations.** Do not edit ignore files, stage files, commit changes, or run repository commands as part of this skill.
-- **Non-interactive fallback.** If interactive questions are unavailable, draft the outline and ask the user to approve it in chat before writing.
+- **Shared contract is mandatory.** Follow the product and architecture contract for product-delivery work.
+- **Research before architecture.** Never design from generic ideals when repository evidence can establish the proper solution.
+- **Production architecture is mandatory.** Never plan a shortcut, temporary bridge, bypass, duplicate source of truth, or knowingly incomplete integration as the completed solution.
+- **No deferred correctness.** Required architecture and product integration cannot be relegated to optional cleanup or follow-up.
+- **Narrow scope, complete depth.** Exclude unrelated work while completing every layer genuinely required by the request.
+- **No speculative architecture.** Proper long-term design does not mean generalized infrastructure for unrequested future cases.
+- **Independent completion gates.** Product closure and architectural integrity must both be satisfied.
+- **Evidence over assertion.** Ground architecture and status in concrete repository evidence.
+- **Never write without approval.** Present the proposed content and wait for direct approval.
+- **Never skip a gate.** Research, product closure, architectural integrity, and write approval are mandatory where applicable.
+- **Preserve durable user intent.** Preserve valid requirements and rationale, but correct stale status and incomplete planning models.
+- **Repository access is read-only.** Do not alter code, Git state, ignore rules, or external systems.
+- **Local working state only.** Treat the document as local task memory unless the user explicitly says otherwise.
+- **No implementation.** Creating the progress document does not authorize beginning its work.
+- **Non-interactive fallback.** If direct approval is unavailable, provide the draft only and do not write.
