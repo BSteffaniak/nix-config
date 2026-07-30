@@ -1,20 +1,26 @@
 ---
 name: resume-progress-doc
-description: Reconcile a local progress document with the current codebase and prepare an execution-ready restart brief. Interactive — verifies current truth, orders remaining work, and identifies the best next task without modifying files.
-allowed-tools: Bash(git:*), Glob(*), Grep(*), Read(*), Question(*)
+description: Reconstruct the current context of a paused effort from its progress document and codebase. Read-only — verifies documented state, gathers relevant knowledge, and stops without recommending or starting work.
+allowed-tools: Bash(git:*), Glob(*), Grep(*), Read(*)
 ---
 
 ## Command execution
 
-Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` invocation.
+Follow the [non-interactive Git command rules](../_shared/non-interactive-git.md) for every `git` invocation.
 
 Git access in this skill is strictly read-only. Never stage, commit, restore, reset, checkout, switch, clean, stash, or otherwise mutate repository state.
 
 ## Purpose
 
-Resume a paused multi-session effort by reconciling its local progress document with the current repository. Verify that completed work, remaining tasks, decisions, blockers, and validation notes still reflect the codebase, then produce a concrete restart brief centered on continuing execution. This skill does not rewrite the progress document, modify code, or begin implementation.
+Reconstruct the current context of a paused multi-session effort by comparing its local progress document with the repository as it exists now. Gather enough accurate knowledge for the user or a later workflow to understand the objective, implementation state, remaining documented work, decisions, constraints, blockers, and validation history without relying on stale session memory.
 
-Use this after `local-progress-doc` has created durable working memory and work has paused long enough that the document may no longer represent current truth. Use `refocus-progress-doc` instead when the primary goal is to rewrite or simplify the document.
+The governing principle is:
+
+> Reconstruct current context accurately, then stop.
+
+This skill is for knowledge gathering only. It does not rewrite the progress document, modify code, run validation, recommend a next task, reorder the plan, ask how to continue, or begin implementation.
+
+Use `local-progress-doc` to create a progress document. Use `refocus-progress-doc` when the goal is to rewrite or simplify one.
 
 ## Steps
 
@@ -28,34 +34,39 @@ Use a path supplied by the user when available. Otherwise, search narrowly for l
 
 Exclude generated, dependency, cache, and VCS directories. Do not perform an unbounded filesystem search.
 
-If exactly one strong candidate exists, use it and state the selected path. If multiple plausible candidates exist, use the Question tool to ask the user which one to inspect. Do not infer solely from the newest modification time.
+If exactly one strong candidate exists, use it and state the selected path. If multiple plausible candidates exist, list them with enough context for the user to choose and stop. Do not ask a question or infer solely from modification time.
+
+If no plausible document exists, report that no progress document could be resolved and stop.
 
 Read the selected document in full before drawing conclusions.
 
-### 2. Recover the intended work
+### 2. Recover the documented context
 
-Extract the document's current working model:
+Extract the document's working model:
 
 - Overall objective and definition of done.
+- Scope and non-goals.
 - Completed outcomes.
-- Remaining checklist items and their apparent order.
-- Active decisions and constraints.
+- Remaining checklist items in their documented order.
+- Active decisions and their rationale.
+- Constraints and dependencies.
 - Blockers, risks, and unresolved questions.
-- Validation requirements.
-- Handoff notes and proposed restart point.
-- Files, modules, commands, issues, or commits referenced by the document.
+- Validation requirements and recorded results.
+- Handoff notes.
+- Referenced files, modules, symbols, commands, issues, and commits.
 
-Separate these into:
+Distinguish among:
 
-1. **Claims to verify** — statements that should have repository evidence.
-2. **Plan intent** — desired future behavior or scope.
-3. **Unresolved assumptions** — statements that may affect execution but lack enough evidence.
+1. **Documented intent** — what the effort is supposed to accomplish.
+2. **Documented status** — what the progress document says has happened.
+3. **Repository evidence** — what the current code and Git state support.
+4. **Unresolved context** — claims or assumptions that available evidence cannot establish.
 
-Do not treat checkbox state, confident wording, or old handoff notes as proof.
+Do not treat checkbox state, confident wording, old handoff notes, or commit messages as conclusive proof.
 
 ### 3. Establish repository context
 
-Read applicable repository instructions such as `AGENTS.md` before evaluating the plan. Treat those instructions as binding.
+Read applicable repository instructions such as `AGENTS.md`. Treat those instructions as binding context and include relevant constraints in the final brief.
 
 Inspect current Git state with non-interactive, read-only commands such as:
 
@@ -80,73 +91,62 @@ Account for:
 - Uncommitted or staged work.
 - Recent commits relevant to the documented effort.
 - Whether the repository is mid-operation.
-- User changes that must not be overwritten.
-- Validation requirements imposed by repository instructions.
+- User changes that affect the documented state.
+- Repository architecture and workflow rules relevant to the effort.
 
 Do not assume a clean worktree or default branch.
 
 ### 4. Inspect the relevant implementation
 
-Use references from the progress document to choose an initially narrow inspection scope. Read the implementation, tests, configuration, and documentation needed to evaluate its claims.
+Start with paths, modules, symbols, tests, and concepts named by the progress document. Read enough surrounding implementation and configuration to understand how those areas fit together.
 
-Expand the scope only when imports, call sites, module wiring, generated outputs, or repository architecture show that adjacent areas are relevant.
+Expand the scope only when imports, call sites, module wiring, generated outputs, tests, or repository architecture show that adjacent areas are relevant.
 
-For each meaningful progress claim, classify it as:
+For meaningful documented status claims, determine whether current evidence is:
 
-- **Confirmed** — current repository evidence supports it.
-- **Partially confirmed** — some expected implementation exists, but the outcome is incomplete or uncertain.
+- **Confirmed** — repository evidence supports the claim.
+- **Partially confirmed** — some expected evidence exists, but the claim is incomplete or uncertain.
 - **Contradicted** — current evidence conflicts with the document.
-- **Obsolete** — later implementation or decisions make it no longer applicable.
-- **Unverified** — available evidence is insufficient without running commands or asking the user.
+- **Obsolete** — later implementation or decisions appear to have superseded the claim.
+- **Unverified** — read-only inspection cannot establish the claim.
 
-Record concrete evidence using paths, symbols, tests, configuration entries, or commits. Do not claim that tests pass unless current evidence shows they were run successfully; documented past results are historical evidence only.
+Record concrete evidence using paths, symbols, configuration entries, tests, or commits. Keep the investigation proportional to reconstructing context; do not turn it into an exhaustive code review.
 
-### 5. Reconcile the remaining plan
+### 5. Reconcile document and repository knowledge
 
-Review each remaining task against current code and the objective.
+Build a neutral account of the effort's current state.
 
-Determine whether it is:
+Identify:
 
-- Already complete but not marked complete.
-- Still actionable as written.
-- Valid but underspecified.
-- Blocked by a decision or prerequisite.
-- Ordered incorrectly.
-- Superseded or obsolete.
-- Outside the current objective.
+- Completed outcomes supported by repository evidence.
+- Documented completed outcomes that remain uncertain or contradicted.
+- Remaining work that still appears consistent with the current codebase.
+- Remaining items that appear complete, obsolete, or affected by later changes.
+- Relevant implementation or constraints absent from the document.
+- Decisions and assumptions that still shape the work.
+- Blockers and unresolved questions without attempting to resolve them through user interaction.
+- Validation commands required by the document or repository instructions.
+- Recorded validation results, clearly labeled as historical.
 
-Reconstruct the remaining execution order from actual dependencies rather than preserving document order mechanically.
+Preserve the progress document's ordering and intent when reporting remaining work. Do not optimize, reprioritize, or choose what should happen next.
 
-Ask the user a concise Question only when ambiguity genuinely blocks selecting a safe next task. Include the evidence and explain why repository inspection cannot resolve it. Do not ask about uncertainties that can be answered by reading more relevant code.
+Do not run builds, tests, linters, formatters, or other validation commands. This skill reports validation knowledge; it does not establish new validation results.
 
-### 6. Select the restart point
+### 6. Present the context brief
 
-Choose the smallest high-confidence next task that materially advances the objective.
-
-The task must include:
-
-- The outcome to achieve.
-- Why it is next.
-- Likely files or implementation areas.
-- Dependencies or constraints.
-- Completion evidence.
-- Relevant validation commands.
-- Any assumptions that must be checked while implementing.
-
-Prefer an executable implementation or validation task over vague instructions such as “investigate,” “continue,” or “review code.” If investigation is unavoidable, define the exact question, evidence to gather, and decision it will unlock.
-
-Do not begin the task within this skill.
-
-### 7. Present the execution-readiness brief
-
-Present a concise report using this structure:
+Present a concise report using the sections that contain useful information:
 
 ```markdown
-# Resume Brief
+# Current Context
 
-## Objective
+## Progress Document
 
-<Current intended outcome and definition of done>
+- Path: <selected path>
+- Stated purpose: <brief summary>
+
+## Objective and Scope
+
+<Current intended outcome, definition of done, scope, and non-goals>
 
 ## Repository State
 
@@ -155,89 +155,58 @@ Present a concise report using this structure:
 - Relevant recent changes: <summary>
 - Applicable instructions: <important constraints>
 
+## Relevant Architecture
+
+- <Important modules, relationships, files, and symbols>
+
 ## Confirmed Progress
 
-- <Completed outcome and evidence>
+- <Completed outcome and supporting evidence>
 
-## Discrepancies
+## Remaining Documented Work
 
-- <Document claim versus current repository truth>
-- <Impact on the remaining plan>
+1. <Item in its documented order and its apparent current status>
+2. <Item in its documented order and its apparent current status>
 
-## Blockers and Open Decisions
+## Decisions and Constraints
 
-- <Only issues that affect continued execution>
-- None, if no blockers remain.
+- <Still-relevant decision, rationale, or constraint>
 
-## Remaining Work
+## Blockers and Unresolved Questions
 
-1. <Dependency-ordered task>
-2. <Next task>
+- <Documented or discovered uncertainty>
 
-## Recommended Next Task
+## Document–Code Discrepancies
 
-**Outcome:** <specific result>
-**Why now:** <dependency or value>
-**Likely scope:** <paths or components>
-**Completion evidence:** <observable result>
-**Validation:** `<command>`
-**Assumptions:** <items to verify, or none>
+- <Document claim versus current repository evidence>
 
-## Readiness
+## Validation Context
 
-<Ready / Ready with assumptions / Blocked>
-<Brief explanation>
+- Required: `<documented or repository-required command>`
+- Historical result: <recorded result and source, without claiming it is current>
+
+## Context Summary
+
+<Compact account of where the effort currently stands>
 ```
 
-Keep the report focused on resuming execution. Do not turn it into a changelog, exhaustive code review, or rewritten progress document.
+Omit empty sections rather than filling them with boilerplate. Clearly distinguish verified facts, reasonable inferences, document claims, and unresolved uncertainty.
 
-### 8. Ask how to continue
-
-Use the Question tool after presenting the complete brief:
-
-```json
-{
-  "questions": [
-    {
-      "header": "Continue",
-      "question": "How would you like to proceed?",
-      "options": [
-        {
-          "label": "Start the recommended task",
-          "description": "Leave this read-only workflow and begin implementation."
-        },
-        {
-          "label": "Inspect a discrepancy",
-          "description": "Deepen the read-only investigation before implementation."
-        },
-        {
-          "label": "Stop here",
-          "description": "Keep the resume brief as the handoff."
-        }
-      ]
-    }
-  ]
-}
-```
-
-If the user chooses implementation, clearly transition out of this skill before changing files. Normal coding-agent permissions and repository validation rules then apply.
-
-If the user chooses a discrepancy, ask which one only when their selection is ambiguous, inspect it read-only, and present an updated brief.
+End after the context brief. Do not add recommendations, next steps, readiness ratings, offers to continue, or questions.
 
 ## Rules
 
-- **Read-only workflow.** Never edit the progress document, code, configuration, Git state, or external systems while this skill is active.
-- **Prepare for execution.** Optimize the investigation and report for beginning useful work, not for preserving history or polishing prose.
-- **Current truth wins.** Current code, tests, configuration, Git state, and binding repository instructions outrank stale document claims.
-- **Preserve plan intent.** Do not discard a requirement merely because its implementation is absent; distinguish intended work from inaccurate status.
+- **Read-only workflow.** Never edit the progress document, code, configuration, Git state, or external systems.
+- **Knowledge gathering only.** Reconstruct and report context; do not plan, prioritize, recommend, validate, or execute work.
+- **Current truth wins for status.** Current code, configuration, Git state, and binding repository instructions outrank stale status claims.
+- **Documented intent remains intent.** Do not discard a requirement merely because its implementation is absent; distinguish desired work from current state.
+- **Preserve documented order.** Report remaining work in its existing order rather than constructing an execution sequence.
 - **Evidence over checkboxes.** A checked item, handoff note, or commit message is not sufficient evidence by itself.
-- **Separate certainty levels.** Clearly distinguish verified facts, reasonable inferences, historical validation, and unresolved assumptions.
-- **Do not fabricate validation.** Never say a check passes unless current evidence supports that result.
-- **Respect user changes.** Treat staged and unstaged work as intentional unless evidence or the user says otherwise.
-- **Narrow before broad.** Start from paths and concepts named by the document, then expand only when repository relationships require it.
-- **Executable next step.** Recommend a bounded task with scope, completion evidence, and validation rather than a vague instruction.
-- **Do not start implementation.** End with the restart brief and continuation gate; implementation belongs to the next workflow.
-- **Never skip a gate.** Resolve ambiguous document selection and the final continuation choice through direct user responses.
-- **Never act without user confirmation.** Do not transition into implementation based on a recommendation, default, or inferred preference.
-- **Non-interactive fallback.** If Question is unavailable, present the brief and ask in normal chat how the user wants to continue.
-- **Local working state.** Treat the progress document as local-only unless the user explicitly states otherwise, and do not stage or commit it.
+- **Separate certainty levels.** Clearly distinguish verified facts, reasonable inferences, historical validation, document claims, and unresolved assumptions.
+- **Do not run validation.** Report required commands and historical results without executing builds, tests, linters, formatters, or checks.
+- **Do not fabricate validation.** Never present a documented past result as a current passing result.
+- **Respect user changes.** Treat staged and unstaged work as intentional context unless evidence says otherwise.
+- **Narrow before broad.** Start from areas named by the document and expand only when repository relationships require it.
+- **No interaction loop.** Do not ask questions or present continuation choices. If required input is missing or ambiguous, report it and stop.
+- **No action framing.** Do not select a restart point, recommend a next task, define an implementation plan, or suggest beginning work.
+- **Local working state.** Treat the progress document as local-only unless the user explicitly states otherwise, and never stage or commit it.
