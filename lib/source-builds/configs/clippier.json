@@ -6,5 +6,6 @@
     "doCheck": false,
     "cargoBuildFlags": ["--package", "clippier"],
     "nativeBuildInputs": ["pkg-config"],
-    "buildInputs": ["openssl"]
+    "buildInputs": ["openssl"],
+    "rustToolchain": "stable"
 }

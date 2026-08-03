@@ -72,6 +72,7 @@
     };
 
     # Development tool configs
+    development.rust.enable = true;
     development.bcode.enable = true;
     development.lazygit.enable = true;
     development.act.enable = true;

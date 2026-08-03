@@ -17,9 +17,8 @@
     fullName = "Braden Steffaniak";
     homeManagerStateVersion = "24.11";
 
-    # Development tools
-    development.rust.enable = true;
-    development.rust.includeNightly = true;
+    # Rust is configured in home.nix so it is only installed through
+    # home-manager.
     development.nodejs.enable = true;
     development.go.enable = true;
     development.python.enable = true;

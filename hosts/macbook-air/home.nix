@@ -120,7 +120,11 @@
     };
 
     # Rust development
-    development.rust.bpfLinker = true;
+    development.rust = {
+      enable = true;
+      includeNightly = true;
+      bpfLinker = true;
+    };
 
     # Tools
     tools = {

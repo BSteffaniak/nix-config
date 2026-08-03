@@ -31,8 +31,10 @@ in
   # This allows the new home-manager modules to access the same settings
   myConfig = {
     # Development tools - mirror from system config
-    development.rust.enable = osConfig.myConfig.development.rust.enable or false;
-    development.rust.includeNightly = osConfig.myConfig.development.rust.includeNightly or false;
+    development.rust.enable = lib.mkDefault (osConfig.myConfig.development.rust.enable or false);
+    development.rust.includeNightly = lib.mkDefault (
+      osConfig.myConfig.development.rust.includeNightly or false
+    );
     development.nodejs.enable = osConfig.myConfig.development.nodejs.enable or false;
     development.go.enable = osConfig.myConfig.development.go.enable or false;
     development.python.enable = osConfig.myConfig.development.python.enable or false;
