@@ -11,21 +11,17 @@ quick = true
 # ---------------------------------------------------------------------------
 [plugins.settings."bmux.theme"]
 # Keep performance diagnostics and mode-aware colors as the stable base, while
-# stacking fun decoration component packs independently per pane.
+# stacking the snake decoration component pack across all panes.
 appearance_themes = ["performance", "mode-aware"]
-component_themes  = ["performance", "pong", "rainbow-snake"]
+component_themes  = ["performance", "rainbow-snake"]
 persistence       = "persist_between_connects"
 
 [plugins.settings."bmux.theme".component_targets]
 "performance.*" = { kind = "all-panes" }
-"pong.*"        = { kind = "unfocused-panes" }
-"snake"         = { kind = "focused-pane" }
+"snake"         = { kind = "all-panes" }
 
 [plugins.settings."bmux.theme".components.snake]
 above = ["performance.border"]
-below = ["performance.header"]
-
-[plugins.settings."bmux.theme".components."pong.score"]
 below = ["performance.header"]
 
 [composition]
