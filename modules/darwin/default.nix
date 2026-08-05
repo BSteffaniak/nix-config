@@ -18,7 +18,6 @@
     ./homebrew.nix
     ./istat-menus.nix
     ./keepingyouawake.nix
-    ./little-snitch.nix
     ./lspmux.nix
     ./minecraft.nix
     ./microsoft-edge.nix
