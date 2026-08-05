@@ -155,11 +155,12 @@ let
     name:
     let
       descriptor = providerDescriptors.${name};
+      providerName = descriptor.registryProvider or descriptor.provider or name;
       hasModels = descriptor ? models && descriptor.models != [ ];
     in
     if descriptor ? baseUrl then
       {
-        providers.${name} = {
+        providers.${providerName} = {
           baseUrl = descriptor.baseUrl;
           api = descriptor.api or "openai-completions";
           apiKey = descriptor.apiKey or "";
