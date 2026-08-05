@@ -67,6 +67,21 @@ nix-darwin.lib.darwinSystem {
             'depends_on macos: :ventura' \
             'depends_on macos: ">= :ventura"'
         '';
+
+        # The little-snitch cask declares `depends_on macos: :sonoma`, which
+        # Homebrew interprets as "exactly macOS 14" and fails with:
+        #   "This software does not run on macOS versions other than Sonoma."
+        # Little Snitch 6 actually supports macOS 14 and newer (the upstream
+        # JSON API reports `macos: { ">=": ["14"] }`), so relax the pin to a
+        # minimum-version requirement.
+        patchedHomebrewCask = pkgs.runCommand "homebrew-cask-patched" { } ''
+          cp -R ${homebrew-cask} "$out"
+          chmod -R u+w "$out"
+          substituteInPlace "$out/Casks/l/little-snitch.rb" \
+            --replace-fail \
+            'depends_on macos: :sonoma' \
+            'depends_on macos: ">= :sonoma"'
+        '';
       in
       {
         myConfig.username = lib.mkDefault meta.username;
@@ -77,7 +92,7 @@ nix-darwin.lib.darwinSystem {
           user = username;
           taps = {
             "homebrew/homebrew-core" = homebrew-core;
-            "homebrew/homebrew-cask" = homebrew-cask;
+            "homebrew/homebrew-cask" = patchedHomebrewCask;
             "nikitabobko/homebrew-tap" = patchedHomebrewAerospace;
             "FelixKratz/homebrew-formulae" = homebrew-felixkratz;
             "schpet/homebrew-tap" = homebrew-linear;
