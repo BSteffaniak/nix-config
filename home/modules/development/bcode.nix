@@ -406,6 +406,30 @@ let
       sshenv = cfg.providers.bedrock.sshenv;
     };
 
+    bedrock-mantle = {
+      providerPluginId = "bcode.bedrock";
+      model = cfg.providers.bedrock.mantleModel;
+      authProfile = "bedrock";
+      settings = {
+        transport = "mantle_anthropic";
+        mantle_base_url = "https://bedrock-mantle.us-east-1.api.aws/anthropic";
+      }
+      // optionalAttrs (cfg.providers.bedrock.region != null) {
+        region = cfg.providers.bedrock.region;
+      };
+      auth = {
+        backend = "sshenv";
+        scheme = "aws_credentials";
+        map.bearer_token.env = "AWS_BEARER_TOKEN_BEDROCK";
+        settings = {
+          provider = "aws";
+          profile =
+            if cfg.providers.bedrock.sshenv != null then cfg.providers.bedrock.sshenv.profile else "bedrock";
+        };
+      };
+      sshenv = cfg.providers.bedrock.sshenv;
+    };
+
     openai = mkOpenAiProfile {
       model = cfg.providers.openai.model;
       fastModel = cfg.providers.openai.fastModel;
@@ -597,7 +621,13 @@ in
         model = mkOption {
           type = types.str;
           default = "global.anthropic.claude-opus-5";
-          description = "Bedrock model used by bcode-bedrock.";
+          description = "Native Bedrock model used by bcode-bedrock.";
+        };
+
+        mantleModel = mkOption {
+          type = types.str;
+          default = "anthropic.claude-opus-5";
+          description = "Anthropic Messages model used by bcode-bedrock-mantle.";
         };
 
         region = mkOption {
