@@ -85,6 +85,10 @@
       url = "github:BSteffaniak/tone-clone";
       flake = false;
     };
+    sendsafely-java-src = {
+      url = "github:BSteffaniak/sendsafely-java";
+      flake = false;
+    };
     worktree-setup-src = {
       url = "github:BSteffaniak/worktree-setup";
       flake = false;
@@ -174,6 +178,7 @@
           enableGithubReleases = true;
           enableSourceBuilds = true;
           enableCronstrue = true;
+          enableSendSafelyJava = true;
           enableFirefoxDarwin = true;
           enableMinecraftPlugins = true;
         };

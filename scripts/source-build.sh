@@ -274,6 +274,58 @@ EOF
   echo "$hash"
 }
 
+# ── Maven hash computation ──
+compute_maven_hash() {
+  local project="$1"
+  local config_file="$CONFIGS_DIR/$project.json"
+  local flake_input pname store_path
+  flake_input=$(jq -r '.flakeInput' "$config_file")
+  pname=$(jq -r '.pname' "$config_file")
+  store_path=$(get_input_store_path "$flake_input") || return 1
+
+  local current_system nixpkgs_input nixpkgs_path
+  current_system=$(nix eval --raw --impure --expr builtins.currentSystem)
+  if [[ "$current_system" == *-darwin ]]; then
+    nixpkgs_input="nixpkgs-darwin"
+  else
+    nixpkgs_input="nixpkgs"
+  fi
+  nixpkgs_path=$(get_input_store_path "$nixpkgs_input") || return 1
+
+  local nix_expr
+  nix_expr=$(cat <<EOF
+let
+  pkgs = import $nixpkgs_path { system = builtins.currentSystem; };
+in
+pkgs.maven.buildMavenPackage {
+  pname = "$pname";
+  version = "unstable";
+  src = $store_path;
+  mvnHash = "";
+  installPhase = "mkdir -p \\$out";
+}
+EOF
+  )
+
+  info "Fetching Maven dependencies..." >&2
+  local build_output
+  build_output=$(nix build --impure --no-link --expr "$nix_expr" 2>&1) || true
+
+  local hash
+  hash=$(echo "$build_output" \
+    | sed -n 's/.*got:[[:space:]]*\(sha256-[A-Za-z0-9+/=]*\).*/\1/p' \
+    | head -1)
+
+  if [ -z "$hash" ]; then
+    err "Could not extract mvnHash from nix build output."
+    err "Build output:"
+    echo "$build_output" | tail -20 >&2
+    return 1
+  fi
+
+  echo "$hash"
+}
+
 # ── Update Logic ────────────────────────────────────────────────────
 update_project() {
   local project="$1"
@@ -333,6 +385,9 @@ update_project() {
       ;;
     rust)
       new_hash=$(compute_cargo_hash "$project") || return 1
+      ;;
+    maven)
+      new_hash=$(compute_maven_hash "$project") || return 1
       ;;
     *)
       err "Unknown build system: $build_system"
@@ -508,13 +563,15 @@ cmd_add_interactive() {
   echo "Build system:"
   echo -e "  ${BOLD}1)${NC} npm (uses prefetch-npm-deps)"
   echo -e "  ${BOLD}2)${NC} rust (uses fetchCargoVendor)"
+  echo -e "  ${BOLD}3)${NC} maven (uses buildMavenPackage)"
   local bs_choice
-  read -rp "Selection [1-2]: " bs_choice
+  read -rp "Selection [1-3]: " bs_choice
 
   local build_system hash_field
   case "$bs_choice" in
     1) build_system="npm"; hash_field="npmDepsHash" ;;
     2) build_system="rust"; hash_field="cargoHash" ;;
+    3) build_system="maven"; hash_field="mvnHash" ;;
     *) err "Invalid selection"; return 1 ;;
   esac
 

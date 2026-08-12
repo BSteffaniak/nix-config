@@ -521,6 +521,7 @@
         "nixpkgs-firefox-darwin": "nixpkgs-firefox-darwin",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "rust-overlay": "rust-overlay",
+        "sendsafely-java-src": "sendsafely-java-src",
         "sledge-src": "sledge-src",
         "sshenv-src": "sshenv-src",
         "swww": "swww",
@@ -566,6 +567,22 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "sendsafely-java-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1692876600,
+        "narHash": "sha256-aZh3+HPapsGETO3+z+0WopqJ9cCLkHHjIIMeVyanqgI=",
+        "owner": "BSteffaniak",
+        "repo": "sendsafely-java",
+        "rev": "8478d79f52ba741259a2bfc259b5b397ae176267",
+        "type": "github"
+      },
+      "original": {
+        "owner": "BSteffaniak",
+        "repo": "sendsafely-java",
         "type": "github"
       }
     },

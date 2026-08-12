@@ -1,0 +1,7 @@
+{
+    "flakeInput": "sendsafely-java-src",
+    "buildSystem": "maven",
+    "pname": "sendsafely-java",
+    "hashField": "mvnHash",
+    "complex": true
+}

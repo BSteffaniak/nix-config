@@ -17,6 +17,7 @@
   enableGithubReleases ? true,
   enableSourceBuilds ? true,
   enableCronstrue ? true,
+  enableSendSafelyJava ? true,
   enableFirefoxDarwin ? true,
   enableMinecraftPlugins ? true,
 }:
@@ -44,6 +45,7 @@ let
     github-releases = import ./overlays/github-releases.nix;
     source-builds = import ./overlays/source-builds.nix;
     cronstrue = import ./overlays/cronstrue.nix;
+    sendsafely-java = import ./overlays/sendsafely-java.nix;
     firefox-darwin = import ./overlays/firefox-darwin.nix;
     minecraft-plugins = import ./overlays/minecraft-plugins.nix;
   };
@@ -63,6 +65,7 @@ mkOverlaysLib.mkOverlays {
     enableGithubReleases
     enableSourceBuilds
     enableCronstrue
+    enableSendSafelyJava
     enableFirefoxDarwin
     enableMinecraftPlugins
     ;

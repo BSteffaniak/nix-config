@@ -78,6 +78,7 @@ in
     parallel.enable = mkEnable "GNU parallel";
     write-good.enable = mkEnable "writing quality checker";
     cronstrue.enable = mkEnable "cron expression diagnostic tool";
+    sendsafely.enable = mkEnable "SendSafely Java CLI";
     clippier.enable = mkEnable "Clippier CI helper";
     cloc.enable = mkEnable "lines of code counter";
     watchexec.enable = mkEnable "file watcher/executor";
@@ -160,6 +161,7 @@ in
       (mkIf cfg.parallel.enable [ pkgs.parallel ])
       (mkIf cfg.write-good.enable [ pkgs.write-good ])
       (mkIf cfg.cronstrue.enable [ pkgs.cronstrue-custom ])
+      (mkIf cfg.sendsafely.enable [ pkgs.sendsafely-java ])
       (mkIf cfg.clippier.enable [ pkgs.clippier ])
       (mkIf cfg.cloc.enable [ pkgs.cloc ])
       (mkIf cfg.watchexec.enable [ pkgs.watchexec ])

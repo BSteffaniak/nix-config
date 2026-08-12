@@ -15,6 +15,7 @@
       enableGithubReleases ? true,
       enableSourceBuilds ? true,
       enableCronstrue ? true,
+      enableSendSafelyJava ? true,
       enableFirefoxDarwin ? true,
       enableMinecraftPlugins ? true,
     }:
@@ -81,6 +82,10 @@
         {
           enable = enableCronstrue;
           overlay = overlayFunctions.cronstrue;
+        }
+        {
+          enable = enableSendSafelyJava;
+          overlay = overlayFunctions.sendsafely-java;
         }
         {
           enable = enableFirefoxDarwin;
