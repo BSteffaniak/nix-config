@@ -260,6 +260,50 @@ let
     profiles:
     foldl' (acc: name: acc // expandProfileSshenv name profiles.${name}) { } (attrNames profiles);
 
+  # Shared scaffolding for the Bedrock wrappers. Every Bedrock profile authenticates through the
+  # same sshenv `bedrock` profile, so they differ only by model, transport settings, and whether the
+  # selected surface needs full AWS credentials or just the Mantle bearer token.
+  mkBedrockProfile =
+    {
+      model,
+      settings ? { },
+      bearerOnly ? false,
+    }:
+    {
+      providerPluginId = "bcode.bedrock";
+      inherit model;
+      authProfile = "bedrock";
+      settings =
+        settings
+        // optionalAttrs (cfg.providers.bedrock.region != null) {
+          region = cfg.providers.bedrock.region;
+        };
+      auth = {
+        backend = "sshenv";
+        scheme = "aws_credentials";
+        # The Mantle surfaces authenticate with a bearer token only; ConverseStream also accepts
+        # sigv4 credentials.
+        map = {
+          bearer_token.env = "AWS_BEARER_TOKEN_BEDROCK";
+        }
+        // optionalAttrs (!bearerOnly) {
+          access_key_id.env = "AWS_ACCESS_KEY_ID";
+          secret_access_key.env = "AWS_SECRET_ACCESS_KEY";
+          session_token.env = "AWS_SESSION_TOKEN";
+        };
+        settings = {
+          provider = "aws";
+          profile =
+            if cfg.providers.bedrock.sshenv != null then cfg.providers.bedrock.sshenv.profile else "bedrock";
+        }
+        // optionalAttrs (cfg.providers.bedrock.awsProfile != null) {
+          profile = cfg.providers.bedrock.awsProfile;
+        }
+        // optionalAttrs (cfg.providers.bedrock.region != null) { region = cfg.providers.bedrock.region; };
+      };
+      sshenv = cfg.providers.bedrock.sshenv;
+    };
+
   mkOpenAiProfile =
     {
       model,
@@ -377,57 +421,26 @@ let
     };
 
   builtinProfiles = {
-    bedrock = {
-      providerPluginId = "bcode.bedrock";
-      model = cfg.providers.bedrock.model;
-      authProfile = "bedrock";
-      settings = optionalAttrs (cfg.providers.bedrock.region != null) {
-        region = cfg.providers.bedrock.region;
-      };
-      auth = {
-        backend = "sshenv";
-        scheme = "aws_credentials";
-        map = {
-          access_key_id.env = "AWS_ACCESS_KEY_ID";
-          secret_access_key.env = "AWS_SECRET_ACCESS_KEY";
-          session_token.env = "AWS_SESSION_TOKEN";
-          bearer_token.env = "AWS_BEARER_TOKEN_BEDROCK";
-        };
-        settings = {
-          provider = "aws";
-          profile =
-            if cfg.providers.bedrock.sshenv != null then cfg.providers.bedrock.sshenv.profile else "bedrock";
-        }
-        // optionalAttrs (cfg.providers.bedrock.awsProfile != null) {
-          profile = cfg.providers.bedrock.awsProfile;
-        }
-        // optionalAttrs (cfg.providers.bedrock.region != null) { region = cfg.providers.bedrock.region; };
-      };
-      sshenv = cfg.providers.bedrock.sshenv;
+    # Bedrock-hosted OpenAI models live only on the Mantle Responses surface. Routing is per-model:
+    # the catalog marks them `api_surface = "responses"`, so no transport pin is needed and other
+    # models selected in-session still route over their own surface. `mantle_base_url` is left unset
+    # so the plugin derives the flavor-correct endpoint from the region.
+    bedrock-openai = mkBedrockProfile {
+      model = cfg.providers.bedrock.openaiModel;
+      bearerOnly = true;
     };
 
-    bedrock-mantle = {
-      providerPluginId = "bcode.bedrock";
+    bedrock-opus = mkBedrockProfile {
+      model = cfg.providers.bedrock.opusModel;
+    };
+
+    bedrock-mantle = mkBedrockProfile {
       model = cfg.providers.bedrock.mantleModel;
-      authProfile = "bedrock";
+      bearerOnly = true;
       settings = {
         transport = "mantle_anthropic";
         mantle_base_url = "https://bedrock-mantle.us-east-1.api.aws/anthropic";
-      }
-      // optionalAttrs (cfg.providers.bedrock.region != null) {
-        region = cfg.providers.bedrock.region;
       };
-      auth = {
-        backend = "sshenv";
-        scheme = "aws_credentials";
-        map.bearer_token.env = "AWS_BEARER_TOKEN_BEDROCK";
-        settings = {
-          provider = "aws";
-          profile =
-            if cfg.providers.bedrock.sshenv != null then cfg.providers.bedrock.sshenv.profile else "bedrock";
-        };
-      };
-      sshenv = cfg.providers.bedrock.sshenv;
     };
 
     openai = mkOpenAiProfile {
@@ -618,10 +631,21 @@ in
 
     providers = {
       bedrock = {
-        model = mkOption {
+        openaiModel = mkOption {
+          type = types.str;
+          default = "openai.gpt-5.6-sol";
+          description = ''
+            Bedrock-hosted OpenAI model used by bcode-bedrock-openai.
+
+            Sent verbatim as the Mantle wire model id, so this uses the bare Bedrock id rather than
+            an inference-profile prefix such as `global.`.
+          '';
+        };
+
+        opusModel = mkOption {
           type = types.str;
           default = "global.anthropic.claude-opus-5";
-          description = "Native Bedrock model used by bcode-bedrock.";
+          description = "Native Bedrock (ConverseStream) model used by bcode-bedrock-opus.";
         };
 
         mantleModel = mkOption {
@@ -633,13 +657,13 @@ in
         region = mkOption {
           type = types.nullOr types.str;
           default = null;
-          description = "Optional AWS region setting for bcode-bedrock.";
+          description = "Optional AWS region setting for the bcode-bedrock-* wrappers.";
         };
 
         awsProfile = mkOption {
           type = types.nullOr types.str;
           default = null;
-          description = "Optional AWS profile setting for bcode-bedrock.";
+          description = "Optional AWS profile setting for the bcode-bedrock-* wrappers.";
         };
 
         sshenv = mkSshenvOption "bedrock" {
