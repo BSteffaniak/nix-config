@@ -112,6 +112,23 @@ in
         '';
       };
 
+      unencryptedSshKeys = mkOption {
+        type = types.enum [
+          "allow"
+          "warn"
+          "deny"
+        ];
+        default = "allow";
+        description = ''
+          Policy sshenv applies to authorized vault recipient SSH private keys
+          that have no passphrase, written to ~/.sshenv/config.toml as
+          [security] unencrypted_ssh_keys.
+
+          "allow" silences the startup warning, "warn" prints it on every
+          command that decrypts secrets, and "deny" refuses to run.
+        '';
+      };
+
       declarativeBindings = mkOption {
         type = types.attrsOf (
           types.oneOf [
@@ -186,7 +203,8 @@ in
     # home.sessionPath (see home/modules/shell/shared.nix).
     homeModules.shell.shared.sessionPath = mkIf cfg.sshenv.enable [ "$HOME/.sshenv/bin" ];
 
-    # Deploy declarative bindings fragments into bindings.d/.
+    # Deploy declarative bindings fragments into bindings.d/, plus the
+    # security policy file at ~/.sshenv/config.toml.
     # When autoBindings is enabled, we provide a base set of pi-* bindings.
     # User declarativeBindings are merged on top (user wins on name conflicts).
     home.file = mkIf cfg.sshenv.enable (
@@ -198,6 +216,12 @@ in
         name = ".sshenv/bindings.d/${name}.toml";
         value.text = bindingsFragmentToToml name value;
       }) final
+      // {
+        ".sshenv/config.toml".text = ''
+          [security]
+          unencrypted_ssh_keys = "${cfg.sshenv.unencryptedSshKeys}"
+        '';
+      }
     );
 
     # Ensure shims are regenerated whenever bindings change.
