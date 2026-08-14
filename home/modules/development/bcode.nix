@@ -128,7 +128,6 @@ let
     plugins.enabled = [
       "bcode.openai-compatible"
       "bcode.bedrock"
-      "bcode.vim-edit"
     ];
 
     worktree.setup.direnv_allow = true;
