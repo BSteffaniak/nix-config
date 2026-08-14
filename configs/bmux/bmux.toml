@@ -31,15 +31,9 @@ above = ["performance.border"]
 below = ["performance.header"]
 
 [composition]
-active_profile = "zellij_vim_local"
+active_profile = "zellij_compat"
 
-[composition.profiles.zellij_vim_local]
-extends = ["vim", "zellij_compat"]
-
-[composition.profiles.zellij_vim_local.patch.keybindings]
-initial_mode = "normal"
-
-[composition.profiles.zellij_vim_local.patch.keybindings.global]
+[keybindings.global]
 "alt+1"      = "plugin:bmux.windows:goto-window 1"
 "alt+2"      = "plugin:bmux.windows:goto-window 2"
 "alt+3"      = "plugin:bmux.windows:goto-window 3"
@@ -68,70 +62,7 @@ initial_mode = "normal"
 "alt+minus"  = "decrease_split"
 "ctrl+alt+r" = "plugin:bmux.prompted_actions:run recording-cut"
 
-[composition.profiles.zellij_vim_local.patch.keybindings.modes.normal.bindings]
-h = "plugin:bmux.windows:prev-window"
-j = "plugin:bmux.windows:prev-window"
-l = "plugin:bmux.windows:last-window"
-p = "enter_mode pane"
-r = "enter_mode resize"
-s = "plugin:bmux.windows:next-window"
-";" = "plugin:bmux.windows:next-window"
-
-[composition.profiles.zellij_vim_local.patch.keybindings.modes.pane]
-label       = "PANE"
-passthrough = false
-
-[composition.profiles.zellij_vim_local.patch.keybindings.modes.pane.bindings]
-"\""        = "split_focused_horizontal"
-"%"         = "split_focused_vertical"
-"("         = "plugin:bmux.windows:prev-window"
-")"         = "plugin:bmux.windows:next-window"
-"["         = "enter_scroll_mode"
-"]"         = "exit_scroll_mode"
-"^"         = "plugin:bmux.windows:last-window"
-c           = "plugin:bmux.windows:new-window"
-h           = "focus_left_pane"
-j           = "focus_down_pane"
-k           = "focus_up_pane"
-l           = "focus_right_pane"
-left        = "focus_left_pane"
-down        = "focus_down_pane"
-up          = "focus_up_pane"
-right       = "focus_right_pane"
-n           = "plugin:bmux.windows:next-window"
-o           = "focus_next_pane"
-p           = "plugin:bmux.windows:prev-window"
-"shift+c"  = "plugin:bmux.sessions:new-session"
-"shift+r"  = "restart_focused_pane"
-"shift+&"  = "plugin:bmux.windows:close-current-window"
-t           = "toggle_split_direction"
-w           = "plugin:bmux.windows:last-window"
-x           = "close_focused_pane"
-z           = "zoom_pane"
-escape      = "enter_mode normal"
-
-[composition.profiles.zellij_vim_local.patch.keybindings.modes.resize]
-label       = "RESIZE"
-passthrough = false
-
-[composition.profiles.zellij_vim_local.patch.keybindings.modes.resize.bindings]
-"shift+h" = "resize_left"
-"shift+l" = "resize_right"
-"shift+k" = "resize_up"
-"shift+j" = "resize_down"
-"shift+left" = "resize_left"
-"shift+right" = "resize_right"
-"shift+up" = "resize_up"
-"shift+down" = "resize_down"
-plus        = "increase_split"
-minus       = "decrease_split"
-escape      = "enter_mode normal"
-
-[composition.profiles.zellij_vim_local.patch.keybindings.modes.command.bindings]
-d = "detach"
-q = "quit"
-
-[composition.profiles.zellij_vim_local.patch.keybindings.scroll]
+[keybindings.scroll]
 "escape" = "exit_scroll_mode"
 "ctrl+c" = "exit_scroll_mode"
 "j" = "scroll_down_line"
