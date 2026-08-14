@@ -191,9 +191,7 @@ let
       authConfig = profile.auth or null;
       settings = profile.settings or { };
       aliases = profile.aliases or { };
-      plugins = profile.plugins or [ profile.providerPluginId ];
       baseOverlay = {
-        plugins.enabled = plugins;
         model = {
           provider_plugin_id = profile.providerPluginId;
           model_id = profile.model;
@@ -595,7 +593,7 @@ in
         Generic generated Bcode provider profiles, keyed by wrapper name without the `bcode-` prefix.
 
         Each profile supports fields like `providerPluginId`, `model`, `authProfile`, `auth`,
-        `settings`, `aliases`, `variants`, `plugins`, `sshenv`, and `extraConfig`. Variants are
+        `settings`, `aliases`, `variants`, `sshenv`, and `extraConfig`. Variants are
         generated as `bcode-<name>-<variant>` wrappers. This is the preferred extension point for
         host-private provider/account profiles because names and auth profile IDs stay in the host
         file that defines them.
