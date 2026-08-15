@@ -3,6 +3,7 @@
   lib,
   pkgs,
   myLib,
+  osConfig ? { },
   ...
 }:
 
@@ -13,6 +14,12 @@ let
 
   mkEnable = myLib.mkEnableOption' cfg.enableAll;
   mkMediaEnable = myLib.mkEnableOption' cfg.media.enableAll;
+  useMacOSKeychainTrustStore =
+    pkgs.stdenv.hostPlatform.isDarwin
+    && (lib.attrByPath [ "myConfig" "darwin" "cloudflareWarp" "enable" ] false osConfig);
+  sendsafelyJava = pkgs.sendsafely-java.override {
+    inherit useMacOSKeychainTrustStore;
+  };
 
   # Convert declarativeBindings value (nice form or raw TOML) into TOML text
   bindingsFragmentToToml =
@@ -178,7 +185,7 @@ in
       (mkIf cfg.parallel.enable [ pkgs.parallel ])
       (mkIf cfg.write-good.enable [ pkgs.write-good ])
       (mkIf cfg.cronstrue.enable [ pkgs.cronstrue-custom ])
-      (mkIf cfg.sendsafely.enable [ pkgs.sendsafely-java ])
+      (mkIf cfg.sendsafely.enable [ sendsafelyJava ])
       (mkIf cfg.clippier.enable [ pkgs.clippier ])
       (mkIf cfg.cloc.enable [ pkgs.cloc ])
       (mkIf cfg.watchexec.enable [ pkgs.watchexec ])

@@ -40,34 +40,40 @@ else
               null;
         in
         {
-          sendsafely-java = final.maven.buildMavenPackage {
-            pname = "sendsafely-java";
-            version = "unstable-${builtins.substring 0 7 source.rev}";
-            src = source.src;
-            mvnHash = hashData.mvnHash;
-            nativeBuildInputs = [ final.makeWrapper ];
+          sendsafely-java = final.callPackage (
+            {
+              useMacOSKeychainTrustStore ? false,
+            }:
+            final.maven.buildMavenPackage {
+              pname = "sendsafely-java";
+              version = "unstable-${builtins.substring 0 7 source.rev}";
+              src = source.src;
+              mvnHash = hashData.mvnHash;
+              nativeBuildInputs = [ final.makeWrapper ];
 
-            installPhase = ''
-              runHook preInstall
+              installPhase = ''
+                runHook preInstall
 
-              mkdir -p $out/bin $out/share/sendsafely-java
-              install -Dm644 \
-                target/sendsafely-java-1.0-SNAPSHOT-jar-with-dependencies.jar \
-                $out/share/sendsafely-java/sendsafely-java.jar
-              makeWrapper ${final.jre}/bin/java $out/bin/ss \
-                --add-flags "-jar $out/share/sendsafely-java/sendsafely-java.jar"
+                mkdir -p $out/bin $out/share/sendsafely-java
+                install -Dm644 \
+                  target/sendsafely-java-1.0-SNAPSHOT-jar-with-dependencies.jar \
+                  $out/share/sendsafely-java/sendsafely-java.jar
+                makeWrapper ${final.jre}/bin/java $out/bin/ss \
+                  ${final.lib.optionalString useMacOSKeychainTrustStore ''--add-flags "-Djavax.net.ssl.trustStoreType=KeychainStore" --add-flags "-Djavax.net.ssl.trustStore=NONE"''} \
+                  --add-flags "-jar $out/share/sendsafely-java/sendsafely-java.jar"
 
-              runHook postInstall
-            '';
+                runHook postInstall
+              '';
 
-            meta = with final.lib; {
-              description = "Interactive command-line client for SendSafely";
-              homepage = "https://github.com/BSteffaniak/sendsafely-java";
-              license = licenses.isc;
-              mainProgram = "ss";
-              platforms = platforms.unix;
-            };
-          };
+              meta = with final.lib; {
+                description = "Interactive command-line client for SendSafely";
+                homepage = "https://github.com/BSteffaniak/sendsafely-java";
+                license = licenses.isc;
+                mainProgram = "ss";
+                platforms = platforms.unix;
+              };
+            }
+          ) { };
         }
       )
     ]
