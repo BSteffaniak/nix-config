@@ -326,6 +326,9 @@ let
       aliases = openAiFastAlias;
       auth = {
         backend = "sshenv";
+        provider_id = authProvider;
+        owner_plugin_id = "bcode.openai-compatible";
+        scheme = if authProvider == "openai" then "chatgpt" else "api_key";
         settings = {
           provider = authProvider;
           profile = authProfile;
@@ -375,6 +378,8 @@ let
       };
       auth = {
         backend = "sshenv";
+        provider_id = authProvider;
+        owner_plugin_id = "bcode.openai-compatible";
         scheme = "api_key";
         map.api_key.env = apiKeyEnv;
         settings = {
