@@ -573,11 +573,11 @@
     "sendsafely-java-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1786829500,
-        "narHash": "sha256-NPBQlTqqMKX0cB7PBPknuB4PPgpjqaShmJnhp3woXq8=",
+        "lastModified": 1786832084,
+        "narHash": "sha256-fGMGAp20TZOTdZMSknMFFGwGVBRLZ/BAoUcEgPSUbac=",
         "owner": "BSteffaniak",
         "repo": "sendsafely-java",
-        "rev": "e300e0cf292bc893a06ba6bd6144d7b6a9833c9f",
+        "rev": "42280695dfce5bc8ecd8313ced9541d2e5a2084f",
         "type": "github"
       },
       "original": {
