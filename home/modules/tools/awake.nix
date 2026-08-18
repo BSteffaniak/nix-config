@@ -61,12 +61,17 @@ let
       # The daemon touches its heartbeat every ~2s. A missing or stale heartbeat
       # means requests would sit unread, so fail loudly rather than reporting a
       # success that never happens.
+      #
+      # System tools are called by absolute path so a GNU coreutils `stat` or
+      # `date` earlier on PATH cannot shadow the BSD flags used here.
       daemon_is_alive() {
         [[ -f "$heartbeat_file" ]] || return 1
 
         local now_ts beat_ts
-        now_ts="$(date +%s)"
-        beat_ts="$(stat -f %m "$heartbeat_file" 2>/dev/null || echo 0)"
+        now_ts="$(/bin/date +%s)"
+        beat_ts="$(/usr/bin/stat -f %m "$heartbeat_file" 2>/dev/null || echo 0)"
+        [[ "$now_ts" =~ ^[0-9]+$ ]] || return 1
+        [[ "$beat_ts" =~ ^[0-9]+$ ]] || beat_ts=0
         (( now_ts - beat_ts <= 15 ))
       }
 
@@ -78,18 +83,22 @@ let
         fi
       }
 
-      disablesleep_is() {
+      # `pmset -a disablesleep <n>` is the setter, but `pmset -g` reports the
+      # same value under the "System-wide power settings" key `SleepDisabled`.
+      # Matching on "disablesleep" never succeeds and would report failure even
+      # when the daemon applied the change correctly.
+      sleep_disabled_is() {
         local want="$1"
-        command -v pmset >/dev/null 2>&1 || return 0
-        pmset -g | grep -qE "^ *disablesleep +$want\$"
+        [[ -x /usr/bin/pmset ]] || return 0
+        /usr/bin/pmset -g | grep -qE "^[[:space:]]*SleepDisabled[[:space:]]+$want''$"
       }
 
       # Poll until pmset reflects the requested state, so success means the
       # setting actually changed rather than just that a request file was written.
-      await_disablesleep() {
+      await_sleep_disabled() {
         local want="$1"
         for _ in {1..40}; do
-          if disablesleep_is "$want"; then
+          if sleep_disabled_is "$want"; then
             return 0
           fi
           sleep 0.25
@@ -118,18 +127,18 @@ let
       case "$command" in
         on)
           send_request on
-          if ! await_disablesleep 1; then
+          if ! await_sleep_disabled 1; then
             echo "stay-awake: request was accepted but sleep is still enabled." >&2
-            echo "Check /var/log/stay-awake.log; 'pmset -g | grep disablesleep' should report 1." >&2
+            echo "Check /var/log/stay-awake.log; 'pmset -g | grep SleepDisabled' should report 1." >&2
             exit 1
           fi
           echo "stay-awake armed: sleep is disabled until you open the lid again or run 'stay-awake off'."
           ;;
         off)
           send_request off
-          if ! await_disablesleep 0; then
+          if ! await_sleep_disabled 0; then
             echo "stay-awake: request was accepted but sleep is still disabled." >&2
-            echo "Check /var/log/stay-awake.log; 'pmset -g | grep disablesleep' should report 0." >&2
+            echo "Check /var/log/stay-awake.log; 'pmset -g | grep SleepDisabled' should report 0." >&2
             exit 1
           fi
           echo "stay-awake disabled: normal lid/sleep behavior restored."
@@ -146,8 +155,8 @@ let
             echo "daemon: NOT running (status above may be stale)"
             daemon_hint
           fi
-          if command -v pmset >/dev/null 2>&1; then
-            pmset -g | grep -E '^ *disablesleep' || true
+          if [[ -x /usr/bin/pmset ]]; then
+            /usr/bin/pmset -g | grep -E '^[[:space:]]*SleepDisabled' || true
           fi
           ;;
         -h|--help|help)
