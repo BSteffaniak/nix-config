@@ -3,6 +3,9 @@
 # The user command writes requests into a state directory. This LaunchDaemon
 # performs the privileged `pmset disablesleep` toggles and automatically restores
 # normal sleep behavior after a closed-lid session ends.
+#
+# The daemon is launched through a `/bin/sh` wrapper so it survives boots where
+# `/nix` is not yet mounted; see the `ProgramArguments` comment below.
 {
   config,
   lib,
@@ -27,6 +30,7 @@ let
     status_file="$state_dir/status"
     active_file="$state_dir/active"
     seen_closed_file="$state_dir/seen-closed"
+    heartbeat_file="$state_dir/heartbeat"
 
     ensure_state_dir() {
       /bin/mkdir -p "$state_dir"
@@ -41,6 +45,13 @@ let
     write_status() {
       printf '%s\nupdated: %s\n' "$1" "$(now)" > "$status_file"
       /usr/sbin/chown "$user_name" "$status_file" 2>/dev/null || true
+    }
+
+    # Touched every loop iteration so the user-facing `stay-awake` command can
+    # distinguish a live daemon from a stale status file left by a dead one.
+    write_heartbeat() {
+      /usr/bin/touch "$heartbeat_file"
+      /usr/sbin/chown "$user_name" "$heartbeat_file" 2>/dev/null || true
     }
 
     lid_state() {
@@ -90,12 +101,23 @@ let
     }
 
     ensure_state_dir
+    write_heartbeat
+
+    # `pmset disablesleep` persists across reboots and daemon restarts. If we
+    # were armed but never observed a lid close, no closed-lid session is in
+    # flight, so restore normal behavior instead of leaving sleep disabled
+    # indefinitely with nothing managing it.
+    if [ -f "$active_file" ] && [ ! -f "$seen_closed_file" ]; then
+      disable_awake "daemon restarted while armed"
+    fi
+
     if [ ! -f "$active_file" ]; then
       write_status "inactive: normal lid/sleep behavior active"
     fi
 
     while true; do
       ensure_state_dir
+      write_heartbeat
       handle_request
 
       if [ -f "$active_file" ]; then
@@ -133,11 +155,49 @@ in
     launchd.daemons.stay-awake = {
       serviceConfig = {
         Label = "dev.braden.stay-awake";
+
+        # `/nix` is commonly a `noauto` (often encrypted) APFS volume mounted by
+        # the separate `org.nixos.darwin-store` daemon, and launchd guarantees no
+        # ordering between the two. Naming the daemon binary directly as the
+        # program loses that race at boot: launchd cannot exec a path under an
+        # unmounted volume, fails the spawn with EX_CONFIG (78), and drops the
+        # job into the penalty box permanently -- `KeepAlive` cannot recover it
+        # because the process never started.
+        #
+        # Spawning `/bin/sh` instead keeps the executed binary on the root
+        # volume, which always exists, so the spawn cannot fail this way. The
+        # wrapper then waits for the real daemon to become available.
         ProgramArguments = [
-          "${daemon}/bin/stay-awake-darwin-daemon"
+          "/bin/sh"
+          "-c"
+          ''
+            daemon='${daemon}/bin/stay-awake-darwin-daemon'
+            waited=0
+            while [ ! -x "$daemon" ]; do
+              if [ "$waited" -ge 300 ]; then
+                echo "stay-awake: $daemon unavailable after ''${waited}s (is /nix mounted?); giving up" >&2
+                exit 1
+              fi
+              waited=$((waited + 1))
+              sleep 1
+            done
+            if [ "$waited" -gt 0 ]; then
+              echo "stay-awake: daemon binary became available after ''${waited}s" >&2
+            fi
+            exec "$daemon"
+          ''
         ];
+
         RunAtLoad = true;
-        KeepAlive = true;
+
+        # Restart whenever /nix/store is present. This replaces `KeepAlive = true`
+        # and acts as defense in depth alongside the wrapper's wait loop.
+        KeepAlive = {
+          PathState = {
+            "/nix/store" = true;
+          };
+        };
+
         StandardOutPath = "/var/log/stay-awake.log";
         StandardErrorPath = "/var/log/stay-awake.log";
       };

@@ -41,6 +41,14 @@ let
       state_dir="${darwinStateDir}"
       request_file="$state_dir/request"
       status_file="$state_dir/status"
+      heartbeat_file="$state_dir/heartbeat"
+
+      daemon_hint() {
+        echo "The privileged stay-awake LaunchDaemon does not appear to be running." >&2
+        echo "Restart it with:" >&2
+        echo "  sudo launchctl kickstart -k system/dev.braden.stay-awake" >&2
+        echo "Then check /var/log/stay-awake.log for spawn errors." >&2
+      }
 
       ensure_state_dir() {
         if [[ ! -d "$state_dir" ]]; then
@@ -50,13 +58,51 @@ let
         fi
       }
 
+      # The daemon touches its heartbeat every ~2s. A missing or stale heartbeat
+      # means requests would sit unread, so fail loudly rather than reporting a
+      # success that never happens.
+      daemon_is_alive() {
+        [[ -f "$heartbeat_file" ]] || return 1
+
+        local now_ts beat_ts
+        now_ts="$(date +%s)"
+        beat_ts="$(stat -f %m "$heartbeat_file" 2>/dev/null || echo 0)"
+        (( now_ts - beat_ts <= 15 ))
+      }
+
+      require_daemon() {
+        ensure_state_dir
+        if ! daemon_is_alive; then
+          daemon_hint
+          exit 1
+        fi
+      }
+
+      disablesleep_is() {
+        local want="$1"
+        command -v pmset >/dev/null 2>&1 || return 0
+        pmset -g | grep -qE "^ *disablesleep +$want\$"
+      }
+
+      # Poll until pmset reflects the requested state, so success means the
+      # setting actually changed rather than just that a request file was written.
+      await_disablesleep() {
+        local want="$1"
+        for _ in {1..40}; do
+          if disablesleep_is "$want"; then
+            return 0
+          fi
+          sleep 0.25
+        done
+        return 1
+      }
+
       send_request() {
         local request="$1"
-        ensure_state_dir
+        require_daemon
         printf '%s\n' "$request" > "$request_file"
 
-        # The root LaunchDaemon polls this file. Wait briefly so the command
-        # only returns once the request was observed in the common case.
+        # The root LaunchDaemon polls this file and removes it once observed.
         for _ in {1..30}; do
           if [[ ! -e "$request_file" ]]; then
             return 0
@@ -64,16 +110,28 @@ let
           sleep 0.2
         done
 
-        echo "request queued; stay-awake daemon should apply it shortly" >&2
+        echo "stay-awake: daemon did not pick up the '$request' request." >&2
+        daemon_hint
+        exit 1
       }
 
       case "$command" in
         on)
           send_request on
+          if ! await_disablesleep 1; then
+            echo "stay-awake: request was accepted but sleep is still enabled." >&2
+            echo "Check /var/log/stay-awake.log; 'pmset -g | grep disablesleep' should report 1." >&2
+            exit 1
+          fi
           echo "stay-awake armed: sleep is disabled until you open the lid again or run 'stay-awake off'."
           ;;
         off)
           send_request off
+          if ! await_disablesleep 0; then
+            echo "stay-awake: request was accepted but sleep is still disabled." >&2
+            echo "Check /var/log/stay-awake.log; 'pmset -g | grep disablesleep' should report 0." >&2
+            exit 1
+          fi
           echo "stay-awake disabled: normal lid/sleep behavior restored."
           ;;
         status)
@@ -81,6 +139,12 @@ let
             cat "$status_file"
           else
             echo "stay-awake status unavailable; daemon may not be initialized."
+          fi
+          if daemon_is_alive; then
+            echo "daemon: running"
+          else
+            echo "daemon: NOT running (status above may be stale)"
+            daemon_hint
           fi
           if command -v pmset >/dev/null 2>&1; then
             pmset -g | grep -E '^ *disablesleep' || true
