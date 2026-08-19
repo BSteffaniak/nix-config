@@ -129,7 +129,7 @@ sshenv list xai                # XAI_API_KEY
 # Just launch:
 pi-openrouter
 pi-zen
-pi-grok-4.3
+pi-grok-4.6
 pi-grok-code-fast
 ```
 

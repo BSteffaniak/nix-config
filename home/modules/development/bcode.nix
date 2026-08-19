@@ -499,7 +499,7 @@ let
         sshenv = cfg.providers.xai.sshenv;
       };
 
-    grok-4-3 =
+    grok-4-6 =
       mkOpenAiProfile {
         model = cfg.providers.xai.model;
         authProfile = "xai";
@@ -723,7 +723,7 @@ in
       xai = {
         model = mkOption {
           type = types.str;
-          default = "grok-4.3";
+          default = "grok-4.6";
           description = "xAI/Grok model used by bcode-xai.";
         };
 

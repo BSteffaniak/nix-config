@@ -1,6 +1,6 @@
 {
     "provider": "xai",
-    "model": "grok-4.3",
+    "model": "grok-4.6",
     "sshenv": {
         "profile": "xai",
         "agentSubdir": "xai",

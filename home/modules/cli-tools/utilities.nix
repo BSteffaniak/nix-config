@@ -58,7 +58,7 @@ let
         "opencode-zen"
       ];
       xai = [
-        "opencode-grok-4-3"
+        "opencode-grok-4-6"
         "opencode-grok-code-fast"
       ];
     };
@@ -151,7 +151,7 @@ in
               "opencode-openrouter"
             ];
             xai = [
-              "pi-grok-4.3"
+              "pi-grok-4.6"
               "pi-grok-code-fast"
             ];
           };

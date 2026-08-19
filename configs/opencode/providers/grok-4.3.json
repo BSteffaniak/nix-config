@@ -1,24 +1,24 @@
 {
-    "model": "xai/grok-4.3",
+    "model": "xai/grok-4.6",
     "small_model": "xai/grok-code-fast",
     "agent": {
         "build": {
-            "model": "xai/grok-4.3"
+            "model": "xai/grok-4.6"
         },
         "plan": {
-            "model": "xai/grok-4.3"
+            "model": "xai/grok-4.6"
         },
         "explore": {
-            "model": "xai/grok-4.3"
+            "model": "xai/grok-4.6"
         },
         "general": {
-            "model": "xai/grok-4.3"
+            "model": "xai/grok-4.6"
         },
         "title": {
             "model": "xai/grok-code-fast"
         },
         "summary": {
-            "model": "xai/grok-4.3"
+            "model": "xai/grok-4.6"
         },
         "compaction": {
             "model": "xai/grok-code-fast"

@@ -92,8 +92,8 @@
       sshenvProfile = "openrouter";
       ignorePersistedAuth = true;
     };
-    development.opencode.aliases.grok-4-3 = {
-      provider = "grok-4.3";
+    development.opencode.aliases.grok-4-6 = {
+      provider = "grok-4.6";
       sshenvProfile = "xai";
       ignorePersistedAuth = true;
     };
