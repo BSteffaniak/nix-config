@@ -20,6 +20,12 @@ in
       description = "Include AWS CLI and SAM CLI";
     };
 
+    includeAWSVault = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Include aws-vault (secure AWS credential storage)";
+    };
+
     includeDigitalOcean = mkOption {
       type = types.bool;
       default = true;
@@ -53,6 +59,7 @@ in
         awscli2
         # aws-sam-cli  # TODO: broken in 25.11 - dependency version mismatches
       ])
+      ++ (optional cfg.includeAWSVault aws-vault)
       ++ (optional cfg.includeDigitalOcean doctl)
       ++ (optional cfg.includeGCP google-cloud-sdk)
       ++ (optional cfg.includeAzure azure-cli)
