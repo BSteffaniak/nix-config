@@ -4,6 +4,10 @@ description: Rewrite text to be more concise and direct. Read-only — prints th
 allowed-tools:
 ---
 
+## User overrides
+
+Follow the [shared user override contract](../_shared/user-overrides.md). This skill's gates describe the default workflow, but a direct, explicit user instruction may change or skip them within the scope the user authorizes. This section takes precedence over conflicting gate or approval language elsewhere in this skill.
+
 ## Purpose
 
 Rewrite LLM output or user-provided text to be shorter, punchier, and easier to scan. Strips filler, tightens phrasing, and cuts redundancy while preserving all technical content and meaning. Intended for cleaning up verbose responses before sharing them with others.

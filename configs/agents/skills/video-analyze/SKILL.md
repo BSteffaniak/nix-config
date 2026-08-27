@@ -4,6 +4,10 @@ description: Extract and view frames from a video to analyze its visual content.
 allowed-tools: Bash(ffmpeg:*), Bash(ffprobe:*), Bash(mkdir:*), Bash(ls:*), Bash(find:*), Bash(python3:*), Question(*), Read(*)
 ---
 
+## User overrides
+
+Follow the [shared user override contract](../_shared/user-overrides.md). This skill's gates describe the default workflow, but a direct, explicit user instruction may change or skip them within the scope the user authorizes. This section takes precedence over conflicting gate or approval language elsewhere in this skill.
+
 ## Purpose
 
 Analyze video content by extracting frames and viewing them as images. The skill locates a video file — either from a user-specified path or by finding the most recent screen recording — extracts frames at an adaptive frame rate tuned to the video's duration, and presents them for visual inspection. When more detail is needed for a specific segment, frames can be re-extracted at a higher frame rate or for a narrower time range. Designed to work seamlessly within an existing conversation without unnecessary interruptions.

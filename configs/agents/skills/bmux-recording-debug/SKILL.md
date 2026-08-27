@@ -4,6 +4,10 @@ description: Investigate bmux terminal recordings to reconstruct user actions an
 allowed-tools: Bash(cargo:*), Bash(ls:*), Bash(rg:*), Bash(python3:*), Bash(jq:*), Question(*)
 ---
 
+## User overrides
+
+Follow the [shared user override contract](../_shared/user-overrides.md). This skill's gates describe the default workflow, but a direct, explicit user instruction may change or skip them within the scope the user authorizes. This section takes precedence over conflicting gate or approval language elsewhere in this skill.
+
 ## Purpose
 
 Use bmux recordings to debug behavior regressions by reconstructing what happened on the timeline, separating signal from polling noise, and validating whether expected request and server-event chains completed. This skill is optimized for incident triage and bug reproduction analysis (for example: split pane -> create window/context -> switch back failure).

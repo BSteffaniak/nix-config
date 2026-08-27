@@ -4,6 +4,10 @@ description: Create a local long-lived progress document grounded in the request
 allowed-tools: Bash(git:*), Glob(*), Grep(*), Question(*), Read(*), Write(*)
 ---
 
+## User overrides
+
+Follow the [shared user override contract](../_shared/user-overrides.md). This skill's gates describe the default workflow, but a direct, explicit user instruction may change or skip them within the scope the user authorizes. This section takes precedence over conflicting gate or approval language elsewhere in this skill.
+
 ## Command execution
 
 Follow the [non-interactive Git command rules](../_shared/non-interactive-git.md) for every `git` invocation.

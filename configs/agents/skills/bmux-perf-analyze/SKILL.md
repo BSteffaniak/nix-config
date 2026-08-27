@@ -4,6 +4,10 @@ description: Analyze bmux recording performance telemetry and produce actionable
 allowed-tools: Bash(bmux:*), Bash(jq:*)
 ---
 
+## User overrides
+
+Follow the [shared user override contract](../_shared/user-overrides.md). This skill's gates describe the default workflow, but a direct, explicit user instruction may change or skip them within the scope the user authorizes. This section takes precedence over conflicting gate or approval language elsewhere in this skill.
+
 ## Purpose
 
 Analyze a bmux recording's `bmux.perf` telemetry and convert raw metrics into an actionable troubleshooting summary. This skill is diagnostics-only: it does not modify files, change config, toggle runtime settings, or make code edits.

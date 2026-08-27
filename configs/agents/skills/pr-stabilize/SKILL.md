@@ -4,6 +4,10 @@ description: Stabilize a pull request or stacked PRs by repeatedly waiting for C
 allowed-tools: Bash(git:*), Bash(gh:*), Bash(jq:*), Bash(tone-clone:*), Bash(bun:*), Bash(python3:*), Bash(sleep:*), Bash(date:*), Bash(mktemp:*), Read(*), Write(*), Edit(*)
 ---
 
+## User overrides
+
+Follow the [shared user override contract](../_shared/user-overrides.md). This skill's gates describe the default workflow, but a direct, explicit user instruction may change or skip them within the scope the user authorizes. This section takes precedence over conflicting gate or approval language elsewhere in this skill.
+
 ## Command execution
 
 Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation.

@@ -3,6 +3,10 @@ name: opencode-session-history
 description: Browse and search OpenCode conversation history from the local SQLite database (~/.local/share/opencode/opencode.db). List sessions, read past conversations, and search across sessions by keyword.
 ---
 
+## User overrides
+
+Follow the [shared user override contract](../_shared/user-overrides.md). This skill's gates describe the default workflow, but a direct, explicit user instruction may change or skip them within the scope the user authorizes. This section takes precedence over conflicting gate or approval language elsewhere in this skill.
+
 ## Purpose
 
 Query the OpenCode SQLite database to retrieve past session context. Use this to recall what was discussed, what tools were used, and what changes were made in previous conversations.

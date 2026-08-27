@@ -4,6 +4,10 @@ description: Elaborate on text with more detail and explanation. Read-only — p
 allowed-tools:
 ---
 
+## User overrides
+
+Follow the [shared user override contract](../_shared/user-overrides.md). This skill's gates describe the default workflow, but a direct, explicit user instruction may change or skip them within the scope the user authorizes. This section takes precedence over conflicting gate or approval language elsewhere in this skill.
+
 ## Purpose
 
 Rewrite LLM output or user-provided text to be more detailed, explanatory, and thorough. Fleshes out terse points, adds context and rationale, and makes the text more accessible to readers who may not have full background. Intended for turning concise internal notes into shareable documentation or explanations.

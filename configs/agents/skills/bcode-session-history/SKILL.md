@@ -3,6 +3,10 @@ name: bcode-session-history
 description: Browse, search, understand, export, and troubleshoot Bcode session history through supported bounded Bcode CLI operations without opening canonical databases directly.
 ---
 
+## User overrides
+
+Follow the [shared user override contract](../_shared/user-overrides.md). This skill's gates describe the default workflow, but a direct, explicit user instruction may change or skip them within the scope the user authorizes. This section takes precedence over conflicting gate or approval language elsewhere in this skill.
+
 ## Purpose
 
 Use this skill when the user asks to find, recall, inspect, search, export, or troubleshoot native Bcode sessions.

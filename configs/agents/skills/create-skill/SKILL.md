@@ -4,6 +4,10 @@ description: Create a new OpenCode skill. Interactive — gathers requirements, 
 allowed-tools: Bash(git:*), Bash(find:*), Bash(ls:*), Question(*), Write(*)
 ---
 
+## User overrides
+
+Follow the [shared user override contract](../_shared/user-overrides.md). This skill's gates describe the default workflow, but a direct, explicit user instruction may change or skip them within the scope the user authorizes. This section takes precedence over conflicting gate or approval language elsewhere in this skill.
+
 ## Command execution
 
 Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
@@ -229,7 +233,8 @@ When designing a new skill, select the pattern that best fits the use case. Thes
 - `allowed-tools` includes `Question(*)`
 - Steps are clearly numbered with ### headings
 - Each gate is explicitly documented: what Question to ask, what options to show, how to handle each response
-- The Rules section includes "Never skip a gate" and "Never act without user confirmation"
+- The Rules section describes gates as the default workflow and references the shared user override contract
+- Gate language must allow a later direct, explicit user instruction to skip or replace the workflow
 
 ### Pattern 5: Per-item review loop
 
@@ -526,8 +531,9 @@ Do not require a second approval gate after files are written. If the user asks 
 - **`allowed-tools` must be minimal.** Only include tools the skill's instructions explicitly use. Over-permissioning is a security concern.
 - **Cross-platform by default.** Use `python3` for date math, SQLite, and scripting. Never use macOS-only (`date -v`) or GNU-only (`date -d`) commands without a cross-platform alternative.
 - **No hardcoded user-specific paths.** Derive directories dynamically from git, session history, or user input. Never embed paths like `~/GitHub` or `~/Projects`.
-- **Apply authorization guidance according to the skill's operating model.** For review-driven interactive skills that use `Question`, normally include "Never act without user confirmation" and "Never skip a gate." Do not impose gates on a skill whose explicit requirement is autonomous execution after invocation.
-- **Interactive mutation safeguards are a recommended default, not a prohibition.** Draft-only mode, a two-turn mutation barrier, strict approval provenance, and an exact-payload checkpoint are appropriate when users need to inspect or curate mutations. They may be omitted when the requested skill is intentionally autonomous and its purpose and Rules section clearly state what invocation authorizes.
+- **Include the shared user override contract.** Every shared skill must link to `../_shared/user-overrides.md` and state that its workflow gates are defaults which a later direct, explicit user instruction may change or skip.
+- **Apply authorization guidance according to the skill's operating model.** Review-driven interactive skills may normally require confirmation and gate completion, but must qualify those rules with the shared user override contract. Do not generate language claiming that only a structured Question response is valid authorization or that reading a skill makes its workflow irrevocable.
+- **Interactive mutation safeguards are a recommended default, not a prohibition.** Draft-only mode, a two-turn mutation barrier, strict approval provenance, and an exact-payload checkpoint are appropriate when users need to inspect or curate mutations. A direct, explicit user instruction may override those workflow safeguards within its clearly authorized scope. They may also be omitted when the requested skill is intentionally autonomous and its purpose and Rules section clearly state what invocation authorizes.
 - **Make autonomous mutation scope explicit.** If invocation authorizes mutation, name the permitted side effects, safety boundaries, stop conditions, and operations that still require clarification. Never infer broader authority than the skill states.
 - **Per-item review means one at a time.** If the skill uses the per-item review loop pattern, its Rules section must enforce processing items individually — never batch.
 - **Review full drafts, not every section.** Present the complete file or file bundle for approval before writing. Do not require per-section approval unless the user explicitly asks for it.

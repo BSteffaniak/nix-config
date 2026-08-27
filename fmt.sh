@@ -138,6 +138,7 @@ if [[ "$CHECK_MODE" == true ]]; then
     echo ""
     echo -e "${GREEN}✓ All files are properly formatted!${NC}"
     run_prettier --check
+    "$SCRIPT_DIR/scripts/check-skill-user-overrides.py"
     exit 0
   fi
 else
