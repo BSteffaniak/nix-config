@@ -124,6 +124,36 @@ let
       agent = mapAttrs (_name: agent: normalizeBcodeAgent agent) settings.agent;
     };
 
+  longContextCompaction = providerPluginId: threshold: {
+    provider_plugin_id = providerPluginId;
+    mode = "proactive_and_overflow";
+    proactive_threshold_tokens = threshold;
+  };
+
+  openAiLongContextModels = [
+    "gpt-5.4"
+    "gpt-5.4-pro"
+    "gpt-5.5"
+    "gpt-5.6-sol"
+    "gpt-5.6-terra"
+    "gpt-5.6-luna"
+    "gpt-5.6-cyber"
+  ];
+
+  pricingBarrierCompactionModels =
+    genAttrs openAiLongContextModels (_: longContextCompaction "bcode.openai-compatible" 272000)
+    // {
+      "openai.gpt-5.6-sol" = longContextCompaction "bcode.bedrock" 272000;
+    };
+
+  compactionSettings = {
+    mode = "auto";
+    backend = "auto";
+    proactive_threshold_percent = 90;
+    keep_recent_tokens = 20000;
+    models = pricingBarrierCompactionModels;
+  };
+
   baseSettings = {
     plugins.enabled = [
       "bcode.openai-compatible"
@@ -147,22 +177,26 @@ let
       "ctrl+shift+enter" = "tui.input.submitFollowUp";
     };
 
-    model.metadata."gpt-5.6-sol".reasoning.default_effort = "none";
-    model.metadata."gpt-5.5".reasoning.default_effort = "none";
+    model = {
+      compaction = compactionSettings;
 
-    # Keep plain `bcode` credential-free. Provider-specific wrappers such as
-    # `bcode-openai` and host-private profile wrappers point BCODE_CONFIG at
-    # generated provider configs that contain their own scoped auth profiles.
-    model.aliases."gpt-5.6-sol-fast" = {
-      provider_plugin_id = "bcode.openai-compatible";
-      model_id = "gpt-5.6-sol";
-      request.service_tier = "priority";
-    };
+      metadata."gpt-5.6-sol".reasoning.default_effort = "none";
+      metadata."gpt-5.5".reasoning.default_effort = "none";
 
-    model.aliases."gpt-5.5-fast" = {
-      provider_plugin_id = "bcode.openai-compatible";
-      model_id = "gpt-5.5";
-      request.service_tier = "priority";
+      # Keep plain `bcode` credential-free. Provider-specific wrappers such as
+      # `bcode-openai` and host-private profile wrappers point BCODE_CONFIG at
+      # generated provider configs that contain their own scoped auth profiles.
+      aliases."gpt-5.6-sol-fast" = {
+        provider_plugin_id = "bcode.openai-compatible";
+        model_id = "gpt-5.6-sol";
+        request.service_tier = "priority";
+      };
+
+      aliases."gpt-5.5-fast" = {
+        provider_plugin_id = "bcode.openai-compatible";
+        model_id = "gpt-5.5";
+        request.service_tier = "priority";
+      };
     };
   };
 
@@ -203,6 +237,7 @@ let
           // optionalAttrs (authProfile != null) { auth_profile = authProfile; }
           // optionalAttrs (profile ? authPool && profile.authPool != null) { auth_pool = profile.authPool; };
           inherit aliases;
+          compaction = compactionSettings;
         };
       }
       // optionalAttrs (authProfile != null && authConfig != null) {
