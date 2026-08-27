@@ -131,9 +131,9 @@ Every skill must end with a `## Rules` section. Each rule is:
 - **Rule name.** Explanation of the constraint and why it matters.
 ```
 
-Common rules that apply to most skills:
+Common rules that apply to many skills. Treat these as design defaults, not universal requirements; the intended invocation model and the user's explicit autonomy requirements may justify a different policy:
 
-- **User confirmation before mutations** — Never write files, post comments, or make external API calls without explicit user approval
+- **User confirmation before mutations** — Prefer explicit approval when the workflow is review-driven or the mutation payload needs user judgment. Autonomous skills may instead treat invocation as authorization when that behavior is explicit in the skill's purpose and rules.
 - **Truthful output** — Never fabricate or embellish information
 - **Respect user edits** — If the user modifies content, preserve their changes faithfully
 
@@ -191,9 +191,7 @@ When designing a new skill, select the pattern that best fits the use case. Thes
 
 ### Pattern 4: Interactive with gates
 
-**Used by**: `pr-review`, `pr-annotate`, `work-summary`
-
-**When to use**: The skill has a multi-step workflow where the user should control progression — selecting what to include, reviewing output, approving actions.
+**When to use**: The skill has a multi-step workflow where the user should control progression — selecting what to include, reviewing output, approving actions. Do not choose this pattern merely because a skill mutates state; autonomous mutation workflows are valid when invocation-level authorization is an explicit requirement.
 
 **Structure**:
 
@@ -528,10 +526,9 @@ Do not require a second approval gate after files are written. If the user asks 
 - **`allowed-tools` must be minimal.** Only include tools the skill's instructions explicitly use. Over-permissioning is a security concern.
 - **Cross-platform by default.** Use `python3` for date math, SQLite, and scripting. Never use macOS-only (`date -v`) or GNU-only (`date -d`) commands without a cross-platform alternative.
 - **No hardcoded user-specific paths.** Derive directories dynamically from git, session history, or user input. Never embed paths like `~/GitHub` or `~/Projects`.
-- **Every interactive skill needs gate rules.** If the skill uses the Question tool, its Rules section must include "Never act without user confirmation" and "Never skip a gate", and approval must come from direct user Question responses.
-- **Interactive mutation skills need strict authorization rules.** If a skill can mutate code, GitHub state, or configs, its Rules section must include: "Default to draft-only mode", "Two-turn mutation barrier", "\"Recommended\" is not approval", "Non-interactive fallback", "Strict approval provenance required", "No delegated approvals", and "No direct-mutation shortcut".
-- **Mutation skills must include a final execution checkpoint.** Before any external mutation call, require a final Question gate (for example, Submit/Post queued/Proceed) that approves the exact payload to mutate.
-- **Mutation approvals must be payload-bound.** Execution is allowed only when the current payload exactly matches what the user approved in a direct Question response in the same run; payload changes or resumed/delegated instructions invalidate prior approval.
+- **Apply authorization guidance according to the skill's operating model.** For review-driven interactive skills that use `Question`, normally include "Never act without user confirmation" and "Never skip a gate." Do not impose gates on a skill whose explicit requirement is autonomous execution after invocation.
+- **Interactive mutation safeguards are a recommended default, not a prohibition.** Draft-only mode, a two-turn mutation barrier, strict approval provenance, and an exact-payload checkpoint are appropriate when users need to inspect or curate mutations. They may be omitted when the requested skill is intentionally autonomous and its purpose and Rules section clearly state what invocation authorizes.
+- **Make autonomous mutation scope explicit.** If invocation authorizes mutation, name the permitted side effects, safety boundaries, stop conditions, and operations that still require clarification. Never infer broader authority than the skill states.
 - **Per-item review means one at a time.** If the skill uses the per-item review loop pattern, its Rules section must enforce processing items individually — never batch.
 - **Review full drafts, not every section.** Present the complete file or file bundle for approval before writing. Do not require per-section approval unless the user explicitly asks for it.
 - **Respect the user's edits.** If the user provides custom text or edit instructions at any point, apply their changes faithfully. Do not re-edit their words.
