@@ -141,13 +141,15 @@ let
   ];
 
   pricingBarrierCompactionModels =
-    genAttrs openAiLongContextModels (_: longContextCompaction "bcode.openai-compatible" 272000)
+    optionalAttrs cfg.compaction.openAiPricingBarrier.enable (
+      genAttrs openAiLongContextModels (_: longContextCompaction "bcode.openai-compatible" 272000)
+    )
     // {
       "openai.gpt-5.6-sol" = longContextCompaction "bcode.bedrock" 272000;
     };
 
   compactionSettings = {
-    mode = "auto";
+    mode = "on_overflow";
     backend = "auto";
     proactive_threshold_percent = 90;
     keep_recent_tokens = 20000;
@@ -664,6 +666,17 @@ in
       );
       default = { };
       description = "Additional sshenv wrapper settings, keyed by extra provider/wrapper name.";
+    };
+
+    compaction.openAiPricingBarrier.enable = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Opt in to proactive compaction at OpenAI's long-context pricing barrier for
+        OpenAI-compatible profiles, including personal ChatGPT/Codex subscription profiles.
+        When disabled, those profiles compact only after a provider context-length error.
+        Bedrock pricing-barrier policies are unaffected.
+      '';
     };
 
     providers = {
