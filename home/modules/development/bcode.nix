@@ -194,24 +194,22 @@ let
     model = {
       compaction = compactionSettings;
 
-      # Set reasoning default to "none" for all GPT models to avoid unexpected token usage
-      metadata."gpt-5.6-sol".reasoning.default_effort = "none";
-      metadata."us.openai.gpt-5.6-sol".reasoning.default_effort = "none";
-      metadata."global.openai.gpt-5.6-sol".reasoning.default_effort = "none";
-      metadata."gpt-5.6-terra".reasoning.default_effort = "none";
-      metadata."us.openai.gpt-5.6-terra".reasoning.default_effort = "none";
-      metadata."eu.openai.gpt-5.6-terra".reasoning.default_effort = "none";
-      metadata."global.openai.gpt-5.6-terra".reasoning.default_effort = "none";
-      metadata."gpt-5.6-luna".reasoning.default_effort = "none";
-      metadata."us.openai.gpt-5.6-luna".reasoning.default_effort = "none";
-      metadata."apac.openai.gpt-5.6-luna".reasoning.default_effort = "none";
-      metadata."global.openai.gpt-5.6-luna".reasoning.default_effort = "none";
-      metadata."gpt-5.5".reasoning.default_effort = "none";
-      metadata."us.openai.gpt-5.5".reasoning.default_effort = "none";
-      metadata."global.openai.gpt-5.5".reasoning.default_effort = "none";
-      metadata."gpt-5.4".reasoning.default_effort = "none";
-      metadata."us.openai.gpt-5.4".reasoning.default_effort = "none";
-      metadata."global.openai.gpt-5.4".reasoning.default_effort = "none";
+      # Set reasoning default to "medium" for all GPT models
+      metadata."gpt-5.6-sol".reasoning.default_effort = "medium";
+      metadata."us.openai.gpt-5.6-sol".reasoning.default_effort = "medium";
+      metadata."global.openai.gpt-5.6-sol".reasoning.default_effort = "medium";
+      metadata."gpt-5.6-terra".reasoning.default_effort = "medium";
+      metadata."us.openai.gpt-5.6-terra".reasoning.default_effort = "medium";
+      metadata."global.openai.gpt-5.6-terra".reasoning.default_effort = "medium";
+      metadata."gpt-5.6-luna".reasoning.default_effort = "medium";
+      metadata."us.openai.gpt-5.6-luna".reasoning.default_effort = "medium";
+      metadata."global.openai.gpt-5.6-luna".reasoning.default_effort = "medium";
+      metadata."gpt-5.5".reasoning.default_effort = "medium";
+      metadata."us.openai.gpt-5.5".reasoning.default_effort = "medium";
+      metadata."global.openai.gpt-5.5".reasoning.default_effort = "medium";
+      metadata."gpt-5.4".reasoning.default_effort = "medium";
+      metadata."us.openai.gpt-5.4".reasoning.default_effort = "medium";
+      metadata."global.openai.gpt-5.4".reasoning.default_effort = "medium";
 
       # Keep plain `bcode` credential-free. Provider-specific wrappers such as
       # `bcode-openai` and host-private profile wrappers point BCODE_CONFIG at
