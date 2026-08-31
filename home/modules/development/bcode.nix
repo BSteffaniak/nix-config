@@ -145,7 +145,19 @@ let
       genAttrs openAiLongContextModels (_: longContextCompaction "bcode.openai-compatible" 272000)
     )
     // {
+      # GPT-5.6 models (1M context) - compact at 272k
       "openai.gpt-5.6-sol" = longContextCompaction "bcode.bedrock" 272000;
+      "us.openai.gpt-5.6-sol" = longContextCompaction "bcode.bedrock" 272000;
+      "global.openai.gpt-5.6-sol" = longContextCompaction "bcode.bedrock" 272000;
+      "openai.gpt-5.6-terra" = longContextCompaction "bcode.bedrock" 272000;
+      "us.openai.gpt-5.6-terra" = longContextCompaction "bcode.bedrock" 272000;
+      "eu.openai.gpt-5.6-terra" = longContextCompaction "bcode.bedrock" 272000;
+      "global.openai.gpt-5.6-terra" = longContextCompaction "bcode.bedrock" 272000;
+      "openai.gpt-5.6-luna" = longContextCompaction "bcode.bedrock" 272000;
+      "us.openai.gpt-5.6-luna" = longContextCompaction "bcode.bedrock" 272000;
+      "apac.openai.gpt-5.6-luna" = longContextCompaction "bcode.bedrock" 272000;
+      "global.openai.gpt-5.6-luna" = longContextCompaction "bcode.bedrock" 272000;
+      # GPT-5.5 and 5.4 have 272k total context, no proactive compaction needed
     };
 
   compactionSettings = {
@@ -182,8 +194,24 @@ let
     model = {
       compaction = compactionSettings;
 
+      # Set reasoning default to "none" for all GPT models to avoid unexpected token usage
       metadata."gpt-5.6-sol".reasoning.default_effort = "none";
+      metadata."us.openai.gpt-5.6-sol".reasoning.default_effort = "none";
+      metadata."global.openai.gpt-5.6-sol".reasoning.default_effort = "none";
+      metadata."gpt-5.6-terra".reasoning.default_effort = "none";
+      metadata."us.openai.gpt-5.6-terra".reasoning.default_effort = "none";
+      metadata."eu.openai.gpt-5.6-terra".reasoning.default_effort = "none";
+      metadata."global.openai.gpt-5.6-terra".reasoning.default_effort = "none";
+      metadata."gpt-5.6-luna".reasoning.default_effort = "none";
+      metadata."us.openai.gpt-5.6-luna".reasoning.default_effort = "none";
+      metadata."apac.openai.gpt-5.6-luna".reasoning.default_effort = "none";
+      metadata."global.openai.gpt-5.6-luna".reasoning.default_effort = "none";
       metadata."gpt-5.5".reasoning.default_effort = "none";
+      metadata."us.openai.gpt-5.5".reasoning.default_effort = "none";
+      metadata."global.openai.gpt-5.5".reasoning.default_effort = "none";
+      metadata."gpt-5.4".reasoning.default_effort = "none";
+      metadata."us.openai.gpt-5.4".reasoning.default_effort = "none";
+      metadata."global.openai.gpt-5.4".reasoning.default_effort = "none";
 
       # Keep plain `bcode` credential-free. Provider-specific wrappers such as
       # `bcode-openai` and host-private profile wrappers point BCODE_CONFIG at
@@ -230,14 +258,11 @@ let
         model = {
           provider_plugin_id = profile.providerPluginId;
           model_id = profile.model;
-          profile = "default";
-          profiles.default = {
-            provider_plugin_id = profile.providerPluginId;
-            model_id = profile.model;
-            inherit settings;
-          }
-          // optionalAttrs (authProfile != null) { auth_profile = authProfile; }
-          // optionalAttrs (profile ? authPool && profile.authPool != null) { auth_pool = profile.authPool; };
+          inherit settings;
+        }
+        // optionalAttrs (authProfile != null) { auth_profile = authProfile; }
+        // optionalAttrs (profile ? authPool && profile.authPool != null) { auth_pool = profile.authPool; }
+        // {
           inherit aliases;
           compaction = compactionSettings;
         };
@@ -683,12 +708,12 @@ in
       bedrock = {
         openaiModel = mkOption {
           type = types.str;
-          default = "openai.gpt-5.6-sol";
+          default = "us.openai.gpt-5.6-sol";
           description = ''
             Bedrock-hosted OpenAI model used by bcode-bedrock-openai.
 
-            Sent verbatim as the Mantle wire model id, so this uses the bare Bedrock id rather than
-            an inference-profile prefix such as `global.`.
+            Sent verbatim as the Bedrock Runtime model id. OpenAI models require an inference profile
+            prefix such as `us.`, `eu.`, or `apac.` rather than the bare model id.
           '';
         };
 
