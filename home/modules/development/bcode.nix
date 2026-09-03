@@ -211,6 +211,12 @@ let
       metadata."us.openai.gpt-5.4".reasoning.default_effort = "medium";
       metadata."global.openai.gpt-5.4".reasoning.default_effort = "medium";
 
+      # Set reasoning default to "medium" for Fable 5.1
+      metadata."claude-fable-5-1".reasoning.default_effort = "medium";
+      metadata."anthropic.claude-fable-5-1".reasoning.default_effort = "medium";
+      metadata."us.anthropic.claude-fable-5-1".reasoning.default_effort = "medium";
+      metadata."global.anthropic.claude-fable-5-1".reasoning.default_effort = "medium";
+
       # Keep plain `bcode` credential-free. Provider-specific wrappers such as
       # `bcode-openai` and host-private profile wrappers point BCODE_CONFIG at
       # generated provider configs that contain their own scoped auth profiles.
