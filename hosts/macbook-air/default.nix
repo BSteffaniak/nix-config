@@ -14,9 +14,6 @@
 
   # Host-specific settings
   myConfig = {
-    fullName = "Braden Steffaniak";
-    homeManagerStateVersion = "24.11";
-
     # Rust is configured in home.nix so it is only installed through
     # home-manager.
     development.nodejs.enable = true;
@@ -70,16 +67,5 @@
     libiconv # Required for building chadthrottle on macOS
   ];
 
-  # Networking
-  networking.hostName = "Bradens-MacBook-Air";
   networking.computerName = "Braden's MacBook Air";
-
-  # User configuration
-  system.primaryUser = config.myConfig.username;
-
-  # System version
-  system.stateVersion = 6;
-
-  # Platform
-  nixpkgs.hostPlatform = "aarch64-darwin";
 }

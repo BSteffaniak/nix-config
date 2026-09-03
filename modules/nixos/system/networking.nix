@@ -10,11 +10,6 @@ with lib;
 {
   options.myConfig.system.networking = {
     enable = mkEnableOption "Networking configuration";
-    hostName = mkOption {
-      type = types.str;
-      default = "nixos";
-      description = "System hostname";
-    };
     allowedTCPPorts = mkOption {
       type = types.listOf types.int;
       default = [ ];
@@ -29,7 +24,6 @@ with lib;
 
   config = mkIf config.myConfig.system.networking.enable {
     networking = {
-      hostName = config.myConfig.system.networking.hostName;
       networkmanager.enable = true;
 
       firewall = {

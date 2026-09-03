@@ -129,7 +129,7 @@ Run: ./scripts/source-build.sh update cronstrue
 - **npm** (`npmDepsHash`): Uses `prefetch-npm-deps` for fast, single-download hash computation
 - **Rust** (`cargoHash`): Uses `fetchCargoVendoredDeps` with automatic hash extraction. Downloads cargo dependencies once; they're cached for the real build
 
-**Auto-discovery:** Simple source-built packages (Rust `buildRustPackage` with no custom build steps) are **automatically discovered** from `lib/source-builds/configs/*.json`. No manual Nix file edits are needed — just create a config JSON, compute the hash, and the package appears in `pkgs`.
+**Auto-discovery:** Simple source-built packages (Rust `buildRustPackage` with no custom build steps) are **automatically discovered** from `pkgs/source-builds/configs/*.json`. No manual Nix file edits are needed — just create a config JSON, compute the hash, and the package appears in `pkgs`.
 
 **Adding a new simple source-built package:**
 
@@ -138,7 +138,7 @@ Run: ./scripts/source-build.sh update cronstrue
 #    my-tool-src = { url = "github:someone/my-tool"; flake = false; };
 
 # 2. Create config JSON
-cat > lib/source-builds/configs/my-tool.json << 'EOF'
+cat > pkgs/source-builds/configs/my-tool.json << 'EOF'
 {
     "flakeInput": "my-tool-src",
     "buildSystem": "rust",
@@ -167,12 +167,12 @@ nix flake lock
 | `cargoLockFile`   | No       | Path to repo-managed lockfile for repos without `Cargo.lock`                 |
 | `complex`         | No       | Set to `true` to skip auto-discovery (use a standalone overlay file instead) |
 
-**Complex builds:** Packages that need custom toolchains, build phases, `nativeBuildInputs`, etc. should set `"complex": true` in their config and use a standalone overlay file in `lib/overlays/`. See `lib/overlays/cronstrue.nix` for an example.
+**Complex builds:** Packages that need custom toolchains, build phases, `nativeBuildInputs`, etc. should set `"complex": true` in their config and use a standalone overlay file in `overlays/`. See `overlays/cronstrue.nix` for an example.
 
 **Directory structure:**
 
 ```
-lib/source-builds/
+pkgs/source-builds/
   configs/              # Per-package config (committed)
     my-tool.json        # { flakeInput, buildSystem, pname, hashField, ... }
   hashes/               # Auto-generated hash data (committed)
@@ -181,7 +181,7 @@ lib/source-builds/
 
 **Important:** The `hashes/` directory contains pinned dependency hashes that Nix reads at evaluation time. These files must be committed to git so all machines use the same hashes.
 
-For Rust repos that do not commit a `Cargo.lock`, set `cargoLockFile` in the package config and point it to a lock file in this repo (for example `lib/source-builds/locks/<name>-Cargo.lock`).
+For Rust repos that do not commit a `Cargo.lock`, set `cargoLockFile` in the package config and point it to a lock file in this repo (for example `pkgs/source-builds/locks/<name>-Cargo.lock`).
 
 **Typical workflow after updating flake inputs:**
 
@@ -284,7 +284,7 @@ Run this before bootstrapping a NixOS host to get hardware-specific recommendati
 
 Manages pre-built binary packages from GitHub releases. Supports both interactive and non-interactive modes.
 
-This script handles the full lifecycle: adding new projects, updating versions, listing status, and removing projects. It works with the auto-discovery overlay system in `lib/overlays/github-releases.nix` — adding a new project only requires creating a config JSON file (no Nix file edits).
+This script handles the full lifecycle: adding new projects, updating versions, listing status, and removing projects. It works with the auto-discovery overlay system in `overlays/github-releases.nix` — adding a new project only requires creating a config JSON file (no Nix file edits).
 
 **Usage:**
 
@@ -346,12 +346,12 @@ Platform asset names can be specified explicitly or auto-detected:
 **Directory structure:**
 
 ```
-lib/github-releases/
+pkgs/github-releases/
   configs/           # Per-project config (written once, committed)
     opencode.json    # Repo, asset mapping, binary names, metadata
   versions/          # Auto-generated version data (committed)
     opencode.json    # URLs, sha256 hashes, version number
-  mkGitHubRelease.nix  # Shared Nix builder function
+  mk-github-release.nix  # Shared Nix builder function
 ```
 
 **Important:** The `versions/` directory contains pinned version data that Nix reads at evaluation time. These files must be committed to git so that all machines see the same versions.

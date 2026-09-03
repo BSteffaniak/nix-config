@@ -9,11 +9,7 @@
 with lib;
 
 let
-  defaultShell = attrByPath [
-    "defaults"
-    "shell"
-    "default"
-  ] "nushell" myLib;
+  defaultShell = myLib.defaultShell;
 
   cfg = config.myConfig.shell;
   sharedCfg = config.homeModules.shell.shared;

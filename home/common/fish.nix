@@ -12,11 +12,7 @@ with lib;
 let
   fishCfg = config.homeModules.fish;
 
-  defaultShell = attrByPath [
-    "defaults"
-    "shell"
-    "default"
-  ] "nushell" myLib;
+  defaultShell = myLib.defaultShell;
 
   systemNeovimEnabled =
     if

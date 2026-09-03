@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  myLib,
   ...
 }:
 
@@ -13,7 +12,7 @@ let
   agentsCfg = config.myConfig.development.agents;
   brouterCfg = config.myConfig.development.brouter;
   brouterProxyCfg = config.myConfig.development.brouterProxy;
-  agentPermissions = import ../../lib/agent-permissions.nix { inherit lib myLib; };
+  agentPermissions = import ../../lib/agent-permissions.nix { inherit lib; };
   tomlFormat = pkgs.formats.toml { };
 
   permissionsDir = ../../../configs/agents/permissions;
@@ -95,7 +94,7 @@ let
         withoutBash = removeAttrs permissions [ "bash" ];
         commandRules =
           if permissions ? command then
-            myLib.deepMerge permissions.command permissions.bash
+            lib.recursiveUpdate permissions.command permissions.bash
           else
             permissions.bash;
       in

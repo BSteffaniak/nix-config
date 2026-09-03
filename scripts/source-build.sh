@@ -22,9 +22,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-CONFIGS_DIR="$REPO_ROOT/lib/source-builds/configs"
-HASHES_DIR="$REPO_ROOT/lib/source-builds/hashes"
-CARGO_VENDOR_PYTHONPATH="$REPO_ROOT/lib/source-builds/cargo-vendor-sitecustomize"
+CONFIGS_DIR="$REPO_ROOT/pkgs/source-builds/configs"
+HASHES_DIR="$REPO_ROOT/pkgs/source-builds/hashes"
+CARGO_VENDOR_PYTHONPATH="$REPO_ROOT/pkgs/source-builds/cargo-vendor-sitecustomize"
 FLAKE_LOCK="$REPO_ROOT/flake.lock"
 
 # ── Colors ──────────────────────────────────────────────────────────
@@ -206,7 +206,7 @@ compute_cargo_hash() {
     cargo_lock_path="$store_path/Cargo.lock"
   else
     err "No Cargo.lock found in $store_path"
-    err "For repos without Cargo.lock, set cargoLockFile in lib/source-builds/configs/$project.json"
+    err "For repos without Cargo.lock, set cargoLockFile in pkgs/source-builds/configs/$project.json"
     return 1
   fi
 
@@ -591,7 +591,7 @@ cmd_add_interactive() {
       hashField: $hashField
     }' > "$CONFIGS_DIR/$project_name.json"
 
-  success "Config written: lib/source-builds/configs/$project_name.json"
+  success "Config written: pkgs/source-builds/configs/$project_name.json"
 
   echo
   if prompt_yes_no "Compute hash now?" "y"; then
@@ -604,7 +604,7 @@ cmd_add_interactive() {
 
   echo
   echo -e "Remember to update your overlay to read the hash from:"
-  echo -e "  ${BOLD}lib/source-builds/hashes/$project_name.json${NC}"
+  echo -e "  ${BOLD}pkgs/source-builds/hashes/$project_name.json${NC}"
 }
 
 # ── Remove Logic ────────────────────────────────────────────────────

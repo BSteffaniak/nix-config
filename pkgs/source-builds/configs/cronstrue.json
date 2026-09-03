@@ -1,5 +1,5 @@
 {
-    "flakeInput": "cronstrue",
+    "flakeInput": "cronstrue-src",
     "buildSystem": "npm",
     "pname": "cronstrue-custom",
     "hashField": "npmDepsHash",

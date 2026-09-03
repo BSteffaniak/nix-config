@@ -1,4 +1,4 @@
-{ lib, myLib }:
+{ lib }:
 
 with lib;
 
@@ -41,5 +41,5 @@ with lib;
 
       overrideConfigs = map (f: builtins.fromJSON (builtins.readFile f)) overrides;
     in
-    foldl' myLib.deepMerge basePermissionConfig (permissionConfigs ++ overrideConfigs);
+    foldl' lib.recursiveUpdate basePermissionConfig (permissionConfigs ++ overrideConfigs);
 }

@@ -8,9 +8,9 @@
 #
 # Usage in an overlay:
 #   let
-#     mkMinecraftPlugin = import ../minecraft-plugins/mkMinecraftPlugin.nix { pkgs = final; };
-#     config = builtins.fromJSON (builtins.readFile ../minecraft-plugins/configs/foo.json);
-#     versionData = builtins.fromJSON (builtins.readFile ../minecraft-plugins/versions/foo.json);
+#     mkMinecraftPlugin = import ../pkgs/minecraft-plugins/mk-minecraft-plugin.nix { pkgs = final; };
+#     config = builtins.fromJSON (builtins.readFile ../pkgs/minecraft-plugins/configs/foo.json);
+#     versionData = builtins.fromJSON (builtins.readFile ../pkgs/minecraft-plugins/versions/foo.json);
 #   in
 #   mkMinecraftPlugin { inherit config versionData; }
 #

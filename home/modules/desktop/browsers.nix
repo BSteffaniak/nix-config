@@ -1,7 +1,7 @@
 # Browser applications installed via home-manager
 #
 # Firefox on darwin requires the nixpkgs-firefox-darwin overlay
-# (registered in lib/overlays/firefox-darwin.nix) since the nixpkgs
+# (registered in overlays/firefox-darwin.nix) since the nixpkgs
 # firefox package is broken on macOS.
 {
   config,

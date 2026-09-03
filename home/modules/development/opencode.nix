@@ -3,7 +3,6 @@
   lib,
   pkgs,
   inputs,
-  myLib,
   ...
 }:
 
@@ -16,7 +15,7 @@ let
   brouterProxyCfg = config.myConfig.development.brouterProxy;
 
   brouterOpencode = import ../../lib/brouter-opencode-provider.nix { };
-  agentPermissions = import ../../lib/agent-permissions.nix { inherit lib myLib; };
+  agentPermissions = import ../../lib/agent-permissions.nix { inherit lib; };
 
   # Auto-discover provider profiles from configs/opencode/providers/
   providersDir = ../../../configs/opencode/providers;
@@ -30,7 +29,7 @@ let
     }) jsonProviderNames
   );
   generatedProviderConfigs = optionalAttrs (jsonProviderConfigs ? openai) {
-    openai-fast = myLib.deepMerge jsonProviderConfigs.openai {
+    openai-fast = lib.recursiveUpdate jsonProviderConfigs.openai {
       model = "openai/gpt-5.5-fast";
       agent = {
         build.model = "openai/gpt-5.5-fast";
@@ -146,7 +145,7 @@ let
     cfg = agentsCfg.permissions;
     overrides = agentsCfg.permissions.overrides ++ cfg.overrides;
   };
-  mergedConfigBase = foldl' myLib.deepMerge baseConfig [
+  mergedConfigBase = foldl' lib.recursiveUpdate baseConfig [
     providerConfig
     permissionConfig
   ];
@@ -154,7 +153,7 @@ let
     let
       withBrouter =
         if brouterCfg.enable && brouterCfg.enableOpenCodeIntegration && brouterCfg.makeOpenCodeDefault then
-          myLib.deepMerge mergedConfigBase brouterProviderConfig
+          lib.recursiveUpdate mergedConfigBase brouterProviderConfig
         else
           mergedConfigBase;
     in
@@ -163,7 +162,7 @@ let
       && brouterProxyCfg.enableOpenCodeIntegration
       && brouterProxyCfg.makeOpenCodeDefault
     then
-      myLib.deepMerge withBrouter brouterProxyProviderConfig
+      lib.recursiveUpdate withBrouter brouterProxyProviderConfig
     else
       withBrouter;
 

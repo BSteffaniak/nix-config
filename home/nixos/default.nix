@@ -1,31 +1,14 @@
 {
   lib,
-  myLib,
   osConfig,
-  inputs ? { },
   ...
 }:
 
-let
-  defaultShell = lib.attrByPath [
-    "defaults"
-    "shell"
-    "default"
-  ] "nushell" myLib;
-in
 {
   imports = [
     ../common
     ../modules
   ];
-
-  # Dynamic configuration from host
-  home.username = osConfig.myConfig.username;
-  home.homeDirectory = "/home/${osConfig.myConfig.username}";
-
-  # State version should match the NixOS release when home-manager was first used
-  # Read from host config
-  home.stateVersion = osConfig.system.stateVersion;
 
   # Mirror system configuration to home-manager modules
   # This allows the new home-manager modules to access the same settings
@@ -54,7 +37,7 @@ in
     containers.tools.enable = osConfig.myConfig.development.devops.enable or false;
 
     # Shell
-    shell.default = lib.mkDefault (osConfig.myConfig.shell.default or defaultShell);
+    shell.default = lib.mkDefault osConfig.myConfig.shell.default;
     shell.fish.enable = osConfig.myConfig.shell.fish.enable or false;
     shell.bash.enable = osConfig.myConfig.shell.bash.enable or false;
     shell.zsh.enable = osConfig.myConfig.shell.zsh.enable or false;
@@ -75,11 +58,6 @@ in
       workspacesConfig = osConfig.myConfig.desktop.hyprland.workspacesConfig or null;
     };
     desktop.waybar.enable = osConfig.myConfig.desktop.waybar.enable or false;
-  };
-
-  # Pass inputs to modules that need them
-  _module.args = {
-    inherit inputs;
   };
 
   # NixOS-specific home files

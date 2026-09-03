@@ -24,7 +24,6 @@
     desktop.hex.enable = true;
     desktop.mkalias.enable = true;
     desktop.sledge.enable = true;
-    desktop.utilities.bitwarden.enable = false;
     desktop.wallpaper.enable = true;
 
     # CLI tools - now configured directly in home-manager

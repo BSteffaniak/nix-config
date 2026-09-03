@@ -81,7 +81,7 @@
         "type": "github"
       }
     },
-    "cronstrue": {
+    "cronstrue-src": {
       "flake": false,
       "locked": {
         "lastModified": 1782776173,
@@ -147,6 +147,22 @@
       "original": {
         "owner": "hercules-ci",
         "repo": "flake-parts",
+        "type": "github"
+      }
+    },
+    "git-sshripped-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787339653,
+        "narHash": "sha256-+kdBRYoDcKP5knRrNDQbJui9G2lnALQ6xXZxfBBgoc0=",
+        "owner": "BSteffaniak",
+        "repo": "git-sshripped",
+        "rev": "ac3839c2c6e11619a770cc24b6e2e8799492befa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "BSteffaniak",
+        "repo": "git-sshripped",
         "type": "github"
       }
     },
@@ -267,7 +283,7 @@
         "type": "github"
       }
     },
-    "lspmux": {
+    "lspmux-src": {
       "flake": false,
       "locked": {
         "lastModified": 1773222928,
@@ -503,7 +519,8 @@
         "brew-src": "brew-src",
         "brouter-src": "brouter-src",
         "clippier-src": "clippier-src",
-        "cronstrue": "cronstrue",
+        "cronstrue-src": "cronstrue-src",
+        "git-sshripped-src": "git-sshripped-src",
         "home-manager": "home-manager",
         "homebrew-aerospace": "homebrew-aerospace",
         "homebrew-cask": "homebrew-cask",
@@ -511,7 +528,7 @@
         "homebrew-felixkratz": "homebrew-felixkratz",
         "homebrew-linear": "homebrew-linear",
         "linear-cli-src": "linear-cli-src",
-        "lspmux": "lspmux",
+        "lspmux-src": "lspmux-src",
         "neovim-nightly-overlay": "neovim-nightly-overlay",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",

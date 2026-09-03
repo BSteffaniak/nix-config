@@ -21,7 +21,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Check if a file is binary/encrypted (e.g., git-crypt locked files)
+# Check if a file is binary/encrypted (e.g., git-sshripped locked files)
 is_encrypted() {
   file --mime-encoding "$1" 2>/dev/null | grep -q "binary"
 }
@@ -93,7 +93,7 @@ for file in "${FILES[@]}"; do
   # Get relative path for display
   rel_path="${file#$SCRIPT_DIR/}"
 
-  # Skip binary/encrypted files (e.g., git-crypt locked files)
+  # Skip binary/encrypted files (e.g., git-sshripped locked files)
   if is_encrypted "$file"; then
     echo -e "${YELLOW}⊘${NC} Skipped (encrypted): $rel_path"
     continue

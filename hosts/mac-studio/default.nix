@@ -14,9 +14,6 @@
 
   # Host-specific settings
   myConfig = {
-    fullName = "Braden Steffaniak";
-    homeManagerStateVersion = "24.11";
-
     # Rust is configured in home.nix so it is only installed through
     # home-manager.
     development.nodejs.enable = true;
@@ -69,16 +66,5 @@
     inputs.home-manager.packages."${pkgs.stdenv.hostPlatform.system}".default
   ];
 
-  # Networking
-  networking.hostName = "Bradens-Mac-Studio";
   networking.computerName = "Braden's Mac Studio";
-
-  # User configuration
-  system.primaryUser = config.myConfig.username;
-
-  # System version
-  system.stateVersion = 6;
-
-  # Platform - adjust this if your Mac Studio is Intel
-  nixpkgs.hostPlatform = "aarch64-darwin"; # Change to "x86_64-darwin" if Intel
 }

@@ -67,7 +67,6 @@ in
       description = "Default wallpaper filename (relative to wallpaperFolder)";
     };
 
-    bitwarden.enable = mkEnableOption "Bitwarden desktop app";
     screenshot.enable = mkEnableOption "screenshot tools (hyprshot, Linux only)";
     brightness.enable = mkEnableOption "brightness controls (brightnessctl, Linux only)";
     inputDiagnostics.enable = mkEnableOption "input diagnostic tools (libinput, evtest, Linux only)";
@@ -79,8 +78,7 @@ in
     {
       home.packages =
         with pkgs;
-        (optional cfg.bitwarden.enable bitwarden-desktop)
-        ++ optionals pkgs.stdenv.isLinux (
+        optionals pkgs.stdenv.isLinux (
           (optional cfg.screenshot.enable hyprshot)
           ++ (optional cfg.brightness.enable brightnessctl)
           ++ (optionals cfg.inputDiagnostics.enable [

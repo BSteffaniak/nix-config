@@ -8,14 +8,8 @@
 
 {
   imports = [
-    ../../home/standalone
     ../../home/standalone/ubuntu.nix
   ];
-
-  # User info
-  home.username = "braden";
-  home.homeDirectory = "/home/braden";
-  home.stateVersion = "25.05";
 
   # Enable all the development tools and features
   myConfig = {
@@ -68,7 +62,6 @@
 
     # Desktop utilities previously installed as common Home Manager packages
     desktop.utilities = {
-      bitwarden.enable = true;
       screenshot.enable = true;
       brightness.enable = true;
       inputDiagnostics.enable = true;

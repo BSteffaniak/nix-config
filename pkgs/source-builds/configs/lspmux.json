@@ -1,5 +1,5 @@
 {
-    "flakeInput": "lspmux",
+    "flakeInput": "lspmux-src",
     "buildSystem": "rust",
     "pname": "lspmux-latest",
     "hashField": "cargoHash"

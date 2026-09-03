@@ -3,7 +3,6 @@
   lib,
   pkgs,
   inputs,
-  myLib,
   ...
 }:
 
@@ -17,7 +16,7 @@ let
   opencodeCfg = config.myConfig.development.opencode;
 
   brouterPiModels = import ../../lib/brouter-pi-models.nix { inherit lib; };
-  agentPermissions = import ../../lib/agent-permissions.nix { inherit lib myLib; };
+  agentPermissions = import ../../lib/agent-permissions.nix { inherit lib; };
 
   # Auto-discover provider profiles from configs/pi/providers/
   # Provider descriptors come from two sources:
@@ -375,7 +374,7 @@ let
   };
   brouterDefaultEnabledModels = map (m: m.id) brouterPiModels.defaultModelDefs;
 
-  mergedModelsConfig = foldl' myLib.deepMerge baseModelsConfig (
+  mergedModelsConfig = foldl' lib.recursiveUpdate baseModelsConfig (
     (optional ollamaCfg.enable { providers.ollama = ollamaModelsEntry; })
     ++ (optional (brouterCfg.enable && brouterCfg.enablePiIntegration) {
       providers.${brouterCfg.providerName} = brouterModelsEntry;
@@ -413,7 +412,7 @@ let
     }
   );
 
-  mergedSettingsBase = foldl' myLib.deepMerge baseSettings (
+  mergedSettingsBase = foldl' lib.recursiveUpdate baseSettings (
     [
       derivedSettings
       cfg.extraSettings

@@ -5,9 +5,9 @@
 #
 # Usage in an overlay:
 #   let
-#     mkGitHubRelease = import ../github-releases/mkGitHubRelease.nix { pkgs = final; };
-#     config = builtins.fromJSON (builtins.readFile ../github-releases/configs/foo.json);
-#     versionData = builtins.fromJSON (builtins.readFile ../github-releases/versions/foo.json);
+#     mkGitHubRelease = import ../pkgs/github-releases/mk-github-release.nix { pkgs = final; };
+#     config = builtins.fromJSON (builtins.readFile ../pkgs/github-releases/configs/foo.json);
+#     versionData = builtins.fromJSON (builtins.readFile ../pkgs/github-releases/versions/foo.json);
 #   in
 #   mkGitHubRelease { inherit config versionData; }
 #

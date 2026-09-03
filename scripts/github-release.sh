@@ -24,8 +24,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-CONFIGS_DIR="$REPO_ROOT/lib/github-releases/configs"
-VERSIONS_DIR="$REPO_ROOT/lib/github-releases/versions"
+CONFIGS_DIR="$REPO_ROOT/pkgs/github-releases/configs"
+VERSIONS_DIR="$REPO_ROOT/pkgs/github-releases/versions"
 
 # ── Colors ──────────────────────────────────────────────────────────
 if [ -t 1 ]; then
@@ -154,7 +154,7 @@ npm_runtime_deps_need_sync() {
   local project="$1"
   local config_file="$2"
   local version_file="$3"
-  local runtime_dir="$REPO_ROOT/lib/github-releases/runtime-deps/$project"
+  local runtime_dir="$REPO_ROOT/pkgs/github-releases/runtime-deps/$project"
 
   jq -e '.runtimeDeps.npm' "$config_file" &>/dev/null || return 1
   [ ! -f "$runtime_dir/package-lock.json" ] && return 0
@@ -182,7 +182,7 @@ update_npm_runtime_deps() {
     return 1
   fi
 
-  local runtime_dir="$REPO_ROOT/lib/github-releases/runtime-deps/$project"
+  local runtime_dir="$REPO_ROOT/pkgs/github-releases/runtime-deps/$project"
   mkdir -p "$runtime_dir"
 
   local source_platform source_url
@@ -601,7 +601,7 @@ cmd_add_interactive() {
 
   # Step 11: Write config
   echo
-  info "Writing config: ${BOLD}lib/github-releases/configs/$project_name.json${NC}"
+  info "Writing config: ${BOLD}pkgs/github-releases/configs/$project_name.json${NC}"
 
   jq -n \
     --arg owner "$owner" \
@@ -640,8 +640,8 @@ cmd_add_interactive() {
   header "Done!"
 
   echo "Created files:"
-  echo "  lib/github-releases/configs/$project_name.json"
-  echo "  lib/github-releases/versions/$project_name.json"
+  echo "  pkgs/github-releases/configs/$project_name.json"
+  echo "  pkgs/github-releases/versions/$project_name.json"
   echo
   echo "The overlay auto-discovers this config. No Nix files to edit."
   echo

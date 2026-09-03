@@ -87,6 +87,7 @@ in
     cronstrue.enable = mkEnable "cron expression diagnostic tool";
     sendsafely.enable = mkEnable "SendSafely Java CLI";
     clippier.enable = mkEnable "Clippier CI helper";
+    gitSshripped.enable = mkEnable "git-sshripped (SSH-key based git file encryption)";
     cloc.enable = mkEnable "lines of code counter";
     watchexec.enable = mkEnable "file watcher/executor";
     lsof.enable = mkEnable "list open files utility";
@@ -187,6 +188,7 @@ in
       (mkIf cfg.cronstrue.enable [ pkgs.cronstrue-custom ])
       (mkIf cfg.sendsafely.enable [ sendsafelyJava ])
       (mkIf cfg.clippier.enable [ pkgs.clippier ])
+      (mkIf cfg.gitSshripped.enable [ pkgs.git-sshripped ])
       (mkIf cfg.cloc.enable [ pkgs.cloc ])
       (mkIf cfg.watchexec.enable [ pkgs.watchexec ])
       (mkIf cfg.lsof.enable [ pkgs.lsof ])

@@ -5,4 +5,5 @@
   # (rebuild.sh falls back to `home-manager switch` for these)
   hostname = "ubuntu-laptop";
   username = "braden";
+  homeStateVersion = "25.05";
 }

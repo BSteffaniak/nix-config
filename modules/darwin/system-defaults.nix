@@ -9,7 +9,7 @@ with lib;
 
 let
   cfg = config.myConfig.darwin.systemDefaults;
-  display-ctl-src = ../../packages/display-ctl/main.m;
+  display-ctl-src = ../../pkgs/display-ctl/main.m;
 
   # Lazy-build script: compiles display-ctl at activation time using the
   # system's clang/Objective-C toolchain, caching the binary so it only

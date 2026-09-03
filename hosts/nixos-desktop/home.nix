@@ -116,7 +116,6 @@
     # Desktop utility configs
     desktop.utilities = {
       enable = true;
-      bitwarden.enable = true;
       screenshot.enable = true;
       brightness.enable = true;
       inputDiagnostics.enable = true;

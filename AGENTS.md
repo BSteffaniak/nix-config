@@ -22,9 +22,13 @@ Platform-specific boilerplate is factored into reusable builder functions:
 - `lib/mkNixosHost.nix` - Creates a NixOS system configuration
 - `lib/mkHomeConfig.nix` - Creates a standalone home-manager configuration
 
-### Private Hosts (git-crypt)
+### Private Hosts (git-sshripped)
 
-Some host directories (e.g., `hosts/bs-mbpro/`) are encrypted via **git-crypt**. On GitHub they appear as binary blobs. On machines with the git-crypt key unlocked, they are transparent. Encryption rules are defined in `.gitattributes`.
+Some host directories (e.g., `hosts/bs-mbpro/`) are encrypted via **[git-sshripped](https://github.com/BSteffaniak/git-sshripped)**, which uses SSH keys as recipients and Git filters for transparent encryption. On GitHub they appear as ciphertext. On machines whose SSH key is a recipient and that have run `git-sshripped unlock`, they are transparent. Encryption rules are defined in `.gitattributes`; recipient/key material lives in `.git-sshripped/`.
+
+`meta.nix` files are intentionally excluded from encryption so host discovery works on machines without the key.
+
+`git-sshripped` is built from source via `pkgs/source-builds/configs/git-sshripped.json` and is available in the repo dev shell (`nix develop` / direnv) and via `myConfig.cliTools.utilities.gitSshripped.enable`.
 
 ## Module Hierarchy
 
@@ -177,7 +181,7 @@ For packages built from Git source (not in nixpkgs), use the **auto-discovery so
    ```nix
    my-tool-src = { url = "github:someone/my-tool"; flake = false; };
    ```
-2. Create `lib/source-builds/configs/my-tool.json`:
+2. Create `pkgs/source-builds/configs/my-tool.json`:
    ```json
    {
      "flakeInput": "my-tool-src",
@@ -189,11 +193,11 @@ For packages built from Git source (not in nixpkgs), use the **auto-discovery so
 3. Run `nix flake lock && ./scripts/source-build.sh update my-tool`
 4. Use `pkgs.my-tool` in your host config
 
-No other Nix files need editing. The auto-discovery overlay (`lib/overlays/source-builds.nix`) picks up configs automatically, similar to how `github-releases.nix` and `minecraft-plugins.nix` work.
+No other Nix files need editing. The auto-discovery overlay (`overlays/source-builds.nix`) picks up configs automatically, similar to how `github-releases.nix` and `minecraft-plugins.nix` work.
 
 **Optional config fields:** `doCheck` (default `true`), `cargoBuildFlags` (array), `cargoLockFile` (for repos without `Cargo.lock`).
 
-**Complex builds** (custom toolchains, build phases, `nativeBuildInputs`, etc.) should set `"complex": true` in the config JSON and use a standalone overlay file in `lib/overlays/`. See `zellij.nix` and `cronstrue.nix` for examples.
+**Complex builds** (custom toolchains, build phases, `nativeBuildInputs`, etc.) should set `"complex": true` in the config JSON and use a standalone overlay file in `overlays/`. See `zellij.nix` and `cronstrue.nix` for examples.
 
 ## Adding New Hosts
 

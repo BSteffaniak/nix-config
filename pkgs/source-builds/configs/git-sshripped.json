@@ -1,0 +1,9 @@
+{
+    "flakeInput": "git-sshripped-src",
+    "buildSystem": "rust",
+    "pname": "git-sshripped",
+    "hashField": "cargoHash",
+    "doCheck": false,
+    "cargoBuildFlags": ["--package", "git_sshripped_cli"],
+    "rustToolchain": "stable"
+}
