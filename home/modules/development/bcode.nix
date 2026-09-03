@@ -492,6 +492,11 @@ let
       bearerOnly = true;
     };
 
+    bedrock-luna = mkBedrockProfile {
+      model = cfg.providers.bedrock.lunaModel;
+      bearerOnly = true;
+    };
+
     # Fable 5.1 is catalog-routed over the Anthropic Messages surface. Keep the transport unpinned
     # so selecting another model in-session still uses that model's declared Bedrock surface.
     bedrock-fable = mkBedrockProfile {
@@ -720,6 +725,12 @@ in
             Sent verbatim as the Bedrock Runtime model id. OpenAI models require an inference profile
             prefix such as `us.`, `eu.`, or `apac.` rather than the bare model id.
           '';
+        };
+
+        lunaModel = mkOption {
+          type = types.str;
+          default = "us.openai.gpt-5.6-luna";
+          description = "Bedrock-hosted GPT-5.6 Luna model used by bcode-bedrock-luna.";
         };
 
         fableModel = mkOption {
