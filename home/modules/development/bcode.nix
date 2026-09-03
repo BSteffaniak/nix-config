@@ -492,6 +492,13 @@ let
       bearerOnly = true;
     };
 
+    # Fable 5.1 is catalog-routed over the Anthropic Messages surface. Keep the transport unpinned
+    # so selecting another model in-session still uses that model's declared Bedrock surface.
+    bedrock-fable = mkBedrockProfile {
+      model = cfg.providers.bedrock.fableModel;
+      bearerOnly = true;
+    };
+
     bedrock-opus = mkBedrockProfile {
       model = cfg.providers.bedrock.opusModel;
     };
@@ -713,6 +720,12 @@ in
             Sent verbatim as the Bedrock Runtime model id. OpenAI models require an inference profile
             prefix such as `us.`, `eu.`, or `apac.` rather than the bare model id.
           '';
+        };
+
+        fableModel = mkOption {
+          type = types.str;
+          default = "global.anthropic.claude-fable-5-1";
+          description = "Bedrock Anthropic Messages model used by bcode-bedrock-fable.";
         };
 
         opusModel = mkOption {
