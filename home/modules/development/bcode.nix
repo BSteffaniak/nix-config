@@ -131,6 +131,7 @@ let
     "gpt-5.4"
     "gpt-5.4-pro"
     "gpt-5.5"
+    "gpt-6-astra"
     "gpt-5.6-sol"
     "gpt-5.6-terra"
     "gpt-5.6-luna"
@@ -142,6 +143,12 @@ let
       lib.genAttrs openAiLongContextModels (_: longContextCompaction "bcode.openai-compatible" 272000)
     )
     // {
+      # GPT-6 Astra (1M context) - compact at 272k
+      "openai.gpt-6-astra" = longContextCompaction "bcode.bedrock" 272000;
+      "us.openai.gpt-6-astra" = longContextCompaction "bcode.bedrock" 272000;
+      "eu.openai.gpt-6-astra" = longContextCompaction "bcode.bedrock" 272000;
+      "apac.openai.gpt-6-astra" = longContextCompaction "bcode.bedrock" 272000;
+      "global.openai.gpt-6-astra" = longContextCompaction "bcode.bedrock" 272000;
       # GPT-5.6 models (1M context) - compact at 272k
       "openai.gpt-5.6-sol" = longContextCompaction "bcode.bedrock" 272000;
       "us.openai.gpt-5.6-sol" = longContextCompaction "bcode.bedrock" 272000;
@@ -192,6 +199,10 @@ let
       compaction = compactionSettings;
 
       # Set reasoning default to "medium" for all GPT models
+      metadata."gpt-6-astra".reasoning.default_effort = "medium";
+      metadata."openai.gpt-6-astra".reasoning.default_effort = "medium";
+      metadata."us.openai.gpt-6-astra".reasoning.default_effort = "medium";
+      metadata."global.openai.gpt-6-astra".reasoning.default_effort = "medium";
       metadata."gpt-5.6-sol".reasoning.default_effort = "medium";
       metadata."us.openai.gpt-5.6-sol".reasoning.default_effort = "medium";
       metadata."global.openai.gpt-5.6-sol".reasoning.default_effort = "medium";
@@ -504,6 +515,11 @@ let
       bearerOnly = true;
     };
 
+    bedrock-astra = mkBedrockProfile {
+      model = cfg.providers.bedrock.astraModel;
+      bearerOnly = true;
+    };
+
     bedrock-luna = mkBedrockProfile {
       model = cfg.providers.bedrock.lunaModel;
       bearerOnly = true;
@@ -737,6 +753,12 @@ in
             Sent verbatim as the Bedrock Runtime model id. OpenAI models require an inference profile
             prefix such as `us.`, `eu.`, or `apac.` rather than the bare model id.
           '';
+        };
+
+        astraModel = lib.mkOption {
+          type = lib.types.str;
+          default = "us.openai.gpt-6-astra";
+          description = "Bedrock-hosted GPT-6 Astra model used by bcode-bedrock-astra.";
         };
 
         lunaModel = lib.mkOption {
