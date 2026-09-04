@@ -176,6 +176,17 @@ let
     models = pricingBarrierCompactionModels;
   };
 
+  overflowCompactionSettings = removeAttrs compactionSettings [ "models" ];
+
+  withFullContextVariant =
+    profile:
+    profile
+    // {
+      variants = (profile.variants or { }) // {
+        full.compaction = overflowCompactionSettings;
+      };
+    };
+
   baseSettings = {
     plugins.enabled = [
       "bcode.openai-compatible"
@@ -270,6 +281,7 @@ let
       authConfig = profile.auth or null;
       settings = profile.settings or { };
       aliases = profile.aliases or { };
+      profileCompaction = profile.compaction or compactionSettings;
       # Bcode only honors `auth_profile`, `auth_pool`, and provider `settings` on a named
       # `[model.profiles.<name>]` entry selected via `[model].profile`; the same keys placed
       # directly on `[model]` are not part of `ModelConfig` and were silently ignored, which
@@ -288,7 +300,7 @@ let
           profile = name;
           profiles.${name} = modelProfile;
           inherit aliases;
-          compaction = compactionSettings;
+          compaction = profileCompaction;
         };
       }
       // lib.optionalAttrs (authProfile != null && authConfig != null) {
@@ -520,20 +532,20 @@ let
     # the catalog marks them `api_surface = "responses"`, so no transport pin is needed and other
     # models selected in-session still route over their own surface. `mantle_base_url` is left unset
     # so the plugin derives the flavor-correct endpoint from the region.
-    bedrock-openai = mkBedrockProfile {
+    bedrock-openai = withFullContextVariant (mkBedrockProfile {
       model = cfg.providers.bedrock.openaiModel;
       bearerOnly = true;
-    };
+    });
 
-    bedrock-astra = mkBedrockProfile {
+    bedrock-astra = withFullContextVariant (mkBedrockProfile {
       model = cfg.providers.bedrock.astraModel;
       bearerOnly = true;
-    };
+    });
 
-    bedrock-luna = mkBedrockProfile {
+    bedrock-luna = withFullContextVariant (mkBedrockProfile {
       model = cfg.providers.bedrock.lunaModel;
       bearerOnly = true;
-    };
+    });
 
     # Fable 5.1 is catalog-routed over the Anthropic Messages surface. Keep the transport unpinned
     # so selecting another model in-session still uses that model's declared Bedrock surface.
@@ -563,33 +575,33 @@ let
       dialect = "chatgpt_codex";
     };
 
-    astra = mkOpenAiProfile {
+    astra = withFullContextVariant (mkOpenAiProfile {
       model = cfg.providers.astra.model;
       authProfile = cfg.providers.astra.authProfile;
       authProvider = "openai";
       dialect = "chatgpt_codex";
-    };
+    });
 
-    luna = mkOpenAiProfile {
+    luna = withFullContextVariant (mkOpenAiProfile {
       model = cfg.providers.luna.model;
       authProfile = cfg.providers.luna.authProfile;
       authProvider = "openai";
       dialect = "chatgpt_codex";
-    };
+    });
 
-    terra = mkOpenAiProfile {
+    terra = withFullContextVariant (mkOpenAiProfile {
       model = cfg.providers.terra.model;
       authProfile = cfg.providers.terra.authProfile;
       authProvider = "openai";
       dialect = "chatgpt_codex";
-    };
+    });
 
-    sol = mkOpenAiProfile {
+    sol = withFullContextVariant (mkOpenAiProfile {
       model = cfg.providers.sol.model;
       authProfile = cfg.providers.sol.authProfile;
       authProvider = "openai";
       dialect = "chatgpt_codex";
-    };
+    });
 
     codex = mkOpenAiProfile {
       model = cfg.providers.codex.model;
