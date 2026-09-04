@@ -131,7 +131,6 @@ let
     "gpt-5.4"
     "gpt-5.4-pro"
     "gpt-5.5"
-    "gpt-6-astra"
     "gpt-5.6-sol"
     "gpt-5.6-terra"
     "gpt-5.6-luna"
@@ -143,12 +142,6 @@ let
       lib.genAttrs openAiLongContextModels (_: longContextCompaction "bcode.openai-compatible" 272000)
     )
     // {
-      # GPT-6 Astra (1M context) - compact at 272k
-      "openai.gpt-6-astra" = longContextCompaction "bcode.bedrock" 272000;
-      "us.openai.gpt-6-astra" = longContextCompaction "bcode.bedrock" 272000;
-      "eu.openai.gpt-6-astra" = longContextCompaction "bcode.bedrock" 272000;
-      "apac.openai.gpt-6-astra" = longContextCompaction "bcode.bedrock" 272000;
-      "global.openai.gpt-6-astra" = longContextCompaction "bcode.bedrock" 272000;
       # GPT-5.6 models (1M context) - compact at 272k
       "openai.gpt-5.6-sol" = longContextCompaction "bcode.bedrock" 272000;
       "us.openai.gpt-5.6-sol" = longContextCompaction "bcode.bedrock" 272000;
