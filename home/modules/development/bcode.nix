@@ -552,6 +552,13 @@ let
       dialect = "chatgpt_codex";
     };
 
+    astra = mkOpenAiProfile {
+      model = cfg.providers.astra.model;
+      authProfile = cfg.providers.astra.authProfile;
+      authProvider = "openai";
+      dialect = "chatgpt_codex";
+    };
+
     codex = mkOpenAiProfile {
       model = cfg.providers.codex.model;
       authProfile = cfg.providers.codex.authProfile;
@@ -830,6 +837,22 @@ in
             description = "Enable Bcode's OpenAI/Codex subscription priming defaults for bcode-openai.";
           };
         };
+      };
+
+      astra = {
+        model = lib.mkOption {
+          type = lib.types.str;
+          default = "gpt-6-astra";
+          description = "GPT-6 Astra model used by bcode-astra.";
+        };
+
+        authProfile = lib.mkOption {
+          type = lib.types.str;
+          default = "openai";
+          description = "Shared sshenv profile used by bcode-astra.";
+        };
+
+        sshenv = mkSshenvOption "openai" null;
       };
 
       codex = {
