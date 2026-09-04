@@ -259,17 +259,23 @@ let
       authConfig = profile.auth or null;
       settings = profile.settings or { };
       aliases = profile.aliases or { };
+      # Bcode only honors `auth_profile`, `auth_pool`, and provider `settings` on a named
+      # `[model.profiles.<name>]` entry selected via `[model].profile`; the same keys placed
+      # directly on `[model]` are not part of `ModelConfig` and were silently ignored, which
+      # left provider overlays without any resolved auth.
+      modelProfile = {
+        provider_plugin_id = profile.providerPluginId;
+        model_id = profile.model;
+        inherit settings;
+      }
+      // lib.optionalAttrs (authProfile != null) { auth_profile = authProfile; }
+      // lib.optionalAttrs (profile ? authPool && profile.authPool != null) {
+        auth_pool = profile.authPool;
+      };
       baseOverlay = {
         model = {
-          provider_plugin_id = profile.providerPluginId;
-          model_id = profile.model;
-          inherit settings;
-        }
-        // lib.optionalAttrs (authProfile != null) { auth_profile = authProfile; }
-        // lib.optionalAttrs (profile ? authPool && profile.authPool != null) {
-          auth_pool = profile.authPool;
-        }
-        // {
+          profile = name;
+          profiles.${name} = modelProfile;
           inherit aliases;
           compaction = compactionSettings;
         };
