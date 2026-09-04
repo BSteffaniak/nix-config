@@ -9,7 +9,7 @@
 
 {
   # Fish shell - feature-based configuration
-  homeModules.fish = {
+  myConfig.shell.fish = {
     # Zellij
     zellij = {
       enable = true;
@@ -54,21 +54,40 @@
       utilities.direnv.enable = true;
       utilities.jq.enable = true;
       utilities.parallel.enable = true;
-      utilities.write-good.enable = true;
+      utilities.writeGood.enable = true;
       utilities.cronstrue.enable = true;
       utilities.cloc.enable = true;
       utilities.watchexec.enable = true;
       utilities.lsof.enable = true;
       utilities.killall.enable = true;
-      utilities.nix-search.enable = true;
+      utilities.nixSearch.enable = true;
       utilities.media.ffmpeg.enable = true;
       utilities.media.flac.enable = true;
       utilities.media.mediainfo.enable = true;
       utilities.opencodeUpstream.enable = true;
       utilities.sshenv.enable = true;
       utilities.clippier.enable = true;
-      utilities.worktree-setup.enable = true;
+      utilities.worktreeSetup.enable = true;
     };
+
+    # Development environments
+    development.nodejs.enable = true;
+    development.go.enable = true;
+    development.python.enable = true;
+    development.android.enable = true;
+    development.java.enable = true;
+    development.openssl.enable = true;
+
+    # Containers and DevOps
+    containers.podman.enable = true;
+    containers.tools.enable = true;
+    devops.kubernetes.enable = true;
+    devops.cloud.enable = true;
+    devops.infrastructure.enable = true;
+
+    # Editors
+    editors.neovim.enable = true;
+    editors.neovim.useNightly = true;
 
     # Development tool configs
     development.rust.enable = true;
@@ -118,7 +137,9 @@
     # DevOps tool configs
     devops.github.enable = true;
 
+    shell.git.enable = true;
     shell.ssh = {
+      enable = true;
       matchBlocks = {
         "github.com" = {
           user = "git";

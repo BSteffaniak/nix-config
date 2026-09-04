@@ -5,8 +5,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.darwin.minecraft;
 
@@ -46,10 +44,10 @@ let
 in
 {
   options.myConfig.darwin.minecraft = {
-    enable = mkEnableOption "Minecraft Paper server with Bedrock crossplay (GeyserMC + Floodgate + ViaVersion)";
+    enable = lib.mkEnableOption "Minecraft Paper server with Bedrock crossplay (GeyserMC + Floodgate + ViaVersion)";
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     environment.systemPackages = [
       serverPackage
       minecraft-server-start

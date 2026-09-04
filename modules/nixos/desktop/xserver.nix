@@ -5,14 +5,12 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.desktop.xserver = {
-    enable = mkEnableOption "X Server and display manager";
+    enable = lib.mkEnableOption "X Server and display manager";
   };
 
-  config = mkIf config.myConfig.desktop.xserver.enable {
+  config = lib.mkIf config.myConfig.desktop.xserver.enable {
     services.xserver = {
       enable = true;
       excludePackages = [ pkgs.xterm ];

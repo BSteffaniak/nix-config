@@ -5,28 +5,26 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.development.elixir;
 in
 {
   options.myConfig.development.elixir = {
-    enable = mkEnableOption "Elixir development environment";
+    enable = lib.mkEnableOption "Elixir development environment";
 
-    includeLSP = mkOption {
-      type = types.bool;
+    includeLSP = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include Elixir language server";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     home.packages =
       with pkgs;
       [
         elixir
       ]
-      ++ (optional cfg.includeLSP beamMinimal27Packages.elixir-ls);
+      ++ (lib.optional cfg.includeLSP beamMinimal27Packages.elixir-ls);
   };
 }

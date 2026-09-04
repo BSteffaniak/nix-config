@@ -5,17 +5,15 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.devops.github;
 in
 {
   options.myConfig.devops.github = {
-    enable = mkEnableOption "GitHub CLI and tools configuration";
+    enable = lib.mkEnableOption "GitHub CLI and tools configuration";
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     # Install GitHub tools (don't use programs.gh to avoid conflicts)
     home.packages = with pkgs; [
       gh

@@ -6,8 +6,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.cliTools.terminals;
   shellCfg = config.myConfig.shell;
@@ -39,8 +37,8 @@ let
 in
 {
   options.myConfig.cliTools.terminals = {
-    enableAll = mkOption {
-      type = types.bool;
+    enableAll = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = "Enable all terminal tools (can be overridden per-tool)";
     };
@@ -52,13 +50,13 @@ in
 
     ghostty = {
       enable = mkEnable "Ghostty terminal emulator";
-      hideWindowDecoration = mkOption {
-        type = types.bool;
+      hideWindowDecoration = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = "Hide window titlebar/decoration (recommended for tiling WMs)";
       };
-      installTerminfo = mkOption {
-        type = types.bool;
+      installTerminfo = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = "Install Ghostty's xterm-ghostty terminfo entry without enabling the Ghostty config";
       };
@@ -66,18 +64,18 @@ in
   };
 
   config = {
-    home.packages = mkMerge [
-      (mkIf cfg.bmux.enable [ pkgs.bmux ])
-      (mkIf installGhosttyTerminfo [ ghosttyTerminfo ])
+    home.packages = lib.mkMerge [
+      (lib.mkIf cfg.bmux.enable [ pkgs.bmux ])
+      (lib.mkIf installGhosttyTerminfo [ ghosttyTerminfo ])
     ];
 
-    home.file = mkIf installGhosttyTerminfo {
+    home.file = lib.mkIf installGhosttyTerminfo {
       ".terminfo/78/xterm-ghostty".source = "${ghosttyTerminfo}/share/terminfo/78/xterm-ghostty";
       ".terminfo/67/ghostty".source = "${ghosttyTerminfo}/share/terminfo/67/ghostty";
     };
 
     # Bmux
-    xdg.configFile."bmux/bmux.toml" = mkIf cfg.bmux.enable {
+    xdg.configFile."bmux/bmux.toml" = lib.mkIf cfg.bmux.enable {
       text = ''
         [general]
         default_shell = "${defaultShellPath}"
@@ -87,33 +85,33 @@ in
     };
 
     # Zellij
-    programs.zellij = mkIf cfg.zellij.enable {
+    programs.zellij = lib.mkIf cfg.zellij.enable {
       enable = true;
       package = pkgs.unstable.zellij;
     };
-    xdg.configFile."zellij/config.kdl" = mkIf cfg.zellij.enable {
+    xdg.configFile."zellij/config.kdl" = lib.mkIf cfg.zellij.enable {
       text =
         builtins.replaceStrings [ "default_shell \"fish\"" ] [ "default_shell \"${defaultShellPath}\"" ]
           (builtins.readFile ../../../configs/zellij/config.kdl);
     };
 
     # Tmux
-    programs.tmux = mkIf cfg.tmux.enable {
+    programs.tmux = lib.mkIf cfg.tmux.enable {
       enable = true;
       extraConfig = builtins.readFile ../../../configs/tmux/tmux.conf;
     };
 
     # WezTerm
-    programs.wezterm = mkIf cfg.wezterm.enable {
+    programs.wezterm = lib.mkIf cfg.wezterm.enable {
       enable = true;
       extraConfig = builtins.readFile ../../../configs/wezterm/wezterm.lua;
     };
 
     # Ghostty - read base config from file and append host-specific overrides
-    xdg.configFile."ghostty/config" = mkIf cfg.ghostty.enable {
+    xdg.configFile."ghostty/config" = lib.mkIf cfg.ghostty.enable {
       text =
         builtins.readFile ../../../configs/ghostty/config
-        + optionalString cfg.ghostty.hideWindowDecoration ''
+        + lib.optionalString cfg.ghostty.hideWindowDecoration ''
 
           # Host-specific: Hide window decoration for tiling WM
           window-decoration = false

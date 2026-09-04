@@ -5,17 +5,15 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.darwin.ollama;
 in
 {
   options.myConfig.darwin.ollama = {
-    enable = mkEnableOption "Ollama local LLM server";
+    enable = lib.mkEnableOption "Ollama local LLM server";
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     # Run `ollama serve` as a persistent user-level background service.
     # Listens on all interfaces so other machines on the network can use it.
     #

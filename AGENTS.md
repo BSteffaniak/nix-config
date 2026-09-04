@@ -10,17 +10,30 @@ This configuration manages multiple hosts across different platforms:
 - **nix-darwin** (macbook-air, mac-studio, bs-mbpro) - macOS with nix-darwin
 - **Standalone home-manager** (ubuntu-laptop) - Home-manager only on non-NixOS Linux
 
+### Repository Layout
+
+```text
+flake.nix          Inputs + thin outputs; everything else is delegated
+lib/               Pure Nix helpers (no package data)
+  hosts.nix          Host discovery + nixos/darwin/home-manager builders
+  dev-shell.nix      `nix develop` shell
+  locked-source.nix  flake.lock rev lookup + stale-hash check for source builds
+  read-json-dir.nix  Read a directory of *.json into an attrset
+  mk-cask-module.nix Generate a `myConfig.darwin.<name>.enable` Homebrew cask option
+overlays/          One file per overlay; `default.nix` returns the ordered list
+pkgs/              Data for generated packages (source-builds, github-releases, minecraft-plugins, display-ctl)
+modules/           System modules (common/, nixos/, darwin/)
+home/              Home Manager modules (common/, modules/, plus nixos/, darwin/, standalone/ bridges)
+hosts/             One directory per host (meta.nix, default.nix, home.nix)
+scripts/           Operational scripts (see scripts/README.md)
+configs/           Portable standalone dot-configs symlinked by home modules
+```
+
 ### Host Auto-Discovery
 
-Hosts are **automatically discovered** from `hosts/*/meta.nix` files. The `flake.nix` scans the `hosts/` directory at evaluation time and generates the appropriate `nixosConfigurations`, `darwinConfigurations`, `homeConfigurations`, and `devShells` outputs based on each host's `meta.nix`. Neither `flake.nix` nor `rebuild.sh` need manual edits when adding or removing hosts.
+Hosts are **automatically discovered** from `hosts/*/meta.nix` by `lib/hosts.nix`. It generates `nixosConfigurations`, `darwinConfigurations`, and `homeConfigurations` outputs from each host's `meta.nix`. Neither `flake.nix` nor `rebuild.sh` need manual edits when adding or removing hosts.
 
-### Host Builder Helpers
-
-Platform-specific boilerplate is factored into reusable builder functions:
-
-- `lib/mkDarwinHost.nix` - Creates a nix-darwin system configuration
-- `lib/mkNixosHost.nix` - Creates a NixOS system configuration
-- `lib/mkHomeConfig.nix` - Creates a standalone home-manager configuration
+`meta.nix` is the single source of host identity. It drives `networking.hostName`, `system.primaryUser`, `home.username`, `home.homeDirectory`, `system.stateVersion`, and `home.stateVersion` (all as `mkDefault`, so a host file can still override).
 
 ### Private Hosts (git-sshripped)
 
@@ -28,232 +41,179 @@ Some host directories (e.g., `hosts/bs-mbpro/`) are encrypted via **[git-sshripp
 
 `meta.nix` files are intentionally excluded from encryption so host discovery works on machines without the key.
 
+**Do not move host-private content out of an encrypted host directory into shared modules.** Refactoring within the directory is fine; anything that would put that content in plaintext elsewhere in the repo is not.
+
 `git-sshripped` is built from source via `pkgs/source-builds/configs/git-sshripped.json` and is available in the repo dev shell (`nix develop` / direnv) and via `myConfig.cliTools.utilities.gitSshripped.enable`.
 
 ## Module Hierarchy
 
-There are two distinct module hierarchies with different purposes:
+There are two module hierarchies with strictly separated responsibilities.
 
 ### 1. System Modules (`modules/`)
 
 Location: `modules/common/`, `modules/nixos/`, `modules/darwin/`
 
-These modules use `environment.systemPackages` and system-level configuration options.
+These own things that require root or OS integration:
 
-**When to use:**
+- Login shells (`myConfig.shell.{fish,bash,zsh,nushell}.enable`, `myConfig.shell.default`) — `/etc/shells`, default user shell
+- Daemons and services (`myConfig.services.*`: sshd, tailscale, docker, avahi, observability, minecraft)
+- Boot, hardware, networking, audio, locale, security (`modules/nixos/`)
+- macOS system defaults, Homebrew casks, launchd daemons, Touch ID (`modules/darwin/`)
 
-- System services (tailscale, docker, etc.)
-- Boot configuration
-- Hardware drivers
-- Network configuration
-- System-wide settings that require root
-
-**Limitations:**
-
-- Not available on standalone home-manager setups (e.g., ubuntu-laptop)
-- Requires system rebuild with elevated privileges
+**Not available on standalone home-manager hosts** (e.g., ubuntu-laptop).
 
 ### 2. Home-Manager Modules (`home/modules/`)
 
-Location: `home/modules/`, `home/common/`, `home/standalone/`, `home/darwin/`, `home/nixos/`
+Location: `home/modules/`, `home/common/`, plus platform bridges `home/nixos/`, `home/darwin/`, `home/standalone/`
 
-The `home/darwin/` and `home/nixos/` directories are platform-specific bridge modules that wire system-level options into the home-manager configuration for their respective platforms.
-
-These modules use `home.packages` and home-manager configuration options.
-
-**When to use:**
-
-- User applications and CLI tools
-- Development environments (Rust, Node.js, Go, Python, etc.)
-- Shell configuration (fish, git, ssh)
-- Editor configuration (neovim)
-- Any package that doesn't require system-level access
+These own **every user-facing tool and its configuration**: development toolchains, editors, CLI utilities, containers/devops CLIs, desktop apps and their configs, git/ssh client config, shell configuration.
 
 **Advantages:**
 
-- Portable across all host types including standalone home-manager
+- Portable across NixOS, nix-darwin, and standalone home-manager
 - User-scoped, no root required
-- Consistent behavior regardless of underlying OS
+- Faster iteration than a full system rebuild
 
-## Key Principle: Prefer Home-Manager for User Tools
+### Key Principle: user tools are declared once, in `home.nix`
 
-**Always prefer `home.packages` over `environment.systemPackages` for user-facing tools.**
+There is exactly one place to enable a user tool: the host's `home.nix`. System modules do **not** re-declare user-tool options, and the platform bridges (`home/nixos`, `home/darwin`) mirror only genuinely system-owned settings into home-manager:
 
-Rationale:
-
-1. **Portability** - Works on standalone home-manager setups that don't have access to system-level package installation
-2. **Consistency** - Same configuration works across NixOS, nix-darwin, and standalone home-manager
-3. **User-scoped** - Packages are installed per-user, avoiding conflicts and permission issues
-4. **Faster iteration** - Home-manager rebuilds are faster than full system rebuilds
-
-### Examples
-
-**Good** - Using home-manager for user tools:
+- `myConfig.shell.{default,fish,bash,zsh,nushell}` — so the login shell and the user shell config agree
+- Hyprland/Waybar enablement (NixOS; compositor is installed at system level)
+- Hex and Ghostty terminfo (Darwin; the apps are Homebrew casks)
 
 ```nix
-# home/modules/tools/default.nix
-config = {
-  home.packages = with pkgs;
-    (optional cfg.archiving.enable _7zz)
-    ++ (optional cfg.encryption.enable age);
+# hosts/<host>/default.nix -- system only
+myConfig = {
+  shell.fish.enable = true;
+  services.sshd.enable = true;
+  darwin.homebrew.enable = true;
 };
-```
 
-**Avoid** - Using system packages for user tools:
-
-```nix
-# modules/common/tools/default.nix (DON'T DO THIS)
-config = {
-  environment.systemPackages = with pkgs; [
-    _7zz
-    age
-  ];
+# hosts/<host>/home.nix -- everything the user touches
+myConfig = {
+  development.rust.enable = true;
+  devops.kubernetes.enable = true;
+  editors.neovim.enable = true;
+  shell.git.enable = true;
+  shell.ssh.enable = true;
 };
 ```
 
 ## Configuration Options Pattern
 
-All configurable features use the `myConfig.*` option namespace:
+All configurable features use the `myConfig.*` option namespace on both layers:
 
 ```nix
 # Defining options (in module)
-options.myConfig.tools.archiving.enable = mkEnableOption "Archive tools (7-zip)";
+options.myConfig.tools.archiving.enable = lib.mkEnableOption "Archive tools (7-zip)";
 
 # Using options (in host config)
 myConfig.tools.archiving.enable = true;
 ```
 
+Internal contribution points other modules write to are marked `internal = true`:
+
+- `myConfig.shell.contrib.*` — aliases, functions, PATH entries, completion commands, init snippets contributed by modules. Host-facing `myConfig.shell.shared.*` overrides these on key collision.
+- `myConfig.shell.resolved.*` — merged results (default shell path, merged aliases).
+
+## Style
+
+- No `with lib;`. Use `lib.` prefixes or `inherit (lib) …;`.
+- Prefer precise option types (`attrsOf`, `submodule`, upstream types like `options.programs.ssh.matchBlocks.type`) over `types.attrs`, except for free-form JSON/TOML passthrough settings.
+- Kebab-case file names; camelCase option names.
+- Run `./fmt.sh` (nixfmt + prettier) before committing.
+
 ## Host Configuration Structure
 
-Each host directory contains the following files:
+Each host directory contains:
 
-- `hosts/<hostname>/meta.nix` - **(required)** Host metadata for auto-discovery (type, system, hostname, username)
-- `hosts/<hostname>/default.nix` - **(NixOS/nix-darwin only)** System-level configuration
-- `hosts/<hostname>/home.nix` - **(required)** User-level configuration (home-manager options)
+- `hosts/<hostname>/meta.nix` - **(required, plaintext)** identity and platform metadata
+- `hosts/<hostname>/home.nix` - **(required)** user-level configuration
+- `hosts/<hostname>/default.nix` - **(NixOS/nix-darwin only)** system-level configuration
 
-Standalone home-manager hosts (e.g., `ubuntu-laptop`) only need `meta.nix` and `home.nix` -- no `default.nix` is required since there is no system-level configuration to manage.
-
-**Metadata (`meta.nix`)** declares:
+**Metadata (`meta.nix`)**:
 
 ```nix
 {
-  type = "darwin";         # "nixos" | "darwin" | "home-manager"
+  type = "darwin";                  # "nixos" | "darwin" | "home-manager"
   system = "aarch64-darwin";
-  hostname = "Bradens-MacBook-Air";  # As reported by `hostname` command
+  hostname = "Bradens-MacBook-Air"; # As reported by `hostname`
   username = "braden";
-  # Optional: extra NixOS modules (e.g., ["nix-minecraft"])
-  # extraModules = [];
+  stateVersion = 6;                 # system.stateVersion (int on darwin, "24.11" string on NixOS)
+  homeStateVersion = "24.11";       # home.stateVersion
+  extraModules = [ "nix-minecraft" ]; # Optional; names resolved by lib/hosts.nix
 }
 ```
 
-**System config (`default.nix`)** should contain (NixOS/nix-darwin hosts only):
+**System config (`default.nix`)**: imports `modules/common` + the platform module directory, then sets only system-level `myConfig.*` flags plus anything host-specific (extra system packages, `networking.computerName`, user groups, fonts).
 
-- Hardware configuration
-- Boot settings
-- System services
-- Network configuration
-- System packages that truly require system-level installation
-
-**Home config (`home.nix`)** should contain:
-
-- User applications
-- Development tools
-- Shell and editor preferences
-- CLI utilities
-- Personal tool configurations
+**Home config (`home.nix`)**: all user tools, editors, shell config, CLI utilities, desktop apps.
 
 ## Adding New Packages
 
-When adding a new package to the configuration:
+1. **Determine scope**: root/daemon/OS integration → `modules/`; anything else → `home/modules/`.
+2. **Create a feature flag**: `options.myConfig.<area>.<name>.enable = lib.mkEnableOption "…";`
+3. **Enable it** in the relevant `home.nix` (or `default.nix` for system concerns).
 
-1. **Determine scope**: Is this a system service or a user tool?
-2. **Choose location**:
-   - User tool → `home/modules/` with `home.packages`
-   - System service → `modules/` with appropriate system options
-3. **Create feature flag**: Add `myConfig.*.enable` option
-4. **Update host configs**: Enable the feature in relevant `home.nix` files
+### Adding a Homebrew cask (Darwin)
+
+Add an entry to `simpleCasks` in `modules/darwin/casks.nix`. Casks that need extra config (launchd agents, defaults) get their own file using `lib/mk-cask-module.nix` — see `scroll-reverser.nix`.
 
 ### Adding Source-Built Packages
 
-For packages built from Git source (not in nixpkgs), use the **auto-discovery source-build system**. Simple Rust packages require only:
+For packages built from Git source, use the auto-discovery source-build system. Simple Rust packages require only:
 
-1. Add a flake input to `flake.nix`:
-   ```nix
-   my-tool-src = { url = "github:someone/my-tool"; flake = false; };
-   ```
-2. Create `pkgs/source-builds/configs/my-tool.json`:
+1. A flake input in `flake.nix` (`<name>-src`, `flake = false`)
+2. `pkgs/source-builds/configs/<name>.json`:
    ```json
    {
-     "flakeInput": "my-tool-src",
+     "flakeInput": "<name>-src",
      "buildSystem": "rust",
-     "pname": "my-tool",
+     "pname": "<name>",
      "hashField": "cargoHash"
    }
    ```
-3. Run `nix flake lock && ./scripts/source-build.sh update my-tool`
-4. Use `pkgs.my-tool` in your host config
+3. `nix flake lock && ./scripts/source-build.sh update <name>`
+4. Use `pkgs.<name>`
 
-No other Nix files need editing. The auto-discovery overlay (`overlays/source-builds.nix`) picks up configs automatically, similar to how `github-releases.nix` and `minecraft-plugins.nix` work.
+`overlays/source-builds.nix` picks up configs automatically. Optional fields: `doCheck`, `cargoBuildFlags`, `nativeBuildInputs`, `buildInputs`, `rustToolchain` (`"stable"`/`"nightly"`), `env`, `postInstallFile`.
 
-**Optional config fields:** `doCheck` (default `true`), `cargoBuildFlags` (array), `cargoLockFile` (for repos without `Cargo.lock`).
+**Complex builds** set `"complex": true` and get a standalone file in `overlays/` (see `cronstrue.nix`, `sendsafely-java.nix`). Use `lib/locked-source.nix` for the flake.lock rev + stale-hash check.
 
-**Complex builds** (custom toolchains, build phases, `nativeBuildInputs`, etc.) should set `"complex": true` in the config JSON and use a standalone overlay file in `overlays/`. See `zellij.nix` and `cronstrue.nix` for examples.
+### Overlays
+
+`overlays/default.nix` returns the ordered overlay list; each file is `{ inputs }: final: prev: { … }`. Attribute _names_ in an overlay must not depend on `final` (use `prev.lib` for structural helpers) or evaluation recurses infinitely.
 
 ## Adding New Hosts
 
-To add a new host, create a directory under `hosts/` with these files:
-
-1. `hosts/<name>/meta.nix` - Metadata (type, system, hostname, username)
-2. `hosts/<name>/default.nix` - System configuration (NixOS/nix-darwin hosts only)
-3. `hosts/<name>/home.nix` - Home-manager configuration
-
-For standalone home-manager hosts, `default.nix` is not needed.
-
-No other files need editing. The flake auto-discovers the host from `meta.nix`, and `rebuild.sh` matches the hostname automatically.
-
-Alternatively, run `./bootstrap.sh` for an interactive setup.
+Run `./bootstrap.sh`, or manually create `hosts/<name>/{meta.nix,home.nix[,default.nix]}`. No other files need editing.
 
 ## Testing Changes
 
-Always test changes by building before switching:
+Always build before switching:
 
 ```bash
-# For nix-darwin (macOS)
-darwin-rebuild build --flake .#<hostname>
-
-# For NixOS
-nixos-rebuild build --flake .#<hostname>
-
-# For standalone home-manager
-home-manager build --flake .#<user>@<hostname>
+./rebuild.sh --diff          # build current host, diff against running system
+./scripts/check-all-hosts.sh compare   # evaluate every host against a saved baseline
+nix flake check              # same set of toplevels as a flake check
 ```
+
+For refactors that should not change any host, save a baseline first (`./scripts/check-all-hosts.sh save`), make changes, then `compare`. Investigate any drift with `nix-diff`.
 
 ## Common Patterns
 
-### Feature flags with mkEnableOption
-
 ```nix
-options.myConfig.tools.encryption.enable = mkEnableOption "Encryption tools (age)";
-```
+# Feature flag with a default that follows a group toggle
+mkEnable = myLib.mkEnableOption' cfg.enableAll;
+options.myConfig.cliTools.utilities.jq.enable = mkEnable "JSON processor";
 
-### Conditional package installation
+# Conditional packages
+home.packages = lib.optional cfg.encryption.enable pkgs.age;
 
-```nix
-home.packages = optional cfg.encryption.enable pkgs.age;
-```
+# Platform-gated package
+home.packages = lib.optional (lib.meta.availableOn pkgs.stdenv.hostPlatform pkgs.csharp-ls) pkgs.csharp-ls;
 
-### Multiple packages from one flag
-
-```nix
-# home/modules/cli-tools/utilities.nix
-home.packages = mkIf cfg.opencode.enable [
-  pkgs.unstable.opencode
-  pkgs.unstable.claude-code
-];
-```
-
-### Using unstable channel
-
-```nix
+# Unstable channel
 home.packages = [ pkgs.unstable.some-package ];
 ```

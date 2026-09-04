@@ -5,54 +5,52 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.containers.tools;
 in
 {
   options.myConfig.containers.tools = {
-    enable = mkEnableOption "Container debugging and management tools";
+    enable = lib.mkEnableOption "Container debugging and management tools";
 
-    includeDive = mkOption {
-      type = types.bool;
+    includeDive = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include dive for exploring image layers";
     };
 
-    includeLazydocker = mkOption {
-      type = types.bool;
+    includeLazydocker = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include lazydocker TUI for container management";
     };
 
-    includeCtop = mkOption {
-      type = types.bool;
+    includeCtop = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include ctop for container monitoring";
     };
 
-    includeSkopeo = mkOption {
-      type = types.bool;
+    includeSkopeo = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include skopeo for image operations";
     };
 
-    includeBuildah = mkOption {
-      type = types.bool;
+    includeBuildah = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = "Include buildah for building OCI images";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     home.packages =
       with pkgs;
       [ ]
-      ++ (optional cfg.includeDive dive)
-      ++ (optional cfg.includeLazydocker lazydocker)
-      ++ (optional cfg.includeCtop ctop)
-      ++ (optional cfg.includeSkopeo skopeo)
-      ++ (optional cfg.includeBuildah buildah);
+      ++ (lib.optional cfg.includeDive dive)
+      ++ (lib.optional cfg.includeLazydocker lazydocker)
+      ++ (lib.optional cfg.includeCtop ctop)
+      ++ (lib.optional cfg.includeSkopeo skopeo)
+      ++ (lib.optional cfg.includeBuildah buildah);
   };
 }

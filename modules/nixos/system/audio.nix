@@ -5,14 +5,12 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.system.audio = {
-    enable = mkEnableOption "Audio with PipeWire";
+    enable = lib.mkEnableOption "Audio with PipeWire";
   };
 
-  config = mkIf config.myConfig.system.audio.enable {
+  config = lib.mkIf config.myConfig.system.audio.enable {
     services.pulseaudio.enable = false;
 
     services.pipewire = {

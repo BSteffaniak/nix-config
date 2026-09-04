@@ -5,8 +5,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.darwin.systemDefaults;
   display-ctl-src = ../../pkgs/display-ctl/main.m;
@@ -56,92 +54,92 @@ let
 in
 {
   options.myConfig.darwin.systemDefaults = {
-    enable = mkEnableOption "macOS system defaults";
+    enable = lib.mkEnableOption "macOS system defaults";
 
-    darkMode = mkOption {
-      type = types.bool;
+    darkMode = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = "Set macOS appearance to dark mode";
     };
 
-    hideDesktopIcons = mkOption {
-      type = types.bool;
+    hideDesktopIcons = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Hide all icons on the desktop (files remain in ~/Desktop but are not shown)";
     };
 
-    preventSleep = mkOption {
-      type = types.bool;
+    preventSleep = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Prevent display from dimming/sleeping (even on battery)";
     };
 
-    fastKeyRepeat = mkOption {
-      type = types.bool;
+    fastKeyRepeat = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Enable faster key repeat rate and shorter initial delay";
     };
 
-    mouseSpeed = mkOption {
-      type = types.nullOr types.float;
+    mouseSpeed = lib.mkOption {
+      type = lib.types.nullOr lib.types.float;
       default = 3.0;
       description = "Mouse tracking speed (0.0 to 3.0, or -1 to disable acceleration). Set to null to leave unmanaged.";
     };
 
-    use24HourClock = mkOption {
-      type = types.bool;
+    use24HourClock = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Use 24-hour clock format in the menu bar";
     };
 
-    showClockSeconds = mkOption {
-      type = types.bool;
+    showClockSeconds = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Show seconds in the menu bar clock";
     };
 
-    disableAutoBrightness = mkOption {
-      type = types.bool;
+    disableAutoBrightness = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Disable automatic display brightness adjustment based on ambient light";
     };
 
-    disableTrueTone = mkOption {
-      type = types.bool;
+    disableTrueTone = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Disable True Tone (automatic color temperature adjustment based on ambient light)";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     system.defaults = {
       dock.autohide = true;
 
       finder.CreateDesktop = !cfg.hideDesktopIcons;
 
-      NSGlobalDomain.AppleInterfaceStyle = mkIf cfg.darkMode "Dark";
+      NSGlobalDomain.AppleInterfaceStyle = lib.mkIf cfg.darkMode "Dark";
       NSGlobalDomain.AppleICUForce24HourTime = cfg.use24HourClock;
 
       menuExtraClock.ShowSeconds = cfg.showClockSeconds;
-      NSGlobalDomain.KeyRepeat = mkIf cfg.fastKeyRepeat 1;
-      NSGlobalDomain.InitialKeyRepeat = mkIf cfg.fastKeyRepeat 2;
-      NSGlobalDomain.ApplePressAndHoldEnabled = mkIf cfg.fastKeyRepeat false;
+      NSGlobalDomain.KeyRepeat = lib.mkIf cfg.fastKeyRepeat 1;
+      NSGlobalDomain.InitialKeyRepeat = lib.mkIf cfg.fastKeyRepeat 2;
+      NSGlobalDomain.ApplePressAndHoldEnabled = lib.mkIf cfg.fastKeyRepeat false;
 
-      CustomUserPreferences.".GlobalPreferences"."com.apple.mouse.scaling" = mkIf (
+      CustomUserPreferences.".GlobalPreferences"."com.apple.mouse.scaling" = lib.mkIf (
         cfg.mouseSpeed != null
       ) cfg.mouseSpeed;
 
       # Disable screensaver and screen lock when preventSleep is enabled
-      screensaver.askForPassword = mkIf cfg.preventSleep false;
-      screensaver.askForPasswordDelay = mkIf cfg.preventSleep 0;
+      screensaver.askForPassword = lib.mkIf cfg.preventSleep false;
+      screensaver.askForPasswordDelay = lib.mkIf cfg.preventSleep 0;
 
-      CustomUserPreferences."com.apple.screensaver".idleTime = mkIf cfg.preventSleep 0;
+      CustomUserPreferences."com.apple.screensaver".idleTime = lib.mkIf cfg.preventSleep 0;
 
     };
 
-    power.sleep.display = mkIf cfg.preventSleep "never";
+    power.sleep.display = lib.mkIf cfg.preventSleep "never";
 
-    launchd.user.agents.keyboard-repeat = mkIf cfg.fastKeyRepeat {
+    launchd.user.agents.keyboard-repeat = lib.mkIf cfg.fastKeyRepeat {
       serviceConfig = {
         Label = "com.braden.keyboard-repeat";
         ProgramArguments = [ "${keyboardRepeatScript}" ];
@@ -154,11 +152,11 @@ in
     # Use pmset directly to prevent display sleep on all power sources (AC, battery, UPS)
     # systemsetup -setDisplaySleep is unreliable on newer macOS versions
     system.activationScripts.postActivation.text = lib.concatStrings [
-      (optionalString cfg.preventSleep ''
+      (lib.optionalString cfg.preventSleep ''
         echo "configuring display sleep prevention (all power sources)..." >&2
         pmset -a displaysleep 0
       '')
-      (optionalString cfg.fastKeyRepeat ''
+      (lib.optionalString cfg.fastKeyRepeat ''
         echo "configuring live keyboard repeat rate..." >&2
         ${keyboardRepeatScript} || true
       '')
@@ -167,14 +165,14 @@ in
       # defaults write does NOT work for these settings on modern macOS.
       # The binary is compiled lazily at activation time using clang to avoid
       # Swift compiler/SDK version mismatches.
-      (optionalString needsDisplayCtl display-ctl-compile)
-      (optionalString cfg.disableAutoBrightness ''
+      (lib.optionalString needsDisplayCtl display-ctl-compile)
+      (lib.optionalString cfg.disableAutoBrightness ''
         if [ -x "$DISPLAY_CTL_BIN" ]; then
           echo "disabling automatic display brightness..." >&2
           "$DISPLAY_CTL_BIN" --auto-brightness off || true
         fi
       '')
-      (optionalString cfg.disableTrueTone ''
+      (lib.optionalString cfg.disableTrueTone ''
         if [ -x "$DISPLAY_CTL_BIN" ]; then
           echo "disabling True Tone..." >&2
           "$DISPLAY_CTL_BIN" --true-tone off || true

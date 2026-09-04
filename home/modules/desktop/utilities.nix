@@ -5,8 +5,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.desktop.utilities;
 
@@ -41,67 +39,67 @@ let
 in
 {
   options.myConfig.desktop.utilities = {
-    enable = mkEnableOption "Desktop utilities configuration";
+    enable = lib.mkEnableOption "Desktop utilities configuration";
 
-    fuzzel = mkOption {
-      type = types.bool;
+    fuzzel = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Enable Fuzzel application launcher configuration";
     };
 
-    waypaper = mkOption {
-      type = types.bool;
+    waypaper = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Enable Waypaper wallpaper manager configuration";
     };
 
-    wallpaperFolder = mkOption {
-      type = types.str;
+    wallpaperFolder = lib.mkOption {
+      type = lib.types.str;
       default = "$HOME/Pictures/wallpapers";
       description = "Path to wallpapers folder (set per-host for hardware-specific paths)";
     };
 
-    defaultWallpaper = mkOption {
-      type = types.str;
+    defaultWallpaper = lib.mkOption {
+      type = lib.types.str;
       default = "";
       description = "Default wallpaper filename (relative to wallpaperFolder)";
     };
 
-    screenshot.enable = mkEnableOption "screenshot tools (hyprshot, Linux only)";
-    brightness.enable = mkEnableOption "brightness controls (brightnessctl, Linux only)";
-    inputDiagnostics.enable = mkEnableOption "input diagnostic tools (libinput, evtest, Linux only)";
-    calculator.enable = mkEnableOption "calculator app (Qalculate, Linux only)";
-    music.enable = mkEnableOption "music player app (Elisa, Linux only)";
+    screenshot.enable = lib.mkEnableOption "screenshot tools (hyprshot, Linux only)";
+    brightness.enable = lib.mkEnableOption "brightness controls (brightnessctl, Linux only)";
+    inputDiagnostics.enable = lib.mkEnableOption "input diagnostic tools (libinput, evtest, Linux only)";
+    calculator.enable = lib.mkEnableOption "calculator app (Qalculate, Linux only)";
+    music.enable = lib.mkEnableOption "music player app (Elisa, Linux only)";
   };
 
-  config = mkMerge [
+  config = lib.mkMerge [
     {
       home.packages =
         with pkgs;
-        optionals pkgs.stdenv.isLinux (
-          (optional cfg.screenshot.enable hyprshot)
-          ++ (optional cfg.brightness.enable brightnessctl)
-          ++ (optionals cfg.inputDiagnostics.enable [
+        lib.optionals pkgs.stdenv.isLinux (
+          (lib.optional cfg.screenshot.enable hyprshot)
+          ++ (lib.optional cfg.brightness.enable brightnessctl)
+          ++ (lib.optionals cfg.inputDiagnostics.enable [
             libinput
             evtest
           ])
-          ++ (optional cfg.calculator.enable qalculate-gtk)
-          ++ (optional cfg.music.enable kdePackages.elisa)
+          ++ (lib.optional cfg.calculator.enable qalculate-gtk)
+          ++ (lib.optional cfg.music.enable kdePackages.elisa)
         );
     }
 
-    (mkIf cfg.enable {
+    (lib.mkIf cfg.enable {
       # Fuzzel application launcher and Waypaper wallpaper manager
       xdg.configFile = {
-        "fuzzel/fuzzel.ini" = mkIf cfg.fuzzel {
+        "fuzzel/fuzzel.ini" = lib.mkIf cfg.fuzzel {
           source = ../../../configs/fuzzel/fuzzel.ini;
         };
 
-        "waypaper/config.ini" = mkIf cfg.waypaper {
+        "waypaper/config.ini" = lib.mkIf cfg.waypaper {
           text = lib.generators.toINI { } waypaperConfig;
         };
 
-        "waypaper/random-wallpaper.sh" = mkIf cfg.waypaper {
+        "waypaper/random-wallpaper.sh" = lib.mkIf cfg.waypaper {
           source = ../../../configs/waypaper/random-wallpaper.sh;
           executable = true;
         };

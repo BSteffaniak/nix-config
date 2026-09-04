@@ -4,32 +4,33 @@
   ...
 }:
 
-with lib;
-
 let
   shellCfg = config.myConfig.shell;
   nushellEnabled = shellCfg.nushell.enable || shellCfg.default == "nushell";
 
   mergedSessionVariables =
-    config.homeModules.shell.shared.sessionVariables // shellCfg.shared.sessionVariables;
+    config.myConfig.shell.contrib.sessionVariables // shellCfg.shared.sessionVariables;
 
-  mergedSessionPath = unique (
-    config.homeModules.shell.shared.sessionPath ++ shellCfg.shared.sessionPath
+  mergedSessionPath = lib.unique (
+    config.myConfig.shell.contrib.sessionPath ++ shellCfg.shared.sessionPath
   );
 
   toNushellPathLiteral =
     path:
-    if hasPrefix "$HOME/" path then "$\"($env.HOME)/${removePrefix "$HOME/" path}\"" else "\"${path}\"";
+    if lib.hasPrefix "$HOME/" path then
+      "$\"($env.HOME)/${lib.removePrefix "$HOME/" path}\""
+    else
+      "\"${path}\"";
 
-  additionalPathLiteral = concatMapStringsSep " " toNushellPathLiteral mergedSessionPath;
+  additionalPathLiteral = lib.concatMapStringsSep " " toNushellPathLiteral mergedSessionPath;
 in
 {
-  options.myConfig.shell.nushell.enable = mkEnableOption "Nushell configuration";
+  options.myConfig.shell.nushell.enable = lib.mkEnableOption "Nushell configuration";
 
-  config = mkIf nushellEnabled {
+  config = lib.mkIf nushellEnabled {
     programs.nushell = {
       enable = true;
-      shellAliases = config.homeModules.shell.resolvedAliases;
+      shellAliases = config.myConfig.shell.resolved.aliases;
       environmentVariables = mergedSessionVariables;
       extraEnv = ''
         $env.DIRENV_LOG_FORMAT = ""
@@ -53,7 +54,7 @@ in
         let additional_path = [ ${additionalPathLiteral} ]
         $env.PATH = ($env.PATH | prepend $additional_path)
 
-        ${config.homeModules.shell.shared.nushellEnv}
+        ${config.myConfig.shell.contrib.nushellEnv}
         ${shellCfg.shared.nushellEnv}
       '';
       extraConfig = ''
@@ -64,7 +65,7 @@ in
             isolation: true
         }
 
-        ${config.homeModules.shell.shared.nushellConfig}
+        ${config.myConfig.shell.contrib.nushellConfig}
         ${shellCfg.shared.nushellConfig}
       '';
     };

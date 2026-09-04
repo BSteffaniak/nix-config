@@ -402,6 +402,7 @@ if [ "$PLATFORM" = "nixos" ]; then
     
     # State version
     STATE_VERSION=$(prompt_input "NixOS state version" "24.11")
+    HOME_MANAGER_STATE_VERSION="$STATE_VERSION"
     
 elif [ "$PLATFORM" = "darwin" ]; then
     print_header "Step 7: Darwin-Specific Configuration"
@@ -465,8 +466,7 @@ mkdir -p "$SCRIPT_DIR/hosts/$HOSTNAME"
     --nushell "$ENABLE_NUSHELL" \
     ${DEFAULT_SHELL:+--default-shell "$DEFAULT_SHELL"} \
     --git "$ENABLE_GIT" \
-    --state-version "$STATE_VERSION" \
-    ${HOME_MANAGER_STATE_VERSION:+--home-manager-state-version "$HOME_MANAGER_STATE_VERSION"} \
+    --clitools "$ENABLE_CLITOOLS" \
     ${ENABLE_DESKTOP:+--desktop "$ENABLE_DESKTOP"} \
     ${ENABLE_HYPRLAND:+--hyprland "$ENABLE_HYPRLAND"} \
     ${ENABLE_WAYBAR:+--waybar "$ENABLE_WAYBAR"} \
@@ -491,7 +491,10 @@ mkdir -p "$SCRIPT_DIR/hosts/$HOSTNAME"
     ${ENABLE_APPLICATIONS:+--applications "$ENABLE_APPLICATIONS"} \
     ${COMPUTER_NAME:+--computer-name "$COMPUTER_NAME"}
 
-print_success "Created $SCRIPT_DIR/hosts/$HOSTNAME/default.nix"
+print_success "Created $SCRIPT_DIR/hosts/$HOSTNAME/home.nix"
+if [ "$PLATFORM" != "linux" ]; then
+    print_success "Created $SCRIPT_DIR/hosts/$HOSTNAME/default.nix"
+fi
 
 # Step 9: Generate meta.nix (for auto-discovery by flake.nix and rebuild.sh)
 print_header "Step 9: Generate Host Metadata"
@@ -503,48 +506,26 @@ case "$PLATFORM" in
     linux)  META_TYPE="home-manager" ;;
 esac
 
-# Determine the hostname used for rebuild.sh auto-detection
-if [ "$PLATFORM" = "darwin" ] && [ -n "${COMPUTER_NAME:-}" ]; then
-    # Darwin uses networking.hostName which we set to HOSTNAME
-    META_HOSTNAME="$HOSTNAME"
-else
-    META_HOSTNAME="$HOSTNAME"
-fi
+# system.stateVersion is an integer on darwin and a string on NixOS.
+case "$PLATFORM" in
+    darwin) META_STATE_VERSION="  stateVersion = $STATE_VERSION;" ;;
+    nixos)  META_STATE_VERSION="  stateVersion = \"$STATE_VERSION\";" ;;
+    *)      META_STATE_VERSION="" ;;
+esac
 
 cat > "$SCRIPT_DIR/hosts/$HOSTNAME/meta.nix" << EOF
 {
   type = "$META_TYPE";
   system = "$ARCH";
-  hostname = "$META_HOSTNAME";
+  hostname = "$HOSTNAME";
   username = "$USERNAME";
+${META_STATE_VERSION:+$META_STATE_VERSION
+}  homeStateVersion = "${HOME_MANAGER_STATE_VERSION:-25.05}";
 }
 EOF
 
 print_success "Created $SCRIPT_DIR/hosts/$HOSTNAME/meta.nix"
 print_success "The flake and rebuild.sh will auto-discover this host -- no manual edits needed."
-
-# Generate required host-specific Home Manager overrides.
-cat > "$SCRIPT_DIR/hosts/$HOSTNAME/home.nix" << EOF
-# Personal home-manager overrides for $HOSTNAME host
-{
-  ...
-}:
-
-{
-  myConfig = {
-    # CLI tools are managed at the Home Manager layer.
-    cliTools = {
-      terminals.enableAll = $ENABLE_CLITOOLS;
-      monitoring.enableAll = $ENABLE_CLITOOLS;
-      fileTools.enableAll = $ENABLE_CLITOOLS;
-      formatters.enableAll = $ENABLE_CLITOOLS;
-      utilities.enableAll = $ENABLE_CLITOOLS;
-    };
-  };
-}
-EOF
-
-print_success "Created $SCRIPT_DIR/hosts/$HOSTNAME/home.nix"
 
 # For NixOS, handle hardware-configuration.nix
 if [ "$PLATFORM" = "nixos" ]; then

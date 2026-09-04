@@ -13,7 +13,7 @@
     ../../modules/nixos
   ];
 
-  # Host-specific settings
+  # Host-specific system settings. User tools live in home.nix.
   myConfig = {
     # Boot configuration
     boot.enable = true;
@@ -24,7 +24,6 @@
     hardware.graphics.enable = true;
 
     # Desktop environment
-    desktop.enable = true;
     desktop.hyprland = {
       enable = true;
       # Host-specific monitor and workspace configuration
@@ -35,28 +34,14 @@
     desktop.gtk.enable = true;
     desktop.xserver.enable = true;
 
-    # Rust is configured in home.nix so it is only installed through
-    # home-manager.
-    development.nodejs.enable = true;
-    development.go.enable = true;
-    development.python.enable = true;
-    development.android.enable = true;
-    development.devops.enable = true;
-    development.zig.enable = true;
-    development.openssl.enable = true;
-
-    # Shell and editors
+    # Login shells
     shell.fish.enable = true;
     shell.bash.enable = true;
     shell.zsh.enable = true;
     shell.nushell.enable = true;
-    shell.git.enable = true;
-    shell.ssh.enable = true;
-    shell.ssh.server.enable = true;
-    editors.neovim.enable = true;
-    editors.neovim.useNightly = true;
 
     # Services
+    services.sshd.enable = true;
     services.avahi.enable = true;
     services.docker.enable = true;
     services.docker.dataRoot = "/hdd/docker";
@@ -65,7 +50,6 @@
     services.tailscale.enable = true;
 
     # System configuration
-    system.enable = true;
     system.networking.enable = true;
     system.security.enable = true;
     system.audio.enable = true;

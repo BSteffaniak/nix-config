@@ -6,26 +6,24 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.desktop.hyprland = {
-    enable = mkEnableOption "Hyprland window manager";
+    enable = lib.mkEnableOption "Hyprland window manager";
 
-    monitorsConfig = mkOption {
-      type = types.nullOr types.path;
+    monitorsConfig = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
       default = null;
       description = "Path to host-specific monitors.conf";
     };
 
-    workspacesConfig = mkOption {
-      type = types.nullOr types.path;
+    workspacesConfig = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
       default = null;
       description = "Path to host-specific workspaces.conf";
     };
   };
 
-  config = mkIf config.myConfig.desktop.hyprland.enable {
+  config = lib.mkIf config.myConfig.desktop.hyprland.enable {
     programs.hyprland = {
       enable = true;
       xwayland.enable = true;

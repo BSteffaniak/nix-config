@@ -5,10 +5,8 @@
   ...
 }:
 
-with lib;
-
 {
-  config = mkIf config.myConfig.services.tailscale.enable {
+  config = lib.mkIf config.myConfig.services.tailscale.enable {
     homebrew.casks = [ "tailscale-app" ];
   };
 }

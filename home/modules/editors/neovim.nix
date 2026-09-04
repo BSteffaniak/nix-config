@@ -6,74 +6,72 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.editors.neovim;
 in
 {
   options.myConfig.editors.neovim = {
-    enable = mkEnableOption "Neovim editor";
+    enable = lib.mkEnableOption "Neovim editor";
 
-    useNightly = mkOption {
-      type = types.bool;
+    useNightly = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = "Use nightly Neovim build";
     };
 
     # Plugin toggles
     plugins = {
-      supermaven = mkOption {
-        type = types.bool;
+      supermaven = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable Supermaven AI assistant";
       };
 
-      copilot = mkOption {
-        type = types.bool;
+      copilot = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = "Enable GitHub Copilot";
       };
 
-      avante = mkOption {
-        type = types.bool;
+      avante = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = "Enable Avante AI assistant";
       };
 
-      jdtls = mkOption {
-        type = types.bool;
+      jdtls = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable Java development tools (nvim-jdtls)";
       };
 
-      elixir = mkOption {
-        type = types.bool;
+      elixir = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable Elixir development plugins";
       };
 
-      ionide = mkOption {
-        type = types.bool;
+      ionide = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable Ionide F# support";
       };
 
-      dadbod = mkOption {
-        type = types.bool;
+      dadbod = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable vim-dadbod database tools";
       };
 
-      treesitterHypr = mkOption {
-        type = types.bool;
+      treesitterHypr = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = "Enable tree-sitter Hyprland support";
       };
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     home.packages =
       with pkgs;
       [
@@ -128,8 +126,5 @@ in
         }
       }
     '';
-
-    # Enable the fish neovim integration if fish is enabled
-    homeModules.fish.neovim.enable = mkIf config.programs.fish.enable true;
   };
 }

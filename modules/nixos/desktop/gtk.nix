@@ -5,14 +5,12 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.desktop.gtk = {
-    enable = mkEnableOption "GTK and desktop integration";
+    enable = lib.mkEnableOption "GTK and desktop integration";
   };
 
-  config = mkIf config.myConfig.desktop.gtk.enable {
+  config = lib.mkIf config.myConfig.desktop.gtk.enable {
     # XDG Portals
     xdg = {
       autostart.enable = true;

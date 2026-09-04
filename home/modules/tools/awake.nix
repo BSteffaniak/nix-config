@@ -9,8 +9,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.tools.awake;
 
@@ -288,27 +286,29 @@ let
 in
 {
   options.myConfig.tools.awake = {
-    enable = mkEnableOption "runtime stay-awake command for manual lid/sleep control";
+    enable = lib.mkEnableOption "runtime stay-awake command for manual lid/sleep control";
   };
 
-  config = mkIf cfg.enable (mkMerge [
-    {
-      home.packages = [ stayAwake ];
-    }
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      {
+        home.packages = [ stayAwake ];
+      }
 
-    (mkIf pkgs.stdenv.isLinux {
-      systemd.user.services.stay-awake-lid = {
-        Unit = {
-          Description = "Stay awake for one closed-lid session";
-          Documentation = [ "man:systemd-inhibit(1)" ];
-        };
+      (lib.mkIf pkgs.stdenv.isLinux {
+        systemd.user.services.stay-awake-lid = {
+          Unit = {
+            Description = "Stay awake for one closed-lid session";
+            Documentation = [ "man:systemd-inhibit(1)" ];
+          };
 
-        Service = {
-          Type = "simple";
-          ExecStart = "${linuxWatcher}/bin/stay-awake-linux-watch";
-          Restart = "no";
+          Service = {
+            Type = "simple";
+            ExecStart = "${linuxWatcher}/bin/stay-awake-linux-watch";
+            Restart = "no";
+          };
         };
-      };
-    })
-  ]);
+      })
+    ]
+  );
 }

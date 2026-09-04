@@ -4,34 +4,34 @@
   ...
 }:
 
-with lib;
-
 let
   shellCfg = config.myConfig.shell;
   zshEnabled = shellCfg.zsh.enable || shellCfg.default == "zsh";
 
   completionCommands =
     if shellCfg.shared.completions.enable then
-      unique (config.homeModules.shell.shared.completionCommands ++ shellCfg.shared.completions.commands)
+      lib.unique (
+        config.myConfig.shell.contrib.completionCommands ++ shellCfg.shared.completions.commands
+      )
     else
       [ ];
 
-  completionInit = concatMapStringsSep "\n" (command: ''
+  completionInit = lib.concatMapStringsSep "\n" (command: ''
     if command -v ${command} >/dev/null 2>&1; then
       source <(${command} completion zsh)
     fi
   '') completionCommands;
 in
 {
-  options.myConfig.shell.zsh.enable = mkEnableOption "Zsh shell configuration";
+  options.myConfig.shell.zsh.enable = lib.mkEnableOption "Zsh shell configuration";
 
-  config = mkIf zshEnabled {
+  config = lib.mkIf zshEnabled {
     programs.zsh = {
       enable = true;
-      shellAliases = config.homeModules.shell.resolvedAliases;
+      shellAliases = config.myConfig.shell.resolved.aliases;
       enableCompletion = shellCfg.shared.completions.enable;
       initContent = ''
-        ${config.homeModules.shell.shared.zshInit}
+        ${config.myConfig.shell.contrib.zshInit}
         ${shellCfg.shared.zshInit}
         ${completionInit}
       '';

@@ -137,7 +137,6 @@ if command -v ip &> /dev/null; then
     echo ""
     print_suggestion "Enable networking:"
     echo "  system.networking.enable = true;"
-    echo "  system.networking.hostName = \"your-hostname\";"
 fi
 
 # Detect WiFi
@@ -269,27 +268,22 @@ cat << 'EOF'
   boot.useLatestKernel = false;  # Set to true for newer hardware
 
   # System
-  system.enable = true;
   system.networking.enable = true;
-  system.networking.hostName = "your-hostname";
   system.security.enable = true;
   system.audio.enable = true;
   system.locale.enable = true;
   system.locale.timeZone = "America/New_York";  # Adjust as needed
 
-  # Development tools (customize as needed)
-  development.rust.enable = true;
-  development.nodejs.enable = true;
-  development.go.enable = true;
-
-  # Shell and editors
+  # Login shells
   shell.fish.enable = true;
   shell.bash.enable = true;
   shell.zsh.enable = true;
   shell.nushell.enable = true;
-  shell.git.enable = true;
-  editors.neovim.enable = true;
 
+  services.sshd.enable = true;
+
+  # Development tools, editors, and git are user-level:
+  # declare them in hosts/<host>/home.nix instead.
 };
 
 # In hosts/<hostname>/home.nix, enable CLI tools at the Home Manager layer:

@@ -6,8 +6,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.cliTools.fileTools;
 
@@ -15,8 +13,8 @@ let
 in
 {
   options.myConfig.cliTools.fileTools = {
-    enableAll = mkOption {
-      type = types.bool;
+    enableAll = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = "Enable all file tools (can be overridden per-tool)";
     };
@@ -29,12 +27,12 @@ in
   };
 
   config = {
-    home.packages = mkMerge [
-      (mkIf cfg.fzf.enable [ pkgs.fzf ])
-      (mkIf cfg.ripgrep.enable [ pkgs.ripgrep ])
-      (mkIf cfg.fd.enable [ pkgs.fd ])
-      (mkIf cfg.unzip.enable [ pkgs.unzip ])
-      (mkIf cfg.zip.enable [ pkgs.zip ])
+    home.packages = lib.mkMerge [
+      (lib.mkIf cfg.fzf.enable [ pkgs.fzf ])
+      (lib.mkIf cfg.ripgrep.enable [ pkgs.ripgrep ])
+      (lib.mkIf cfg.fd.enable [ pkgs.fd ])
+      (lib.mkIf cfg.unzip.enable [ pkgs.unzip ])
+      (lib.mkIf cfg.zip.enable [ pkgs.zip ])
     ];
   };
 }

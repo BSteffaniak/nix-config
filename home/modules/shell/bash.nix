@@ -4,34 +4,34 @@
   ...
 }:
 
-with lib;
-
 let
   shellCfg = config.myConfig.shell;
   bashEnabled = shellCfg.bash.enable || shellCfg.default == "bash";
 
   completionCommands =
     if shellCfg.shared.completions.enable then
-      unique (config.homeModules.shell.shared.completionCommands ++ shellCfg.shared.completions.commands)
+      lib.unique (
+        config.myConfig.shell.contrib.completionCommands ++ shellCfg.shared.completions.commands
+      )
     else
       [ ];
 
-  completionInit = concatMapStringsSep "\n" (command: ''
+  completionInit = lib.concatMapStringsSep "\n" (command: ''
     if command -v ${command} >/dev/null 2>&1; then
       source <(${command} completion bash)
     fi
   '') completionCommands;
 in
 {
-  options.myConfig.shell.bash.enable = mkEnableOption "Bash shell configuration";
+  options.myConfig.shell.bash.enable = lib.mkEnableOption "Bash shell configuration";
 
-  config = mkIf bashEnabled {
+  config = lib.mkIf bashEnabled {
     programs.bash = {
       enable = true;
       enableCompletion = shellCfg.shared.completions.enable;
-      shellAliases = config.homeModules.shell.resolvedAliases;
+      shellAliases = config.myConfig.shell.resolved.aliases;
       initExtra = ''
-        ${config.homeModules.shell.shared.bashInit}
+        ${config.myConfig.shell.contrib.bashInit}
         ${shellCfg.shared.bashInit}
         ${completionInit}
       '';

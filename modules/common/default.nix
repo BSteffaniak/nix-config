@@ -1,21 +1,17 @@
 {
-  config,
   lib,
   pkgs,
   ...
 }:
 
-with lib;
-
 {
   imports = [
-    ./development
-    ./editors
     ./services
-    ./shell
+    ./shell.nix
   ];
 
-  # Common options available on all platforms
+  # Options shared by every system configuration. User-facing feature flags
+  # live in home-manager (home/modules); only system concerns are declared here.
   options.myConfig = {
     username = lib.mkOption {
       type = lib.types.str;
@@ -35,7 +31,7 @@ with lib;
       "flakes"
     ];
 
-    # Common packages for all platforms
+    # Baseline packages for all platforms
     environment.systemPackages = with pkgs; [
       vim
       wget

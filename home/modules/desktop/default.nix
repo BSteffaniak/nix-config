@@ -2,6 +2,7 @@
   imports = [
     ./aerospace.nix
     ./browsers.nix
+    ./gtk.nix
     ./hex.nix
     ./hyprland.nix
     ./mkalias.nix

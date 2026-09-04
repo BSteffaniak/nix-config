@@ -5,14 +5,12 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.services.observability = {
-    enable = mkEnableOption "Observability stack (Grafana, Prometheus, Loki, Tempo)";
+    enable = lib.mkEnableOption "Observability stack (Grafana, Prometheus, Loki, Tempo)";
   };
 
-  config = mkIf config.myConfig.services.observability.enable {
+  config = lib.mkIf config.myConfig.services.observability.enable {
     networking.firewall.allowedTCPPorts = [
       config.services.grafana.settings.server.http_port
     ];

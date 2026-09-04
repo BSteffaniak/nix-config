@@ -5,19 +5,17 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.system.locale = {
-    enable = mkEnableOption "Locale and timezone configuration";
-    timeZone = mkOption {
-      type = types.str;
+    enable = lib.mkEnableOption "Locale and timezone configuration";
+    timeZone = lib.mkOption {
+      type = lib.types.str;
       default = "America/New_York";
       description = "System timezone";
     };
   };
 
-  config = mkIf config.myConfig.system.locale.enable {
+  config = lib.mkIf config.myConfig.system.locale.enable {
     time.timeZone = config.myConfig.system.locale.timeZone;
 
     i18n.defaultLocale = "en_US.UTF-8";

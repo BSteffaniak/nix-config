@@ -44,12 +44,13 @@ home-manager build --flake .#<user>@<host>
 
 ```text
 .
-├── flake.nix / flake.lock      # Unified flake for all hosts
-├── hosts/                      # Per-host configs (auto-discovered)
-├── home/                       # Home Manager modules and shared user config
-├── modules/                    # System-level modules (NixOS/Darwin)
-├── lib/                        # Host builders, overlays, helpers
-├── packages/                   # Custom package definitions
+├── flake.nix / flake.lock      # Inputs + thin outputs
+├── hosts/                      # Per-host configs (auto-discovered from meta.nix)
+├── home/                       # Home Manager modules and platform bridges
+├── modules/                    # System-level modules (common/NixOS/Darwin)
+├── lib/                        # Host discovery, dev shell, pure helpers
+├── overlays/                   # nixpkgs overlays (one file each)
+├── pkgs/                       # Data for generated packages (source builds, releases, plugins)
 ├── scripts/                    # Operational helper scripts
 └── configs/                    # Portable standalone dot-configs
 ```
@@ -79,7 +80,8 @@ Agent and contributor guidance:
 
 ## Design Principles
 
-- Prefer user-scoped tools in `home.packages` for portability
-- Use system modules only for true system concerns (services, drivers, boot)
-- Keep host-specific customization in `hosts/<name>/`
+- Every user tool is declared once, in `hosts/<name>/home.nix`, on every platform
+- Use system modules only for true system concerns (login shells, services, drivers, boot, casks)
+- `meta.nix` is the single source of host identity
 - Keep module logic reusable and host files declarative
+- Refactors are verified with `scripts/check-all-hosts.sh` (zero-diff against a saved baseline)

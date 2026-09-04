@@ -2,7 +2,7 @@
 
 Back to overview: `README.md`
 
-This repository discovers hosts automatically from `hosts/*/meta.nix`.
+This repository discovers hosts automatically from `hosts/*/meta.nix` (see `lib/hosts.nix`).
 
 ## Host Types
 
@@ -14,11 +14,11 @@ This repository discovers hosts automatically from `hosts/*/meta.nix`.
 
 Each host directory lives under `hosts/<hostname>/`.
 
-- `meta.nix` (required): host metadata used for auto-discovery
-- `home.nix` (required): user-level configuration
-- `default.nix` (required for NixOS/Darwin): system-level configuration
+- `meta.nix` (required, plaintext): identity and platform metadata
+- `home.nix` (required): user-level configuration — every user tool is enabled here
+- `default.nix` (NixOS/Darwin): system-level configuration — login shells, services, hardware, casks
 
-Example metadata:
+`meta.nix` drives hostname, primary user, home directory, and both state versions, so `default.nix` no longer repeats them:
 
 ```nix
 {
@@ -26,6 +26,9 @@ Example metadata:
   system = "aarch64-darwin";
   hostname = "Bradens-MacBook-Air";
   username = "braden";
+  stateVersion = 6; # "24.11" on NixOS
+  homeStateVersion = "24.11";
+  # extraModules = [ "nix-minecraft" ];
 }
 ```
 
@@ -46,6 +49,10 @@ Manual flow:
 
 No flake edits are required for host registration.
 
+## Private Hosts
+
+Host directories can be encrypted with git-sshripped (see `.gitattributes`). Keep `meta.nix` plaintext so discovery works everywhere. Do not move private content out of an encrypted host directory.
+
 ## NixOS Hardware Detection
 
 Before creating a NixOS host, you can inspect hardware support with:
@@ -57,12 +64,13 @@ Before creating a NixOS host, you can inspect hardware support with:
 ## Build Before Switching
 
 ```bash
-# NixOS
+./rebuild.sh --diff
+
+# or manually
 sudo nixos-rebuild build --flake .#<host>
-
-# Darwin
 darwin-rebuild build --flake .#<host>
-
-# Standalone Home Manager
 home-manager build --flake .#<user>@<host>
+
+# every host at once (evaluation only)
+./scripts/check-all-hosts.sh eval
 ```

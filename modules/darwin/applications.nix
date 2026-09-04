@@ -5,14 +5,12 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.darwin.applications = {
-    enable = mkEnableOption "macOS applications management";
+    enable = lib.mkEnableOption "macOS applications management";
   };
 
-  config = mkIf config.myConfig.darwin.applications.enable {
+  config = lib.mkIf config.myConfig.darwin.applications.enable {
     environment.systemPackages = with pkgs; [
       mkalias
     ];

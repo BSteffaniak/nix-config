@@ -35,32 +35,30 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.desktop.sledge;
 in
 {
   options.myConfig.desktop.sledge = {
-    enable = mkEnableOption "Sledge keyboard remap daemon";
+    enable = lib.mkEnableOption "Sledge keyboard remap daemon";
   };
 
-  config = mkMerge [
+  config = lib.mkMerge [
     # -----------------------------------------------------------------
     # Universal configuration
     # -----------------------------------------------------------------
     # The option is declarable on any platform so a Linux host can set
     # it aspirationally today. Installation + LaunchAgent setup is
     # gated per-platform below.
-    (mkIf cfg.enable {
+    (lib.mkIf cfg.enable {
       # Package is only built for macOS at present. The isDarwin guard
       # keeps Linux hosts evaluating cleanly even when cfg.enable = true;
       # drop it once sledge ships a Linux backend.
-      home.packages = mkIf pkgs.stdenv.isDarwin [ pkgs.sledge ];
+      home.packages = lib.mkIf pkgs.stdenv.isDarwin [ pkgs.sledge ];
 
       # Config file. Currently macOS-only because the daemon only runs
       # there; same `isDarwin` guard pattern as above.
-      xdg.configFile."sledge/config.toml" = mkIf pkgs.stdenv.isDarwin {
+      xdg.configFile."sledge/config.toml" = lib.mkIf pkgs.stdenv.isDarwin {
         source = ../../../configs/sledge/config.toml;
         onChange = ''
           # The sledge daemon has its own file watcher that applies
@@ -75,7 +73,7 @@ in
     # -----------------------------------------------------------------
     # macOS-specific: LaunchAgent + /Applications install + signing
     # -----------------------------------------------------------------
-    (mkIf (cfg.enable && pkgs.stdenv.isDarwin) {
+    (lib.mkIf (cfg.enable && pkgs.stdenv.isDarwin) {
       # Exclude Sledge.app from mkalias's Finder-alias creation loop.
       # mkalias otherwise sees ${pkgs.sledge}/Applications/Sledge.app
       # (linked under ~/.nix-profile/Applications via home.packages)

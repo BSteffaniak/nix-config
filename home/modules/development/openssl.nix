@@ -5,17 +5,15 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.development.openssl;
 in
 {
   options.myConfig.development.openssl = {
-    enable = mkEnableOption "OpenSSL development environment";
+    enable = lib.mkEnableOption "OpenSSL development environment";
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     home.packages = with pkgs; [
       pkg-config
       openssl

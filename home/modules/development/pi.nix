@@ -6,8 +6,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.development.pi;
   agentsCfg = config.myConfig.development.agents;
@@ -27,16 +25,16 @@ let
   # entry. On name collisions the inline option wins.
   providersDir = ../../../configs/pi/providers;
   allProviderFiles = builtins.attrNames (builtins.readDir providersDir);
-  jsonProviderFiles = builtins.filter (f: hasSuffix ".json" f) allProviderFiles;
-  jsonProviderNames = map (f: removeSuffix ".json" f) jsonProviderFiles;
-  jsonProviderDescriptors = listToAttrs (
+  jsonProviderFiles = builtins.filter (f: lib.hasSuffix ".json" f) allProviderFiles;
+  jsonProviderNames = map (f: lib.removeSuffix ".json" f) jsonProviderFiles;
+  jsonProviderDescriptors = lib.listToAttrs (
     map (n: {
       name = n;
       value = builtins.fromJSON (builtins.readFile (providersDir + "/${n}.json"));
     }) jsonProviderNames
   );
 
-  generatedProviderDescriptors = optionalAttrs (jsonProviderDescriptors ? openai) {
+  generatedProviderDescriptors = lib.optionalAttrs (jsonProviderDescriptors ? openai) {
     openai-fast = jsonProviderDescriptors.openai // {
       model = "gpt-5.5-fast";
     };
@@ -73,7 +71,7 @@ let
     let
       descriptor = providerDescriptors.${name};
       thinkingFlag =
-        if descriptor ? thinking then " --thinking ${escapeShellArg descriptor.thinking}" else "";
+        if descriptor ? thinking then " --thinking ${lib.escapeShellArg descriptor.thinking}" else "";
       hasSshenv = descriptor ? sshenv;
       sshenvSpec = descriptor.sshenv or { };
       sshenvEnvOnly = sshenvSpec.envOnly or false;
@@ -92,13 +90,13 @@ let
     in
     if hasSshenv && sshenvEnvOnly then
       ''
-        exec ${pkgs.sshenv}/bin/sshenv run ${escapeShellArg sshenvProfile} -- pi --provider ${escapeShellArg descriptor.provider} --model ${escapeShellArg descriptor.model}${thinkingFlag} "$@"
+        exec ${pkgs.sshenv}/bin/sshenv run ${lib.escapeShellArg sshenvProfile} -- pi --provider ${lib.escapeShellArg descriptor.provider} --model ${lib.escapeShellArg descriptor.model}${thinkingFlag} "$@"
       ''
     else if hasSshenv then
       ''
-        _agent_dir=${escapeShellArg sshenvAgentDir}
-        _shared=${escapeShellArg sharedAgentDir}
-        _vault_path=${escapeShellArg sshenvVaultPath}
+        _agent_dir=${lib.escapeShellArg sshenvAgentDir}
+        _shared=${lib.escapeShellArg sharedAgentDir}
+        _vault_path=${lib.escapeShellArg sshenvVaultPath}
         _vault_dir="$(dirname "$_vault_path")"
         mkdir -p "$_agent_dir" "$_shared/sessions" "$_vault_dir"
         chmod 700 "$_agent_dir" "$_shared/sessions" "$_vault_dir" 2>/dev/null || true
@@ -127,17 +125,17 @@ let
         fi
         PI_CODING_AGENT_DIR="$_agent_dir" \
         SSHENV_VAULT="$_vault_path" \
-        PI_SSHENV_PROFILE=${escapeShellArg sshenvProfile} \
-        PI_SSHENV_API_KEYS_JSON=${escapeShellArg sshenvApiKeysJson} \
-        PI_SSHENV_OAUTH_KEYS_JSON=${escapeShellArg sshenvOAuthJson} \
-        ${optionalString (
+        PI_SSHENV_PROFILE=${lib.escapeShellArg sshenvProfile} \
+        PI_SSHENV_API_KEYS_JSON=${lib.escapeShellArg sshenvApiKeysJson} \
+        PI_SSHENV_OAUTH_KEYS_JSON=${lib.escapeShellArg sshenvOAuthJson} \
+        ${lib.optionalString (
           sshenvInitRecipientKey != null
-        ) ''PI_SSHENV_INIT_RECIPIENT_KEY=${escapeShellArg sshenvInitRecipientKey} \''}
-          pi --provider ${escapeShellArg descriptor.provider} --model ${escapeShellArg descriptor.model}${thinkingFlag} "$@"
+        ) ''PI_SSHENV_INIT_RECIPIENT_KEY=${lib.escapeShellArg sshenvInitRecipientKey} \''}
+          pi --provider ${lib.escapeShellArg descriptor.provider} --model ${lib.escapeShellArg descriptor.model}${thinkingFlag} "$@"
       ''
     else
       ''
-        pi --provider ${escapeShellArg descriptor.provider} --model ${escapeShellArg descriptor.model}${apiKeyFlag}${thinkingFlag} "$@"
+        pi --provider ${lib.escapeShellArg descriptor.provider} --model ${lib.escapeShellArg descriptor.model}${apiKeyFlag}${thinkingFlag} "$@"
       '';
 
   providerWrapperCommands = builtins.listToAttrs (
@@ -311,13 +309,13 @@ let
   promptsDir = ../../../configs/pi/prompts;
   promptEntries =
     if builtins.pathExists promptsDir then builtins.attrNames (builtins.readDir promptsDir) else [ ];
-  promptFiles = builtins.filter (f: hasSuffix ".md" f) promptEntries;
+  promptFiles = builtins.filter (f: lib.hasSuffix ".md" f) promptEntries;
 
   # Auto-discover theme files from configs/pi/themes/
   themesDir = ../../../configs/pi/themes;
   themeEntries =
     if builtins.pathExists themesDir then builtins.attrNames (builtins.readDir themesDir) else [ ];
-  themeFiles = builtins.filter (f: hasSuffix ".json" f) themeEntries;
+  themeFiles = builtins.filter (f: lib.hasSuffix ".json" f) themeEntries;
 
   # Auto-discover extension files/directories from configs/pi/extensions/
   extensionsDir = ../../../configs/pi/extensions;
@@ -332,7 +330,7 @@ let
       kind = (builtins.readDir extensionsDir).${name} or null;
       full = extensionsDir + "/${name}";
     in
-    (kind == "regular" && (hasSuffix ".ts" name || hasSuffix ".js" name))
+    (kind == "regular" && (lib.hasSuffix ".ts" name || lib.hasSuffix ".js" name))
     || (kind == "directory" && builtins.pathExists (full + "/index.ts"));
   extensionNames = builtins.filter isExtensionEntry extensionEntries;
 
@@ -341,7 +339,7 @@ let
 
   # Ollama provider config (only when ollama is enabled)
   ollamaCfg = config.myConfig.tools.ai.ollama;
-  ollamaModels = unique ([ ollamaCfg.model ] ++ ollamaCfg.extraModels);
+  ollamaModels = lib.unique ([ ollamaCfg.model ] ++ ollamaCfg.extraModels);
   mkOllamaModelEntry = model: {
     id = model;
     name = model;
@@ -374,12 +372,12 @@ let
   };
   brouterDefaultEnabledModels = map (m: m.id) brouterPiModels.defaultModelDefs;
 
-  mergedModelsConfig = foldl' lib.recursiveUpdate baseModelsConfig (
-    (optional ollamaCfg.enable { providers.ollama = ollamaModelsEntry; })
-    ++ (optional (brouterCfg.enable && brouterCfg.enablePiIntegration) {
+  mergedModelsConfig = lib.foldl' lib.recursiveUpdate baseModelsConfig (
+    (lib.optional ollamaCfg.enable { providers.ollama = ollamaModelsEntry; })
+    ++ (lib.optional (brouterCfg.enable && brouterCfg.enablePiIntegration) {
       providers.${brouterCfg.providerName} = brouterModelsEntry;
     })
-    ++ (optional (brouterProxyCfg.enable && brouterProxyCfg.enablePiIntegration) {
+    ++ (lib.optional (brouterProxyCfg.enable && brouterProxyCfg.enablePiIntegration) {
       providers.${brouterProxyCfg.providerName} = brouterProxyModelsEntry;
     })
     ++ discoveredProviderModels
@@ -392,18 +390,19 @@ let
   derivedSettings = {
     enableInstallTelemetry = false;
   }
-  // (optionalAttrs (cfg.models != [ ]) {
+  // (lib.optionalAttrs (cfg.models != [ ]) {
     models = cfg.models;
     enabledModels = cfg.models;
   })
-  // (optionalAttrs (brouterCfg.enable && brouterCfg.enablePiIntegration && brouterCfg.makePiDefault)
+  // (lib.optionalAttrs
+    (brouterCfg.enable && brouterCfg.enablePiIntegration && brouterCfg.makePiDefault)
     {
       defaultProvider = brouterCfg.providerName;
       defaultModel = brouterCfg.defaultModel;
       enabledModels = brouterDefaultEnabledModels;
     }
   )
-  // (optionalAttrs
+  // (lib.optionalAttrs
     (brouterProxyCfg.enable && brouterProxyCfg.enablePiIntegration && brouterProxyCfg.makePiDefault)
     {
       defaultProvider = brouterProxyCfg.providerName;
@@ -412,7 +411,7 @@ let
     }
   );
 
-  mergedSettingsBase = foldl' lib.recursiveUpdate baseSettings (
+  mergedSettingsBase = lib.foldl' lib.recursiveUpdate baseSettings (
     [
       derivedSettings
       cfg.extraSettings
@@ -424,11 +423,11 @@ let
     # settings.json paths resolve relative to ~/.pi/agent, where this module
     # deploys the generated shared agent skill root below. Add this after
     # overrides so host-local skill settings don't accidentally drop shared skills.
-    skills = unique ((mergedSettingsBase.skills or [ ]) ++ [ "agent-skills" ]);
+    skills = lib.unique ((mergedSettingsBase.skills or [ ]) ++ [ "agent-skills" ]);
 
     # Load Pi-native packages that provide structured questions and subagent
     # delegation for imported shared skills.
-    packages = unique ((mergedSettingsBase.packages or [ ]) ++ piPackageSources);
+    packages = lib.unique ((mergedSettingsBase.packages or [ ]) ++ piPackageSources);
 
     npmCommand =
       mergedSettingsBase.npmCommand or [
@@ -440,10 +439,10 @@ let
 in
 {
   options.myConfig.development.pi = {
-    enable = mkEnableOption "Pi coding agent CLI";
+    enable = lib.mkEnableOption "Pi coding agent CLI";
 
-    models = mkOption {
-      type = types.listOf types.str;
+    models = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
       default = [ ];
       example = [
         "claude-*"
@@ -452,28 +451,28 @@ in
       description = "Model patterns for Ctrl+P cycling (settings.json `models` field)";
     };
 
-    extraSettings = mkOption {
-      type = types.attrs;
+    extraSettings = lib.mkOption {
+      type = lib.types.attrs;
       default = { };
       description = "Extra keys deep-merged into settings.json after base + derived keys";
     };
 
-    overrides = mkOption {
-      type = types.listOf types.path;
+    overrides = lib.mkOption {
+      type = lib.types.listOf lib.types.path;
       default = [ ];
       description = "JSON files deep-merged into settings.json last (e.g., host-specific encrypted overrides)";
     };
 
-    permissionOverrides = mkOption {
-      type = types.listOf types.path;
+    permissionOverrides = lib.mkOption {
+      type = lib.types.listOf lib.types.path;
       default = [ ];
       description = "Additional Pi-only shared-agent permission JSON files merged after shared and OpenCode config overrides.";
     };
 
-    extraProviders = mkOption {
-      type = types.attrsOf types.attrs;
+    extraProviders = lib.mkOption {
+      type = lib.types.attrsOf lib.types.attrs;
       default = { };
-      example = literalExpression ''
+      example = lib.literalExpression ''
         {
           private-openai = {
             provider = "openai-codex";
@@ -498,207 +497,209 @@ in
 
   };
 
-  config = mkIf cfg.enable (mkMerge [
-    {
-      home.packages = [
-        pkgs.pi
-        pkgs.tone-clone
-      ];
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      {
+        home.packages = [
+          pkgs.pi
+          pkgs.tone-clone
+        ];
 
-      home.sessionVariables = {
-        # Pi respects this env var to disable anonymous install/update telemetry.
-        PI_TELEMETRY = "0";
+        home.sessionVariables = {
+          # Pi respects this env var to disable anonymous install/update telemetry.
+          PI_TELEMETRY = "0";
 
-        # Rewrite assistant replies into a more listenable script before TTS.
-        PI_READ_REPLY_AUDIO_ADAPTER = "llm";
-        PI_READ_REPLY_AUDIO_ADAPTER_PROVIDER = "openai";
-        PI_READ_REPLY_AUDIO_ADAPTER_MODEL = "gpt-4o-mini";
-      };
+          # Rewrite assistant replies into a more listenable script before TTS.
+          PI_READ_REPLY_AUDIO_ADAPTER = "llm";
+          PI_READ_REPLY_AUDIO_ADAPTER_PROVIDER = "openai";
+          PI_READ_REPLY_AUDIO_ADAPTER_MODEL = "gpt-4o-mini";
+        };
 
-      # Deploy the merged settings.json to pi's default config location (~/.pi/agent/).
-      home.file.".pi/agent/settings.json".text = builtins.toJSON mergedSettings;
+        # Deploy the merged settings.json to pi's default config location (~/.pi/agent/).
+        home.file.".pi/agent/settings.json".text = builtins.toJSON mergedSettings;
 
-      # Register custom provider models that Pi's built-in registry may not know yet.
-      home.file.".pi/agent/models.json".text = builtins.toJSON mergedModelsConfig;
+        # Register custom provider models that Pi's built-in registry may not know yet.
+        home.file.".pi/agent/models.json".text = builtins.toJSON mergedModelsConfig;
 
-      # Free Tab for the agent-modes shortcut; Ctrl+Space keeps autocomplete available.
-      home.file.".pi/agent/keybindings.json".source = keybindingsConfig;
+        # Free Tab for the agent-modes shortcut; Ctrl+Space keeps autocomplete available.
+        home.file.".pi/agent/keybindings.json".source = keybindingsConfig;
 
-      # Shared agent permission config consumed by the local Pi extension.
-      home.file.".pi/agent/agent-permissions.json".text = builtins.toJSON mergedPermissions;
+        # Shared agent permission config consumed by the local Pi extension.
+        home.file.".pi/agent/agent-permissions.json".text = builtins.toJSON mergedPermissions;
 
-      # Shared agent skills made available to Pi via settings.json `skills`.
-      home.file.".pi/agent/agent-skills".source = sharedAgentSkillsForPi;
+        # Shared agent skills made available to Pi via settings.json `skills`.
+        home.file.".pi/agent/agent-skills".source = sharedAgentSkillsForPi;
 
-      # User-writable npm prefix for Pi package installs under Nix.
-      home.file.".pi/agent/npm/.keep".text = "";
+        # User-writable npm prefix for Pi package installs under Nix.
+        home.file.".pi/agent/npm/.keep".text = "";
 
-      # Pi 0.70.6+ runs as a Bun-compiled binary and resolves global npm
-      # package resources via `bun pm bin -g`, even when `npmCommand` points
-      # installs at the Nix-managed npm prefix above. Give Pi a private Bun
-      # global tree that maps back to the real npm-managed node_modules.
-      home.activation.setupPiBunGlobal = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        bun_global="${config.home.homeDirectory}/.pi/agent/bun/install/global"
-        bun_bin="${config.home.homeDirectory}/.pi/agent/bun/bin"
-        npm_node_modules="${piNpmPrefix}/lib/node_modules"
+        # Pi 0.70.6+ runs as a Bun-compiled binary and resolves global npm
+        # package resources via `bun pm bin -g`, even when `npmCommand` points
+        # installs at the Nix-managed npm prefix above. Give Pi a private Bun
+        # global tree that maps back to the real npm-managed node_modules.
+        home.activation.setupPiBunGlobal = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          bun_global="${config.home.homeDirectory}/.pi/agent/bun/install/global"
+          bun_bin="${config.home.homeDirectory}/.pi/agent/bun/bin"
+          npm_node_modules="${piNpmPrefix}/lib/node_modules"
 
-        mkdir -p "$bun_global" "$bun_bin" "$npm_node_modules"
+          mkdir -p "$bun_global" "$bun_bin" "$npm_node_modules"
 
-        if [ ! -f "$bun_global/package.json" ]; then
-          printf '%s\n' '{"name":"pi-bun-global","private":true}' > "$bun_global/package.json"
-        fi
+          if [ ! -f "$bun_global/package.json" ]; then
+            printf '%s\n' '{"name":"pi-bun-global","private":true}' > "$bun_global/package.json"
+          fi
 
-        if [ -e "$bun_global/node_modules" ] && [ ! -L "$bun_global/node_modules" ]; then
-          rm -rf "$bun_global/node_modules"
-        fi
-        ln -sfn "$npm_node_modules" "$bun_global/node_modules"
-      '';
+          if [ -e "$bun_global/node_modules" ] && [ ! -L "$bun_global/node_modules" ]; then
+            rm -rf "$bun_global/node_modules"
+          fi
+          ln -sfn "$npm_node_modules" "$bun_global/node_modules"
+        '';
 
-      # Pi stores sessions below a cwd-derived subdirectory when using its
-      # default session path. The previous per-profile wrapper briefly set
-      # PI_CODING_AGENT_SESSION_DIR directly, which caused sessions to be
-      # written at the root. Move those back under their cwd-derived dirs.
-      home.activation.migratePiRootSessions = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-                session_root="${config.home.homeDirectory}/.pi/agent/sessions"
-                if [ -d "$session_root" ]; then
-                  ${pkgs.python3}/bin/python3 - "$session_root" <<'PY'
-        import json
-        import shutil
-        import sys
-        from pathlib import Path
+        # Pi stores sessions below a cwd-derived subdirectory when using its
+        # default session path. The previous per-profile wrapper briefly set
+        # PI_CODING_AGENT_SESSION_DIR directly, which caused sessions to be
+        # written at the root. Move those back under their cwd-derived dirs.
+        home.activation.migratePiRootSessions = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+                  session_root="${config.home.homeDirectory}/.pi/agent/sessions"
+                  if [ -d "$session_root" ]; then
+                    ${pkgs.python3}/bin/python3 - "$session_root" <<'PY'
+          import json
+          import shutil
+          import sys
+          from pathlib import Path
 
-        root = Path(sys.argv[1])
-
-
-        def session_dir_name(cwd: str) -> str:
-            return "--" + cwd.strip("/").replace("/", "-") + "--"
+          root = Path(sys.argv[1])
 
 
-        def append_and_unlink(source: Path, target: Path) -> None:
-            with source.open("rb") as src, target.open("ab") as dst:
-                dst.write(src.read())
-            source.unlink()
+          def session_dir_name(cwd: str) -> str:
+              return "--" + cwd.strip("/").replace("/", "-") + "--"
 
 
-        for session in sorted(root.glob("*.jsonl")):
-            try:
-                with session.open("r", encoding="utf-8") as handle:
-                    first_line = handle.readline()
-                header = json.loads(first_line) if first_line else {}
+          def append_and_unlink(source: Path, target: Path) -> None:
+              with source.open("rb") as src, target.open("ab") as dst:
+                  dst.write(src.read())
+              source.unlink()
 
-                if header.get("type") == "session" and isinstance(header.get("cwd"), str) and header["cwd"]:
-                    destination_dir = root / session_dir_name(header["cwd"])
-                    destination_dir.mkdir(mode=0o700, exist_ok=True)
-                    destination = destination_dir / session.name
 
-                    if destination.exists():
-                        append_and_unlink(session, destination)
-                    else:
-                        shutil.move(str(session), str(destination))
+          for session in sorted(root.glob("*.jsonl")):
+              try:
+                  with session.open("r", encoding="utf-8") as handle:
+                      first_line = handle.readline()
+                  header = json.loads(first_line) if first_line else {}
 
-                    companion = root / session.stem
-                    if companion.exists():
-                        companion_destination = destination_dir / companion.name
-                        if companion_destination.exists():
-                            for child in companion.iterdir():
-                                child_destination = companion_destination / child.name
-                                if not child_destination.exists():
-                                    shutil.move(str(child), str(child_destination))
-                            try:
-                                companion.rmdir()
-                            except OSError:
-                                pass
-                        else:
-                            shutil.move(str(companion), str(companion_destination))
-                    continue
+                  if header.get("type") == "session" and isinstance(header.get("cwd"), str) and header["cwd"]:
+                      destination_dir = root / session_dir_name(header["cwd"])
+                      destination_dir.mkdir(mode=0o700, exist_ok=True)
+                      destination = destination_dir / session.name
 
-                # If an old live process recreates a root-level fragment after the
-                # header-bearing file was already moved, append it to the unique matching
-                # migrated session file.
-                migrated_matches = [candidate for candidate in root.glob(f"*/{session.name}") if candidate.is_file()]
-                if len(migrated_matches) == 1:
-                    append_and_unlink(session, migrated_matches[0])
-            except Exception as exc:
-                print(f"warning: failed to migrate {session}: {exc}", file=sys.stderr)
-        PY
-                fi
-      '';
-    }
+                      if destination.exists():
+                          append_and_unlink(session, destination)
+                      else:
+                          shutil.move(str(session), str(destination))
 
-    # Cross-shell wrapper commands for per-provider profile selection (pi-bedrock, pi-codex, ...)
-    {
-      homeModules.shell.shared.functions = providerWrapperCommands;
-    }
+                      companion = root / session.stem
+                      if companion.exists():
+                          companion_destination = destination_dir / companion.name
+                          if companion_destination.exists():
+                              for child in companion.iterdir():
+                                  child_destination = companion_destination / child.name
+                                  if not child_destination.exists():
+                                      shutil.move(str(child), str(child_destination))
+                              try:
+                                  companion.rmdir()
+                              except OSError:
+                                  pass
+                          else:
+                              shutil.move(str(companion), str(companion_destination))
+                      continue
 
-    # Conditional Ollama wrapper (only when tools.ai.ollama is enabled)
-    (mkIf ollamaCfg.enable {
-      homeModules.shell.shared.functions.pi-ollama = ''
-        pi --provider ollama --model ${escapeShellArg ollamaCfg.model} "$@"
-      '';
-    })
+                  # If an old live process recreates a root-level fragment after the
+                  # header-bearing file was already moved, append it to the unique matching
+                  # migrated session file.
+                  migrated_matches = [candidate for candidate in root.glob(f"*/{session.name}") if candidate.is_file()]
+                  if len(migrated_matches) == 1:
+                      append_and_unlink(session, migrated_matches[0])
+              except Exception as exc:
+                  print(f"warning: failed to migrate {session}: {exc}", file=sys.stderr)
+          PY
+                  fi
+        '';
+      }
 
-    # Conditional brouter wrapper. The provider itself is registered in models.json above.
-    (mkIf (brouterCfg.enable && brouterCfg.enablePiIntegration) {
-      homeModules.shell.shared.functions.pi-brouter = ''
-        pi --provider ${escapeShellArg brouterCfg.providerName} --model ${escapeShellArg brouterCfg.defaultModel} "$@"
-      '';
-    })
+      # Cross-shell wrapper commands for per-provider profile selection (pi-bedrock, pi-codex, ...)
+      {
+        myConfig.shell.contrib.functions = providerWrapperCommands;
+      }
 
-    # Conditional brouter-proxy wrapper. The provider is registered in models.json above.
-    (mkIf (brouterProxyCfg.enable && brouterProxyCfg.enablePiIntegration) {
-      homeModules.shell.shared.functions.pi-brouter-proxy = ''
-        pi --provider ${escapeShellArg brouterProxyCfg.providerName} --model ${escapeShellArg brouterProxyCfg.defaultModel} "$@"
-      '';
-    })
+      # Conditional Ollama wrapper (only when tools.ai.ollama is enabled)
+      (lib.mkIf ollamaCfg.enable {
+        myConfig.shell.contrib.functions.pi-ollama = ''
+          pi --provider ollama --model ${lib.escapeShellArg ollamaCfg.model} "$@"
+        '';
+      })
 
-    # Auto-deploy skill directories from configs/pi/skills/<name>/
-    (mkIf (skillNames != [ ]) {
-      home.file = builtins.listToAttrs (
-        map (name: {
-          name = ".pi/agent/skills/${name}";
-          value = {
-            source = skillsDir + "/${name}";
-            recursive = true;
-          };
-        }) skillNames
-      );
-    })
+      # Conditional brouter wrapper. The provider itself is registered in models.json above.
+      (lib.mkIf (brouterCfg.enable && brouterCfg.enablePiIntegration) {
+        myConfig.shell.contrib.functions.pi-brouter = ''
+          pi --provider ${lib.escapeShellArg brouterCfg.providerName} --model ${lib.escapeShellArg brouterCfg.defaultModel} "$@"
+        '';
+      })
 
-    # Auto-deploy prompt templates from configs/pi/prompts/*.md
-    (mkIf (promptFiles != [ ]) {
-      home.file = builtins.listToAttrs (
-        map (fname: {
-          name = ".pi/agent/prompts/${fname}";
-          value = {
-            source = promptsDir + "/${fname}";
-          };
-        }) promptFiles
-      );
-    })
+      # Conditional brouter-proxy wrapper. The provider is registered in models.json above.
+      (lib.mkIf (brouterProxyCfg.enable && brouterProxyCfg.enablePiIntegration) {
+        myConfig.shell.contrib.functions.pi-brouter-proxy = ''
+          pi --provider ${lib.escapeShellArg brouterProxyCfg.providerName} --model ${lib.escapeShellArg brouterProxyCfg.defaultModel} "$@"
+        '';
+      })
 
-    # Auto-deploy theme files from configs/pi/themes/*.json
-    (mkIf (themeFiles != [ ]) {
-      home.file = builtins.listToAttrs (
-        map (fname: {
-          name = ".pi/agent/themes/${fname}";
-          value = {
-            source = themesDir + "/${fname}";
-          };
-        }) themeFiles
-      );
-    })
+      # Auto-deploy skill directories from configs/pi/skills/<name>/
+      (lib.mkIf (skillNames != [ ]) {
+        home.file = builtins.listToAttrs (
+          map (name: {
+            name = ".pi/agent/skills/${name}";
+            value = {
+              source = skillsDir + "/${name}";
+              recursive = true;
+            };
+          }) skillNames
+        );
+      })
 
-    # Auto-deploy Pi extensions from configs/pi/extensions/.
-    (mkIf (extensionNames != [ ]) {
-      home.file = builtins.listToAttrs (
-        map (name: {
-          name = ".pi/agent/extensions/${name}";
-          value = {
-            source = extensionsDir + "/${name}";
-            recursive = true;
-          };
-        }) extensionNames
-      );
-    })
-  ]);
+      # Auto-deploy prompt templates from configs/pi/prompts/*.md
+      (lib.mkIf (promptFiles != [ ]) {
+        home.file = builtins.listToAttrs (
+          map (fname: {
+            name = ".pi/agent/prompts/${fname}";
+            value = {
+              source = promptsDir + "/${fname}";
+            };
+          }) promptFiles
+        );
+      })
+
+      # Auto-deploy theme files from configs/pi/themes/*.json
+      (lib.mkIf (themeFiles != [ ]) {
+        home.file = builtins.listToAttrs (
+          map (fname: {
+            name = ".pi/agent/themes/${fname}";
+            value = {
+              source = themesDir + "/${fname}";
+            };
+          }) themeFiles
+        );
+      })
+
+      # Auto-deploy Pi extensions from configs/pi/extensions/.
+      (lib.mkIf (extensionNames != [ ]) {
+        home.file = builtins.listToAttrs (
+          map (name: {
+            name = ".pi/agent/extensions/${name}";
+            value = {
+              source = extensionsDir + "/${name}";
+              recursive = true;
+            };
+          }) extensionNames
+        );
+      })
+    ]
+  );
 }

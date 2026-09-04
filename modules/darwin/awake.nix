@@ -13,8 +13,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.darwin.awake;
   username = config.myConfig.username;
@@ -148,10 +146,10 @@ let
 in
 {
   options.myConfig.darwin.awake = {
-    enable = mkEnableOption "privileged stay-awake backend for one-shot closed-lid sessions";
+    enable = lib.mkEnableOption "privileged stay-awake backend for one-shot closed-lid sessions";
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     launchd.daemons.stay-awake = {
       serviceConfig = {
         Label = "dev.braden.stay-awake";

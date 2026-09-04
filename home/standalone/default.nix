@@ -6,10 +6,7 @@
 }:
 
 {
-  imports = [
-    ../modules
-    ../common
-  ];
+  imports = [ ../common ];
 
   # Enable XDG base directories
   xdg.enable = true;
@@ -21,7 +18,7 @@
     lib.mkIf config.myConfig.shell.warnOnStandaloneLoginShellMismatch
       (
         lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          desired_shell="${config.homeModules.shell.defaultShellPath}"
+          desired_shell="${config.myConfig.shell.resolved.defaultShellPath}"
           username="$(id -un)"
           current_shell="$(awk -F: -v user="$username" '$1 == user { print $7 }' /etc/passwd)"
           desired_name="$(basename "$desired_shell")"

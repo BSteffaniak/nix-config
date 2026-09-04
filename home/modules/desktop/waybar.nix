@@ -6,17 +6,15 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.desktop.waybar;
 in
 {
   options.myConfig.desktop.waybar = {
-    enable = mkEnableOption "Waybar status bar configuration";
+    enable = lib.mkEnableOption "Waybar status bar configuration";
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     # Symlink standalone waybar config from configs/waybar
     xdg.configFile = {
       "waybar/config.jsonc".source = ../../../configs/waybar/config.jsonc;

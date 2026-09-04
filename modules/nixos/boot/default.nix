@@ -5,19 +5,17 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.boot = {
-    enable = mkEnableOption "Boot configuration";
-    useLatestKernel = mkOption {
-      type = types.bool;
+    enable = lib.mkEnableOption "Boot configuration";
+    useLatestKernel = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = "Use latest kernel instead of stable";
     };
   };
 
-  config = mkIf config.myConfig.boot.enable {
+  config = lib.mkIf config.myConfig.boot.enable {
     boot = {
       kernelPackages =
         if config.myConfig.boot.useLatestKernel then pkgs.linuxPackages_latest else pkgs.linuxPackages;

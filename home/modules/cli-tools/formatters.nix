@@ -6,8 +6,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.cliTools.formatters;
 
@@ -15,8 +13,8 @@ let
 in
 {
   options.myConfig.cliTools.formatters = {
-    enableAll = mkOption {
-      type = types.bool;
+    enableAll = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = "Enable all code formatters (can be overridden per-tool)";
     };
@@ -28,14 +26,14 @@ in
   };
 
   config = {
-    home.packages = mkMerge [
-      (mkIf cfg.nixfmt.enable [ pkgs.nixfmt-rfc-style ])
-      (mkIf cfg.eslint.enable [ pkgs.eslint_d ])
-      (mkIf cfg.prettier.enable [
+    home.packages = lib.mkMerge [
+      (lib.mkIf cfg.nixfmt.enable [ pkgs.nixfmt-rfc-style ])
+      (lib.mkIf cfg.eslint.enable [ pkgs.eslint_d ])
+      (lib.mkIf cfg.prettier.enable [
         pkgs.prettier
         pkgs.prettierd
       ])
-      (mkIf cfg.taplo.enable [ pkgs.taplo ])
+      (lib.mkIf cfg.taplo.enable [ pkgs.taplo ])
     ];
   };
 }

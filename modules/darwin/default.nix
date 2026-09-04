@@ -1,31 +1,18 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ pkgs, ... }:
 
 {
   imports = [
     ./aerospace.nix
     ./applications.nix
     ./awake.nix
+    ./casks.nix
     ./cloudflare-warp.nix
-    ./figma.nix
-    ./ghostty.nix
-    ./google-chrome.nix
-    ./hex.nix
     ./homebrew.nix
-    ./istat-menus.nix
     ./keepingyouawake.nix
-    ./lspmux.nix
     ./minecraft.nix
-    ./microsoft-edge.nix
     ./ollama.nix
-    ./roon.nix
     ./scroll-reverser.nix
     ./security.nix
-    ./signal.nix
     ./sketchybar.nix
     ./ssh.nix
     ./system-defaults.nix

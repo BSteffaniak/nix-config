@@ -5,14 +5,12 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.hardware.nvidia = {
-    enable = mkEnableOption "NVIDIA GPU support";
+    enable = lib.mkEnableOption "NVIDIA GPU support";
   };
 
-  config = mkIf config.myConfig.hardware.nvidia.enable {
+  config = lib.mkIf config.myConfig.hardware.nvidia.enable {
     services.xserver.videoDrivers = [ "nvidia" ];
 
     hardware.nvidia = {

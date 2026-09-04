@@ -5,8 +5,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.development.bcode;
   agentsCfg = config.myConfig.development.agents;
@@ -109,18 +107,18 @@ let
   normalizeBcodeAgent =
     agent:
     agent
-    // optionalAttrs (agent ? permission && builtins.isAttrs agent.permission) {
+    // lib.optionalAttrs (agent ? permission && builtins.isAttrs agent.permission) {
       permission = renameBcodePermissionCategory agent.permission;
     }
-    // optionalAttrs (agent ? tools && builtins.isAttrs agent.tools) {
+    // lib.optionalAttrs (agent ? tools && builtins.isAttrs agent.tools) {
       tools = renameBcodeToolKey agent.tools;
     };
 
   normalizeBcodeAgentConfig =
     settings:
     settings
-    // optionalAttrs (settings ? agent && builtins.isAttrs settings.agent) {
-      agent = mapAttrs (_name: agent: normalizeBcodeAgent agent) settings.agent;
+    // lib.optionalAttrs (settings ? agent && builtins.isAttrs settings.agent) {
+      agent = lib.mapAttrs (_name: agent: normalizeBcodeAgent agent) settings.agent;
     };
 
   longContextCompaction = providerPluginId: threshold: {
@@ -140,8 +138,8 @@ let
   ];
 
   pricingBarrierCompactionModels =
-    optionalAttrs cfg.compaction.openAiPricingBarrier.enable (
-      genAttrs openAiLongContextModels (_: longContextCompaction "bcode.openai-compatible" 272000)
+    lib.optionalAttrs cfg.compaction.openAiPricingBarrier.enable (
+      lib.genAttrs openAiLongContextModels (_: longContextCompaction "bcode.openai-compatible" 272000)
     )
     // {
       # GPT-5.6 models (1M context) - compact at 272k
@@ -233,7 +231,7 @@ let
     };
   };
 
-  finalSettingsRaw = recursiveUpdate (recursiveUpdate baseSettings bcodePermissions) cfg.extraSettings;
+  finalSettingsRaw = lib.recursiveUpdate (lib.recursiveUpdate baseSettings bcodePermissions) cfg.extraSettings;
   finalSettings = normalizeBcodeAgentConfig finalSettingsRaw;
 
   openAiFastAlias = {
@@ -263,22 +261,25 @@ let
           model_id = profile.model;
           inherit settings;
         }
-        // optionalAttrs (authProfile != null) { auth_profile = authProfile; }
-        // optionalAttrs (profile ? authPool && profile.authPool != null) { auth_pool = profile.authPool; }
+        // lib.optionalAttrs (authProfile != null) { auth_profile = authProfile; }
+        // lib.optionalAttrs (profile ? authPool && profile.authPool != null) {
+          auth_pool = profile.authPool;
+        }
         // {
           inherit aliases;
           compaction = compactionSettings;
         };
       }
-      // optionalAttrs (authProfile != null && authConfig != null) {
+      // lib.optionalAttrs (authProfile != null && authConfig != null) {
         auth.profiles.${authProfile} = authConfig;
       };
     in
-    recursiveUpdate baseOverlay (profile.extraConfig or { });
+    lib.recursiveUpdate baseOverlay (profile.extraConfig or { });
 
   profileWithoutVariants = profile: removeAttrs profile [ "variants" ];
 
-  mergeProfileVariant = profile: variant: recursiveUpdate (profileWithoutVariants profile) variant;
+  mergeProfileVariant =
+    profile: variant: lib.recursiveUpdate (profileWithoutVariants profile) variant;
 
   expandProfileOverlays =
     name: profile:
@@ -289,38 +290,42 @@ let
     {
       ${name} = mkProfileOverlay name baseProfile;
     }
-    // mapAttrs' (variantName: variant: {
+    // lib.mapAttrs' (variantName: variant: {
       name = "${name}-${variantName}";
       value = mkProfileOverlay "${name}-${variantName}" (mergeProfileVariant profile variant);
     }) variants;
 
   mkProfileOverlays =
     profiles:
-    foldl' (acc: name: acc // expandProfileOverlays name profiles.${name}) { } (attrNames profiles);
+    lib.foldl' (acc: name: acc // expandProfileOverlays name profiles.${name}) { } (
+      lib.attrNames profiles
+    );
 
   expandProfileSshenv =
     name: profile:
     let
       baseProfile = profileWithoutVariants profile;
       variants = profile.variants or { };
-      base = optionalAttrs (baseProfile ? sshenv && baseProfile.sshenv != null) {
+      base = lib.optionalAttrs (baseProfile ? sshenv && baseProfile.sshenv != null) {
         ${name} = baseProfile.sshenv;
       };
     in
     base
-    // concatMapAttrs (
+    // lib.concatMapAttrs (
       variantName: variant:
       let
         merged = mergeProfileVariant profile variant;
       in
-      optionalAttrs (merged ? sshenv && merged.sshenv != null) {
+      lib.optionalAttrs (merged ? sshenv && merged.sshenv != null) {
         "${name}-${variantName}" = merged.sshenv;
       }
     ) variants;
 
   mkProfileSshenv =
     profiles:
-    foldl' (acc: name: acc // expandProfileSshenv name profiles.${name}) { } (attrNames profiles);
+    lib.foldl' (acc: name: acc // expandProfileSshenv name profiles.${name}) { } (
+      lib.attrNames profiles
+    );
 
   # Shared scaffolding for the Bedrock wrappers. Every Bedrock profile authenticates through the
   # same sshenv `bedrock` profile, so they differ only by model, transport settings, and whether the
@@ -337,7 +342,7 @@ let
       authProfile = "bedrock";
       settings =
         settings
-        // optionalAttrs (cfg.providers.bedrock.region != null) {
+        // lib.optionalAttrs (cfg.providers.bedrock.region != null) {
           region = cfg.providers.bedrock.region;
         };
       auth = {
@@ -348,7 +353,7 @@ let
         map = {
           bearer_token.env = "AWS_BEARER_TOKEN_BEDROCK";
         }
-        // optionalAttrs (!bearerOnly) {
+        // lib.optionalAttrs (!bearerOnly) {
           access_key_id.env = "AWS_ACCESS_KEY_ID";
           secret_access_key.env = "AWS_SECRET_ACCESS_KEY";
           session_token.env = "AWS_SESSION_TOKEN";
@@ -358,10 +363,12 @@ let
           profile =
             if cfg.providers.bedrock.sshenv != null then cfg.providers.bedrock.sshenv.profile else "bedrock";
         }
-        // optionalAttrs (cfg.providers.bedrock.awsProfile != null) {
+        // lib.optionalAttrs (cfg.providers.bedrock.awsProfile != null) {
           profile = cfg.providers.bedrock.awsProfile;
         }
-        // optionalAttrs (cfg.providers.bedrock.region != null) { region = cfg.providers.bedrock.region; };
+        // lib.optionalAttrs (cfg.providers.bedrock.region != null) {
+          region = cfg.providers.bedrock.region;
+        };
       };
       sshenv = cfg.providers.bedrock.sshenv;
     };
@@ -386,8 +393,8 @@ let
       inherit model authProfile;
       authPool = if enableSubscriptionPriming then authPool else null;
       settings =
-        optionalAttrs (baseUrl != null) { base_url = baseUrl; }
-        // optionalAttrs (dialect != null) { inherit dialect; };
+        lib.optionalAttrs (baseUrl != null) { base_url = baseUrl; }
+        // lib.optionalAttrs (dialect != null) { inherit dialect; };
       aliases = openAiFastAlias;
       auth = {
         backend = "sshenv";
@@ -399,10 +406,10 @@ let
           profile = authProfile;
           vault = cfg.authVaultPath;
         }
-        // optionalAttrs (authProvider == "openai") { mode = "chatgpt"; }
-        // optionalAttrs (baseUrl != null) { base_url = baseUrl; };
+        // lib.optionalAttrs (authProvider == "openai") { mode = "chatgpt"; }
+        // lib.optionalAttrs (baseUrl != null) { base_url = baseUrl; };
       };
-      extraConfig = optionalAttrs enableSubscriptionPriming {
+      extraConfig = lib.optionalAttrs enableSubscriptionPriming {
         auth.pools.${authPool} = {
           provider_plugin_id = "bcode.openai-compatible";
           priming.enabled = true;
@@ -410,7 +417,7 @@ let
       };
       variants =
         variants
-        // optionalAttrs (fastModel != null) {
+        // lib.optionalAttrs (fastModel != null) {
           fast.model = fastModel;
         };
     };
@@ -457,22 +464,22 @@ let
         };
       };
     }
-    // optionalAttrs (sshenv != null) { inherit sshenv; };
+    // lib.optionalAttrs (sshenv != null) { inherit sshenv; };
 
   mkSshenvOption =
     defaultProfile: defaultValue:
-    mkOption {
-      type = types.nullOr (
-        types.submodule {
+    lib.mkOption {
+      type = lib.types.nullOr (
+        lib.types.submodule {
           options = {
-            profile = mkOption {
-              type = types.str;
+            profile = lib.mkOption {
+              type = lib.types.str;
               default = defaultProfile;
               description = "sshenv profile to load before starting this Bcode provider wrapper.";
             };
 
-            envOnly = mkOption {
-              type = types.bool;
+            envOnly = lib.mkOption {
+              type = lib.types.bool;
               default = true;
               description = "Load the sshenv profile as process environment variables for this provider.";
             };
@@ -611,7 +618,7 @@ let
 
   providerOverlays = mkProfileOverlays allProfiles // cfg.extraProviderOverlays;
 
-  providerSshenv = filterAttrs (_name: spec: spec != null) (
+  providerSshenv = lib.filterAttrs (_name: spec: spec != null) (
     mkProfileSshenv allProfiles // cfg.extraProviderSshenv
   );
 
@@ -625,7 +632,7 @@ let
     in
     if sshenvSpec != null then
       ''
-        exec ${pkgs.sshenv}/bin/sshenv run ${escapeShellArg sshenvSpec.profile} -- ${command}
+        exec ${pkgs.sshenv}/bin/sshenv run ${lib.escapeShellArg sshenvSpec.profile} -- ${command}
       ''
     else
       ''
@@ -641,34 +648,34 @@ let
 in
 {
   options.myConfig.development.bcode = {
-    enable = mkEnableOption "Bcode coding agent configuration";
+    enable = lib.mkEnableOption "Bcode coding agent configuration";
 
-    package = mkOption {
-      type = types.nullOr types.package;
+    package = lib.mkOption {
+      type = lib.types.nullOr lib.types.package;
       default = pkgs.bcode or null;
       description = "Optional Bcode package to install. Set to null when Bcode is installed outside this Nix configuration.";
     };
 
-    authVaultPath = mkOption {
-      type = types.str;
+    authVaultPath = lib.mkOption {
+      type = lib.types.str;
       default = "${config.home.homeDirectory}/.local/state/bcode/auth/vault";
       description = "sshenv vault path used for Bcode OpenAI/ChatGPT authentication.";
     };
 
-    permissionOverrides = mkOption {
-      type = types.listOf types.path;
+    permissionOverrides = lib.mkOption {
+      type = lib.types.listOf lib.types.path;
       default = [ ];
       description = "Bcode-specific agent permission JSON files merged after shared permission files.";
     };
 
-    extraSettings = mkOption {
-      type = types.attrs;
+    extraSettings = lib.mkOption {
+      type = lib.types.attrs;
       default = { };
       description = "Additional Bcode TOML settings merged after generated shared agent permissions.";
     };
 
-    profiles = mkOption {
-      type = types.attrsOf types.attrs;
+    profiles = lib.mkOption {
+      type = lib.types.attrsOf lib.types.attrs;
       default = { };
       description = ''
         Generic generated Bcode provider profiles, keyed by wrapper name without the `bcode-` prefix.
@@ -681,23 +688,23 @@ in
       '';
     };
 
-    extraProviderOverlays = mkOption {
-      type = types.attrsOf types.attrs;
+    extraProviderOverlays = lib.mkOption {
+      type = lib.types.attrsOf lib.types.attrs;
       default = { };
       description = "Raw Bcode provider overlay TOML settings, keyed by wrapper/provider name. Prefer `profiles` for generated provider configs.";
     };
 
-    extraProviderSshenv = mkOption {
-      type = types.attrsOf (
-        types.submodule {
+    extraProviderSshenv = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.submodule {
           options = {
-            profile = mkOption {
-              type = types.str;
+            profile = lib.mkOption {
+              type = lib.types.str;
               description = "sshenv profile to load before starting this extra Bcode provider wrapper.";
             };
 
-            envOnly = mkOption {
-              type = types.bool;
+            envOnly = lib.mkOption {
+              type = lib.types.bool;
               default = true;
               description = "Load the sshenv profile as process environment variables for this provider.";
             };
@@ -708,8 +715,8 @@ in
       description = "Additional sshenv wrapper settings, keyed by extra provider/wrapper name.";
     };
 
-    compaction.openAiPricingBarrier.enable = mkOption {
-      type = types.bool;
+    compaction.openAiPricingBarrier.enable = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = ''
         Opt in to proactive compaction at OpenAI's long-context pricing barrier for
@@ -721,8 +728,8 @@ in
 
     providers = {
       bedrock = {
-        openaiModel = mkOption {
-          type = types.str;
+        openaiModel = lib.mkOption {
+          type = lib.types.str;
           default = "us.openai.gpt-5.6-sol";
           description = ''
             Bedrock-hosted OpenAI model used by bcode-bedrock-openai.
@@ -732,38 +739,38 @@ in
           '';
         };
 
-        lunaModel = mkOption {
-          type = types.str;
+        lunaModel = lib.mkOption {
+          type = lib.types.str;
           default = "us.openai.gpt-5.6-luna";
           description = "Bedrock-hosted GPT-5.6 Luna model used by bcode-bedrock-luna.";
         };
 
-        fableModel = mkOption {
-          type = types.str;
+        fableModel = lib.mkOption {
+          type = lib.types.str;
           default = "global.anthropic.claude-fable-5-1";
           description = "Bedrock Anthropic Messages model used by bcode-bedrock-fable.";
         };
 
-        opusModel = mkOption {
-          type = types.str;
+        opusModel = lib.mkOption {
+          type = lib.types.str;
           default = "global.anthropic.claude-opus-5";
           description = "Native Bedrock (ConverseStream) model used by bcode-bedrock-opus.";
         };
 
-        mantleModel = mkOption {
-          type = types.str;
+        mantleModel = lib.mkOption {
+          type = lib.types.str;
           default = "anthropic.claude-opus-5";
           description = "Anthropic Messages model used by bcode-bedrock-mantle.";
         };
 
-        region = mkOption {
-          type = types.nullOr types.str;
+        region = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
           default = null;
           description = "Optional AWS region setting for the bcode-bedrock-* wrappers.";
         };
 
-        awsProfile = mkOption {
-          type = types.nullOr types.str;
+        awsProfile = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
           default = null;
           description = "Optional AWS profile setting for the bcode-bedrock-* wrappers.";
         };
@@ -775,20 +782,20 @@ in
       };
 
       openai = {
-        model = mkOption {
-          type = types.str;
+        model = lib.mkOption {
+          type = lib.types.str;
           default = "gpt-5.6-sol";
           description = "OpenAI/ChatGPT model used by bcode-openai.";
         };
 
-        fastModel = mkOption {
-          type = types.str;
+        fastModel = lib.mkOption {
+          type = lib.types.str;
           default = "gpt-5.6-sol-fast";
           description = "Priority-tier OpenAI/ChatGPT model alias used by bcode-openai-fast.";
         };
 
-        authProfile = mkOption {
-          type = types.str;
+        authProfile = lib.mkOption {
+          type = lib.types.str;
           default = "openai";
           description = "Shared sshenv profile used by bcode-openai.";
         };
@@ -796,8 +803,8 @@ in
         sshenv = mkSshenvOption "openai" null;
 
         subscriptionPriming = {
-          enable = mkOption {
-            type = types.bool;
+          enable = lib.mkOption {
+            type = lib.types.bool;
             default = true;
             description = "Enable Bcode's OpenAI/Codex subscription priming defaults for bcode-openai.";
           };
@@ -805,14 +812,14 @@ in
       };
 
       codex = {
-        model = mkOption {
-          type = types.str;
+        model = lib.mkOption {
+          type = lib.types.str;
           default = "gpt-5.3-codex";
           description = "Codex model used by bcode-codex.";
         };
 
-        authProfile = mkOption {
-          type = types.str;
+        authProfile = lib.mkOption {
+          type = lib.types.str;
           default = "openai";
           description = "Shared sshenv profile used by bcode-codex.";
         };
@@ -821,14 +828,14 @@ in
       };
 
       xai = {
-        model = mkOption {
-          type = types.str;
+        model = lib.mkOption {
+          type = lib.types.str;
           default = "grok-4.6";
           description = "xAI/Grok model used by bcode-xai.";
         };
 
-        codeFastModel = mkOption {
-          type = types.str;
+        codeFastModel = lib.mkOption {
+          type = lib.types.str;
           default = "grok-code-fast";
           description = "xAI/Grok Code Fast model used by bcode-grok-code-fast.";
         };
@@ -840,32 +847,32 @@ in
       };
 
       openrouter = {
-        model = mkOption {
-          type = types.str;
+        model = lib.mkOption {
+          type = lib.types.str;
           default = "z-ai/glm-5.1";
           description = "OpenRouter model used by bcode-openrouter.";
         };
 
-        baseUrl = mkOption {
-          type = types.str;
+        baseUrl = lib.mkOption {
+          type = lib.types.str;
           default = "https://openrouter.ai/api/v1";
           description = "OpenRouter OpenAI-compatible API base URL.";
         };
 
-        authProfile = mkOption {
-          type = types.str;
+        authProfile = lib.mkOption {
+          type = lib.types.str;
           default = "openrouter";
           description = "sshenv auth profile used by bcode-openrouter.";
         };
 
-        authVaultPath = mkOption {
-          type = types.str;
+        authVaultPath = lib.mkOption {
+          type = lib.types.str;
           default = cfg.authVaultPath;
           description = "sshenv vault path used by bcode-openrouter.";
         };
 
-        apiKeyEnv = mkOption {
-          type = types.str;
+        apiKeyEnv = lib.mkOption {
+          type = lib.types.str;
           default = "OPENROUTER_API_KEY";
           description = "API key environment variable loaded from the bcode-openrouter sshenv profile.";
         };
@@ -877,32 +884,32 @@ in
       };
 
       zen = {
-        model = mkOption {
-          type = types.str;
+        model = lib.mkOption {
+          type = lib.types.str;
           default = "big-pickle";
           description = "OpenCode Zen model used by bcode-zen.";
         };
 
-        baseUrl = mkOption {
-          type = types.str;
+        baseUrl = lib.mkOption {
+          type = lib.types.str;
           default = "https://opencode.ai/zen/v1";
           description = "OpenCode Zen OpenAI-compatible API base URL.";
         };
 
-        authProfile = mkOption {
-          type = types.str;
+        authProfile = lib.mkOption {
+          type = lib.types.str;
           default = "opencode-zen";
           description = "sshenv auth profile used by bcode-zen.";
         };
 
-        authVaultPath = mkOption {
-          type = types.str;
+        authVaultPath = lib.mkOption {
+          type = lib.types.str;
           default = cfg.authVaultPath;
           description = "sshenv vault path used by bcode-zen.";
         };
 
-        apiKeyEnv = mkOption {
-          type = types.str;
+        apiKeyEnv = lib.mkOption {
+          type = lib.types.str;
           default = "OPENCODE_API_KEY";
           description = "API key environment variable loaded from the bcode-zen sshenv profile.";
         };
@@ -914,8 +921,8 @@ in
       };
 
       brouter = {
-        model = mkOption {
-          type = types.str;
+        model = lib.mkOption {
+          type = lib.types.str;
           default = brouterCfg.defaultModel;
           description = "Model used by bcode-brouter against the local brouter OpenAI-compatible endpoint.";
         };
@@ -924,8 +931,8 @@ in
       };
 
       brouterProxy = {
-        model = mkOption {
-          type = types.str;
+        model = lib.mkOption {
+          type = lib.types.str;
           default = brouterProxyCfg.defaultModel;
           description = "Model used by bcode-brouter-proxy against the local brouter-proxy OpenAI-compatible endpoint.";
         };
@@ -935,25 +942,27 @@ in
     };
   };
 
-  config = mkIf cfg.enable (mkMerge [
-    {
-      assertions = mapAttrsToList (name: spec: {
-        assertion = spec.envOnly;
-        message = "Bcode provider '${name}' only supports sshenv.envOnly = true.";
-      }) providerSshenv;
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      {
+        assertions = lib.mapAttrsToList (name: spec: {
+          assertion = spec.envOnly;
+          message = "Bcode provider '${name}' only supports sshenv.envOnly = true.";
+        }) providerSshenv;
 
-      home.packages = optional (cfg.package != null) cfg.package;
+        home.packages = lib.optional (cfg.package != null) cfg.package;
 
-      xdg.configFile."bcode/bcode.toml".source = tomlFormat.generate "bcode.toml" finalSettings;
-      xdg.configFile."bcode/skills".source = skillsDir;
+        xdg.configFile."bcode/bcode.toml".source = tomlFormat.generate "bcode.toml" finalSettings;
+        xdg.configFile."bcode/skills".source = skillsDir;
 
-      homeModules.shell.shared.functions = providerWrapperCommands;
-    }
-    {
-      xdg.configFile = mapAttrs' (name: overlay: {
-        name = "bcode/providers/${name}.toml";
-        value.source = tomlFormat.generate "bcode-provider-${name}.toml" overlay;
-      }) providerOverlays;
-    }
-  ]);
+        myConfig.shell.contrib.functions = providerWrapperCommands;
+      }
+      {
+        xdg.configFile = lib.mapAttrs' (name: overlay: {
+          name = "bcode/providers/${name}.toml";
+          value.source = tomlFormat.generate "bcode-provider-${name}.toml" overlay;
+        }) providerOverlays;
+      }
+    ]
+  );
 }

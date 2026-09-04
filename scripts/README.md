@@ -37,7 +37,7 @@ The script will prompt you for:
 
 ### `new-host-template.sh` (Template Generator)
 
-Generates host configuration files from command-line arguments. Called by `bootstrap.sh` but can be used standalone.
+Generates `hosts/<host>/home.nix` (user-level) and, for NixOS/Darwin, `hosts/<host>/default.nix` (system-level) from command-line arguments. Called by `bootstrap.sh` but can be used standalone. Host identity (hostname, username, state versions) lives in `meta.nix`, which `bootstrap.sh` writes.
 
 **Usage:**
 
@@ -50,44 +50,43 @@ Generates host configuration files from command-line arguments. Called by `boots
   --arch x86_64-linux \
   --rust true \
   --nodejs true \
-  --go true \
-  --state-version 24.11
+  --go true
 ```
 
 **Available Options:**
 
 Platform options:
 
-- `--platform` - "nixos" or "darwin"
+- `--platform` - "nixos", "darwin", or "linux" (standalone home-manager)
 - `--hostname` - Host name
 - `--username` - Primary user
 - `--fullname` - Full name
 - `--arch` - Architecture (x86_64-linux, aarch64-linux, x86_64-darwin, aarch64-darwin)
-- `--state-version` - NixOS/Darwin state version
 
-Development tools:
+Development tools (written to `home.nix`):
 
 - `--rust`, `--nodejs`, `--go`, `--python`, `--java`, `--zig` - true/false
-- `--android`, `--devops`, `--openssl` - true/false
-- `--podman` (Darwin), `--docker` (NixOS) - true/false
+- `--android`, `--devops`, `--openssl`, `--podman` - true/false
+- `--dotnet` and the `--dotnet-*` family - see `bootstrap.sh`
 
 Editors and shell:
 
-- `--neovim`, `--neovim-nightly` - true/false
-- `--fish`, `--bash`, `--zsh`, `--nushell`, `--git`, `--clitools` - true/false
+- `--neovim`, `--neovim-nightly` - true/false (home.nix)
+- `--git`, `--ssh`, `--clitools` - true/false (home.nix)
+- `--fish`, `--bash`, `--zsh`, `--nushell` - true/false (login shells; default.nix)
 - `--default-shell` - optional host override; one of: `fish`, `bash`, `zsh`, `nushell`
 
-NixOS-specific:
+NixOS-specific (default.nix):
 
 - `--desktop`, `--hyprland`, `--waybar`, `--gtk`, `--xserver` - true/false
 - `--nvidia`, `--graphics` - true/false
 - `--boot`, `--latest-kernel` - true/false
-- `--system`, `--networking`, `--ssh`, `--security`, `--audio`, `--locale` - true/false
+- `--system`, `--networking`, `--security`, `--audio`, `--locale` - true/false
 - `--timezone` - Timezone string
-- `--docker-data-root` - Docker data directory
-- `--observability`, `--minecraft`, `--nixos-clitools` - true/false
+- `--docker`, `--docker-data-root` - Docker daemon
+- `--observability`, `--minecraft` - true/false
 
-Darwin-specific:
+Darwin-specific (default.nix):
 
 - `--homebrew`, `--system-defaults`, `--applications` - true/false
 - `--computer-name` - Display name for the computer
@@ -280,6 +279,19 @@ NixOS-only script that detects hardware and suggests appropriate configuration o
 
 Run this before bootstrapping a NixOS host to get hardware-specific recommendations.
 
+### `check-all-hosts.sh` (Evaluation Regression Gate)
+
+Evaluates the toplevel derivation of every host discovered from `hosts/*/meta.nix` and compares against a saved baseline. Use it to prove a refactor changed nothing, or to see exactly which hosts a change affects.
+
+```bash
+./scripts/check-all-hosts.sh save      # write .host-drvs.baseline (gitignored)
+# ...make changes...
+./scripts/check-all-hosts.sh compare   # exit 1 and print the differing hosts
+./scripts/check-all-hosts.sh eval      # just print current drvPaths
+```
+
+When hosts differ, inspect with `nix-diff <old-drv> <new-drv>` (available in the dev shell). Evaluation uses `path:` so untracked files are picked up without staging. `nix flake check` exposes the same set of toplevels via the `checks` output.
+
 ### `github-release.sh` (GitHub Release Manager)
 
 Manages pre-built binary packages from GitHub releases. Supports both interactive and non-interactive modes.
@@ -413,12 +425,13 @@ darwin-rebuild build --flake .#new-hostname
   --go true \
   --desktop false \
   --boot true \
+  --system true \
   --networking true \
   --ssh true \
-  --docker true \
-  --state-version 24.11
+  --docker true
 
-# The host is auto-discovered from meta.nix -- no flake or rebuild.sh edits needed
+# Then write hosts/server-01/meta.nix (see docs/hosts.md) -- the host is
+# auto-discovered from it; no flake or rebuild.sh edits needed.
 ```
 
 ## Notes
@@ -427,7 +440,7 @@ darwin-rebuild build --flake .#new-hostname
 - For NixOS, make sure to generate or copy `hardware-configuration.nix` - the bootstrap script will help with this.
 - Always test your configuration with `build` before applying with `switch`.
 - The scripts preserve your existing hosts and configurations - they only add new ones.
-- State versions should match your NixOS/Darwin release version at the time of first install.
+- State versions live in `meta.nix` (`stateVersion`, `homeStateVersion`) and should match the release at the time of first install.
 
 ## Troubleshooting
 

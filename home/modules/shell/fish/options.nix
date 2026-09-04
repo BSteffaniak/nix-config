@@ -1,59 +1,40 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+# Option declarations for myConfig.shell.fish.
+{ lib, ... }:
 
-with lib;
-
-let
-  shellCfg = config.myConfig.shell;
-  completionCommands =
-    if shellCfg.shared.completions.enable then
-      unique (config.homeModules.shell.shared.completionCommands ++ shellCfg.shared.completions.commands)
-    else
-      [ ];
-  completionInit = concatMapStringsSep "\n" (command: ''
-    if type -q ${command}
-      ${command} completion fish | source
-    end
-  '') completionCommands;
-in
 {
-  options.homeModules.fish = {
-    enable = mkEnableOption "Fish shell configuration";
+  options.myConfig.shell.fish = {
+    enable = lib.mkEnableOption "Fish shell configuration";
 
     # Low-level options for custom use
-    aliases = mkOption {
-      type = types.attrsOf types.str;
+    aliases = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
       default = { };
       description = "Custom fish shell aliases";
     };
 
-    functions = mkOption {
-      type = types.attrsOf types.str;
+    functions = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
       default = { };
       description = "Custom fish shell functions";
     };
 
-    shellInit = mkOption {
-      type = types.lines;
+    shellInit = lib.mkOption {
+      type = lib.types.lines;
       default = "";
       description = "Fish shell initialization code";
     };
 
-    interactiveShellInit = mkOption {
-      type = types.lines;
+    interactiveShellInit = lib.mkOption {
+      type = lib.types.lines;
       default = "";
       description = "Interactive shell initialization code";
     };
 
-    plugins = mkOption {
-      type = types.listOf types.package;
+    plugins = lib.mkOption {
+      type = lib.types.listOf lib.types.package;
       default = [ ];
       description = "Fish plugins to install";
-      example = literalExpression ''
+      example = lib.literalExpression ''
         with pkgs.fishPlugins; [
           done
           fzf-fish
@@ -63,8 +44,8 @@ in
       '';
     };
 
-    extraConfigFiles = mkOption {
-      type = types.listOf types.str;
+    extraConfigFiles = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
       default = [ ];
       description = ''
         List of additional fish config files to source.
@@ -72,7 +53,7 @@ in
         Useful for sourcing non-Nix managed configurations.
         Files are sourced in order, and only if they exist.
       '';
-      example = literalExpression ''
+      example = lib.literalExpression ''
         [
           ".config/fish/work.fish"
           ".config/fish/private.fish"
@@ -87,20 +68,20 @@ in
 
     # Flat Project Configuration
     flat = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = "Enable Flat project tooling";
       };
 
-      logging = mkOption {
-        type = types.bool;
+      logging = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable Flat logging functions (requires flat.enable)";
       };
 
-      airship = mkOption {
-        type = types.bool;
+      airship = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable Airship/devship wrapper (requires flat.enable and airship package)";
       };
@@ -108,14 +89,14 @@ in
 
     # Zellij Configuration
     zellij = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = "Enable Zellij terminal multiplexer integration";
       };
 
-      resurrect = mkOption {
-        type = types.bool;
+      resurrect = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable session resurrection function (requires zellij.enable)";
       };
@@ -123,20 +104,20 @@ in
 
     # OpenCode Configuration
     opencode = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = "Enable OpenCode development tooling";
       };
 
-      devMode = mkOption {
-        type = types.bool;
+      devMode = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable development mode runner (requires opencode.enable)";
       };
 
-      projectPath = mkOption {
-        type = types.str;
+      projectPath = lib.mkOption {
+        type = lib.types.str;
         default = "/hdd/GitHub/opencode";
         description = "Path to OpenCode project";
       };
@@ -144,8 +125,8 @@ in
 
     # Neovim Configuration
     neovim = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = ''
           Enable Neovim-specific features.
@@ -153,14 +134,14 @@ in
         '';
       };
 
-      sessionLoading = mkOption {
-        type = types.bool;
+      sessionLoading = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable nvims function for session loading (requires neovim.enable)";
       };
 
-      manPages = mkOption {
-        type = types.bool;
+      manPages = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable enhanced man page viewer in nvim (requires neovim.enable)";
       };
@@ -168,26 +149,26 @@ in
 
     # General Utilities
     utilities = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable general utility functions";
       };
 
-      sessionManagement = mkOption {
-        type = types.bool;
+      sessionManagement = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable reload-session function (requires utilities.enable)";
       };
 
-      pathManagement = mkOption {
-        type = types.bool;
+      pathManagement = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable path management utilities (fish_remove_path) - requires utilities.enable";
       };
 
-      retryCommand = mkOption {
-        type = types.bool;
+      retryCommand = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable auto-retry command wrapper (requires utilities.enable)";
       };
@@ -195,14 +176,14 @@ in
 
     # Development Tools
     development = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = "Enable development/testing tools";
       };
 
-      benchmark = mkOption {
-        type = types.bool;
+      benchmark = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable terminal rendering benchmark (requires development.enable)";
       };
@@ -210,14 +191,14 @@ in
 
     # Editor Configuration
     editor = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable editor environment variable configuration";
       };
 
-      nvim = mkOption {
-        type = types.bool;
+      nvim = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = ''
           Set neovim as EDITOR and VISUAL (requires editor.enable).
@@ -228,60 +209,11 @@ in
 
     # Direnv Integration
     direnv = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable direnv integration for per-directory environments";
       };
-    };
-  };
-
-  config = mkIf config.homeModules.fish.enable {
-    # home-manager's fish module force-enables `programs.man.generateCaches`
-    # via `mkDefault true` to back `man <tab>` completion with `apropos`.
-    # That rebuilds the man-db `whatis` index on every switch, which is slow
-    # and noisy. Disable it; `man <name>` still works without the cache.
-    programs.man.generateCaches = false;
-
-    # Home Manager otherwise generates Fish completions from every installed
-    # package's man pages. Keep native and explicitly configured completions,
-    # but avoid fragile completion derivations such as age's.
-    programs.fish.generateCompletions = false;
-
-    programs.fish = {
-      enable = true;
-      shellAliases = config.homeModules.shell.resolvedAliases // config.homeModules.fish.aliases;
-      functions = config.homeModules.fish.functions;
-      plugins = map (pkg: {
-        name = pkg.pname;
-        src = pkg.src;
-      }) config.homeModules.fish.plugins;
-
-      shellInit = ''
-        ${config.homeModules.fish.shellInit}
-      '';
-
-      interactiveShellInit = ''
-        ${config.homeModules.shell.shared.fishInit}
-        ${shellCfg.shared.fishInit}
-        ${completionInit}
-
-
-        # Source extra config files specified in configuration
-        ${concatMapStringsSep "\n" (file: ''
-          if test -e "$HOME/${file}"
-            source "$HOME/${file}"
-          end
-        '') config.homeModules.fish.extraConfigFiles}
-
-        # Source local override file (convention-based)
-        # This allows quick customizations without rebuilding
-        if test -e "$HOME/.config/fish/local.fish"
-          source "$HOME/.config/fish/local.fish"
-        end
-
-        ${config.homeModules.fish.interactiveShellInit}
-      '';
     };
   };
 }

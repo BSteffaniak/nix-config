@@ -5,14 +5,12 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.system.security = {
-    enable = mkEnableOption "Security configuration";
+    enable = lib.mkEnableOption "Security configuration";
   };
 
-  config = mkIf config.myConfig.system.security.enable {
+  config = lib.mkIf config.myConfig.system.security.enable {
     security = {
       pam.services.swaylock = {
         text = ''

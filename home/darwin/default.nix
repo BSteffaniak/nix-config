@@ -1,3 +1,7 @@
+# nix-darwin -> home-manager bridge.
+#
+# User-facing feature flags are declared directly in the host's home.nix.
+# Only genuinely system-owned settings are mirrored from the OS config here.
 {
   lib,
   osConfig,
@@ -5,59 +9,25 @@
 }:
 
 {
-  imports = [
-    ../common
-    ../modules
-  ];
+  imports = [ ../common ];
 
-  # Mirror system configuration to home-manager modules
   myConfig = {
-    # Development tools
-    development.rust.enable = lib.mkDefault (osConfig.myConfig.development.rust.enable or false);
-    development.rust.includeNightly = lib.mkDefault (
-      osConfig.myConfig.development.rust.includeNightly or false
-    );
-    development.nodejs.enable = osConfig.myConfig.development.nodejs.enable or false;
-    development.go.enable = osConfig.myConfig.development.go.enable or false;
-    development.python.enable = osConfig.myConfig.development.python.enable or false;
-    development.android.enable = osConfig.myConfig.development.android.enable or false;
-    development.java.enable = osConfig.myConfig.development.java.enable or false;
-    development.elixir.enable = osConfig.myConfig.development.elixir.enable or false;
-    development.zig.enable = osConfig.myConfig.development.zig.enable or false;
-    development.c.enable = osConfig.myConfig.development.c.enable or false;
-    development.openssl.enable = osConfig.myConfig.development.openssl.enable or false;
+    # Login shells are declared at system level so they can be used as login
+    # shells; mirror them so home-manager configures the same set.
+    shell = {
+      default = lib.mkDefault osConfig.myConfig.shell.default;
+      fish.enable = lib.mkDefault osConfig.myConfig.shell.fish.enable;
+      bash.enable = lib.mkDefault osConfig.myConfig.shell.bash.enable;
+      zsh.enable = lib.mkDefault osConfig.myConfig.shell.zsh.enable;
+      nushell.enable = lib.mkDefault osConfig.myConfig.shell.nushell.enable;
+    };
 
-    # Containers - Podman works on macOS!
-    containers.podman.enable = osConfig.myConfig.development.podman.enable or false;
-    containers.tools.enable = osConfig.myConfig.development.devops.enable or false;
-
-    # DevOps tools
-    devops.kubernetes.enable = osConfig.myConfig.development.devops.enable or false;
-    devops.cloud.enable = osConfig.myConfig.development.devops.enable or false;
-    devops.infrastructure.enable = osConfig.myConfig.development.devops.enable or false;
-
-    # Shell
-    shell.default = lib.mkDefault osConfig.myConfig.shell.default;
-    shell.fish.enable = osConfig.myConfig.shell.fish.enable or false;
-    shell.bash.enable = osConfig.myConfig.shell.bash.enable or false;
-    shell.zsh.enable = osConfig.myConfig.shell.zsh.enable or false;
-    shell.nushell.enable = osConfig.myConfig.shell.nushell.enable or false;
-    shell.shared = lib.mkDefault (osConfig.myConfig.shell.shared or { });
-    shell.git.enable = osConfig.myConfig.shell.git.enable or false;
-    shell.ssh.enable = osConfig.myConfig.shell.ssh.enable or false;
-
-    # Editors
-    editors.neovim.enable = osConfig.myConfig.editors.neovim.enable or false;
-    editors.neovim.useNightly = osConfig.myConfig.editors.neovim.useNightly or false;
-
-    # Desktop
-    desktop.hex.enable = osConfig.myConfig.darwin.hex.enable or false;
-    desktop.hex.showDockIcon = false;
+    # Hex is installed as a Homebrew cask; home-manager manages its prefs.
+    desktop.hex.enable = lib.mkDefault osConfig.myConfig.darwin.hex.enable;
+    desktop.hex.showDockIcon = lib.mkDefault false;
 
     # Ghostty is installed as a Homebrew cask on Darwin, but still use Nix to
     # provide terminfo for ncurses apps such as htop.
-    cliTools.terminals.ghostty.installTerminfo = lib.mkDefault (
-      osConfig.myConfig.darwin.ghostty.enable or false
-    );
+    cliTools.terminals.ghostty.installTerminfo = lib.mkDefault osConfig.myConfig.darwin.ghostty.enable;
   };
 }

@@ -6,17 +6,15 @@
   ...
 }:
 
-with lib;
-
 let
   defaultShell = myLib.defaultShell;
 
   cfg = config.myConfig.shell;
-  sharedCfg = config.homeModules.shell.shared;
+  sharedCfg = cfg.contrib;
 
   mergedAliases = sharedCfg.aliases // cfg.shared.aliases;
   mergedSessionVariables = sharedCfg.sessionVariables // cfg.shared.sessionVariables;
-  mergedSessionPath = unique (sharedCfg.sessionPath ++ cfg.shared.sessionPath);
+  mergedSessionPath = lib.unique (sharedCfg.sessionPath ++ cfg.shared.sessionPath);
   mergedFunctions = sharedCfg.functions // cfg.shared.functions;
 
   shellPackages = {
@@ -36,7 +34,7 @@ let
   isShellEnabled =
     shell:
     (
-      hasAttrByPath [
+      lib.hasAttrByPath [
         shell
         "enable"
       ] cfg
@@ -46,8 +44,8 @@ let
 in
 {
   options.myConfig.shell = {
-    default = mkOption {
-      type = types.enum [
+    default = lib.mkOption {
+      type = lib.types.enum [
         "fish"
         "bash"
         "zsh"
@@ -57,27 +55,27 @@ in
       description = "Default shell";
     };
 
-    warnOnStandaloneLoginShellMismatch = mkOption {
-      type = types.bool;
+    warnOnStandaloneLoginShellMismatch = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Warn in standalone Home Manager when login shell does not match myConfig.shell.default";
     };
 
     shared = {
-      aliases = mkOption {
-        type = types.attrsOf types.str;
+      aliases = lib.mkOption {
+        type = lib.types.attrsOf lib.types.str;
         default = { };
         description = "Aliases shared across fish, bash, zsh, and nushell";
       };
 
-      sessionVariables = mkOption {
-        type = types.attrsOf types.str;
+      sessionVariables = lib.mkOption {
+        type = lib.types.attrsOf lib.types.str;
         default = { };
         description = "Session environment variables shared across shells";
       };
 
-      sessionPath = mkOption {
-        type = types.listOf types.str;
+      sessionPath = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
         default = [
           "$HOME/.local/bin"
           "$HOME/.npm-packages/bin"
@@ -86,162 +84,164 @@ in
         description = "Session PATH entries shared across shells";
       };
 
-      functions = mkOption {
-        type = types.attrsOf types.lines;
+      functions = lib.mkOption {
+        type = lib.types.attrsOf lib.types.lines;
         default = { };
         description = "Portable shell functions exposed as commands";
       };
 
       completions = {
-        enable = mkOption {
-          type = types.bool;
+        enable = lib.mkOption {
+          type = lib.types.bool;
           default = true;
           description = "Enable completion support across shells";
         };
 
-        useCarapace = mkOption {
-          type = types.bool;
+        useCarapace = lib.mkOption {
+          type = lib.types.bool;
           default = true;
           description = "Use Carapace as a shared completion backend";
         };
 
-        commands = mkOption {
-          type = types.listOf types.str;
+        commands = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
           default = [ ];
           description = "Commands to initialize via '<cmd> completion <shell>' hooks";
         };
       };
 
-      bashInit = mkOption {
-        type = types.lines;
+      bashInit = lib.mkOption {
+        type = lib.types.lines;
         default = "";
         description = "Additional shared Bash initialization";
       };
 
-      zshInit = mkOption {
-        type = types.lines;
+      zshInit = lib.mkOption {
+        type = lib.types.lines;
         default = "";
         description = "Additional shared Zsh initialization";
       };
 
-      fishInit = mkOption {
-        type = types.lines;
+      fishInit = lib.mkOption {
+        type = lib.types.lines;
         default = "";
         description = "Additional shared Fish initialization";
       };
 
-      nushellConfig = mkOption {
-        type = types.lines;
+      nushellConfig = lib.mkOption {
+        type = lib.types.lines;
         default = "";
         description = "Additional shared Nushell config";
       };
 
-      nushellEnv = mkOption {
-        type = types.lines;
+      nushellEnv = lib.mkOption {
+        type = lib.types.lines;
         default = "";
         description = "Additional shared Nushell environment config";
       };
     };
   };
 
-  options.homeModules.shell = {
-    defaultShellPath = mkOption {
-      type = types.str;
+  # Internal: values other modules contribute (aliases, PATH entries, init
+  # snippets). Host-facing `myConfig.shell.shared.*` wins on key collisions.
+  options.myConfig.shell.resolved = {
+    defaultShellPath = lib.mkOption {
+      type = lib.types.str;
       default = "${pkgs.fish}/bin/fish";
       internal = true;
       description = "Resolved absolute path to the configured default shell";
     };
 
-    resolvedAliases = mkOption {
-      type = types.attrsOf types.str;
+    aliases = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
       default = { };
       internal = true;
-      description = "Merged aliases from shared module contributions and user config";
+      description = "Merged aliases from module contributions and user config";
+    };
+  };
+
+  options.myConfig.shell.contrib = {
+    aliases = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      internal = true;
+      description = "Alias contributions from modules";
     };
 
-    shared = {
-      aliases = mkOption {
-        type = types.attrsOf types.str;
-        default = { };
-        internal = true;
-        description = "Alias contributions from modules";
-      };
+    sessionVariables = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      internal = true;
+      description = "Session variable contributions from modules";
+    };
 
-      sessionVariables = mkOption {
-        type = types.attrsOf types.str;
-        default = { };
-        internal = true;
-        description = "Session variable contributions from modules";
-      };
+    sessionPath = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      internal = true;
+      description = "PATH entry contributions from modules";
+    };
 
-      sessionPath = mkOption {
-        type = types.listOf types.str;
-        default = [ ];
-        internal = true;
-        description = "PATH entry contributions from modules";
-      };
+    functions = lib.mkOption {
+      type = lib.types.attrsOf lib.types.lines;
+      default = { };
+      internal = true;
+      description = "Portable function contributions from modules";
+    };
 
-      functions = mkOption {
-        type = types.attrsOf types.lines;
-        default = { };
-        internal = true;
-        description = "Portable function contributions from modules";
-      };
+    completionCommands = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      internal = true;
+      description = "Completion command contributions from modules";
+    };
 
-      completionCommands = mkOption {
-        type = types.listOf types.str;
-        default = [ ];
-        internal = true;
-        description = "Completion command contributions from modules";
-      };
+    bashInit = lib.mkOption {
+      type = lib.types.lines;
+      default = "";
+      internal = true;
+      description = "Bash init contributions from modules";
+    };
 
-      bashInit = mkOption {
-        type = types.lines;
-        default = "";
-        internal = true;
-        description = "Bash init contributions from modules";
-      };
+    zshInit = lib.mkOption {
+      type = lib.types.lines;
+      default = "";
+      internal = true;
+      description = "Zsh init contributions from modules";
+    };
 
-      zshInit = mkOption {
-        type = types.lines;
-        default = "";
-        internal = true;
-        description = "Zsh init contributions from modules";
-      };
+    fishInit = lib.mkOption {
+      type = lib.types.lines;
+      default = "";
+      internal = true;
+      description = "Fish init contributions from modules";
+    };
 
-      fishInit = mkOption {
-        type = types.lines;
-        default = "";
-        internal = true;
-        description = "Fish init contributions from modules";
-      };
+    nushellConfig = lib.mkOption {
+      type = lib.types.lines;
+      default = "";
+      internal = true;
+      description = "Nushell config contributions from modules";
+    };
 
-      nushellConfig = mkOption {
-        type = types.lines;
-        default = "";
-        internal = true;
-        description = "Nushell config contributions from modules";
-      };
-
-      nushellEnv = mkOption {
-        type = types.lines;
-        default = "";
-        internal = true;
-        description = "Nushell env contributions from modules";
-      };
+    nushellEnv = lib.mkOption {
+      type = lib.types.lines;
+      default = "";
+      internal = true;
+      description = "Nushell env contributions from modules";
     };
   };
 
   config = {
-    homeModules.shell.defaultShellPath = "${shellPackages.${cfg.default}}/bin/${shellBinaries.${cfg.default}}";
-    homeModules.shell.resolvedAliases = mergedAliases;
+    myConfig.shell.resolved.defaultShellPath = "${shellPackages.${cfg.default}}/bin/${shellBinaries.${cfg.default}}";
+    myConfig.shell.resolved.aliases = mergedAliases;
 
     home.sessionVariables = mergedSessionVariables;
     home.sessionPath = mergedSessionPath;
 
-    home.packages = mapAttrsToList (name: body: pkgs.writeShellScriptBin name body) mergedFunctions;
+    home.packages = lib.mapAttrsToList (name: body: pkgs.writeShellScriptBin name body) mergedFunctions;
 
-    programs.carapace = mkIf (cfg.shared.completions.enable && cfg.shared.completions.useCarapace) {
+    programs.carapace = lib.mkIf (cfg.shared.completions.enable && cfg.shared.completions.useCarapace) {
       enable = true;
       enableBashIntegration = isShellEnabled "bash";
       enableFishIntegration = isShellEnabled "fish";

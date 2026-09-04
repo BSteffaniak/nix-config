@@ -41,9 +41,11 @@ attr_for_host() {
 
 evaluate_all() {
   local meta_file attr drv
+  # `path:` makes nix read the working tree directly, so untracked files are
+  # visible during refactors without staging them first.
   for meta_file in hosts/*/meta.nix; do
     attr="$(attr_for_host "$meta_file")"
-    drv="$(nix eval --raw ".#$attr")"
+    drv="$(nix eval --raw "path:$REPO_DIR#$attr")"
     printf '%s\t%s\n' "$attr" "$drv"
   done
 }

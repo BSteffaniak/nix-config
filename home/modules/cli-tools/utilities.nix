@@ -7,8 +7,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.cliTools.utilities;
 
@@ -66,16 +64,16 @@ let
 in
 {
   options.myConfig.cliTools.utilities = {
-    enableAll = mkOption {
-      type = types.bool;
+    enableAll = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = "Enable all utility tools (can be overridden per-tool)";
     };
 
     direnv = {
       enable = mkEnable "Direnv for per-directory environments";
-      nix-direnv = mkOption {
-        type = types.bool;
+      nix-direnv = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Enable nix-direnv integration";
       };
@@ -83,7 +81,7 @@ in
 
     jq.enable = mkEnable "JSON processor";
     parallel.enable = mkEnable "GNU parallel";
-    write-good.enable = mkEnable "writing quality checker";
+    writeGood.enable = mkEnable "writing quality checker";
     cronstrue.enable = mkEnable "cron expression diagnostic tool";
     sendsafely.enable = mkEnable "SendSafely Java CLI";
     clippier.enable = mkEnable "Clippier CI helper";
@@ -92,11 +90,11 @@ in
     watchexec.enable = mkEnable "file watcher/executor";
     lsof.enable = mkEnable "list open files utility";
     killall.enable = mkEnable "killall utility";
-    nix-search.enable = mkEnable "Nix package search";
+    nixSearch.enable = mkEnable "Nix package search";
 
     media = {
-      enableAll = mkOption {
-        type = types.bool;
+      enableAll = lib.mkOption {
+        type = lib.types.bool;
         default = cfg.enableAll;
         description = "Enable all media tools (can be overridden per-tool)";
       };
@@ -111,8 +109,8 @@ in
     sshenv = {
       enable = mkEnable "sshenv SSH-key-backed env vault";
 
-      autoBindings = mkOption {
-        type = types.bool;
+      autoBindings = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = ''
           Automatically provide useful bindings for pi-* commands (and common opencode aliases)
@@ -120,8 +118,8 @@ in
         '';
       };
 
-      unencryptedSshKeys = mkOption {
-        type = types.enum [
+      unencryptedSshKeys = lib.mkOption {
+        type = lib.types.enum [
           "allow"
           "warn"
           "deny"
@@ -137,11 +135,11 @@ in
         '';
       };
 
-      declarativeBindings = mkOption {
-        type = types.attrsOf (
-          types.oneOf [
-            (types.attrsOf (types.listOf types.str)) # nice form: profile -> [commands]
-            types.lines # raw TOML escape hatch
+      declarativeBindings = lib.mkOption {
+        type = lib.types.attrsOf (
+          lib.types.oneOf [
+            (lib.types.attrsOf (lib.types.listOf lib.types.str)) # nice form: profile -> [commands]
+            lib.types.lines # raw TOML escape hatch
           ]
         );
         default = { };
@@ -166,57 +164,57 @@ in
         '';
       };
     };
-    worktree-setup.enable = mkEnable "worktree setup helper";
+    worktreeSetup.enable = mkEnable "worktree setup helper";
   };
 
   config = {
-    warnings = optional (
+    warnings = lib.optional (
       cfg.pi.enable && config.myConfig.development.pi.enable
     ) "myConfig.cliTools.utilities.pi.enable is redundant when myConfig.development.pi.enable is true.";
 
     # Direnv
-    programs.direnv = mkIf cfg.direnv.enable {
+    programs.direnv = lib.mkIf cfg.direnv.enable {
       enable = true;
       nix-direnv.enable = cfg.direnv.nix-direnv;
     };
 
     # Package installs
-    home.packages = mkMerge [
-      (mkIf cfg.jq.enable [ pkgs.jq ])
-      (mkIf cfg.parallel.enable [ pkgs.parallel ])
-      (mkIf cfg.write-good.enable [ pkgs.write-good ])
-      (mkIf cfg.cronstrue.enable [ pkgs.cronstrue-custom ])
-      (mkIf cfg.sendsafely.enable [ sendsafelyJava ])
-      (mkIf cfg.clippier.enable [ pkgs.clippier ])
-      (mkIf cfg.gitSshripped.enable [ pkgs.git-sshripped ])
-      (mkIf cfg.cloc.enable [ pkgs.cloc ])
-      (mkIf cfg.watchexec.enable [ pkgs.watchexec ])
-      (mkIf cfg.lsof.enable [ pkgs.lsof ])
-      (mkIf cfg.killall.enable [ pkgs.killall ])
-      (mkIf cfg.nix-search.enable [ pkgs.nix-search ])
-      (mkIf cfg.media.ffmpeg.enable [ pkgs.unstable.ffmpeg ])
-      (mkIf cfg.media.flac.enable [ pkgs.flac ])
-      (mkIf cfg.media.mediainfo.enable [ pkgs.mediainfo ])
-      (mkIf cfg.opencodeUpstream.enable [
+    home.packages = lib.mkMerge [
+      (lib.mkIf cfg.jq.enable [ pkgs.jq ])
+      (lib.mkIf cfg.parallel.enable [ pkgs.parallel ])
+      (lib.mkIf cfg.writeGood.enable [ pkgs.write-good ])
+      (lib.mkIf cfg.cronstrue.enable [ pkgs.cronstrue-custom ])
+      (lib.mkIf cfg.sendsafely.enable [ sendsafelyJava ])
+      (lib.mkIf cfg.clippier.enable [ pkgs.clippier ])
+      (lib.mkIf cfg.gitSshripped.enable [ pkgs.git-sshripped ])
+      (lib.mkIf cfg.cloc.enable [ pkgs.cloc ])
+      (lib.mkIf cfg.watchexec.enable [ pkgs.watchexec ])
+      (lib.mkIf cfg.lsof.enable [ pkgs.lsof ])
+      (lib.mkIf cfg.killall.enable [ pkgs.killall ])
+      (lib.mkIf cfg.nixSearch.enable [ pkgs.nix-search ])
+      (lib.mkIf cfg.media.ffmpeg.enable [ pkgs.unstable.ffmpeg ])
+      (lib.mkIf cfg.media.flac.enable [ pkgs.flac ])
+      (lib.mkIf cfg.media.mediainfo.enable [ pkgs.mediainfo ])
+      (lib.mkIf cfg.opencodeUpstream.enable [
         pkgs.unstable.opencode
       ])
-      (mkIf cfg.pi.enable [ pkgs.pi ])
-      (mkIf cfg.sshenv.enable [ pkgs.sshenv ])
-      (mkIf cfg.worktree-setup.enable [ pkgs.worktree-setup ])
+      (lib.mkIf cfg.pi.enable [ pkgs.pi ])
+      (lib.mkIf cfg.sshenv.enable [ pkgs.sshenv ])
+      (lib.mkIf cfg.worktreeSetup.enable [ pkgs.worktree-setup ])
     ];
 
     # Shim dir goes first in PATH so sshenv shims shadow nix-profile,
     # ~/.cargo/bin, ~/.local/bin, etc. Contributed via the internal
-    # homeModules.shell.shared.sessionPath hook, which the shared shell
+    # myConfig.shell.contrib.sessionPath hook, which the shared shell
     # module concatenates BEFORE user-facing defaults when building
     # home.sessionPath (see home/modules/shell/shared.nix).
-    homeModules.shell.shared.sessionPath = mkIf cfg.sshenv.enable [ "$HOME/.sshenv/bin" ];
+    myConfig.shell.contrib.sessionPath = lib.mkIf cfg.sshenv.enable [ "$HOME/.sshenv/bin" ];
 
     # Deploy declarative bindings fragments into bindings.d/, plus the
     # security policy file at ~/.sshenv/config.toml.
     # When autoBindings is enabled, we provide a base set of pi-* bindings.
     # User declarativeBindings are merged on top (user wins on name conflicts).
-    home.file = mkIf cfg.sshenv.enable (
+    home.file = lib.mkIf cfg.sshenv.enable (
       let
         base = if cfg.sshenv.autoBindings then autoSshenvBindings else { };
         final = base // cfg.sshenv.declarativeBindings;

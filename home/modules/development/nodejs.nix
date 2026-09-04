@@ -5,43 +5,41 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.development.nodejs;
 in
 {
   options.myConfig.development.nodejs = {
-    enable = mkEnableOption "Node.js development environment";
+    enable = lib.mkEnableOption "Node.js development environment";
 
-    includeBun = mkOption {
-      type = types.bool;
+    includeBun = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include Bun runtime";
     };
 
-    includePnpm = mkOption {
-      type = types.bool;
+    includePnpm = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include pnpm package manager";
     };
 
-    includeLanguageServers = mkOption {
-      type = types.bool;
+    includeLanguageServers = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include TypeScript, Astro, Svelte, and web LSPs";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     home.packages =
       with pkgs;
       [
         nodePackages_latest.nodejs
       ]
-      ++ (optional cfg.includeBun unstable.bun)
-      ++ (optional cfg.includePnpm pnpm_10)
-      ++ (optionals cfg.includeLanguageServers [
+      ++ (lib.optional cfg.includeBun unstable.bun)
+      ++ (lib.optional cfg.includePnpm pnpm_10)
+      ++ (lib.optionals cfg.includeLanguageServers [
         typescript-language-server
         astro-language-server
         svelte-language-server

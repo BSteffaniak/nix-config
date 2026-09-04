@@ -4,50 +4,48 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.development.brouterProxy = {
-    enable = mkEnableOption "brouter-proxy provider integration (assumes you start the proxy yourself)";
+    enable = lib.mkEnableOption "brouter-proxy provider integration (assumes you start the proxy yourself)";
 
-    host = mkOption {
-      type = types.str;
+    host = lib.mkOption {
+      type = lib.types.str;
       default = "127.0.0.1";
       description = "Host where brouter-proxy is reachable.";
     };
 
-    port = mkOption {
-      type = types.port;
+    port = lib.mkOption {
+      type = lib.types.port;
       default = 8581;
       description = "Port where brouter-proxy is reachable.";
     };
 
-    providerName = mkOption {
-      type = types.str;
+    providerName = lib.mkOption {
+      type = lib.types.str;
       default = "brouter-proxy";
       description = "Provider key registered in pi/opencode for the proxy.";
     };
 
-    displayName = mkOption {
-      type = types.str;
+    displayName = lib.mkOption {
+      type = lib.types.str;
       default = "BRouter Proxy";
       description = "Human-readable provider name shown in pi/opencode UI.";
     };
 
-    defaultModel = mkOption {
-      type = types.str;
+    defaultModel = lib.mkOption {
+      type = lib.types.str;
       default = "auto";
       description = "Default brouter-proxy model id used by Pi/OpenCode integrations.";
     };
 
-    enablePiIntegration = mkOption {
-      type = types.bool;
+    enablePiIntegration = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Register brouter-proxy as a Pi custom provider and add a pi-brouter-proxy wrapper.";
     };
 
-    makePiDefault = mkOption {
-      type = types.bool;
+    makePiDefault = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = ''
         Make brouter-proxy the default Pi provider/model. Wins over
@@ -55,14 +53,14 @@ with lib;
       '';
     };
 
-    enableOpenCodeIntegration = mkOption {
-      type = types.bool;
+    enableOpenCodeIntegration = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Register brouter-proxy as an OpenCode provider and add an opencode-brouter-proxy wrapper.";
     };
 
-    makeOpenCodeDefault = mkOption {
-      type = types.bool;
+    makeOpenCodeDefault = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = ''
         Make brouter-proxy the default OpenCode provider/model. Wins over
@@ -76,5 +74,5 @@ with lib;
   # This module exists purely to expose the option surface so those agents'
   # config builders can read brouter-proxy settings the same way they read
   # myConfig.development.brouter.
-  config = mkIf config.myConfig.development.brouterProxy.enable { };
+  config = lib.mkIf config.myConfig.development.brouterProxy.enable { };
 }

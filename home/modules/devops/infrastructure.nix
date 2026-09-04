@@ -5,51 +5,49 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.devops.infrastructure;
 in
 {
   options.myConfig.devops.infrastructure = {
-    enable = mkEnableOption "Infrastructure as Code tools";
+    enable = lib.mkEnableOption "Infrastructure as Code tools";
 
-    includeTerraform = mkOption {
-      type = types.bool;
+    includeTerraform = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include OpenTofu (Terraform fork)";
     };
 
-    includeTerraformLS = mkOption {
-      type = types.bool;
+    includeTerraformLS = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include Terraform Language Server";
     };
 
-    includeProtobuf = mkOption {
-      type = types.bool;
+    includeProtobuf = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include buf (Protocol buffer tooling)";
     };
 
-    includeNats = mkOption {
-      type = types.bool;
+    includeNats = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include natscli";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     home.packages =
       with pkgs;
       [ ]
-      ++ (optional cfg.includeTerraform opentofu)
-      ++ (optional cfg.includeTerraformLS terraform-ls)
-      ++ (optional cfg.includeProtobuf buf)
-      ++ (optional cfg.includeNats natscli);
+      ++ (lib.optional cfg.includeTerraform opentofu)
+      ++ (lib.optional cfg.includeTerraformLS terraform-ls)
+      ++ (lib.optional cfg.includeProtobuf buf)
+      ++ (lib.optional cfg.includeNats natscli);
 
     # Terraform/OpenTofu aliases shared across configured shells
-    homeModules.shell.shared.aliases = mkIf cfg.includeTerraform {
+    myConfig.shell.contrib.aliases = lib.mkIf cfg.includeTerraform {
       tf = "tofu";
       tfi = "tofu init";
       tfp = "tofu plan";

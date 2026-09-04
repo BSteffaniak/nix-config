@@ -5,17 +5,15 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.development.zig;
 in
 {
   options.myConfig.development.zig = {
-    enable = mkEnableOption "Zig development environment";
+    enable = lib.mkEnableOption "Zig development environment";
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     home.packages = with pkgs; [ zig ];
   };
 }

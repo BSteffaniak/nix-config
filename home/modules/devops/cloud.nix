@@ -5,8 +5,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.devops.cloud;
 
@@ -20,23 +18,25 @@ let
 
   # Omitting -l is what disables lock-on-sleep; there is no explicit "off"
   # flag. -u would prompt to unlock, which must not happen during activation.
-  awsVaultKeychainFlags = concatStringsSep " " (
-    (optional awsVaultKeychain.lockOnSleep "-l")
-    ++ (optional (awsVaultKeychain.lockTimeout != null) "-t ${toString awsVaultKeychain.lockTimeout}")
+  awsVaultKeychainFlags = lib.concatStringsSep " " (
+    (lib.optional awsVaultKeychain.lockOnSleep "-l")
+    ++ (lib.optional (
+      awsVaultKeychain.lockTimeout != null
+    ) "-t ${toString awsVaultKeychain.lockTimeout}")
   );
 in
 {
   options.myConfig.devops.cloud = {
-    enable = mkEnableOption "Cloud provider CLI tools";
+    enable = lib.mkEnableOption "Cloud provider CLI tools";
 
-    includeAWS = mkOption {
-      type = types.bool;
+    includeAWS = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include AWS CLI and SAM CLI";
     };
 
-    includeAWSVault = mkOption {
-      type = types.bool;
+    includeAWSVault = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = ''
         Include aws-vault (secure AWS credential storage).
@@ -54,10 +54,10 @@ in
     # login keychain would. The `keychain` options below relax that policy; the
     # TTL options reduce how often aws-vault needs to read the keychain at all.
     awsVault = {
-      enable = mkEnableOption "aws-vault (secure AWS credential storage)";
+      enable = lib.mkEnableOption "aws-vault (secure AWS credential storage)";
 
-      sessionTokenTTL = mkOption {
-        type = types.nullOr types.str;
+      sessionTokenTTL = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
         default = null;
         example = "12h";
         description = ''
@@ -70,8 +70,8 @@ in
         '';
       };
 
-      assumeRoleTTL = mkOption {
-        type = types.nullOr types.str;
+      assumeRoleTTL = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
         default = null;
         example = "12h";
         description = ''
@@ -82,8 +82,8 @@ in
       };
 
       keychain = {
-        manageSettings = mkOption {
-          type = types.bool;
+        manageSettings = lib.mkOption {
+          type = lib.types.bool;
           default = false;
           description = ''
             Apply the lock settings below to the aws-vault keychain during
@@ -95,8 +95,8 @@ in
           '';
         };
 
-        lockTimeout = mkOption {
-          type = types.nullOr types.int;
+        lockTimeout = lib.mkOption {
+          type = lib.types.nullOr lib.types.int;
           default = null;
           example = 28800;
           description = ''
@@ -106,8 +106,8 @@ in
           '';
         };
 
-        lockOnSleep = mkOption {
-          type = types.bool;
+        lockOnSleep = lib.mkOption {
+          type = lib.types.bool;
           default = true;
           description = ''
             Lock the aws-vault keychain when the machine sleeps. Setting this
@@ -118,55 +118,55 @@ in
       };
     };
 
-    includeDigitalOcean = mkOption {
-      type = types.bool;
+    includeDigitalOcean = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include doctl (DigitalOcean CLI)";
     };
 
-    includeGCP = mkOption {
-      type = types.bool;
+    includeGCP = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = "Include Google Cloud SDK";
     };
 
-    includeAzure = mkOption {
-      type = types.bool;
+    includeAzure = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = "Include Azure CLI";
     };
 
-    includeFlyctl = mkOption {
-      type = types.bool;
+    includeFlyctl = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include flyctl (Fly.io CLI)";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     home.packages =
       with pkgs;
       [ ]
-      ++ (optionals cfg.includeAWS [
+      ++ (lib.optionals cfg.includeAWS [
         awscli2
         # aws-sam-cli  # TODO: broken in 25.11 - dependency version mismatches
       ])
-      ++ (optional awsVaultEnabled aws-vault)
-      ++ (optional cfg.includeDigitalOcean doctl)
-      ++ (optional cfg.includeGCP google-cloud-sdk)
-      ++ (optional cfg.includeAzure azure-cli)
-      ++ (optional cfg.includeFlyctl flyctl);
+      ++ (lib.optional awsVaultEnabled aws-vault)
+      ++ (lib.optional cfg.includeDigitalOcean doctl)
+      ++ (lib.optional cfg.includeGCP google-cloud-sdk)
+      ++ (lib.optional cfg.includeAzure azure-cli)
+      ++ (lib.optional cfg.includeFlyctl flyctl);
 
     # Contributed through the shared shell channel rather than
     # home.sessionVariables directly: nushell (the default shell on some hosts)
-    # builds its environment from homeModules.shell.shared.sessionVariables and
+    # builds its environment from myConfig.shell.contrib.sessionVariables and
     # would not otherwise see these. home/modules/shell/shared.nix folds this
     # channel back into home.sessionVariables for the POSIX shells.
-    homeModules.shell.shared.sessionVariables = mkIf awsVaultEnabled (
-      (optionalAttrs (cfg.awsVault.sessionTokenTTL != null) {
+    myConfig.shell.contrib.sessionVariables = lib.mkIf awsVaultEnabled (
+      (lib.optionalAttrs (cfg.awsVault.sessionTokenTTL != null) {
         AWS_SESSION_TOKEN_TTL = cfg.awsVault.sessionTokenTTL;
       })
-      // (optionalAttrs (cfg.awsVault.assumeRoleTTL != null) {
+      // (lib.optionalAttrs (cfg.awsVault.assumeRoleTTL != null) {
         AWS_ASSUME_ROLE_TTL = cfg.awsVault.assumeRoleTTL;
       })
     );
@@ -181,7 +181,7 @@ in
     # created the keychain. If the keychain is currently locked, macOS may
     # prompt once here -- and the new settings only govern future locks, so an
     # already-locked keychain still needs one manual unlock.
-    home.activation = mkIf manageAwsVaultKeychain {
+    home.activation = lib.mkIf manageAwsVaultKeychain {
       awsVaultKeychainSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         aws_vault_keychain="$HOME/Library/Keychains/aws-vault.keychain-db"
         if [ -e "$aws_vault_keychain" ]; then

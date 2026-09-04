@@ -6,8 +6,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.development.opencode;
   agentsCfg = config.myConfig.development.agents;
@@ -20,15 +18,15 @@ let
   # Auto-discover provider profiles from configs/opencode/providers/
   providersDir = ../../../configs/opencode/providers;
   allProviderFiles = builtins.attrNames (builtins.readDir providersDir);
-  jsonProviderFiles = builtins.filter (f: hasSuffix ".json" f) allProviderFiles;
-  jsonProviderNames = map (f: removeSuffix ".json" f) jsonProviderFiles;
-  jsonProviderConfigs = listToAttrs (
+  jsonProviderFiles = builtins.filter (f: lib.hasSuffix ".json" f) allProviderFiles;
+  jsonProviderNames = map (f: lib.removeSuffix ".json" f) jsonProviderFiles;
+  jsonProviderConfigs = lib.listToAttrs (
     map (name: {
       inherit name;
       value = builtins.fromJSON (builtins.readFile (providersDir + "/${name}.json"));
     }) jsonProviderNames
   );
-  generatedProviderConfigs = optionalAttrs (jsonProviderConfigs ? openai) {
+  generatedProviderConfigs = lib.optionalAttrs (jsonProviderConfigs ? openai) {
     openai-fast = lib.recursiveUpdate jsonProviderConfigs.openai {
       model = "openai/gpt-5.5-fast";
       agent = {
@@ -56,7 +54,7 @@ let
   mkAliasWrapper =
     name: alias:
     let
-      authEnv = optionalString alias.ignorePersistedAuth "OPENCODE_AUTH_CONTENT={} ";
+      authEnv = lib.optionalString alias.ignorePersistedAuth "OPENCODE_AUTH_CONTENT={} ";
       command = ''
         env OPENCODE_CONFIG="$HOME/.config/opencode/providers/${alias.provider}.json" ${authEnv}opencode-dev "$@"
       '';
@@ -65,10 +63,10 @@ let
       command
     else
       ''
-        sshenv run ${escapeShellArg alias.sshenvProfile} -- ${command}
+        sshenv run ${lib.escapeShellArg alias.sshenvProfile} -- ${command}
       '';
 
-  aliasWrapperCommands = mapAttrs' (name: alias: {
+  aliasWrapperCommands = lib.mapAttrs' (name: alias: {
     name = "opencode-${name}";
     value = mkAliasWrapper name alias;
   }) cfg.aliases;
@@ -145,7 +143,7 @@ let
     cfg = agentsCfg.permissions;
     overrides = agentsCfg.permissions.overrides ++ cfg.overrides;
   };
-  mergedConfigBase = foldl' lib.recursiveUpdate baseConfig [
+  mergedConfigBase = lib.foldl' lib.recursiveUpdate baseConfig [
     providerConfig
     permissionConfig
   ];
@@ -168,7 +166,7 @@ let
 
   # Ollama provider config (only when ollama is enabled)
   ollamaCfg = config.myConfig.tools.ai.ollama;
-  ollamaModels = unique ([ ollamaCfg.model ] ++ ollamaCfg.extraModels);
+  ollamaModels = lib.unique ([ ollamaCfg.model ] ++ ollamaCfg.extraModels);
   ollamaModel = "ollama/${ollamaCfg.model}";
   ollamaModelRegistry = builtins.listToAttrs (
     map (model: {
@@ -206,41 +204,41 @@ let
     let
       url = ollamaCfg.serverUrl;
     in
-    if hasSuffix "/v1" url then substring 0 (stringLength url - 3) url else url;
+    if lib.hasSuffix "/v1" url then lib.substring 0 (lib.stringLength url - 3) url else url;
 in
 {
   options.myConfig.development.opencode = {
-    enable = mkEnableOption "OpenCode AI assistant configuration";
+    enable = lib.mkEnableOption "OpenCode AI assistant configuration";
 
-    provider = mkOption {
-      type = types.enum providerNames;
+    provider = lib.mkOption {
+      type = lib.types.enum providerNames;
       default = "openai";
       description = "OpenCode provider profile to use (matches filename in configs/opencode/providers/ without .json)";
     };
 
-    overrides = mkOption {
-      type = types.listOf types.path;
+    overrides = lib.mkOption {
+      type = lib.types.listOf lib.types.path;
       default = [ ];
       description = "List of JSON files to deep-merge over the base config (e.g., host-specific encrypted overrides)";
     };
 
-    aliases = mkOption {
-      type = types.attrsOf (
-        types.submodule {
+    aliases = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.submodule {
           options = {
-            provider = mkOption {
-              type = types.enum providerNames;
+            provider = lib.mkOption {
+              type = lib.types.enum providerNames;
               description = "Provider profile to use for this OpenCode alias";
             };
 
-            sshenvProfile = mkOption {
-              type = types.nullOr types.str;
+            sshenvProfile = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
               default = null;
               description = "Optional sshenv profile to load before starting OpenCode";
             };
 
-            ignorePersistedAuth = mkOption {
-              type = types.bool;
+            ignorePersistedAuth = lib.mkOption {
+              type = lib.types.bool;
               default = false;
               description = "Ignore ~/.local/share/opencode/auth.json for this alias so env credentials win";
             };
@@ -253,91 +251,93 @@ in
 
   };
 
-  config = mkIf cfg.enable (mkMerge [
-    {
-      xdg.configFile."opencode/opencode.json".text = builtins.toJSON mergedConfig;
-      xdg.configFile."opencode/tui.json".source = tuiConfig;
-    }
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      {
+        xdg.configFile."opencode/opencode.json".text = builtins.toJSON mergedConfig;
+        xdg.configFile."opencode/tui.json".source = tuiConfig;
+      }
 
-    # Auto-discover and deploy all shared agent skill directories from configs/agents/skills/
-    {
-      xdg.configFile = builtins.listToAttrs (
-        map (name: {
-          name = "opencode/skills/${name}";
-          value = {
-            source = skillsDir + "/${name}";
-            recursive = true;
-          };
-        }) skillEntries
-      );
-    }
-
-    # Deploy tone-clone skill from external repo and install the CLI
-    {
-      xdg.configFile."opencode/skills/tone-clone" = {
-        source = "${inputs.tone-clone-src}/skills/tone-clone";
-        recursive = true;
-      };
-      home.packages = [
-        pkgs.opencode-dev
-        pkgs.tone-clone
-      ];
-    }
-
-    # Auto-generate slash commands for all skills (local + external)
-    {
-      xdg.configFile = localSkillCommands // toneCloneCommand;
-    }
-
-    # Deploy raw/generated provider files for per-provider wrapper commands (opencode-bedrock, opencode-copilot, etc.)
-    {
-      xdg.configFile =
-        (builtins.listToAttrs (
+      # Auto-discover and deploy all shared agent skill directories from configs/agents/skills/
+      {
+        xdg.configFile = builtins.listToAttrs (
           map (name: {
-            name = "opencode/providers/${name}.json";
+            name = "opencode/skills/${name}";
             value = {
-              source = providersDir + "/${name}.json";
+              source = skillsDir + "/${name}";
+              recursive = true;
             };
-          }) jsonProviderNames
-        ))
-        // (mapAttrs' (name: providerConfig: {
-          name = "opencode/providers/${name}.json";
-          value.text = builtins.toJSON providerConfig;
-        }) generatedProviderConfigs);
-    }
+          }) skillEntries
+        );
+      }
 
-    # Cross-shell wrapper commands for switching provider profiles
-    {
-      homeModules.shell.shared.functions = providerWrapperCommands // aliasWrapperCommands;
-    }
+      # Deploy tone-clone skill from external repo and install the CLI
+      {
+        xdg.configFile."opencode/skills/tone-clone" = {
+          source = "${inputs.tone-clone-src}/skills/tone-clone";
+          recursive = true;
+        };
+        home.packages = [
+          pkgs.opencode-dev
+          pkgs.tone-clone
+        ];
+      }
 
-    # Conditional Ollama provider (only when tools.ai.ollama is enabled)
-    (mkIf ollamaCfg.enable {
-      xdg.configFile."opencode/providers/ollama.json".text = builtins.toJSON ollamaProviderConfig;
-      homeModules.shell.shared.functions.opencode-ollama = ''
-        OLLAMA_HOST=${escapeShellArg ollamaHost} OPENCODE_CONFIG="$HOME/.config/opencode/providers/ollama.json" opencode-dev "$@"
-      '';
-      home.sessionVariables.OLLAMA_HOST = ollamaHost;
-    })
+      # Auto-generate slash commands for all skills (local + external)
+      {
+        xdg.configFile = localSkillCommands // toneCloneCommand;
+      }
 
-    # Conditional brouter provider. It is available as opencode-brouter even
-    # when it is not the default OpenCode config.
-    (mkIf (brouterCfg.enable && brouterCfg.enableOpenCodeIntegration) {
-      xdg.configFile."opencode/providers/${brouterCfg.providerName}.json".text =
-        builtins.toJSON brouterProviderConfig;
-      homeModules.shell.shared.functions."opencode-${brouterCfg.providerName}" = ''
-        OPENCODE_CONFIG="$HOME/.config/opencode/providers/${brouterCfg.providerName}.json" opencode-dev "$@"
-      '';
-    })
+      # Deploy raw/generated provider files for per-provider wrapper commands (opencode-bedrock, opencode-copilot, etc.)
+      {
+        xdg.configFile =
+          (builtins.listToAttrs (
+            map (name: {
+              name = "opencode/providers/${name}.json";
+              value = {
+                source = providersDir + "/${name}.json";
+              };
+            }) jsonProviderNames
+          ))
+          // (lib.mapAttrs' (name: providerConfig: {
+            name = "opencode/providers/${name}.json";
+            value.text = builtins.toJSON providerConfig;
+          }) generatedProviderConfigs);
+      }
 
-    # Conditional brouter-proxy provider. Available as opencode-brouter-proxy
-    # even when it is not the default OpenCode config.
-    (mkIf (brouterProxyCfg.enable && brouterProxyCfg.enableOpenCodeIntegration) {
-      xdg.configFile."opencode/providers/${brouterProxyCfg.providerName}.json".text =
-        builtins.toJSON brouterProxyProviderConfig;
-      homeModules.shell.shared.functions."opencode-${brouterProxyCfg.providerName}" = ''
-        OPENCODE_CONFIG="$HOME/.config/opencode/providers/${brouterProxyCfg.providerName}.json" opencode-dev "$@"
-      '';
-    })
-  ]);
+      # Cross-shell wrapper commands for switching provider profiles
+      {
+        myConfig.shell.contrib.functions = providerWrapperCommands // aliasWrapperCommands;
+      }
+
+      # Conditional Ollama provider (only when tools.ai.ollama is enabled)
+      (lib.mkIf ollamaCfg.enable {
+        xdg.configFile."opencode/providers/ollama.json".text = builtins.toJSON ollamaProviderConfig;
+        myConfig.shell.contrib.functions.opencode-ollama = ''
+          OLLAMA_HOST=${lib.escapeShellArg ollamaHost} OPENCODE_CONFIG="$HOME/.config/opencode/providers/ollama.json" opencode-dev "$@"
+        '';
+        home.sessionVariables.OLLAMA_HOST = ollamaHost;
+      })
+
+      # Conditional brouter provider. It is available as opencode-brouter even
+      # when it is not the default OpenCode config.
+      (lib.mkIf (brouterCfg.enable && brouterCfg.enableOpenCodeIntegration) {
+        xdg.configFile."opencode/providers/${brouterCfg.providerName}.json".text =
+          builtins.toJSON brouterProviderConfig;
+        myConfig.shell.contrib.functions."opencode-${brouterCfg.providerName}" = ''
+          OPENCODE_CONFIG="$HOME/.config/opencode/providers/${brouterCfg.providerName}.json" opencode-dev "$@"
+        '';
+      })
+
+      # Conditional brouter-proxy provider. Available as opencode-brouter-proxy
+      # even when it is not the default OpenCode config.
+      (lib.mkIf (brouterProxyCfg.enable && brouterProxyCfg.enableOpenCodeIntegration) {
+        xdg.configFile."opencode/providers/${brouterProxyCfg.providerName}.json".text =
+          builtins.toJSON brouterProxyProviderConfig;
+        myConfig.shell.contrib.functions."opencode-${brouterProxyCfg.providerName}" = ''
+          OPENCODE_CONFIG="$HOME/.config/opencode/providers/${brouterProxyCfg.providerName}.json" opencode-dev "$@"
+        '';
+      })
+    ]
+  );
 }

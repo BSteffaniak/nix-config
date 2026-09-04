@@ -1,51 +1,17 @@
-{
-  config,
-  lib,
-  myLib,
-  pkgs,
-  osConfig ? { },
-  ...
-}:
-
-with lib;
+# Fish function library, gated by myConfig.shell.fish feature flags.
+#
+# Returns { fishFunctions; sharedFunctions; }. Fish-only functions mutate
+# shell state (set -gx etc.); shared functions are POSIX scripts exposed to
+# every shell through myConfig.shell.contrib.functions.
+{ lib, fishCfg }:
 
 let
-  fishCfg = config.homeModules.fish;
-
-  defaultShell = myLib.defaultShell;
-
-  systemNeovimEnabled =
-    if
-      hasAttrByPath [
-        "myConfig"
-        "editors"
-        "neovim"
-        "enable"
-      ] osConfig
-    then
-      osConfig.myConfig.editors.neovim.enable
-    else
-      config.myConfig.editors.neovim.enable or true;
-
-  systemFishEnabled =
-    if
-      hasAttrByPath [
-        "myConfig"
-        "shell"
-        "fish"
-        "enable"
-      ] osConfig
-    then
-      osConfig.myConfig.shell.fish.enable
-    else
-      (config.myConfig.shell.fish.enable or false)
-      || (config.myConfig.shell.default or defaultShell) == "fish";
 
   # ============================================================
   # FLAT PROJECT CONFIGURATION
   # ============================================================
-  flatFunctions = optionalAttrs fishCfg.flat.enable (
-    (optionalAttrs fishCfg.flat.logging {
+  flatFunctions = lib.optionalAttrs fishCfg.flat.enable (
+    (lib.optionalAttrs fishCfg.flat.logging {
       set-flat-logging-levels = ''
         set -gx LOGGING_LABEL_LOGGING_LEVELS $argv[1]
       '';
@@ -82,8 +48,8 @@ let
   );
 
   # Shared flat functions (POSIX scripts, available in all shells)
-  flatSharedFunctions = optionalAttrs fishCfg.flat.enable (
-    optionalAttrs fishCfg.flat.airship {
+  flatSharedFunctions = lib.optionalAttrs fishCfg.flat.enable (
+    lib.optionalAttrs fishCfg.flat.airship {
       devship = ''
         exec airship --use-links "$@"
       '';
@@ -95,7 +61,7 @@ let
   # ============================================================
   zellijFunctions = { };
 
-  zellijSharedFunctions = optionalAttrs (fishCfg.zellij.enable && fishCfg.zellij.resurrect) {
+  zellijSharedFunctions = lib.optionalAttrs (fishCfg.zellij.enable && fishCfg.zellij.resurrect) {
     zresurrect = ''
       echo "Resurrecting zellij sessions..."
       zellij list-sessions --short | while IFS= read -r session; do
@@ -115,13 +81,13 @@ let
   neovimFunctions = { };
 
   # Shared neovim functions (POSIX scripts, available in all shells)
-  neovimSharedFunctions = optionalAttrs fishCfg.neovim.enable (
-    (optionalAttrs fishCfg.neovim.sessionLoading {
+  neovimSharedFunctions = lib.optionalAttrs fishCfg.neovim.enable (
+    (lib.optionalAttrs fishCfg.neovim.sessionLoading {
       nvims = ''
         exec nvim -c 'lua Handle_load_session()' "$@"
       '';
     })
-    // (optionalAttrs fishCfg.neovim.manPages {
+    // (lib.optionalAttrs fishCfg.neovim.manPages {
       nman = ''
         command man "$@" 2>/dev/null | col -b | nvim -R -c 'set ft=man nomod nolist' -
       '';
@@ -131,14 +97,14 @@ let
   # ============================================================
   # UTILITIES CONFIGURATION
   # ============================================================
-  utilitiesFunctions = optionalAttrs fishCfg.utilities.enable (
-    (optionalAttrs fishCfg.utilities.sessionManagement {
+  utilitiesFunctions = lib.optionalAttrs fishCfg.utilities.enable (
+    (lib.optionalAttrs fishCfg.utilities.sessionManagement {
       reload-session = ''
         set -e __fish_home_manager_config_sourced
         source ~/.config/fish/config.fish
       '';
     })
-    // (optionalAttrs fishCfg.utilities.pathManagement {
+    // (lib.optionalAttrs fishCfg.utilities.pathManagement {
       fish_remove_path = ''
         if set -l index (contains -i "$argv" $fish_user_paths)
           set -e fish_user_paths[$index]
@@ -149,7 +115,7 @@ let
   );
 
   utilitySharedFunctions =
-    optionalAttrs (fishCfg.utilities.enable && fishCfg.utilities.retryCommand)
+    lib.optionalAttrs (fishCfg.utilities.enable && fishCfg.utilities.retryCommand)
       {
         auto-retry = ''
           current_attempt=0
@@ -184,7 +150,7 @@ let
 
   # Shared development functions (POSIX scripts, available in all shells)
   developmentSharedFunctions =
-    optionalAttrs (fishCfg.development.enable && fishCfg.development.benchmark)
+    lib.optionalAttrs (fishCfg.development.enable && fishCfg.development.benchmark)
       {
         benchmark = ''
           i=0
@@ -206,85 +172,19 @@ let
           done
         '';
       };
-
-  # ============================================================
-  # INTERACTIVE SHELL INIT COMPONENTS
-  # ============================================================
-  editorInit = optionalString (fishCfg.editor.enable && fishCfg.editor.nvim) ''
-    # Set editor environment variables
-    set -gx EDITOR nvim
-    set -gx VISUAL nvim
-  '';
-
-  direnvInit = optionalString fishCfg.direnv.enable ''
-    # Initialize direnv for per-directory environment management
-    direnv hook fish | source
-  '';
-
-  # ============================================================
-  # SMART DEFAULTS BASED ON SYSTEM CONFIGURATION
-  # ============================================================
-  # These use mkDefault so they can be overridden in host-specific configs
-  smartDefaults = {
-    # Neovim features: auto-enable if neovim is enabled system-wide
-    neovim.enable = mkDefault systemNeovimEnabled;
-
-    # Editor config: use neovim if it's enabled system-wide
-    editor = {
-      enable = mkDefault true;
-      nvim = mkDefault systemNeovimEnabled;
-    };
-
-    # Direnv: enabled by default when fish is enabled
-    direnv.enable = mkDefault systemFishEnabled;
-
-    # Utilities: always enabled by default (generally useful)
-    utilities.enable = mkDefault true;
-
-    # Project-specific features: opt-in only (keep as false)
-    flat.enable = mkDefault false;
-    zellij.enable = mkDefault false;
-    opencode.enable = mkDefault false;
-    development.enable = mkDefault false;
-  };
-
 in
 {
-  config = mkIf systemFishEnabled {
-    # Apply smart defaults, then merge with feature-based configuration
-    homeModules.fish = mkMerge [
-      smartDefaults
-      {
-        enable = true;
+  fishFunctions = lib.mkMerge [
+    flatFunctions
+    zellijFunctions
+    utilitiesFunctions
+  ];
 
-        # Fish-only functions (shell-state mutators that use set -gx, fish builtins, etc.)
-        functions = mkMerge [
-          flatFunctions
-          zellijFunctions
-          utilitiesFunctions
-        ];
-
-        # Merge init scripts (don't reference fishCfg.interactiveShellInit to avoid recursion)
-        interactiveShellInit = mkMerge [
-          editorInit
-          direnvInit
-        ];
-      }
-    ];
-
-    # Shared functions (POSIX scripts via writeShellScriptBin, available in all shells)
-    homeModules.shell.shared.functions = mkMerge [
-      flatSharedFunctions
-      zellijSharedFunctions
-      neovimSharedFunctions
-      utilitySharedFunctions
-      developmentSharedFunctions
-    ];
-
-    # Set session variables for editor
-    home.sessionVariables = mkIf (fishCfg.editor.enable && fishCfg.editor.nvim) {
-      EDITOR = "nvim";
-      VISUAL = "nvim";
-    };
-  };
+  sharedFunctions = lib.mkMerge [
+    flatSharedFunctions
+    zellijSharedFunctions
+    neovimSharedFunctions
+    utilitySharedFunctions
+    developmentSharedFunctions
+  ];
 }

@@ -6,8 +6,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.tools.tts;
 
@@ -119,23 +117,23 @@ in
 {
   options.myConfig.tools.tts = {
     piper = {
-      enable = mkEnableOption "Piper local/offline text-to-speech";
+      enable = lib.mkEnableOption "Piper local/offline text-to-speech";
 
-      defaultVoice = mkOption {
-        type = types.enum (attrNames packagedVoices);
+      defaultVoice = lib.mkOption {
+        type = lib.types.enum (lib.attrNames packagedVoices);
         default = "en_US-ryan-high";
         description = "Packaged Piper voice to install when modelPath is not set.";
       };
 
-      modelPath = mkOption {
-        type = types.nullOr types.str;
+      modelPath = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
         default = null;
         example = "$HOME/.local/share/tts/piper/voices/en_US-ryan-high.onnx";
         description = "Optional external Piper ONNX model path. When null, the packaged defaultVoice is installed.";
       };
 
-      configPath = mkOption {
-        type = types.nullOr types.str;
+      configPath = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
         default = null;
         example = "$HOME/.local/share/tts/piper/voices/en_US-ryan-high.onnx.json";
         description = "Optional external Piper voice config path. Defaults to modelPath + .json for external models.";
@@ -143,24 +141,26 @@ in
     };
   };
 
-  config = mkIf cfg.piper.enable (mkMerge [
-    {
-      home.packages = [
-        pkgs.piper-tts
-        ttsSay
-      ]
-      ++ optional pkgs.stdenv.isLinux pkgs.alsa-utils;
+  config = lib.mkIf cfg.piper.enable (
+    lib.mkMerge [
+      {
+        home.packages = [
+          pkgs.piper-tts
+          ttsSay
+        ]
+        ++ lib.optional pkgs.stdenv.isLinux pkgs.alsa-utils;
 
-      home.sessionVariables = {
-        TTS_BACKEND = "piper";
-        PIPER_VOICE = voiceModelPath;
-        PIPER_VOICE_CONFIG = voiceConfigPath;
-      };
-    }
+        home.sessionVariables = {
+          TTS_BACKEND = "piper";
+          PIPER_VOICE = voiceModelPath;
+          PIPER_VOICE_CONFIG = voiceConfigPath;
+        };
+      }
 
-    (mkIf usingPackagedVoice {
-      home.file."${voiceDir}/${cfg.piper.defaultVoice}.onnx".source = voice.model;
-      home.file."${voiceDir}/${cfg.piper.defaultVoice}.onnx.json".source = voice.config;
-    })
-  ]);
+      (lib.mkIf usingPackagedVoice {
+        home.file."${voiceDir}/${cfg.piper.defaultVoice}.onnx".source = voice.model;
+        home.file."${voiceDir}/${cfg.piper.defaultVoice}.onnx.json".source = voice.config;
+      })
+    ]
+  );
 }

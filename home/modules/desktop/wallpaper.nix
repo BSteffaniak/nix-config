@@ -5,8 +5,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.desktop.wallpaper;
 
@@ -22,19 +20,19 @@ let
     text = ''
       set -euo pipefail
 
-      wallpaper_source=${escapeShellArg cfg.source}
-      wallpaper_dir=${escapeShellArg cfg.directory}
-      market=${escapeShellArg cfg.bing.market}
-      resolution=${escapeShellArg cfg.bing.resolution}
-      wallhaven_query=${escapeShellArg cfg.wallhaven.query}
-      wallhaven_categories=${escapeShellArg cfg.wallhaven.categories}
-      wallhaven_purity=${escapeShellArg cfg.wallhaven.purity}
-      wallhaven_ratios=${escapeShellArg (concatStringsSep "," cfg.wallhaven.ratios)}
-      wallhaven_atleast=${escapeShellArg cfg.wallhaven.atleast}
-      wallhaven_sorting=${escapeShellArg cfg.wallhaven.sorting}
+      wallpaper_source=${lib.escapeShellArg cfg.source}
+      wallpaper_dir=${lib.escapeShellArg cfg.directory}
+      market=${lib.escapeShellArg cfg.bing.market}
+      resolution=${lib.escapeShellArg cfg.bing.resolution}
+      wallhaven_query=${lib.escapeShellArg cfg.wallhaven.query}
+      wallhaven_categories=${lib.escapeShellArg cfg.wallhaven.categories}
+      wallhaven_purity=${lib.escapeShellArg cfg.wallhaven.purity}
+      wallhaven_ratios=${lib.escapeShellArg (lib.concatStringsSep "," cfg.wallhaven.ratios)}
+      wallhaven_atleast=${lib.escapeShellArg cfg.wallhaven.atleast}
+      wallhaven_sorting=${lib.escapeShellArg cfg.wallhaven.sorting}
       retention_days=${toString cfg.retentionDays}
       set_desktop=${if cfg.setDesktop then "1" else "0"}
-      state_dir=${escapeShellArg "${config.home.homeDirectory}/Library/Application Support/inspiring-wallpaper"}
+      state_dir=${lib.escapeShellArg "${config.home.homeDirectory}/Library/Application Support/inspiring-wallpaper"}
       state_file="$state_dir/current"
       mode="refresh"
 
@@ -286,10 +284,10 @@ let
 in
 {
   options.myConfig.desktop.wallpaper = {
-    enable = mkEnableOption "inspiring macOS wallpapers";
+    enable = lib.mkEnableOption "inspiring macOS wallpapers";
 
-    source = mkOption {
-      type = types.enum [
+    source = lib.mkOption {
+      type = lib.types.enum [
         "wallhaven"
         "bing-daily"
       ];
@@ -297,21 +295,21 @@ in
       description = "Wallpaper source to use.";
     };
 
-    directory = mkOption {
-      type = types.str;
+    directory = lib.mkOption {
+      type = lib.types.str;
       default = "${config.home.homeDirectory}/Pictures/Wallpapers/Wallhaven";
       description = "Directory where downloaded wallpapers are cached.";
     };
 
     wallhaven = {
-      query = mkOption {
-        type = types.str;
+      query = lib.mkOption {
+        type = lib.types.str;
         default = "nature landscape mountains forest ocean -flag -flags -politics -political -logo -text -weapon -war";
         description = "Wallhaven search query. Negative terms are used to avoid noisy or political imagery.";
       };
 
-      categories = mkOption {
-        type = types.enum [
+      categories = lib.mkOption {
+        type = lib.types.enum [
           "100"
           "101"
           "110"
@@ -321,8 +319,8 @@ in
         description = "Wallhaven category mask. Default is general wallpapers only.";
       };
 
-      purity = mkOption {
-        type = types.enum [
+      purity = lib.mkOption {
+        type = lib.types.enum [
           "100"
           "110"
         ];
@@ -330,8 +328,8 @@ in
         description = "Wallhaven purity mask. Default is SFW only.";
       };
 
-      ratios = mkOption {
-        type = types.listOf types.str;
+      ratios = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
         default = [
           "16x9"
           "16x10"
@@ -339,14 +337,14 @@ in
         description = "Preferred Wallhaven aspect ratios.";
       };
 
-      atleast = mkOption {
-        type = types.str;
+      atleast = lib.mkOption {
+        type = lib.types.str;
         default = "3840x2160";
         description = "Minimum Wallhaven image resolution.";
       };
 
-      sorting = mkOption {
-        type = types.enum [
+      sorting = lib.mkOption {
+        type = lib.types.enum [
           "random"
           "relevance"
           "date_added"
@@ -360,14 +358,14 @@ in
     };
 
     bing = {
-      market = mkOption {
-        type = types.str;
+      market = lib.mkOption {
+        type = lib.types.str;
         default = "en-US";
         description = "Bing image market/locale used for the daily wallpaper feed.";
       };
 
-      resolution = mkOption {
-        type = types.enum [
+      resolution = lib.mkOption {
+        type = lib.types.enum [
           "UHD"
           "1920x1080"
           "1366x768"
@@ -377,46 +375,46 @@ in
       };
     };
 
-    refreshHour = mkOption {
-      type = types.ints.between 0 23;
+    refreshHour = lib.mkOption {
+      type = lib.types.ints.between 0 23;
       default = 7;
       description = "Hour of day when launchd refreshes the wallpaper.";
     };
 
-    refreshMinute = mkOption {
-      type = types.ints.between 0 59;
+    refreshMinute = lib.mkOption {
+      type = lib.types.ints.between 0 59;
       default = 15;
       description = "Minute of the hour when launchd refreshes the wallpaper.";
     };
 
-    retentionDays = mkOption {
-      type = types.ints.unsigned;
+    retentionDays = lib.mkOption {
+      type = lib.types.ints.unsigned;
       default = 90;
       description = "Delete cached wallpapers older than this many days. Set to 0 to keep all.";
     };
 
-    setDesktop = mkOption {
-      type = types.bool;
+    setDesktop = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Set the downloaded image as the desktop wallpaper.";
     };
 
     monitorWatcher = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "Reapply the current wallpaper when macOS display topology changes.";
       };
 
-      pollSeconds = mkOption {
-        type = types.ints.between 1 3600;
+      pollSeconds = lib.mkOption {
+        type = lib.types.ints.between 1 3600;
         default = 15;
         description = "Seconds between display topology checks.";
       };
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     assertions = [
       {
         assertion = pkgs.stdenv.isDarwin;
@@ -444,7 +442,7 @@ in
       };
     };
 
-    launchd.agents.inspiring-wallpaper-display-watcher = mkIf cfg.monitorWatcher.enable {
+    launchd.agents.inspiring-wallpaper-display-watcher = lib.mkIf cfg.monitorWatcher.enable {
       enable = true;
       config = {
         Label = "com.braden.inspiring-wallpaper-display-watcher";

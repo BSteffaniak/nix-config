@@ -1,7 +1,5 @@
 { lib }:
 
-with lib;
-
 {
   mkPermissions =
     {
@@ -12,10 +10,10 @@ with lib;
     }:
     let
       allPermissionFiles = builtins.attrNames (builtins.readDir permissionsDir);
-      jsonPermissionFiles = builtins.filter (f: hasSuffix ".json" f) allPermissionFiles;
-      allNames = map (f: removeSuffix ".json" f) jsonPermissionFiles;
+      jsonPermissionFiles = builtins.filter (f: lib.hasSuffix ".json" f) allPermissionFiles;
+      allNames = map (f: lib.removeSuffix ".json" f) jsonPermissionFiles;
 
-      isVariant = name: hasSuffix "-restricted" name || hasSuffix "-yolo" name;
+      isVariant = name: lib.hasSuffix "-restricted" name || lib.hasSuffix "-yolo" name;
       baseNames = builtins.filter (name: !(isVariant name)) allNames;
 
       resolvePermissionFile =
@@ -41,5 +39,5 @@ with lib;
 
       overrideConfigs = map (f: builtins.fromJSON (builtins.readFile f)) overrides;
     in
-    foldl' lib.recursiveUpdate basePermissionConfig (permissionConfigs ++ overrideConfigs);
+    lib.foldl' lib.recursiveUpdate basePermissionConfig (permissionConfigs ++ overrideConfigs);
 }

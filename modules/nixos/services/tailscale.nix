@@ -5,20 +5,18 @@
   ...
 }:
 
-with lib;
-
 {
-  config = mkIf config.myConfig.services.tailscale.enable {
+  config = lib.mkIf config.myConfig.services.tailscale.enable {
     services.tailscale = {
       enable = true;
       useRoutingFeatures = config.myConfig.services.tailscale.useRoutingFeatures;
       authKeyFile = config.myConfig.services.tailscale.authKeyFile;
       extraUpFlags =
         config.myConfig.services.tailscale.extraUpFlags
-        ++ optional config.myConfig.services.tailscale.acceptRoutes "--accept-routes";
+        ++ lib.optional config.myConfig.services.tailscale.acceptRoutes "--accept-routes";
     };
 
-    networking.firewall.trustedInterfaces = mkIf config.myConfig.services.tailscale.trustInterface [
+    networking.firewall.trustedInterfaces = lib.mkIf config.myConfig.services.tailscale.trustInterface [
       "tailscale0"
     ];
   };

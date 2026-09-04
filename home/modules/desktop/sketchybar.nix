@@ -5,17 +5,15 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.desktop.sketchybar;
 in
 {
   options.myConfig.desktop.sketchybar = {
-    enable = mkEnableOption "SketchyBar status bar for macOS";
+    enable = lib.mkEnableOption "SketchyBar status bar for macOS";
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     # SketchyBar is installed via homebrew cask (managed by nix-darwin)
     # We just manage the configuration here
 

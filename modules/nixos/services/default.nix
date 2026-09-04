@@ -1,13 +1,4 @@
 {
-  config,
-  lib,
-  pkgs,
-  ...
-}:
-
-with lib;
-
-{
   imports = [
     ./avahi.nix
     ./docker.nix
@@ -15,8 +6,4 @@ with lib;
     ./observability.nix
     ./tailscale.nix
   ];
-
-  options.myConfig.services = {
-    enable = lib.mkEnableOption "System services";
-  };
 }

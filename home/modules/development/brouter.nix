@@ -6,8 +6,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.development.brouter;
   ollamaCfg = config.myConfig.tools.ai.ollama;
@@ -32,12 +30,12 @@ let
     ];
   };
 
-  localModels = optionalAttrs ollamaCfg.enable (
+  localModels = lib.optionalAttrs ollamaCfg.enable (
     {
       local_primary = mkLocalModel ollamaCfg.model 75;
     }
     // builtins.listToAttrs (
-      imap0 (index: model: {
+      lib.imap0 (index: model: {
         name = "local_extra_${toString index}";
         value = mkLocalModel model 65;
       }) extraOllamaModels
@@ -65,14 +63,14 @@ let
     display_badges = [ latencyClass ];
   };
 
-  openaiMaxModels = optionalAttrs cfg.openaiMax.enable {
+  openaiMaxModels = lib.optionalAttrs cfg.openaiMax.enable {
     openai_max_fast = mkOpenaiMaxModel cfg.openaiMax.fastModel 96 "standard";
     openai_max_fast_priority = mkOpenaiMaxModel cfg.openaiMax.fastModel 96 "priority";
     openai_max_strong = mkOpenaiMaxModel cfg.openaiMax.strongModel 98 "standard";
     openai_max_strong_priority = mkOpenaiMaxModel cfg.openaiMax.strongModel 98 "priority";
   };
 
-  openaiModels = optionalAttrs cfg.openai.enable {
+  openaiModels = lib.optionalAttrs cfg.openai.enable {
     cheap_cloud = {
       provider = "openai";
       model = cfg.openai.fastModel;
@@ -135,7 +133,7 @@ let
     display_badges = [ latencyClass ];
   };
 
-  openrouterModels = optionalAttrs cfg.openrouter.enable {
+  openrouterModels = lib.optionalAttrs cfg.openrouter.enable {
     openrouter_fast = mkOpenrouterModel cfg.openrouter.fastModel 85 "standard";
     openrouter_fast_priority = mkOpenrouterModel cfg.openrouter.fastModel 85 "priority";
     openrouter_strong = mkOpenrouterModel cfg.openrouter.strongModel 92 "standard";
@@ -163,7 +161,7 @@ let
     display_badges = [ latencyClass ];
   };
 
-  opencodeZenModels = optionalAttrs cfg.opencodeZen.enable {
+  opencodeZenModels = lib.optionalAttrs cfg.opencodeZen.enable {
     opencode_zen_fast = mkOpencodeZenModel cfg.opencodeZen.fastModel 88 "standard";
     opencode_zen_fast_priority = mkOpencodeZenModel cfg.opencodeZen.fastModel 88 "priority";
     opencode_zen_strong = mkOpencodeZenModel cfg.opencodeZen.strongModel 93 "standard";
@@ -253,7 +251,7 @@ let
         };
       };
       rules =
-        (optional ollamaCfg.enable {
+        (lib.optional ollamaCfg.enable {
           name = "private-local";
           when_contains = [
             "secret"
@@ -287,22 +285,22 @@ let
           }
         ];
     }
-    // optionalAttrs (cfg.openai.enable || cfg.openaiMax.enable) {
+    // lib.optionalAttrs (cfg.openai.enable || cfg.openaiMax.enable) {
       groups = {
         cloud =
-          (optional cfg.openaiMax.enable "openai_max_fast")
-          ++ (optional cfg.openaiMax.enable "openai_max_fast_priority")
-          ++ (optional cfg.openaiMax.enable "openai_max_strong")
-          ++ (optional cfg.openaiMax.enable "openai_max_strong_priority")
-          ++ (optional cfg.openai.enable "cheap_cloud")
-          ++ (optional cfg.openai.enable "strong_cloud");
+          (lib.optional cfg.openaiMax.enable "openai_max_fast")
+          ++ (lib.optional cfg.openaiMax.enable "openai_max_fast_priority")
+          ++ (lib.optional cfg.openaiMax.enable "openai_max_strong")
+          ++ (lib.optional cfg.openaiMax.enable "openai_max_strong_priority")
+          ++ (lib.optional cfg.openai.enable "cheap_cloud")
+          ++ (lib.optional cfg.openai.enable "strong_cloud");
         standard =
-          (optional cfg.openaiMax.enable "openai_max_fast")
-          ++ (optional cfg.openaiMax.enable "openai_max_strong")
-          ++ (optional cfg.openai.enable "cheap_cloud")
-          ++ (optional cfg.openai.enable "strong_cloud");
+          (lib.optional cfg.openaiMax.enable "openai_max_fast")
+          ++ (lib.optional cfg.openaiMax.enable "openai_max_strong")
+          ++ (lib.optional cfg.openai.enable "cheap_cloud")
+          ++ (lib.optional cfg.openai.enable "strong_cloud");
       }
-      // optionalAttrs cfg.openaiMax.enable {
+      // lib.optionalAttrs cfg.openaiMax.enable {
         priority = [
           "openai_max_fast_priority"
           "openai_max_strong_priority"
@@ -313,14 +311,14 @@ let
     telemetry.database_path = "${stateDir}/brouter.db";
 
     providers =
-      optionalAttrs ollamaCfg.enable {
+      lib.optionalAttrs ollamaCfg.enable {
         ollama = {
           kind = "open-ai-compatible";
           base_url = ollamaCfg.serverUrl;
           timeout_ms = 60000;
         };
       }
-      // optionalAttrs cfg.openaiMax.enable {
+      // lib.optionalAttrs cfg.openaiMax.enable {
         openai_max = {
           kind = "openai-codex";
           auth_backend = "sshenv";
@@ -333,7 +331,7 @@ let
           };
         };
       }
-      // optionalAttrs cfg.openai.enable {
+      // lib.optionalAttrs cfg.openai.enable {
         openai = {
           kind = "open-ai-compatible";
           base_url = "https://api.openai.com/v1";
@@ -341,7 +339,7 @@ let
           timeout_ms = 60000;
         };
       }
-      // optionalAttrs cfg.openrouter.enable {
+      // lib.optionalAttrs cfg.openrouter.enable {
         openrouter = {
           kind = "open-ai-compatible";
           base_url = cfg.openrouter.baseUrl;
@@ -351,7 +349,7 @@ let
           timeout_ms = 60000;
         };
       }
-      // optionalAttrs cfg.opencodeZen.enable {
+      // lib.optionalAttrs cfg.opencodeZen.enable {
         opencode_zen = {
           kind = "open-ai-compatible";
           base_url = "https://opencode.ai/zen/v1";
@@ -365,342 +363,344 @@ let
     models = localModels // openaiMaxModels // openaiModels // openrouterModels // opencodeZenModels;
   };
 
-  finalSettings = recursiveUpdate baseSettings cfg.extraSettings;
+  finalSettings = lib.recursiveUpdate baseSettings cfg.extraSettings;
   generatedConfig = tomlFormat.generate "brouter.toml" finalSettings;
   restartSource = pkgs.writeText "brouter-restart-source" ''
     config=${generatedConfig}
     brouter=${cfg.package}/bin/brouter
-    sshenv=${optionalString (cfg.sshenvProfile != null) "${pkgs.sshenv}/bin/sshenv"}
-    sshenv_profile=${optionalString (cfg.sshenvProfile != null) cfg.sshenvProfile}
+    sshenv=${lib.optionalString (cfg.sshenvProfile != null) "${pkgs.sshenv}/bin/sshenv"}
+    sshenv_profile=${lib.optionalString (cfg.sshenvProfile != null) cfg.sshenvProfile}
   '';
 in
 {
   options.myConfig.development.brouter = {
-    enable = mkEnableOption "brouter local LLM router service";
+    enable = lib.mkEnableOption "brouter local LLM router service";
 
-    package = mkOption {
-      type = types.package;
+    package = lib.mkOption {
+      type = lib.types.package;
       default = pkgs.brouter;
-      defaultText = literalExpression "pkgs.brouter";
+      defaultText = lib.literalExpression "pkgs.brouter";
       description = "brouter package to install and run.";
     };
 
-    host = mkOption {
-      type = types.str;
+    host = lib.mkOption {
+      type = lib.types.str;
       default = "127.0.0.1";
       description = "Host address for the local brouter HTTP server.";
     };
 
-    port = mkOption {
-      type = types.port;
+    port = lib.mkOption {
+      type = lib.types.port;
       default = 8080;
       description = "Port for the local brouter HTTP server.";
     };
 
-    enableService = mkOption {
-      type = types.bool;
+    enableService = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Start brouter automatically as a user service.";
     };
 
-    enablePiIntegration = mkOption {
-      type = types.bool;
+    enablePiIntegration = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Register brouter as a Pi custom provider and add pi-brouter.";
     };
 
-    makePiDefault = mkOption {
-      type = types.bool;
+    makePiDefault = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = "Make brouter the default Pi provider/model.";
     };
 
-    enableOpenCodeIntegration = mkOption {
-      type = types.bool;
+    enableOpenCodeIntegration = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Register brouter as an OpenCode provider and add opencode-brouter.";
     };
 
-    makeOpenCodeDefault = mkOption {
-      type = types.bool;
+    makeOpenCodeDefault = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = "Make brouter the default OpenCode provider/model.";
     };
 
-    providerName = mkOption {
-      type = types.str;
+    providerName = lib.mkOption {
+      type = lib.types.str;
       default = "brouter";
       description = "Provider name exposed to Pi and OpenCode.";
     };
 
-    defaultModel = mkOption {
-      type = types.str;
+    defaultModel = lib.mkOption {
+      type = lib.types.str;
       default = "auto";
       description = "Default brouter model ID used by Pi/OpenCode integrations.";
     };
 
-    environment = mkOption {
-      type = types.attrsOf types.str;
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
       default = { };
       description = "Environment variables injected into the brouter user service.";
     };
 
-    sshenvProfile = mkOption {
-      type = types.nullOr types.str;
+    sshenvProfile = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
       default = null;
       example = "openai-api";
       description = "Optional sshenv profile used to launch the brouter service with secrets.";
     };
 
-    extraSettings = mkOption {
-      type = types.attrs;
+    extraSettings = lib.mkOption {
+      type = lib.types.attrs;
       default = { };
       description = "Extra TOML settings recursively merged into generated brouter.toml.";
     };
 
     openaiMax = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = "Add ChatGPT/Codex Max subscription auth from an sshenv vault.";
       };
 
-      authProfile = mkOption {
-        type = types.str;
+      authProfile = lib.mkOption {
+        type = lib.types.str;
         default = "openai-max";
         description = "sshenv profile containing ChatGPT/Codex OAuth tokens.";
       };
 
-      authVaultPath = mkOption {
-        type = types.str;
+      authVaultPath = lib.mkOption {
+        type = lib.types.str;
         default = "${config.home.homeDirectory}/.local/state/brouter/auth/vault";
         description = "brouter-owned sshenv vault path containing ChatGPT/Codex OAuth tokens.";
       };
 
-      fastModel = mkOption {
-        type = types.str;
+      fastModel = lib.mkOption {
+        type = lib.types.str;
         default = "gpt-5.5";
         description = "Default ChatGPT/Codex subscription model for fast routing.";
       };
 
-      strongModel = mkOption {
-        type = types.str;
+      strongModel = lib.mkOption {
+        type = lib.types.str;
         default = "gpt-5.5";
         description = "Default ChatGPT/Codex subscription model for strong routing.";
       };
     };
 
     openai = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = "Add OpenAI as a cloud upstream. The service must receive the API key env var separately.";
       };
 
-      apiKeyEnv = mkOption {
-        type = types.str;
+      apiKeyEnv = lib.mkOption {
+        type = lib.types.str;
         default = "OPENAI_API_KEY";
         description = "Environment variable brouter reads for the OpenAI API key.";
       };
 
-      fastModel = mkOption {
-        type = types.str;
+      fastModel = lib.mkOption {
+        type = lib.types.str;
         default = "gpt-4o-mini";
         description = "Lower-cost OpenAI model for fast cloud routing.";
       };
 
-      strongModel = mkOption {
-        type = types.str;
+      strongModel = lib.mkOption {
+        type = lib.types.str;
         default = "gpt-4.1";
         description = "Higher-quality OpenAI model for strong cloud routing.";
       };
 
-      embeddingModel = mkOption {
-        type = types.str;
+      embeddingModel = lib.mkOption {
+        type = lib.types.str;
         default = "text-embedding-3-small";
         description = "OpenAI embedding model.";
       };
     };
 
     openrouter = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = "Add OpenRouter as a cloud upstream (aggregates many model providers).";
       };
 
-      apiKeyEnv = mkOption {
-        type = types.str;
+      apiKeyEnv = lib.mkOption {
+        type = lib.types.str;
         default = "OPENROUTER_API_KEY";
         description = "Environment variable brouter reads for the OpenRouter API key (injected by sshenv vault).";
       };
 
-      authProfile = mkOption {
-        type = types.str;
+      authProfile = lib.mkOption {
+        type = lib.types.str;
         default = "openrouter";
         description = "sshenv profile containing OpenRouter API key.";
       };
 
-      authVaultPath = mkOption {
-        type = types.str;
+      authVaultPath = lib.mkOption {
+        type = lib.types.str;
         default = "${config.home.homeDirectory}/.local/state/brouter/auth/openrouter_vault";
         description = "brouter-owned sshenv vault path for OpenRouter API key.";
       };
 
-      baseUrl = mkOption {
-        type = types.str;
+      baseUrl = lib.mkOption {
+        type = lib.types.str;
         default = "https://openrouter.ai/api/v1";
         description = "OpenRouter API base URL.";
       };
 
-      fastModel = mkOption {
-        type = types.str;
+      fastModel = lib.mkOption {
+        type = lib.types.str;
         default = "anthropic/claude-3.5-haiku";
         description = "OpenRouter model for fast routing.";
       };
 
-      strongModel = mkOption {
-        type = types.str;
+      strongModel = lib.mkOption {
+        type = lib.types.str;
         default = "anthropic/claude-3.7-sonnet";
         description = "OpenRouter model for strong routing.";
       };
     };
 
     opencodeZen = {
-      enable = mkOption {
-        type = types.bool;
+      enable = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = "Add OpenCode Zen as a cloud upstream (OpenCode's own LLM service).";
       };
 
-      apiKeyEnv = mkOption {
-        type = types.str;
+      apiKeyEnv = lib.mkOption {
+        type = lib.types.str;
         default = "OPENCODE_API_KEY";
         description = "Environment variable brouter reads for the OpenCode Zen API key (injected by sshenv vault).";
       };
 
-      authProfile = mkOption {
-        type = types.str;
+      authProfile = lib.mkOption {
+        type = lib.types.str;
         default = "opencode-zen";
         description = "sshenv profile containing the OpenCode Zen API key.";
       };
 
-      authVaultPath = mkOption {
-        type = types.str;
+      authVaultPath = lib.mkOption {
+        type = lib.types.str;
         default = "${config.home.homeDirectory}/.local/state/brouter/auth/opencode_zen_vault";
         description = "brouter-owned sshenv vault path for OpenCode Zen API key.";
       };
 
-      fastModel = mkOption {
-        type = types.str;
+      fastModel = lib.mkOption {
+        type = lib.types.str;
         default = "big-pickle";
         description = "OpenCode Zen model for fast routing.";
       };
 
-      strongModel = mkOption {
-        type = types.str;
+      strongModel = lib.mkOption {
+        type = lib.types.str;
         default = "big-pickle";
         description = "OpenCode Zen model for strong routing.";
       };
     };
   };
 
-  config = mkIf cfg.enable (mkMerge [
-    {
-      assertions = [
-        {
-          assertion =
-            ollamaCfg.enable
-            || cfg.openaiMax.enable
-            || cfg.openai.enable
-            || cfg.openrouter.enable
-            || cfg.opencodeZen.enable
-            || cfg.extraSettings ? providers;
-          message = "myConfig.development.brouter requires at least one upstream provider: enable tools.ai.ollama, enable development.brouter.openaiMax/openai/openrouter/opencodeZen, or provide extraSettings.providers/models.";
-        }
-      ];
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      {
+        assertions = [
+          {
+            assertion =
+              ollamaCfg.enable
+              || cfg.openaiMax.enable
+              || cfg.openai.enable
+              || cfg.openrouter.enable
+              || cfg.opencodeZen.enable
+              || cfg.extraSettings ? providers;
+            message = "myConfig.development.brouter requires at least one upstream provider: enable tools.ai.ollama, enable development.brouter.openaiMax/openai/openrouter/opencodeZen, or provide extraSettings.providers/models.";
+          }
+        ];
 
-      home.packages = [ cfg.package ] ++ optional (cfg.sshenvProfile != null) pkgs.sshenv;
+        home.packages = [ cfg.package ] ++ lib.optional (cfg.sshenvProfile != null) pkgs.sshenv;
 
-      xdg.configFile."brouter/brouter.toml".source = generatedConfig;
+        xdg.configFile."brouter/brouter.toml".source = generatedConfig;
 
-      home.activation.createBrouterStateDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        mkdir -p ${escapeShellArg stateDir}
-      '';
-    }
+        home.activation.createBrouterStateDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          mkdir -p ${lib.escapeShellArg stateDir}
+        '';
+      }
 
-    (mkIf (cfg.enableService && pkgs.stdenv.isDarwin) {
-      launchd.agents.brouter = {
-        enable = true;
-        config = {
-          Label = "com.braden.brouter";
-          ProgramArguments =
-            if cfg.sshenvProfile == null then
-              [
-                "${cfg.package}/bin/brouter"
-                "serve"
-                "--config"
-                configPath
-              ]
-            else
-              [
-                "${pkgs.sshenv}/bin/sshenv"
-                "run"
-                cfg.sshenvProfile
-                "--"
-                "${cfg.package}/bin/brouter"
-                "serve"
-                "--config"
-                configPath
-              ];
-          RunAtLoad = true;
-          KeepAlive = {
-            Crashed = true;
-            SuccessfulExit = false;
+      (lib.mkIf (cfg.enableService && pkgs.stdenv.isDarwin) {
+        launchd.agents.brouter = {
+          enable = true;
+          config = {
+            Label = "com.braden.brouter";
+            ProgramArguments =
+              if cfg.sshenvProfile == null then
+                [
+                  "${cfg.package}/bin/brouter"
+                  "serve"
+                  "--config"
+                  configPath
+                ]
+              else
+                [
+                  "${pkgs.sshenv}/bin/sshenv"
+                  "run"
+                  cfg.sshenvProfile
+                  "--"
+                  "${cfg.package}/bin/brouter"
+                  "serve"
+                  "--config"
+                  configPath
+                ];
+            RunAtLoad = true;
+            KeepAlive = {
+              Crashed = true;
+              SuccessfulExit = false;
+            };
+            EnvironmentVariables = cfg.environment;
+            StandardOutPath = "${logsDir}/brouter.launchd.log";
+            StandardErrorPath = "${logsDir}/brouter.launchd.err.log";
           };
-          EnvironmentVariables = cfg.environment;
-          StandardOutPath = "${logsDir}/brouter.launchd.log";
-          StandardErrorPath = "${logsDir}/brouter.launchd.err.log";
         };
-      };
-      home.activation.restartBrouterAfterConfigChange = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        state_dir=${escapeShellArg stateDir}
-        marker="$state_dir/restart-source"
-        current_source=${escapeShellArg restartSource}
-        previous_source=""
+        home.activation.restartBrouterAfterConfigChange = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          state_dir=${lib.escapeShellArg stateDir}
+          marker="$state_dir/restart-source"
+          current_source=${lib.escapeShellArg restartSource}
+          previous_source=""
 
-        mkdir -p "$state_dir"
-        if [ -f "$marker" ]; then
-          previous_source="$(cat "$marker")"
-        fi
-
-        if [ "$previous_source" != "$current_source" ]; then
-          printf '%s\n' "$current_source" > "$marker"
-          if launchctl print "gui/$(id -u)/com.braden.brouter" >/dev/null 2>&1; then
-            run launchctl kickstart -k "gui/$(id -u)/com.braden.brouter" || true
+          mkdir -p "$state_dir"
+          if [ -f "$marker" ]; then
+            previous_source="$(cat "$marker")"
           fi
-        fi
-      '';
-    })
 
-    (mkIf (cfg.enableService && pkgs.stdenv.isLinux) {
-      systemd.user.services.brouter = {
-        Unit = {
-          Description = "brouter local LLM router";
-          After = [ "network-online.target" ];
+          if [ "$previous_source" != "$current_source" ]; then
+            printf '%s\n' "$current_source" > "$marker"
+            if launchctl print "gui/$(id -u)/com.braden.brouter" >/dev/null 2>&1; then
+              run launchctl kickstart -k "gui/$(id -u)/com.braden.brouter" || true
+            fi
+          fi
+        '';
+      })
+
+      (lib.mkIf (cfg.enableService && pkgs.stdenv.isLinux) {
+        systemd.user.services.brouter = {
+          Unit = {
+            Description = "brouter local LLM router";
+            After = [ "network-online.target" ];
+          };
+          Service = {
+            ExecStart =
+              if cfg.sshenvProfile == null then
+                "${cfg.package}/bin/brouter serve --config ${configPath}"
+              else
+                "${pkgs.sshenv}/bin/sshenv run ${lib.escapeShellArg cfg.sshenvProfile} -- ${cfg.package}/bin/brouter serve --config ${configPath}";
+            Restart = "on-failure";
+            RestartSec = 5;
+            Environment = lib.mapAttrsToList (name: value: "${name}=${value}") cfg.environment;
+          };
+          Install.WantedBy = [ "default.target" ];
         };
-        Service = {
-          ExecStart =
-            if cfg.sshenvProfile == null then
-              "${cfg.package}/bin/brouter serve --config ${configPath}"
-            else
-              "${pkgs.sshenv}/bin/sshenv run ${escapeShellArg cfg.sshenvProfile} -- ${cfg.package}/bin/brouter serve --config ${configPath}";
-          Restart = "on-failure";
-          RestartSec = 5;
-          Environment = mapAttrsToList (name: value: "${name}=${value}") cfg.environment;
-        };
-        Install.WantedBy = [ "default.target" ];
-      };
-    })
-  ]);
+      })
+    ]
+  );
 }

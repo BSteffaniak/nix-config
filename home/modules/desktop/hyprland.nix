@@ -8,29 +8,27 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.desktop.hyprland;
 in
 {
   options.myConfig.desktop.hyprland = {
-    enable = mkEnableOption "Hyprland window manager configuration";
+    enable = lib.mkEnableOption "Hyprland window manager configuration";
 
-    monitorsConfig = mkOption {
-      type = types.nullOr types.path;
+    monitorsConfig = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
       default = null;
       description = "Path to host-specific monitors.conf (should be set per-host)";
     };
 
-    workspacesConfig = mkOption {
-      type = types.nullOr types.path;
+    workspacesConfig = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
       default = null;
       description = "Path to host-specific workspaces.conf (optional)";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     # Symlink standalone hyprland config from configs/hyprland
     xdg.configFile = {
       # Shared config and scripts
@@ -45,10 +43,10 @@ in
       };
 
       # Host-specific configs (only if provided)
-      "hypr/monitors.conf" = mkIf (cfg.monitorsConfig != null) {
+      "hypr/monitors.conf" = lib.mkIf (cfg.monitorsConfig != null) {
         source = cfg.monitorsConfig;
       };
-      "hypr/workspaces.conf" = mkIf (cfg.workspacesConfig != null) {
+      "hypr/workspaces.conf" = lib.mkIf (cfg.workspacesConfig != null) {
         source = cfg.workspacesConfig;
       };
     };

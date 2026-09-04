@@ -2,7 +2,7 @@
   imports = [
     ./shared.nix
     ./bash.nix
-    ./fish.nix
+    ./fish
     ./nushell.nix
     ./zsh.nix
     ./git.nix

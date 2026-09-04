@@ -1,24 +1,23 @@
 {
   config,
   lib,
-  pkgs,
+  options,
   ...
 }:
-
-with lib;
 
 let
   cfg = config.myConfig.shell.ssh;
 in
 {
   options.myConfig.shell.ssh = {
-    enable = mkEnableOption "SSH client configuration";
+    enable = lib.mkEnableOption "SSH client configuration";
 
-    matchBlocks = mkOption {
-      type = types.attrs;
+    matchBlocks = lib.mkOption {
+      # Reuse home-manager's own submodule type so host blocks are validated.
+      type = options.programs.ssh.matchBlocks.type;
       default = { };
-      description = "SSH host configurations";
-      example = literalExpression ''
+      description = "SSH host configurations (see programs.ssh.matchBlocks)";
+      example = lib.literalExpression ''
         {
           "github.com" = {
             user = "git";
@@ -29,7 +28,7 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     programs.ssh = {
       enable = true;
       enableDefaultConfig = false;

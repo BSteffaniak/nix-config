@@ -5,24 +5,22 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.development.go;
 in
 {
   options.myConfig.development.go = {
-    enable = mkEnableOption "Go development environment";
+    enable = lib.mkEnableOption "Go development environment";
 
-    includeLSP = mkOption {
-      type = types.bool;
+    includeLSP = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include gopls (Go language server)";
     };
   };
 
-  config = mkIf cfg.enable {
-    home.packages = with pkgs; [ go ] ++ (optional cfg.includeLSP gopls);
+  config = lib.mkIf cfg.enable {
+    home.packages = with pkgs; [ go ] ++ (lib.optional cfg.includeLSP gopls);
 
     # Set up Go environment variables
     home.sessionVariables = {

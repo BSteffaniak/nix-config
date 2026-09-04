@@ -19,8 +19,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.desktop.mkalias;
 
@@ -41,10 +39,10 @@ let
 in
 {
   options.myConfig.desktop.mkalias = {
-    enable = mkEnableOption "macOS Finder aliases for home-manager apps";
+    enable = lib.mkEnableOption "macOS Finder aliases for home-manager apps";
 
-    excludeApps = mkOption {
-      type = types.listOf types.str;
+    excludeApps = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
       default = [ ];
       example = [ "Sledge.app" ];
       description = ''
@@ -57,7 +55,7 @@ in
     };
   };
 
-  config = mkIf (cfg.enable && pkgs.stdenv.isDarwin) {
+  config = lib.mkIf (cfg.enable && pkgs.stdenv.isDarwin) {
     home.activation.aliasHomeManagerApps = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       manifest="''${XDG_STATE_HOME:-$HOME/.local/state}/hm-mkalias-apps.txt"
 

@@ -5,14 +5,12 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.services.avahi = {
-    enable = mkEnableOption "Avahi mDNS/DNS-SD daemon for local network discovery";
+    enable = lib.mkEnableOption "Avahi mDNS/DNS-SD daemon for local network discovery";
   };
 
-  config = mkIf config.myConfig.services.avahi.enable {
+  config = lib.mkIf config.myConfig.services.avahi.enable {
     services.avahi = {
       enable = true;
 

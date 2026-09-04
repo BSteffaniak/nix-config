@@ -94,20 +94,20 @@
       utilities.direnv.enable = true;
       utilities.jq.enable = true;
       utilities.parallel.enable = true;
-      utilities.write-good.enable = true;
+      utilities.writeGood.enable = true;
       utilities.cronstrue.enable = true;
       utilities.cloc.enable = true;
       utilities.watchexec.enable = true;
       utilities.lsof.enable = true;
       utilities.killall.enable = true;
-      utilities.nix-search.enable = true;
+      utilities.nixSearch.enable = true;
       utilities.media.ffmpeg.enable = true;
       utilities.media.flac.enable = true;
       utilities.media.mediainfo.enable = true;
       utilities.opencodeUpstream.enable = true;
       utilities.sshenv.enable = true;
       utilities.clippier.enable = true;
-      utilities.worktree-setup.enable = true;
+      utilities.worktreeSetup.enable = true;
     };
   };
 }

@@ -5,24 +5,22 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.system.networking = {
-    enable = mkEnableOption "Networking configuration";
-    allowedTCPPorts = mkOption {
-      type = types.listOf types.int;
+    enable = lib.mkEnableOption "Networking configuration";
+    allowedTCPPorts = lib.mkOption {
+      type = lib.types.listOf lib.types.int;
       default = [ ];
       description = "Additional TCP ports to open";
     };
-    allowedUDPPorts = mkOption {
-      type = types.listOf types.int;
+    allowedUDPPorts = lib.mkOption {
+      type = lib.types.listOf lib.types.int;
       default = [ ];
       description = "Additional UDP ports to open";
     };
   };
 
-  config = mkIf config.myConfig.system.networking.enable {
+  config = lib.mkIf config.myConfig.system.networking.enable {
     networking = {
       networkmanager.enable = true;
 

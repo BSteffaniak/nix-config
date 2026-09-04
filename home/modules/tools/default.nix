@@ -9,18 +9,16 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.tools;
   ollamaHost =
     let
       url = cfg.ai.ollama.serverUrl;
     in
-    if hasSuffix "/v1" url then substring 0 (stringLength url - 3) url else url;
-  pullOllamaModelCommands = concatMapStringsSep "\n" (model: ''
+    if lib.hasSuffix "/v1" url then lib.substring 0 (lib.stringLength url - 3) url else url;
+  pullOllamaModelCommands = lib.concatMapStringsSep "\n" (model: ''
     echo "pulling ollama model ${model}..." >&2
-    OLLAMA_HOST=${escapeShellArg ollamaHost} ${pkgs.ollama}/bin/ollama pull ${escapeShellArg model} || true
+    OLLAMA_HOST=${lib.escapeShellArg ollamaHost} ${pkgs.ollama}/bin/ollama pull ${lib.escapeShellArg model} || true
   '') cfg.ai.ollama.modelsToPull;
 in
 {
@@ -31,50 +29,50 @@ in
   options.myConfig.tools = {
     # Archive tools
     archiving = {
-      enable = mkEnableOption "Archive tools (7-zip)";
+      enable = lib.mkEnableOption "Archive tools (7-zip)";
     };
 
     # Mapping/GIS tools
     mapping = {
-      enable = mkEnableOption "Mapping tools (tippecanoe)";
+      enable = lib.mkEnableOption "Mapping tools (tippecanoe)";
     };
 
     # Encryption tools
     encryption = {
-      enable = mkEnableOption "Encryption tools (age)";
+      enable = lib.mkEnableOption "Encryption tools (age)";
     };
 
     # Web tools
     web = {
-      enable = mkEnableOption "Web tools (httrack website copier)";
+      enable = lib.mkEnableOption "Web tools (httrack website copier)";
     };
 
     # Database tools
     database = {
       postgresql = {
-        enable = mkEnableOption "PostgreSQL client tools";
+        enable = lib.mkEnableOption "PostgreSQL client tools";
       };
     };
 
     # AI tools
     ai = {
       gemini = {
-        enable = mkEnableOption "Google Gemini CLI";
+        enable = lib.mkEnableOption "Google Gemini CLI";
       };
       ollama = {
-        enable = mkEnableOption "Ollama local AI runner";
-        serverUrl = mkOption {
-          type = types.str;
+        enable = lib.mkEnableOption "Ollama local AI runner";
+        serverUrl = lib.mkOption {
+          type = lib.types.str;
           default = "http://localhost:11434/v1";
           description = "Ollama server URL (for remote hosts, use e.g. http://mac-studio:11434/v1)";
         };
-        model = mkOption {
-          type = types.str;
+        model = lib.mkOption {
+          type = lib.types.str;
           default = "qwen3:14b";
           description = "Primary Ollama model ID used by local coding tools";
         };
-        extraModels = mkOption {
-          type = types.listOf types.str;
+        extraModels = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
           default = [ ];
           example = [
             "qwen3:30b-a3b"
@@ -82,8 +80,8 @@ in
           ];
           description = "Additional Ollama models to register for model pickers";
         };
-        modelsToPull = mkOption {
-          type = types.listOf types.str;
+        modelsToPull = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
           default = [ ];
           example = [
             "qwen3:14b"
@@ -98,15 +96,15 @@ in
   config = {
     home.packages =
       with pkgs;
-      (optional cfg.archiving.enable _7zz)
-      ++ (optional cfg.mapping.enable tippecanoe)
-      ++ (optional cfg.encryption.enable age)
-      ++ (optional cfg.web.enable httrack)
-      ++ (optional cfg.database.postgresql.enable postgresql)
-      ++ (optional cfg.ai.gemini.enable unstable.gemini-cli)
-      ++ (optional cfg.ai.ollama.enable ollama);
+      (lib.optional cfg.archiving.enable _7zz)
+      ++ (lib.optional cfg.mapping.enable tippecanoe)
+      ++ (lib.optional cfg.encryption.enable age)
+      ++ (lib.optional cfg.web.enable httrack)
+      ++ (lib.optional cfg.database.postgresql.enable postgresql)
+      ++ (lib.optional cfg.ai.gemini.enable unstable.gemini-cli)
+      ++ (lib.optional cfg.ai.ollama.enable ollama);
 
-    home.activation.pullOllamaModels = mkIf (
+    home.activation.pullOllamaModels = lib.mkIf (
       cfg.ai.ollama.enable && cfg.ai.ollama.modelsToPull != [ ]
     ) (lib.hm.dag.entryAfter [ "writeBoundary" ] pullOllamaModelCommands);
   };

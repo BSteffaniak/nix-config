@@ -5,14 +5,12 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.desktop.waybar = {
-    enable = mkEnableOption "Waybar status bar";
+    enable = lib.mkEnableOption "Waybar status bar";
   };
 
-  config = mkIf config.myConfig.desktop.waybar.enable {
+  config = lib.mkIf config.myConfig.desktop.waybar.enable {
     programs.waybar = {
       enable = true;
       package = pkgs.waybar.overrideAttrs (oldAttrs: {

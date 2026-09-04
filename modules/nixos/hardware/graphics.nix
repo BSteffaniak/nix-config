@@ -5,14 +5,12 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.hardware.graphics = {
-    enable = mkEnableOption "Graphics and OpenGL support";
+    enable = lib.mkEnableOption "Graphics and OpenGL support";
   };
 
-  config = mkIf config.myConfig.hardware.graphics.enable {
+  config = lib.mkIf config.myConfig.hardware.graphics.enable {
     hardware.graphics = {
       enable = true;
       enable32Bit = true;

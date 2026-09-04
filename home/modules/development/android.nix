@@ -5,8 +5,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.development.android;
   darwinSdkRoot = "$HOME/Library/Android/sdk";
@@ -43,32 +41,32 @@ let
 in
 {
   options.myConfig.development.android = {
-    enable = mkEnableOption "Android development environment";
+    enable = lib.mkEnableOption "Android development environment";
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     home.packages =
-      optionals (!pkgs.stdenv.isDarwin) [ android.androidsdk ]
-      ++ optionals (
-        !pkgs.stdenv.isDarwin && meta.availableOn pkgs.stdenv.hostPlatform pkgs.android-studio
+      lib.optionals (!pkgs.stdenv.isDarwin) [ android.androidsdk ]
+      ++ lib.optionals (
+        !pkgs.stdenv.isDarwin && lib.meta.availableOn pkgs.stdenv.hostPlatform pkgs.android-studio
       ) [ pkgs.android-studio ];
 
-    home.sessionVariables = mkMerge [
-      (mkIf pkgs.stdenv.isDarwin {
+    home.sessionVariables = lib.mkMerge [
+      (lib.mkIf pkgs.stdenv.isDarwin {
         ANDROID_HOME = darwinSdkRoot;
         ANDROID_SDK_ROOT = darwinSdkRoot;
         ANDROID_NDK_HOME = "${android.androidsdk}/libexec/android-sdk/ndk-bundle";
         ANDROID_NDK_ROOT = "${android.androidsdk}/libexec/android-sdk/ndk-bundle";
         NDK_HOME = "${android.androidsdk}/libexec/android-sdk/ndk-bundle";
       })
-      (mkIf (!pkgs.stdenv.isDarwin) {
+      (lib.mkIf (!pkgs.stdenv.isDarwin) {
         ANDROID_HOME = "${android.androidsdk}/libexec/android-sdk";
         ANDROID_SDK_ROOT = "${android.androidsdk}/libexec/android-sdk";
         NDK_HOME = "${android.androidsdk}/libexec/android-sdk/ndk-bundle";
       })
     ];
 
-    home.sessionPath = mkIf pkgs.stdenv.isDarwin [
+    home.sessionPath = lib.mkIf pkgs.stdenv.isDarwin [
       "${darwinSdkRoot}/emulator"
       "${darwinSdkRoot}/platform-tools"
       "${darwinSdkRoot}/cmdline-tools/latest/bin"

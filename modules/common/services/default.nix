@@ -1,12 +1,6 @@
 {
-  config,
-  lib,
-  pkgs,
-  ...
-}:
-
-{
   imports = [
+    ./sshd.nix
     ./tailscale.nix
   ];
 }

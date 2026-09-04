@@ -5,67 +5,65 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.devops.kubernetes;
 in
 {
   options.myConfig.devops.kubernetes = {
-    enable = mkEnableOption "Kubernetes tools and utilities";
+    enable = lib.mkEnableOption "Kubernetes tools and utilities";
 
-    includeKind = mkOption {
-      type = types.bool;
+    includeKind = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include kind (Kubernetes in Docker)";
     };
 
-    includeHelm = mkOption {
-      type = types.bool;
+    includeHelm = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include Helm package manager";
     };
 
-    includeK9s = mkOption {
-      type = types.bool;
+    includeK9s = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include k9s TUI for Kubernetes";
     };
 
-    includeStern = mkOption {
-      type = types.bool;
+    includeStern = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include stern for multi-pod log tailing";
     };
 
-    includeKrew = mkOption {
-      type = types.bool;
+    includeKrew = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include krew (kubectl plugin manager)";
     };
 
-    includeCertManager = mkOption {
-      type = types.bool;
+    includeCertManager = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include cmctl (cert-manager CLI)";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     home.packages =
       with pkgs;
       [
         kubectl
       ]
-      ++ (optional cfg.includeKind kind)
-      ++ (optional cfg.includeHelm kubernetes-helm-wrapped)
-      ++ (optional cfg.includeK9s k9s)
-      ++ (optional cfg.includeStern stern)
-      ++ (optional cfg.includeKrew krew)
-      ++ (optional cfg.includeCertManager cmctl);
+      ++ (lib.optional cfg.includeKind kind)
+      ++ (lib.optional cfg.includeHelm kubernetes-helm-wrapped)
+      ++ (lib.optional cfg.includeK9s k9s)
+      ++ (lib.optional cfg.includeStern stern)
+      ++ (lib.optional cfg.includeKrew krew)
+      ++ (lib.optional cfg.includeCertManager cmctl);
 
     # Shared completion hooks and aliases across all configured shells
-    homeModules.shell.shared = {
+    myConfig.shell.contrib = {
       completionCommands = [ "kubectl" ];
       aliases = {
         k = "kubectl";

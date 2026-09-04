@@ -5,19 +5,17 @@
   ...
 }:
 
-with lib;
-
 {
   options.myConfig.services.docker = {
-    enable = mkEnableOption "Docker container runtime";
-    dataRoot = mkOption {
-      type = types.str;
+    enable = lib.mkEnableOption "Docker container runtime";
+    dataRoot = lib.mkOption {
+      type = lib.types.str;
       default = "/var/lib/docker";
       description = "Docker data root directory";
     };
   };
 
-  config = mkIf config.myConfig.services.docker.enable {
+  config = lib.mkIf config.myConfig.services.docker.enable {
     virtualisation.docker = {
       enable = true;
       # docker_28 (the nixpkgs default) is marked insecure in 25.11.

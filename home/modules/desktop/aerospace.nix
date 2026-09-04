@@ -5,17 +5,15 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.desktop.aerospace;
 in
 {
   options.myConfig.desktop.aerospace = {
-    enable = mkEnableOption "AeroSpace tiling window manager for macOS";
+    enable = lib.mkEnableOption "AeroSpace tiling window manager for macOS";
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     # Install AeroSpace via homebrew cask (managed by nix-darwin)
     # The package is installed via homebrew, we just manage the config here
 

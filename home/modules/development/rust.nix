@@ -5,8 +5,6 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.myConfig.development.rust;
 
@@ -19,10 +17,10 @@ let
       # Cargo development tools
       cargoUtils =
         with pkgs;
-        (optional cfg.cargoTools.includeBinstall cargo-binstall)
-        ++ (optional cfg.cargoTools.includeNextest cargo-nextest)
-        ++ (optional cfg.cargoTools.includeLambda cargo-lambda)
-        ++ (optional cfg.cargoTools.includeLspmux lspmux-latest);
+        (lib.optional cfg.cargoTools.includeBinstall cargo-binstall)
+        ++ (lib.optional cfg.cargoTools.includeNextest cargo-nextest)
+        ++ (lib.optional cfg.cargoTools.includeLambda cargo-lambda)
+        ++ (lib.optional cfg.cargoTools.includeLspmux lspmux-latest);
 
       # Build toolchains with rust-src configuration
       stableToolchain = pkgs.mkRustStable { includeRustSrc = cfg.includeRustSrc; };
@@ -59,22 +57,22 @@ let
 in
 {
   options.myConfig.development.rust = {
-    enable = mkEnableOption "Rust development environment";
+    enable = lib.mkEnableOption "Rust development environment";
 
-    includeStable = mkOption {
-      type = types.bool;
+    includeStable = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include Rust stable toolchain";
     };
 
-    includeNightly = mkOption {
-      type = types.bool;
+    includeNightly = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = "Include Rust nightly toolchain";
     };
 
-    includeRustSrc = mkOption {
-      type = types.bool;
+    includeRustSrc = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = ''
         Include rust-src component in the Rust toolchain.
@@ -85,15 +83,15 @@ in
       '';
     };
 
-    disableIncrementalCompilation = mkOption {
-      type = types.bool;
+    disableIncrementalCompilation = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Disable Cargo incremental compilation to reduce target directory disk usage";
     };
 
     cargoTools = {
-      includeBinstall = mkOption {
-        type = types.bool;
+      includeBinstall = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = ''
           Include cargo-binstall for binary crate installation.
@@ -101,8 +99,8 @@ in
         '';
       };
 
-      includeNextest = mkOption {
-        type = types.bool;
+      includeNextest = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = ''
           Include cargo-nextest, a next-generation test runner.
@@ -110,8 +108,8 @@ in
         '';
       };
 
-      includeLambda = mkOption {
-        type = types.bool;
+      includeLambda = lib.mkOption {
+        type = lib.types.bool;
         default = false;
         description = ''
           Include cargo-lambda for AWS Lambda development.
@@ -119,8 +117,8 @@ in
         '';
       };
 
-      includeLspmux = mkOption {
-        type = types.bool;
+      includeLspmux = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = ''
           Include lspmux (LSP multiplexer).
@@ -129,15 +127,15 @@ in
       };
     };
 
-    bpfLinker = mkEnableOption "BPF linker for eBPF development";
+    bpfLinker = lib.mkEnableOption "BPF linker for eBPF development";
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     # Install Rust toolchains and tools via home-manager
-    home.packages = rustPackages ++ (optional cfg.bpfLinker pkgs.unstable.bpf-linker);
+    home.packages = rustPackages ++ (lib.optional cfg.bpfLinker pkgs.unstable.bpf-linker);
 
     # Reduce target directory disk usage unless a host opts out
-    home.file.".cargo/config.toml" = mkIf cfg.disableIncrementalCompilation {
+    home.file.".cargo/config.toml" = lib.mkIf cfg.disableIncrementalCompilation {
       text = ''
         [build]
         incremental = false
@@ -148,14 +146,14 @@ in
     home.sessionPath = [ "$HOME/.cargo/bin" ];
 
     # Set up environment variables for Rust
-    home.sessionVariables = mkMerge [
-      (mkIf cfg.includeRustSrc {
+    home.sessionVariables = lib.mkMerge [
+      (lib.mkIf cfg.includeRustSrc {
         RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
       })
     ];
 
     # Warn if neither stable nor nightly is enabled
-    warnings = optional (
+    warnings = lib.optional (
       !cfg.includeStable && !cfg.includeNightly
     ) "Rust development environment is enabled but neither stable nor nightly toolchain is included.";
   };
