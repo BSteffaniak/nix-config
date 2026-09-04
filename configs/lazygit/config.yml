@@ -361,6 +361,7 @@ keybinding:
         suspendApp: <c-z>
         return: <esc>
         quitWithoutChangingDirectory: Q
+        newWorktree: w
         togglePanel: <tab>
         prevItem: <up>
         nextItem: <down>
@@ -453,7 +454,7 @@ keybinding:
         ignoreFile: i
         refreshFiles: r
         stashAllChanges: S
-        viewStashOptions: <c-S>
+        viewStashOptions: <c-s>
         toggleStagedAll: a
         viewResetOptions: D
         fetch: f
@@ -481,8 +482,6 @@ keybinding:
         setUpstream: u
         fetchRemote: f
         sortOrder: S
-    worktrees:
-        viewWorktreeOptions: w
     commits:
         squashDown: S
         renameCommit: r
@@ -500,9 +499,9 @@ keybinding:
         cherryPickCopy: C
         pasteCommits: V
         markCommitAsBaseForRebase: B
-        tagCommit: <c-T>
+        tagCommit: <c-t>
         checkoutCommit: <space>
-        resetCherryPick: <c-R>
+        resetCherryPick: <c-r>
         copyCommitAttributeToClipboard: "y"
         openLogMenu: <c-l>
         openInBrowser: o
