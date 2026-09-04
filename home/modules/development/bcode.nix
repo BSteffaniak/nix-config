@@ -127,10 +127,14 @@ let
     proactive_threshold_tokens = threshold;
   };
 
-  openAiLongContextModels = [
+  openAiPricingBarrierModels = [
     "gpt-5.4"
     "gpt-5.4-pro"
     "gpt-5.5"
+  ];
+
+  openAiLongContextModels = [
+    "gpt-6-astra"
     "gpt-5.6-sol"
     "gpt-5.6-terra"
     "gpt-5.6-luna"
@@ -138,11 +142,15 @@ let
   ];
 
   pricingBarrierCompactionModels =
-    lib.optionalAttrs cfg.compaction.openAiPricingBarrier.enable (
-      lib.genAttrs openAiLongContextModels (_: longContextCompaction "bcode.openai-compatible" 272000)
+    lib.genAttrs openAiLongContextModels (_: longContextCompaction "bcode.openai-compatible" 272000)
+    // lib.optionalAttrs cfg.compaction.openAiPricingBarrier.enable (
+      lib.genAttrs openAiPricingBarrierModels (_: longContextCompaction "bcode.openai-compatible" 272000)
     )
     // {
-      # GPT-5.6 models (1M context) - compact at 272k
+      # GPT-6 Astra and GPT-5.6 models (1M context) - compact at 272k
+      "openai.gpt-6-astra" = longContextCompaction "bcode.bedrock" 272000;
+      "us.openai.gpt-6-astra" = longContextCompaction "bcode.bedrock" 272000;
+      "global.openai.gpt-6-astra" = longContextCompaction "bcode.bedrock" 272000;
       "openai.gpt-5.6-sol" = longContextCompaction "bcode.bedrock" 272000;
       "us.openai.gpt-5.6-sol" = longContextCompaction "bcode.bedrock" 272000;
       "global.openai.gpt-5.6-sol" = longContextCompaction "bcode.bedrock" 272000;
@@ -154,7 +162,10 @@ let
       "us.openai.gpt-5.6-luna" = longContextCompaction "bcode.bedrock" 272000;
       "apac.openai.gpt-5.6-luna" = longContextCompaction "bcode.bedrock" 272000;
       "global.openai.gpt-5.6-luna" = longContextCompaction "bcode.bedrock" 272000;
-      # GPT-5.5 and 5.4 have 272k total context, no proactive compaction needed
+      "openai.gpt-5.6-cyber" = longContextCompaction "bcode.bedrock" 272000;
+      "us.openai.gpt-5.6-cyber" = longContextCompaction "bcode.bedrock" 272000;
+      "global.openai.gpt-5.6-cyber" = longContextCompaction "bcode.bedrock" 272000;
+      # GPT-5.5 and 5.4 have 272k total context, no proactive compaction needed by default
     };
 
   compactionSettings = {
@@ -762,10 +773,9 @@ in
       type = lib.types.bool;
       default = false;
       description = ''
-        Opt in to proactive compaction at OpenAI's long-context pricing barrier for
-        OpenAI-compatible profiles, including personal ChatGPT/Codex subscription profiles.
-        When disabled, those profiles compact only after a provider context-length error.
-        Bedrock pricing-barrier policies are unaffected.
+        Opt in to proactive compaction at 272k for older OpenAI-compatible models whose
+        total context window is 272k. GPT-6 Astra and GPT-5.6 profiles always compact at
+        272k on both personal ChatGPT/Codex and Bedrock.
       '';
     };
 
