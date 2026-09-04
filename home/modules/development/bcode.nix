@@ -559,6 +559,27 @@ let
       dialect = "chatgpt_codex";
     };
 
+    luna = mkOpenAiProfile {
+      model = cfg.providers.luna.model;
+      authProfile = cfg.providers.luna.authProfile;
+      authProvider = "openai";
+      dialect = "chatgpt_codex";
+    };
+
+    terra = mkOpenAiProfile {
+      model = cfg.providers.terra.model;
+      authProfile = cfg.providers.terra.authProfile;
+      authProvider = "openai";
+      dialect = "chatgpt_codex";
+    };
+
+    sol = mkOpenAiProfile {
+      model = cfg.providers.sol.model;
+      authProfile = cfg.providers.sol.authProfile;
+      authProvider = "openai";
+      dialect = "chatgpt_codex";
+    };
+
     codex = mkOpenAiProfile {
       model = cfg.providers.codex.model;
       authProfile = cfg.providers.codex.authProfile;
@@ -850,6 +871,54 @@ in
           type = lib.types.str;
           default = "openai";
           description = "Shared sshenv profile used by bcode-astra.";
+        };
+
+        sshenv = mkSshenvOption "openai" null;
+      };
+
+      luna = {
+        model = lib.mkOption {
+          type = lib.types.str;
+          default = "gpt-5.6-luna";
+          description = "GPT-5.6 Luna model used by bcode-luna.";
+        };
+
+        authProfile = lib.mkOption {
+          type = lib.types.str;
+          default = "openai";
+          description = "Shared sshenv profile used by bcode-luna.";
+        };
+
+        sshenv = mkSshenvOption "openai" null;
+      };
+
+      terra = {
+        model = lib.mkOption {
+          type = lib.types.str;
+          default = "gpt-5.6-terra";
+          description = "GPT-5.6 Terra model used by bcode-terra.";
+        };
+
+        authProfile = lib.mkOption {
+          type = lib.types.str;
+          default = "openai";
+          description = "Shared sshenv profile used by bcode-terra.";
+        };
+
+        sshenv = mkSshenvOption "openai" null;
+      };
+
+      sol = {
+        model = lib.mkOption {
+          type = lib.types.str;
+          default = "gpt-5.6-sol";
+          description = "GPT-5.6 Sol model used by bcode-sol.";
+        };
+
+        authProfile = lib.mkOption {
+          type = lib.types.str;
+          default = "openai";
+          description = "Shared sshenv profile used by bcode-sol.";
         };
 
         sshenv = mkSshenvOption "openai" null;
