@@ -68,11 +68,11 @@
     "clippier-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1787526411,
-        "narHash": "sha256-w8Gjfrtfrxcx9YSG2YWqLW4zgfJ8D0g+vfBAjhjz0tc=",
+        "lastModified": 1788633298,
+        "narHash": "sha256-PPXs2qt0j+2xElAiXC0DyPRZ9eVnYHeESevwaYjYrEE=",
         "owner": "MoosicBox",
         "repo": "MoosicBox",
-        "rev": "5567f4627433554b150bf62cd3793df7fd27a0ce",
+        "rev": "21fa5332b47d301957e6f096f4d9963ec6dcd84f",
         "type": "github"
       },
       "original": {
