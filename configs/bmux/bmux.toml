@@ -78,6 +78,7 @@ active_profile = "zellij_compat"
 "ctrl+a z" = "zoom_pane"
 
 [keybindings.global]
+"ctrl+f" = "plugin:bmux.finder:show"
 "alt+l" = "plugin:bmux.workspaces:last-workspace"
 "alt+1" = "plugin:bmux.windows:goto-window 1"
 "alt+2" = "plugin:bmux.windows:goto-window 2"
