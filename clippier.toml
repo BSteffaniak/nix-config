@@ -1,0 +1,66 @@
+[runner]
+required = [
+  "black",
+  "clang-format",
+  "clippier_md",
+  "nixfmt",
+  "prettier",
+  "shfmt",
+  "stylua",
+  "taplo",
+]
+skip = [
+  "alejandra",
+  "biome",
+  "deadnix",
+  "deno",
+  "dprint",
+  "mdformat",
+  "remark",
+  "ruff",
+  "statix",
+  "yamlfmt",
+]
+
+[runner.tools]
+black = { mode = "enabled", capabilities = [
+  "format",
+], format-extensions = [
+  "py",
+] }
+clang-format = { mode = "enabled", capabilities = [
+  "format",
+], format-extensions = [
+  "m",
+] }
+clippier_md = { mode = "enabled", capabilities = [
+  "format",
+], format-extensions = [
+  "md",
+] }
+nixfmt = { mode = "enabled", capabilities = [
+  "format",
+], format-extensions = [
+  "nix",
+] }
+prettier = { mode = "enabled", capabilities = [
+  "format",
+], format-extensions = [
+  "css",
+  "yml",
+] }
+shfmt = { mode = "enabled", capabilities = [
+  "format",
+], format-extensions = [
+  "sh",
+] }
+stylua = { mode = "enabled", capabilities = [
+  "format",
+], format-extensions = [
+  "lua",
+] }
+taplo = { mode = "enabled", capabilities = [
+  "format",
+], format-extensions = [
+  "toml",
+] }
