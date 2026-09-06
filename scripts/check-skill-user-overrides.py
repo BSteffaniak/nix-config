@@ -26,7 +26,9 @@ HARD_GATE_PATTERNS = (
 def main() -> int:
     errors: list[str] = []
     if not CONTRACT.is_file():
-        errors.append(f"missing shared contract: {CONTRACT.relative_to(ROOT.parent.parent.parent)}")
+        errors.append(
+            f"missing shared contract: {CONTRACT.relative_to(ROOT.parent.parent.parent)}"
+        )
 
     skills = sorted(ROOT.glob("*/SKILL.md"))
     for skill in skills:
@@ -40,7 +42,9 @@ def main() -> int:
             for match in pattern.finditer(text):
                 if not has_contract:
                     line = text.count("\n", 0, match.start()) + 1
-                    errors.append(f"{relative}:{line}: unqualified hard-gate language: {match.group(0)!r}")
+                    errors.append(
+                        f"{relative}:{line}: unqualified hard-gate language: {match.group(0)!r}"
+                    )
 
     if errors:
         print("Skill override policy check failed:", file=sys.stderr)

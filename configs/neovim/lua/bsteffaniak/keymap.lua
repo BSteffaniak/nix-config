@@ -15,8 +15,8 @@ vim.keymap.set("n", "<Leader>O", "O<Esc>", key_opts)
 vim.keymap.set("n", "<Leader>e", ":FzfLua git_files<Enter>", key_opts)
 vim.keymap.set("n", "<Leader><Leader>", ":FzfLua files<Enter>", key_opts)
 vim.keymap.set("n", "<Leader>t", function()
-  local cwd = vim.fn.getcwd()
-  require("oil").open_float(cwd)
+	local cwd = vim.fn.getcwd()
+	require("oil").open_float(cwd)
 end, key_opts)
 vim.keymap.set("n", "<Leader>g", ":Oil --float<Enter>", key_opts)
 -- vim.keymap.set("n", "<Leader>r", ':lua require("spectre").toggle()<Enter>', key_opts)
@@ -48,54 +48,54 @@ vim.keymap.set("n", "H", "<c-o>", key_opts)
 vim.keymap.set("n", "S", "<c-i>", key_opts)
 vim.keymap.set("v", "<Enter>", '"+y', key_opts)
 vim.keymap.set({ "n", "v" }, "g#", function()
-  vim.cmd(vim.api.nvim_replace_termcodes("normal gm`", true, true, true))
-  vim.cmd("keepjumps normal! #``")
+	vim.cmd(vim.api.nvim_replace_termcodes("normal gm`", true, true, true))
+	vim.cmd("keepjumps normal! #``")
 end)
 vim.keymap.set("n", "YY", '"+yy', key_opts)
 
 vim.keymap.set({ "n", "v" }, "t", function()
-  return vim.v.count > 0 and "j" or "gj"
+	return vim.v.count > 0 and "j" or "gj"
 end, { expr = true, noremap = true })
 vim.keymap.set({ "n", "v" }, "n", function()
-  return vim.v.count > 0 and "k" or "gk"
+	return vim.v.count > 0 and "k" or "gk"
 end, { expr = true, noremap = true })
 vim.keymap.set({ "n", "v" }, "k", function()
-  return vim.v.count > 0 and "j" or "gj"
+	return vim.v.count > 0 and "j" or "gj"
 end, { expr = true, noremap = true })
 vim.keymap.set({ "n", "v" }, "l", function()
-  return vim.v.count > 0 and "k" or "gk"
+	return vim.v.count > 0 and "k" or "gk"
 end, { expr = true, noremap = true })
 
 local maximize = require("maximize")
 
 vim.keymap.set({ "n", "v" }, "<Leader><Tab>", function()
-  maximize.restore()
-  vim.cmd(vim.api.nvim_replace_termcodes("normal <c-w>w", true, true, true))
-  maximize.maximize()
+	maximize.restore()
+	vim.cmd(vim.api.nvim_replace_termcodes("normal <c-w>w", true, true, true))
+	maximize.maximize()
 end, key_opts)
 
 vim.keymap.set({ "n", "v" }, "<Leader>l", function()
-  vim.opt.relativenumber = not vim.opt.relativenumber:get()
+	vim.opt.relativenumber = not vim.opt.relativenumber:get()
 end, key_opts)
 
 vim.keymap.set({ "n", "v" }, "<Leader>j", function()
-  local so = vim.opt.scrolloff:get()
+	local so = vim.opt.scrolloff:get()
 
-  if so == 0 then
-    vim.opt.scrolloff = vim.g.lastscrolloff
-  else
-    vim.g.lastscrolloff = so
-    vim.opt.scrolloff = 0
-  end
+	if so == 0 then
+		vim.opt.scrolloff = vim.g.lastscrolloff
+	else
+		vim.g.lastscrolloff = so
+		vim.opt.scrolloff = 0
+	end
 end, key_opts)
 
 vim.keymap.set({ "n", "v" }, "<Leader>k", function()
-  local so = vim.opt.scrolloff:get()
+	local so = vim.opt.scrolloff:get()
 
-  if so == 999 then
-    vim.opt.scrolloff = vim.g.lastscrolloff
-  else
-    vim.g.lastscrolloff = so
-    vim.opt.scrolloff = 999
-  end
+	if so == 999 then
+		vim.opt.scrolloff = vim.g.lastscrolloff
+	else
+		vim.g.lastscrolloff = so
+		vim.opt.scrolloff = 999
+	end
 end, key_opts)

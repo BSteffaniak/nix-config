@@ -6,12 +6,12 @@
 set -euo pipefail
 
 # Get script directory
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Parse arguments
 CHECK_MODE=false
 if [[ "${1:-}" == "--check" ]]; then
-  CHECK_MODE=true
+	CHECK_MODE=true
 fi
 
 # Colors for output
@@ -23,7 +23,7 @@ NC='\033[0m' # No Color
 
 # Check if a file is binary/encrypted (e.g., git-sshripped locked files)
 is_encrypted() {
-  file --mime-encoding "$1" 2>/dev/null | grep -q "binary"
+	file --mime-encoding "$1" 2>/dev/null | grep -q "binary"
 }
 
 # Run prettier with automatic exclusion of encrypted files.
@@ -31,30 +31,30 @@ is_encrypted() {
 # Discovers encrypted files matching prettier extensions and passes them
 # as negative globs so they are skipped on top of .prettierignore/.gitignore.
 run_prettier() {
-  local mode_flag="$1"
-  local prettier_glob="**/*.{md,yml,yaml,ts,json,css,js}"
+	local mode_flag="$1"
+	local prettier_glob="**/*.{md,yml,yaml,ts,json,css,js}"
 
-  # Find encrypted files matching prettier extensions and build negative globs
-  local excludes=()
-  while IFS= read -r f; do
-    if is_encrypted "$f"; then
-      local rel="${f#$SCRIPT_DIR/}"
-      echo -e "${YELLOW}⊘${NC} Skipped (encrypted): $rel"
-      excludes+=("!${rel}")
-    fi
-  done < <(find "$SCRIPT_DIR" -type f \
-    \( -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.ts" \
-       -o -name "*.json" -o -name "*.css" -o -name "*.js" \) \
-    -not -path "*/\.git/*" -not -path "*/node_modules/*" -not -path "*/result*" | sort)
+	# Find encrypted files matching prettier extensions and build negative globs
+	local excludes=()
+	while IFS= read -r f; do
+		if is_encrypted "$f"; then
+			local rel="${f#$SCRIPT_DIR/}"
+			echo -e "${YELLOW}⊘${NC} Skipped (encrypted): $rel"
+			excludes+=("!${rel}")
+		fi
+	done < <(find "$SCRIPT_DIR" -type f \
+		\( -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.ts" \
+		-o -name "*.json" -o -name "*.css" -o -name "*.js" \) \
+		-not -path "*/\.git/*" -not -path "*/node_modules/*" -not -path "*/result*" | sort)
 
-  npx prettier "$mode_flag" "$prettier_glob" "${excludes[@]}"
+	npx prettier "$mode_flag" "$prettier_glob" "${excludes[@]}"
 }
 
 # Check if nixfmt is available
-if ! command -v nixfmt &> /dev/null; then
-  echo -e "${RED}Error: nixfmt not found in PATH${NC}"
-  echo "Install it with: nix-shell -p nixfmt-rfc-style"
-  exit 1
+if ! command -v nixfmt &>/dev/null; then
+	echo -e "${RED}Error: nixfmt not found in PATH${NC}"
+	echo "Install it with: nix-shell -p nixfmt-rfc-style"
+	exit 1
 fi
 
 echo "Searching for Nix files..."
@@ -65,9 +65,9 @@ echo "Searching for Nix files..."
 # - Any nix store paths
 # Use mapfile to properly read into an array
 mapfile -t FILES < <(find "$SCRIPT_DIR" -type f -name "*.nix" \
-  -not -path "*/\.git/*" \
-  -not -path "*/result*" \
-  -not -path "*/nix/store/*" | sort)
+	-not -path "*/\.git/*" \
+	-not -path "*/result*" \
+	-not -path "*/nix/store/*" | sort)
 
 FILE_COUNT=${#FILES[@]}
 
@@ -75,8 +75,8 @@ echo -e "Found ${BLUE}$FILE_COUNT${NC} Nix files to process"
 echo ""
 
 if [[ "$CHECK_MODE" == true ]]; then
-  echo -e "${YELLOW}Running in CHECK mode (no files will be modified)${NC}"
-  echo ""
+	echo -e "${YELLOW}Running in CHECK mode (no files will be modified)${NC}"
+	echo ""
 fi
 
 # Track statistics
@@ -87,38 +87,38 @@ FAILED_FILES=()
 
 # Process each file using array iteration
 for file in "${FILES[@]}"; do
-  # Skip empty entries
-  [[ -z "$file" ]] && continue
+	# Skip empty entries
+	[[ -z "$file" ]] && continue
 
-  # Get relative path for display
-  rel_path="${file#$SCRIPT_DIR/}"
+	# Get relative path for display
+	rel_path="${file#$SCRIPT_DIR/}"
 
-  # Skip binary/encrypted files (e.g., git-sshripped locked files)
-  if is_encrypted "$file"; then
-    echo -e "${YELLOW}⊘${NC} Skipped (encrypted): $rel_path"
-    continue
-  fi
+	# Skip binary/encrypted files (e.g., git-sshripped locked files)
+	if is_encrypted "$file"; then
+		echo -e "${YELLOW}⊘${NC} Skipped (encrypted): $rel_path"
+		continue
+	fi
 
-  if [[ "$CHECK_MODE" == true ]]; then
-    # Check mode: verify if file is formatted
-    if nixfmt --check "$file" &> /dev/null; then
-      echo -e "${GREEN}✓${NC} $rel_path"
-      ALREADY_FORMATTED=$((ALREADY_FORMATTED + 1))
-    else
-      echo -e "${YELLOW}✗${NC} $rel_path (needs formatting)"
-      FORMATTED=$((FORMATTED + 1))
-    fi
-  else
-    # Format mode: actually format the file
-    if nixfmt "$file" &> /dev/null; then
-      echo -e "${GREEN}✓${NC} Formatted: $rel_path"
-      FORMATTED=$((FORMATTED + 1))
-    else
-      echo -e "${RED}✗${NC} Failed: $rel_path"
-      FAILED=$((FAILED + 1))
-      FAILED_FILES+=("$rel_path")
-    fi
-  fi
+	if [[ "$CHECK_MODE" == true ]]; then
+		# Check mode: verify if file is formatted
+		if nixfmt --check "$file" &>/dev/null; then
+			echo -e "${GREEN}✓${NC} $rel_path"
+			ALREADY_FORMATTED=$((ALREADY_FORMATTED + 1))
+		else
+			echo -e "${YELLOW}✗${NC} $rel_path (needs formatting)"
+			FORMATTED=$((FORMATTED + 1))
+		fi
+	else
+		# Format mode: actually format the file
+		if nixfmt "$file" &>/dev/null; then
+			echo -e "${GREEN}✓${NC} Formatted: $rel_path"
+			FORMATTED=$((FORMATTED + 1))
+		else
+			echo -e "${RED}✗${NC} Failed: $rel_path"
+			FAILED=$((FAILED + 1))
+			FAILED_FILES+=("$rel_path")
+		fi
+	fi
 done
 
 echo ""
@@ -126,37 +126,37 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "Summary:"
 
 if [[ "$CHECK_MODE" == true ]]; then
-  echo -e "  Already formatted: ${GREEN}$ALREADY_FORMATTED${NC} files"
-  echo -e "  Need formatting:   ${YELLOW}$FORMATTED${NC} files"
-  echo -e "  Total checked:     ${BLUE}$FILE_COUNT${NC} files"
+	echo -e "  Already formatted: ${GREEN}$ALREADY_FORMATTED${NC} files"
+	echo -e "  Need formatting:   ${YELLOW}$FORMATTED${NC} files"
+	echo -e "  Total checked:     ${BLUE}$FILE_COUNT${NC} files"
 
-  if [[ $FORMATTED -gt 0 ]]; then
-    echo ""
-    echo -e "${YELLOW}⚠  Some files need formatting. Run './fmt.sh' to format them.${NC}"
-    exit 1
-  else
-    echo ""
-    echo -e "${GREEN}✓ All files are properly formatted!${NC}"
-    run_prettier --check
-    "$SCRIPT_DIR/scripts/check-skill-user-overrides.py"
-    exit 0
-  fi
+	if [[ $FORMATTED -gt 0 ]]; then
+		echo ""
+		echo -e "${YELLOW}⚠  Some files need formatting. Run './fmt.sh' to format them.${NC}"
+		exit 1
+	else
+		echo ""
+		echo -e "${GREEN}✓ All files are properly formatted!${NC}"
+		run_prettier --check
+		"$SCRIPT_DIR/scripts/check-skill-user-overrides.py"
+		exit 0
+	fi
 else
-  echo -e "  Formatted:  ${GREEN}$FORMATTED${NC} files"
-  echo -e "  Failed:     ${RED}$FAILED${NC} files"
-  echo -e "  Total:      ${BLUE}$FILE_COUNT${NC} files"
+	echo -e "  Formatted:  ${GREEN}$FORMATTED${NC} files"
+	echo -e "  Failed:     ${RED}$FAILED${NC} files"
+	echo -e "  Total:      ${BLUE}$FILE_COUNT${NC} files"
 
-  if [[ $FAILED -gt 0 ]]; then
-    echo ""
-    echo -e "${RED}Failed to format:${NC}"
-    for failed_file in "${FAILED_FILES[@]}"; do
-      echo "  - $failed_file"
-    done
-    exit 1
-  else
-    echo ""
-    echo -e "${GREEN}✓ Successfully formatted all files!${NC}"
-    run_prettier --write
-    exit 0
-  fi
+	if [[ $FAILED -gt 0 ]]; then
+		echo ""
+		echo -e "${RED}Failed to format:${NC}"
+		for failed_file in "${FAILED_FILES[@]}"; do
+			echo "  - $failed_file"
+		done
+		exit 1
+	else
+		echo ""
+		echo -e "${GREEN}✓ Successfully formatted all files!${NC}"
+		run_prettier --write
+		exit 0
+	fi
 fi

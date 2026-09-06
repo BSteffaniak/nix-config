@@ -1,1 +1,1 @@
-vim.cmd('runtime! ftplugin/typescriptreact.lua')
+vim.cmd("runtime! ftplugin/typescriptreact.lua")
