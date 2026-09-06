@@ -11,15 +11,38 @@ required = [
 ]
 skip = [
   "alejandra",
+  "autopep8",
+  "bandit",
   "biome",
+  "codespell",
+  "csharpier",
+  "cspell",
   "deadnix",
   "deno",
   "dprint",
+  "eslint",
+  "flake8",
+  "isort",
+  "luacheck",
+  "markdownlint",
   "mdformat",
+  "mypy",
+  "oxfmt",
+  "oxlint",
+  "pylint",
+  "pyright",
   "remark",
   "ruff",
+  "rumdl",
+  "selene",
+  "shellcheck",
   "statix",
+  "stylelint",
+  "ty",
+  "vale",
   "yamlfmt",
+  "yamllint",
+  "yapf",
 ]
 
 [runner.tools]
@@ -47,6 +70,8 @@ prettier = { mode = "enabled", capabilities = [
   "format",
 ], format-extensions = [
   "css",
+  "json",
+  "ts",
   "yml",
 ] }
 shfmt = { mode = "enabled", capabilities = [
@@ -64,3 +89,36 @@ taplo = { mode = "enabled", capabilities = [
 ], format-extensions = [
   "toml",
 ] }
+alejandra = { mode = "disabled" }
+autopep8 = { mode = "disabled" }
+bandit = { mode = "disabled" }
+biome = { mode = "disabled" }
+codespell = { mode = "disabled" }
+csharpier = { mode = "disabled" }
+cspell = { mode = "disabled" }
+deadnix = { mode = "disabled" }
+deno = { mode = "disabled" }
+dprint = { mode = "disabled" }
+eslint = { mode = "disabled" }
+flake8 = { mode = "disabled" }
+isort = { mode = "disabled" }
+luacheck = { mode = "disabled" }
+markdownlint = { mode = "disabled" }
+mdformat = { mode = "disabled" }
+mypy = { mode = "disabled" }
+oxfmt = { mode = "disabled" }
+oxlint = { mode = "disabled" }
+pylint = { mode = "disabled" }
+pyright = { mode = "disabled" }
+remark = { mode = "disabled" }
+ruff = { mode = "disabled" }
+rumdl = { mode = "disabled" }
+selene = { mode = "disabled" }
+shellcheck = { mode = "disabled" }
+statix = { mode = "disabled" }
+stylelint = { mode = "disabled" }
+ty = { mode = "disabled" }
+vale = { mode = "disabled" }
+yamlfmt = { mode = "disabled" }
+yamllint = { mode = "disabled" }
+yapf = { mode = "disabled" }
