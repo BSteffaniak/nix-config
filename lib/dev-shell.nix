@@ -13,6 +13,7 @@ pkgs.mkShell {
 
     # Formatting (non-nix files)
     nodePackages.prettier # ./fmt.sh (markdown, yaml, json, etc.)
+    shfmt # Shell script formatter
 
     # Shells (for the interactive handoff below)
     fish
