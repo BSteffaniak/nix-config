@@ -176,7 +176,13 @@ let
     models = pricingBarrierCompactionModels;
   };
 
-  overflowCompactionSettings = removeAttrs compactionSettings [ "models" ];
+  # Provider configs merge with the base config, so omission would retain its model rules.
+  overflowCompactionSettings = compactionSettings // {
+    models = lib.mapAttrs (_: model: {
+      inherit (model) provider_plugin_id;
+      mode = "on_overflow";
+    }) compactionSettings.models;
+  };
 
   withFullContextVariant =
     profile:
