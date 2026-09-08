@@ -1,6 +1,6 @@
 ---
 name: pr-stabilize
-description: Stabilize a pull request or stacked PRs by repeatedly waiting for CI and automated review, validating failures and comments, applying only justified in-scope fixes, maintaining stack ancestry, and looping until required CI is green and no valid blockers remain. Autonomous — mutates branches and GitHub state without intermediate approval.
+description: Stabilize a pull request or stacked PRs by continuously monitoring CI and review feedback, prioritizing failing jobs, then justified review fixes, then base updates, and looping until required CI is green and no valid blockers remain. Autonomous — mutates branches and GitHub state without intermediate approval.
 allowed-tools: Bash(git:*), Bash(gh:*), Bash(jq:*), Bash(tone-clone:*), Bash(bun:*), Bash(python3:*), Bash(sleep:*), Bash(date:*), Bash(mktemp:*), Read(*), Write(*), Edit(*)
 ---
 
@@ -14,7 +14,7 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Drive one pull request or a stack of pull requests to a stable review-ready state without requiring the user to supervise the loop. Wait for current CI and automated review workflows, inspect their real outputs, validate every failure and review comment against the exact branch that owns it, apply only concrete in-scope fixes, maintain stacked branches from base to tip, push safely, and repeat until all required CI succeeds and no unresolved current review thread contains a valid blocker.
+Drive one pull request or a stack of pull requests to a stable review-ready state without requiring the user to supervise the loop. Continuously inspect CI and review feedback across the stack; prioritize failing jobs, then actionable review feedback, then base freshness. Validate every issue against the branch that owns it, apply only concrete in-scope fixes, maintain stacked branches from base to tip, push safely, and repeat until all required CI succeeds and no unresolved current review thread contains a valid blocker.
 
 The invocation authorizes this skill to edit files, run validation, commit, rebase stack descendants, force-push with lease, rerun transiently failed jobs, reply to review threads, and resolve threads. Do not pause for confirmation unless a required action is destructive beyond the named PR branches, branch ownership is ambiguous, credentials are missing, or the correct fix requires a product decision that cannot be established from repository evidence.
 
@@ -45,17 +45,20 @@ Before diagnosing the PRs:
 4. Treat a failure as pre-existing only when equivalent code and the same failing behavior are present on the current default branch. Do not infer this from an old run or from a vaguely similar annotation.
 5. Record known default-branch failures with evidence so they can be recognized throughout the loop.
 
-### 3. Wait for the current workflow wave
+### 3. Monitor and dispatch by priority
 
-For every PR head SHA:
+This is a priority loop, not a sequence of waits for CI followed by review.
 
-1. Find CI, automated code-review, CodeQL, and required repository workflows associated with that exact SHA.
-2. Ignore runs for superseded SHAs.
-3. Poll every 20–60 seconds with bounded commands. Print concise progress when the state changes or after several minutes.
-4. Follow reruns under the same run ID and newly created runs after force-pushes.
-5. Wait until all relevant jobs are terminal before deciding the wave's result.
-6. A cancelled or missing required run is not success. Determine whether it was superseded, concurrency-cancelled, manually cancelled, or never triggered.
-7. Do not stop merely because one job failed while sibling jobs are still producing evidence.
+1. On every cycle, collect signals across **all PRs**: job-level CI failures and required statuses, automated code-review and CodeQL workflows, review threads and replies, review summaries, issue-level comments (Step 5), and remote base/stack freshness.
+2. Associate runs with each current head SHA; ignore superseded runs. Follow reruns under the same run ID and newly created runs after pushes. Track processed feedback and dispositions so unchanged comments do not trigger repeated work or replies; reconsider when new replies or code changes warrant it.
+3. Dispatch the highest-priority actionable work across the whole stack:
+   - **First: failing jobs.** Diagnose through Step 4 as soon as a job fails, even if sibling jobs or the overall workflow are still running. Continue collecting sibling evidence; do not wait for every job to become terminal before fixing an established failure.
+   - **Second: review feedback.** Validate and address through Steps 5–6 whenever no CI failure needs action. Pending CI or automated review does not prevent addressing feedback already available.
+   - **Third: base freshness.** Update through Step 7 only when failure and review work are idle. Pending CI alone does not prevent a necessary freshness update.
+4. Refresh priorities between work units and before a lower-priority mutation or push. If a failure appears while handling feedback, finish or safely checkpoint the active edit before switching; do not abandon a dirty operation. Necessary descendant propagation belongs to the active fix's priority.
+5. When no work is actionable, sleep 20–60 seconds, then refresh **all** signals, including comments—not just CI. Use bounded commands; do not block on a workflow/check watch that prevents feedback polling. Print concise progress when state changes or after several minutes. During long validation, refresh signals between bounded commands when practical.
+6. A cancelled or missing required run is not success. Determine whether it was superseded, concurrency-cancelled, manually cancelled, or never triggered, and handle actionable CI blockers at CI priority.
+7. A failure awaiting a rerun or further evidence is not a reason to sit idle on available review work. Record its disposition and next check; an undiagnosed or fixable failure still takes priority. Require terminal workflow results for completion, not before taking action.
 
 ### 4. Diagnose CI failures
 
@@ -88,13 +91,13 @@ Then:
 
 1. Skip resolved and outdated threads.
 2. Give human reviewer comments priority over automation.
-3. Validate every actionable comment against the exact PR branch where it was posted and against that PR's diff from its base.
+3. Validate every actionable comment against the code and base diff of the PR where it was posted, then inspect related stack diffs to establish ownership. The comment's location is not necessarily the fix's location.
 4. Address a comment only when all are true:
    - the claim is factually correct
-   - the issue is introduced or owned by that PR
-   - the change is within that PR's scope
+   - the issue is introduced or owned by a PR in the authorized scope
+   - the change fits the intended scope of that owning PR and the overall stack
    - the issue is material enough to change
-5. Reject or leave unchanged comments that are speculative, duplicate, stylistic without repository backing, based on stale code, owned by another stack PR, already fixed downstream, or unrelated to the PR.
+5. Route valid feedback to the owning PR through Step 6, even when posted on another PR. Do not reject it solely because it belongs elsewhere in the stack, or automatically treat a downstream fix as sufficient if an earlier PR remains independently broken. Reject or leave unchanged requests that are speculative, duplicate, stylistic without repository backing, stale, already adequately fixed, or outside the PR/stack's scope. Explain factual disagreement or scope boundaries directly with evidence; do not broaden scope merely to satisfy a reviewer.
 6. Do not let severity labels from bots determine validity.
 7. Before replying, use `tone-clone` to sample the user's authentic GitHub review/comment style when useful. Keep replies concise, direct, technical, and non-celebratory.
 8. Never write phrases such as "good catch", "great point", "thanks for catching this", or other praise directed at automation.
@@ -108,19 +111,24 @@ Then:
 5. Add or update tests only when they prove changed behavior. Follow the repository requirement to demonstrate a new test fails for the intended reason before trusting it when practical.
 6. Run the smallest validation that proves the fix, plus formatting or contract checks required by repository guidance.
 7. Commit with the repository's commit conventions. Do not invent issue references.
-8. Reply to the specific review thread with what changed and why. Resolve only threads that were fixed or deliberately disputed with evidence.
+8. After validation and pushing the fix (including necessary propagation in Step 7), reply on the original review thread with what changed and why. If another PR owns the fix, link that PR and the actual pushed fixing commit; do not duplicate the change on the commented PR merely to close its thread. Resolve only threads whose fix or deliberate dispute is substantiated with evidence. For actionable review summaries or issue-level comments without a resolvable thread, reply at their origin without claiming to resolve a thread.
 
 ### 7. Maintain the stack
 
-After changing any non-tip branch:
+Distinguish two kinds of maintenance:
+
+- **Fix propagation:** after changing a non-tip branch, propagate the fix through descendants as part of that CI/review work, at the same priority. This is not a reason to opportunistically incorporate unrelated default-branch updates.
+- **Freshness-only updates:** when failure and review work are idle, refresh remote refs and all Step 3 signals once more. If higher-priority work appeared, defer. Otherwise update the first PR onto the latest intended base and repair ancestry through the full stack, base-to-tip. Do not rebase branches already current. Pending CI alone does not block this work; avoid redundant rebases and pushes that restart jobs and review.
+
+For either operation:
 
 1. Record old branch tips before rebasing.
-2. Rebase each descendant onto its newly rewritten parent, proceeding base-to-tip.
+2. Rebase each affected descendant onto its newly rewritten parent, proceeding base-to-tip.
 3. Resolve conflicts by preserving the parent fix and the descendant's owned delta. Never use blanket ours/theirs without inspecting the resulting workflow or code.
 4. After each conflict resolution, verify load-bearing lines from both sides still exist.
 5. Push rewritten branches only with `--force-with-lease`.
 6. Verify:
-   - default branch is ancestor of the first PR
+   - the recorded default/base tip is ancestor of the first PR; record newer remote base drift for the next idle freshness pass rather than folding it into a higher-priority fix
    - each PR branch is ancestor of the next
    - PR base/head relationships remain correct
    - no unmerged paths exist
@@ -131,14 +139,14 @@ After changing any non-tip branch:
 
 After every push or rerun:
 
-1. Return to Step 3 and wait for the new head-SHA workflow wave.
-2. After automated review workflows finish, fetch review threads again; comments may arrive after CI finishes.
-3. Apply newly valid feedback through Steps 5–7.
-4. Continue until all completion conditions hold simultaneously:
+1. Return immediately to Step 3 to monitor all signals for the current head SHAs, not to wait exclusively for CI.
+2. Keep fetching feedback while jobs run. After automated review workflows finish, fetch threads, review summaries, and issue-level comments again; comments may arrive after CI finishes.
+3. Dispatch newly actionable work in priority order: failing jobs, review feedback, then freshness-only updates. Revalidate feedback against the new heads after rewrites.
+4. Refresh remote refs and all signals before declaring completion. Continue until all completion conditions hold simultaneously:
    - required CI/status checks succeed on every current PR head
    - no relevant workflow is still pending
-   - no unresolved, non-outdated human or automated review thread is a valid blocker
-   - stack ancestry and PR base/head relationships are intact
+   - no unresolved, non-outdated human or automated review thread, review summary, or issue-level comment contains a valid unaddressed blocker
+   - the first PR includes the latest fetched intended base, full-stack ancestry is current, and PR base/head relationships are intact
    - worktree is clean
 5. Require at least one complete post-fix workflow/review wave with no new valid blocker before declaring success.
 
