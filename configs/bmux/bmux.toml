@@ -16,19 +16,16 @@ mode = "frozen"
 # Theme
 # ---------------------------------------------------------------------------
 [plugins.settings."bmux.theme"]
-# Keep performance diagnostics and mode-aware colors as the stable base, while
-# stacking the snake decoration component pack across all panes.
-appearance_themes = ["performance", "mode-aware"]
-component_themes = ["performance", "rainbow-snake"]
+# Keep performance diagnostics on all panes with pulse-demo borders and mode cues.
+appearance_themes = ["performance", "pulse-demo", "mode-aware"]
+component_themes = ["performance", "pulse-demo"]
 persistence = "persist_between_connects"
 
 [plugins.settings."bmux.theme".component_targets]
 "performance.*" = { kind = "all-panes" }
-"snake" = { kind = "all-panes" }
 
-[plugins.settings."bmux.theme".components.snake]
-above = ["performance.border"]
-below = ["performance.header"]
+[plugins.settings."bmux.theme".components."performance.border"]
+enabled = false
 
 [composition]
 active_profile = "zellij_compat"
