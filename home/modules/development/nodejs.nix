@@ -18,6 +18,12 @@ in
       description = "Include Bun runtime";
     };
 
+    bunGlobalStore = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Use Bun's global virtual store for isolated installs";
+    };
+
     includePnpm = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -45,6 +51,12 @@ in
         svelte-language-server
         vscode-langservers-extracted # HTML/CSS/JSON/ESLint
       ]);
+
+    home.file.".bunfig.toml" = lib.mkIf cfg.includeBun {
+      source = (pkgs.formats.toml { }).generate "bunfig.toml" {
+        install.globalStore = cfg.bunGlobalStore;
+      };
+    };
 
     # Configure npm to use global directory in home
     home.sessionVariables = {
