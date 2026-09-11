@@ -16,8 +16,8 @@ mode = "frozen"
 # Theme
 # ---------------------------------------------------------------------------
 [plugins.settings."bmux.theme"]
-# Keep performance diagnostics on all panes with pulse-demo borders and mode cues.
-appearance_themes = ["performance", "pulse-demo", "mode-aware"]
+# Keep performance appearance and diagnostics, with resource-colored pulse borders.
+appearance_themes = ["performance", "mode-aware"]
 component_themes = ["performance", "pulse-demo"]
 persistence = "persist_between_connects"
 
@@ -26,6 +26,21 @@ persistence = "persist_between_connects"
 
 [plugins.settings."bmux.theme".components."performance.border"]
 enabled = false
+
+[plugins.settings."bmux.theme".components."pulse.border"]
+below = ["performance.header"]
+
+[plugins.settings."bmux.theme".components."pulse.border".settings]
+color-source = "performance-colors-v1"
+heat-mode = "cpu-memory"
+memory-green-percent = "5"
+memory-yellow-percent = "15"
+memory-orange-percent = "30"
+memory-red-percent = "50"
+period-ms = "2000"
+smoothing-ms = "500"
+brightness-min = "0.6"
+brightness-max = "1"
 
 [composition]
 active_profile = "zellij_compat"
