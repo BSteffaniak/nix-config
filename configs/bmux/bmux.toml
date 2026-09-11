@@ -18,7 +18,7 @@ mode = "frozen"
 [plugins.settings."bmux.theme"]
 # Keep performance appearance and diagnostics, with resource-colored pulse borders.
 appearance_themes = ["performance", "mode-aware"]
-component_themes = ["performance", "pulse-demo"]
+component_themes = ["performance", "pulse-border"]
 persistence = "persist_between_connects"
 
 [plugins.settings."bmux.theme".component_targets]
