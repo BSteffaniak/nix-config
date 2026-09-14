@@ -67,7 +67,9 @@ only when targeted inspection cannot resolve it.
 
 Using the Git directory printed by the context script, write the generated
 message to `<git-directory>/LAZYGIT_PENDING_COMMIT` in one tool call. Preserve
-the message exactly, including its blank line and wrapped body.
+the message exactly: one newline between summary and description, no blank
+separator line, and only intentional newlines within the description. Do not
+hard-wrap the description to a line length limit.
 
 Do not create a commit, stage files, or alter the index. Invocation of this
 skill authorizes replacing only the pending commit message file.

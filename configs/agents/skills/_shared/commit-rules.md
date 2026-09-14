@@ -21,11 +21,11 @@
 
 ### Description
 
-- Blank line between title and description
-- Wrap at 72 characters
+- Separate title and description with exactly one newline; do not insert a blank separator line.
+- Do not hard-wrap the description or enforce any character-based line length limit. Use newlines only for intentional structure, such as separate bullets or paragraph breaks.
 - Bullet points or short paragraph
 - Describe WHAT the changes are, not WHY
-- Each bullet is one line (two max). Name the thing changed, don't narrate every identifier touched.
+- Keep each bullet concise. Name the thing changed, don't narrate every identifier touched.
 - Aim for 3–8 bullets for typical changes, up to ~15 for large refactors. If you need more, the commit is probably too big — but write fewer, broader bullets rather than padding.
 - Group related edits into one bullet — don't split "add X" and "wire X into Y" into two bullets unless the wiring is itself substantive.
 - Skim test: a reviewer should grasp the commit in <10 seconds of scanning. If your message doesn't pass that, it's too long.
@@ -34,7 +34,7 @@
 ### Strictly Forbidden
 
 - Generic messages: "Update code", "Fix bugs", "Code review changes", "Address feedback", "Make improvements", "Various updates", "Clean up"
-- Paragraph-bullets: bullets longer than two wrapped lines. Split the change or cut detail instead.
+- Overly detailed bullets. Split distinct changes or cut unnecessary detail instead; do not judge bullet length by wrapped lines.
 - Exhaustive identifier dumps: listing every renamed import, every test fixture tweak, every type path swap. Describe the semantic change once.
 - Describing motivation or reasoning — the commit message is the WHAT, the PR description is the WHY
 - Repeating the title in the description
