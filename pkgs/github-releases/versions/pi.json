@@ -1,27 +1,27 @@
 {
-    "version": "0.80.10",
-    "tag": "v0.80.10",
+    "version": "0.85.1",
+    "tag": "v0.85.1",
     "platforms": {
         "aarch64-darwin": {
-            "url": "https://github.com/earendil-works/pi/releases/download/v0.80.10/pi-darwin-arm64.tar.gz",
-            "sha256": "4406ed227c486f2e3c16cf14f793dc3ad46b5d01bf69135a2424cffa58a9a34b"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.85.1/pi-darwin-arm64.tar.gz",
+            "sha256": "d5f70e3c0cf7398eac239fd0261ee074d98b7ba7f6b43fe3617f052ed5b79d06"
         },
         "aarch64-linux": {
-            "url": "https://github.com/earendil-works/pi/releases/download/v0.80.10/pi-linux-arm64.tar.gz",
-            "sha256": "dfe4340063dfe27406fa64aac99d904726fac079197c4579b9e8155175d05272"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.85.1/pi-linux-arm64.tar.gz",
+            "sha256": "042d20ae885ee4f3b102815f3280b962c377b2e9fb44de4037908cc530eae4d4"
         },
         "x86_64-darwin": {
-            "url": "https://github.com/earendil-works/pi/releases/download/v0.80.10/pi-darwin-x64.tar.gz",
-            "sha256": "892b3f385ae6779299c07a25d9280183897fcf755f7226f6b36c70d268f321be"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.85.1/pi-darwin-x64.tar.gz",
+            "sha256": "adb918b845625f184d8bea408d55eacaf21aa87238793c0f5b4f3b9737bce62b"
         },
         "x86_64-linux": {
-            "url": "https://github.com/earendil-works/pi/releases/download/v0.80.10/pi-linux-x64.tar.gz",
-            "sha256": "ab6604f6c3f3d050783e7abbbdd1f79b775b20f3969833ce9721740685d01e13"
+            "url": "https://github.com/earendil-works/pi/releases/download/v0.85.1/pi-linux-x64.tar.gz",
+            "sha256": "494e498f47d74d21f40b3386f6a5e921a3d49531a169cab55bbdaca0ea1fe25a"
         }
     },
     "runtimeDeps": {
         "npm": {
-            "npmDepsHash": "sha256-U/Uo1Xwdvyy0utZ1uNDHnAN2yS+P1pVLS/dqxReZGIY="
+            "npmDepsHash": "sha256-EIQBsqCXOe0T27V5tHcpjnpj7yQEz2MAmTlBWleUW8w="
         }
     }
 }
