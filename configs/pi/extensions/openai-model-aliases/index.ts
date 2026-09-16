@@ -27,8 +27,8 @@ function selectedFastAlias(ctx: ContextLike): boolean {
     const model = ctx.model;
     return (
         model?.provider === "openai-codex" &&
-        model.id === "gpt-5.5" &&
-        model.name === "gpt-5.5-fast"
+        (model.id === "gpt-6-astra" ||
+            (model.id === "gpt-5.5" && model.name === "gpt-5.5-fast"))
     );
 }
 
