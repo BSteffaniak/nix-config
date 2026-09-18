@@ -203,6 +203,8 @@ let
 
     metrics = {
       enabled = true;
+      # Retain cold-start attribution independently of the busy runtime event timeline.
+      startup_reports = true;
       persist_events = true;
       segment_max_bytes = 8 * 1024 * 1024;
       total_max_bytes = 128 * 1024 * 1024;
