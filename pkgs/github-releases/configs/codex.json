@@ -1,0 +1,24 @@
+{
+    "owner": "openai",
+    "repo": "codex",
+    "pname": "codex-dev",
+    "binaryNames": {
+        "aarch64-darwin": "codex-aarch64-apple-darwin",
+        "x86_64-darwin": "codex-x86_64-apple-darwin",
+        "aarch64-linux": "codex-aarch64-unknown-linux-musl",
+        "x86_64-linux": "codex-x86_64-unknown-linux-musl"
+    },
+    "installedBinaryName": "codex-dev",
+    "stripVersionPrefix": "rust-v",
+    "platforms": {
+        "aarch64-darwin": "codex-aarch64-apple-darwin.tar.gz",
+        "x86_64-darwin": "codex-x86_64-apple-darwin.tar.gz",
+        "aarch64-linux": "codex-aarch64-unknown-linux-musl.tar.gz",
+        "x86_64-linux": "codex-x86_64-unknown-linux-musl.tar.gz"
+    },
+    "meta": {
+        "description": "OpenAI Codex CLI (latest from GitHub releases)",
+        "homepage": "https://github.com/openai/codex",
+        "license": "asl20"
+    }
+}

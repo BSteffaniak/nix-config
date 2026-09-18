@@ -25,7 +25,7 @@ let
   isTarGz = pkgs.lib.hasSuffix ".tar.gz" platformData.url;
   isZip = pkgs.lib.hasSuffix ".zip" platformData.url;
 
-  binaryName = config.binaryName or config.pname;
+  binaryName = config.binaryNames.${system} or (config.binaryName or config.pname);
   installedBinaryName = config.installedBinaryName or config.pname;
 
   # installMode controls how the archive is unpacked into $out:
