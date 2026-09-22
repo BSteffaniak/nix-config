@@ -135,6 +135,8 @@ let
 
   openAiLongContextModels = [
     "gpt-6-astra"
+    "gpt-6-sol"
+    "gpt-6-luna"
     "gpt-5.6-sol"
     "gpt-5.6-terra"
     "gpt-5.6-luna"
@@ -222,6 +224,8 @@ let
       compaction = compactionSettings;
 
       # Set reasoning default to "medium" for all GPT models
+      metadata."gpt-6-sol".reasoning.default_effort = "medium";
+      metadata."gpt-6-luna".reasoning.default_effort = "medium";
       metadata."gpt-6-astra".reasoning.default_effort = "medium";
       metadata."openai.gpt-6-astra".reasoning.default_effort = "medium";
       metadata."us.openai.gpt-6-astra".reasoning.default_effort = "medium";
@@ -251,6 +255,12 @@ let
       # Keep plain `bcode` credential-free. Provider-specific wrappers such as
       # `bcode-openai` and host-private profile wrappers point BCODE_CONFIG at
       # generated provider configs that contain their own scoped auth profiles.
+      aliases."gpt-6-sol-fast" = {
+        provider_plugin_id = "bcode.openai-compatible";
+        model_id = "gpt-6-sol";
+        request.service_tier = "priority";
+      };
+
       aliases."gpt-5.6-sol-fast" = {
         provider_plugin_id = "bcode.openai-compatible";
         model_id = "gpt-5.6-sol";
@@ -269,6 +279,11 @@ let
   finalSettings = normalizeBcodeAgentConfig finalSettingsRaw;
 
   openAiFastAlias = {
+    "gpt-6-sol-fast" = {
+      provider_plugin_id = "bcode.openai-compatible";
+      model_id = "gpt-6-sol";
+      request.service_tier = "priority";
+    };
     "gpt-5.6-sol-fast" = {
       provider_plugin_id = "bcode.openai-compatible";
       model_id = "gpt-5.6-sol";
@@ -794,8 +809,8 @@ in
       default = false;
       description = ''
         Opt in to proactive compaction at 272k for older OpenAI-compatible models whose
-        total context window is 272k. GPT-6 Astra and GPT-5.6 profiles always compact at
-        272k on both personal ChatGPT/Codex and Bedrock.
+        total context window is 272k. GPT-6 and GPT-5.6 profiles always compact at
+        272k; this also applies to the configured Bedrock variants.
       '';
     };
 
@@ -863,13 +878,13 @@ in
       openai = {
         model = lib.mkOption {
           type = lib.types.str;
-          default = "gpt-5.6-sol";
+          default = "gpt-6-sol";
           description = "OpenAI/ChatGPT model used by bcode-openai.";
         };
 
         fastModel = lib.mkOption {
           type = lib.types.str;
-          default = "gpt-5.6-sol-fast";
+          default = "gpt-6-sol-fast";
           description = "Priority-tier OpenAI/ChatGPT model alias used by bcode-openai-fast.";
         };
 
@@ -909,8 +924,8 @@ in
       luna = {
         model = lib.mkOption {
           type = lib.types.str;
-          default = "gpt-5.6-luna";
-          description = "GPT-5.6 Luna model used by bcode-luna.";
+          default = "gpt-6-luna";
+          description = "GPT-6 Luna model used by bcode-luna.";
         };
 
         authProfile = lib.mkOption {
@@ -941,8 +956,8 @@ in
       sol = {
         model = lib.mkOption {
           type = lib.types.str;
-          default = "gpt-5.6-sol";
-          description = "GPT-5.6 Sol model used by bcode-sol.";
+          default = "gpt-6-sol";
+          description = "GPT-6 Sol model used by bcode-sol.";
         };
 
         authProfile = lib.mkOption {
