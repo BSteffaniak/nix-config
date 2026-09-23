@@ -190,9 +190,16 @@ let
     profile:
     profile
     // {
-      variants = (profile.variants or { }) // {
-        full.compaction = overflowCompactionSettings;
-      };
+      variants =
+        (profile.variants or { })
+        // {
+          full.compaction = overflowCompactionSettings;
+        }
+        // lib.optionalAttrs (profile ? variants.fast) {
+          full-fast = profile.variants.fast // {
+            compaction = overflowCompactionSettings;
+          };
+        };
     };
 
   baseSettings = {
@@ -255,47 +262,30 @@ let
       # Keep plain `bcode` credential-free. Provider-specific wrappers such as
       # `bcode-openai` and host-private profile wrappers point BCODE_CONFIG at
       # generated provider configs that contain their own scoped auth profiles.
-      aliases."gpt-6-sol-fast" = {
-        provider_plugin_id = "bcode.openai-compatible";
-        model_id = "gpt-6-sol";
-        request.service_tier = "priority";
-      };
-
-      aliases."gpt-5.6-sol-fast" = {
-        provider_plugin_id = "bcode.openai-compatible";
-        model_id = "gpt-5.6-sol";
-        request.service_tier = "priority";
-      };
-
-      aliases."gpt-5.5-fast" = {
-        provider_plugin_id = "bcode.openai-compatible";
-        model_id = "gpt-5.5";
-        request.service_tier = "priority";
-      };
+      aliases = openAiFastAlias;
     };
   };
 
   finalSettingsRaw = lib.recursiveUpdate (lib.recursiveUpdate baseSettings bcodePermissions) cfg.extraSettings;
   finalSettings = normalizeBcodeAgentConfig finalSettingsRaw;
 
-  openAiFastAlias = {
-    "gpt-6-sol-fast" = {
-      provider_plugin_id = "bcode.openai-compatible";
-      model_id = "gpt-6-sol";
-      request.service_tier = "priority";
-    };
-    "gpt-5.6-sol-fast" = {
-      provider_plugin_id = "bcode.openai-compatible";
-      model_id = "gpt-5.6-sol";
-      request.service_tier = "priority";
-    };
+  # Only generate fast variants for models with documented Fast/priority support.
+  openAiFastModels = [
+    "gpt-6-astra"
+    "gpt-6-sol"
+    "gpt-6-luna"
+    "gpt-5.6-sol"
+    "gpt-5.6-terra"
+    "gpt-5.6-luna"
+    "gpt-5.5"
+    "gpt-5.3-codex"
+  ];
 
-    "gpt-5.5-fast" = {
-      provider_plugin_id = "bcode.openai-compatible";
-      model_id = "gpt-5.5";
-      request.service_tier = "priority";
-    };
-  };
+  openAiFastAlias = lib.genAttrs (map (model: "${model}-fast") openAiFastModels) (alias: {
+    provider_plugin_id = "bcode.openai-compatible";
+    model_id = lib.removeSuffix "-fast" alias;
+    request."bcode.extension/bcode.openai-compatible".service_tier = "priority";
+  });
 
   mkProfileOverlay =
     name: profile:
@@ -304,6 +294,7 @@ let
       authConfig = profile.auth or null;
       settings = profile.settings or { };
       aliases = profile.aliases or { };
+      modelAlias = aliases.${profile.model} or null;
       profileCompaction = profile.compaction or compactionSettings;
       # Bcode only honors `auth_profile`, `auth_pool`, and provider `settings` on a named
       # `[model.profiles.<name>]` entry selected via `[model].profile`; the same keys placed
@@ -311,7 +302,9 @@ let
       # left provider overlays without any resolved auth.
       modelProfile = {
         provider_plugin_id = profile.providerPluginId;
-        model_id = profile.model;
+        model_id = if modelAlias != null then modelAlias.model_id else profile.model;
+        request =
+          (if modelAlias != null then modelAlias.request or { } else { }) // (profile.request or { });
         inherit settings;
       }
       // lib.optionalAttrs (authProfile != null) { auth_profile = authProfile; }
@@ -433,7 +426,8 @@ let
     {
       model,
       authProfile,
-      fastModel ? null,
+      fastModel ?
+        if authProvider == "openai" && builtins.elem model openAiFastModels then "${model}-fast" else null,
       authProvider ? "openai",
       baseUrl ? null,
       dialect ? null,
