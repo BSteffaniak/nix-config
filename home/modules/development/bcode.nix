@@ -283,6 +283,7 @@ let
 
   openAiFastAlias = lib.genAttrs (map (model: "${model}-fast") openAiFastModels) (alias: {
     provider_plugin_id = "bcode.openai-compatible";
+    display_name = "${lib.removeSuffix "-fast" alias} · Fast";
     model_id = lib.removeSuffix "-fast" alias;
     request."bcode.extension/bcode.openai-compatible".service_tier = "priority";
   });
@@ -301,6 +302,7 @@ let
       # directly on `[model]` are not part of `ModelConfig` and were silently ignored, which
       # left provider overlays without any resolved auth.
       modelProfile = {
+        display_name = profile.displayName or name;
         provider_plugin_id = profile.providerPluginId;
         model_id = if modelAlias != null then modelAlias.model_id else profile.model;
         request =
@@ -764,7 +766,10 @@ in
         Generic generated Bcode provider profiles, keyed by wrapper name without the `bcode-` prefix.
 
         Each profile supports fields like `providerPluginId`, `model`, `authProfile`, `auth`,
-        `settings`, `aliases`, `variants`, `sshenv`, and `extraConfig`. Variants are
+        `displayName`, `settings`, `aliases`, `variants`, `sshenv`, and `extraConfig`.
+        Display names default to the expanded profile name, so variants remain
+        distinguishable. A variant can override `displayName` independently.
+        Variants are
         generated as `bcode-<name>-<variant>` wrappers. This is the preferred extension point for
         host-private provider/account profiles because names and auth profile IDs stay in the host
         file that defines them.
