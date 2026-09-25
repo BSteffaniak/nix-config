@@ -41,6 +41,9 @@
                     "git worktree add *": "deny",
                     "git worktree remove *": "deny",
                     "git submodule update *": "deny"
+                },
+                "command_patterns": {
+                    "git stash ...": "deny"
                 }
             }
         },
@@ -91,6 +94,14 @@
                     "git count-objects *": "allow",
                     "git worktree list": "allow",
                     "git worktree list *": "allow"
+                },
+                "command_patterns": {
+                    "git [--no-pager] diff ...": "allow",
+                    "git [--no-pager] log ...": "allow",
+                    "git [--no-pager] show ...": "allow",
+                    "git [--no-pager] status ...": "allow",
+                    "git [--no-pager] stash list ...": "allow",
+                    "git [--no-pager] stash show ...": "allow"
                 }
             }
         }
