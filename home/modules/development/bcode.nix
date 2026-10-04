@@ -135,6 +135,7 @@ let
 
   openAiLongContextModels = [
     "gpt-6-astra"
+    "gpt-6.1-sol"
     "gpt-6-sol"
     "gpt-6-luna"
     "gpt-5.6-sol"
@@ -272,6 +273,7 @@ let
   # Only generate fast variants for models with documented Fast/priority support.
   openAiFastModels = [
     "gpt-6-astra"
+    "gpt-6.1-sol"
     "gpt-6-sol"
     "gpt-6-luna"
     "gpt-5.6-sol"
@@ -955,8 +957,8 @@ in
       sol = {
         model = lib.mkOption {
           type = lib.types.str;
-          default = "gpt-6-sol";
-          description = "GPT-6 Sol model used by bcode-sol.";
+          default = "gpt-6.1-sol";
+          description = "GPT-6.1 Sol model used by bcode-sol.";
         };
 
         authProfile = lib.mkOption {
