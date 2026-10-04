@@ -298,15 +298,16 @@ let
       settings = profile.settings or { };
       aliases = profile.aliases or { };
       modelAlias = aliases.${profile.model} or null;
+      resolvedModelId = if modelAlias != null then modelAlias.model_id else profile.model;
       profileCompaction = profile.compaction or compactionSettings;
       # Bcode only honors `auth_profile`, `auth_pool`, and provider `settings` on a named
       # `[model.profiles.<name>]` entry selected via `[model].profile`; the same keys placed
       # directly on `[model]` are not part of `ModelConfig` and were silently ignored, which
       # left provider overlays without any resolved auth.
       modelProfile = {
-        display_name = profile.displayName or name;
+        display_name = "${profile.displayName or name} · ${resolvedModelId}";
         provider_plugin_id = profile.providerPluginId;
-        model_id = if modelAlias != null then modelAlias.model_id else profile.model;
+        model_id = resolvedModelId;
         request =
           (if modelAlias != null then modelAlias.request or { } else { }) // (profile.request or { });
         inherit settings;
@@ -769,8 +770,9 @@ in
 
         Each profile supports fields like `providerPluginId`, `model`, `authProfile`, `auth`,
         `displayName`, `settings`, `aliases`, `variants`, `sshenv`, and `extraConfig`.
-        Display names default to the expanded profile name, so variants remain
-        distinguishable. A variant can override `displayName` independently.
+        Display names default to the expanded profile name plus its resolved model id, so
+        versions and variants remain distinguishable. A variant can override `displayName`
+        independently while retaining the model id in its label.
         Variants are
         generated as `bcode-<name>-<variant>` wrappers. This is the preferred extension point for
         host-private provider/account profiles because names and auth profile IDs stay in the host
