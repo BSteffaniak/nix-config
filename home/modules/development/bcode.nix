@@ -291,7 +291,7 @@ let
   });
 
   mkProfileOverlay =
-    name: profile:
+    name: baseName: variantName: profile:
     let
       authProfile = profile.authProfile or null;
       authConfig = profile.auth or null;
@@ -299,13 +299,23 @@ let
       aliases = profile.aliases or { };
       modelAlias = aliases.${profile.model} or null;
       resolvedModelId = if modelAlias != null then modelAlias.model_id else profile.model;
+      normalizedModelId = lib.replaceStrings [ "." ] [ "-" ] resolvedModelId;
+      redundantName = baseName == normalizedModelId || lib.hasSuffix "-${baseName}" normalizedModelId;
+      label =
+        profile.displayName or (
+          if redundantName then
+            "${resolvedModelId}${lib.optionalString (variantName != null) " · ${variantName}"}"
+          else
+            name
+        );
       profileCompaction = profile.compaction or compactionSettings;
       # Bcode only honors `auth_profile`, `auth_pool`, and provider `settings` on a named
       # `[model.profiles.<name>]` entry selected via `[model].profile`; the same keys placed
       # directly on `[model]` are not part of `ModelConfig` and were silently ignored, which
       # left provider overlays without any resolved auth.
       modelProfile = {
-        display_name = "${profile.displayName or name} · ${resolvedModelId}";
+        display_name =
+          if lib.hasInfix resolvedModelId label then label else "${label} · ${resolvedModelId}";
         provider_plugin_id = profile.providerPluginId;
         model_id = resolvedModelId;
         request =
@@ -342,11 +352,13 @@ let
       variants = profile.variants or { };
     in
     {
-      ${name} = mkProfileOverlay name baseProfile;
+      ${name} = mkProfileOverlay name name null baseProfile;
     }
     // lib.mapAttrs' (variantName: variant: {
       name = "${name}-${variantName}";
-      value = mkProfileOverlay "${name}-${variantName}" (mergeProfileVariant profile variant);
+      value = mkProfileOverlay "${name}-${variantName}" name variantName (
+        mergeProfileVariant profile variant
+      );
     }) variants;
 
   mkProfileOverlays =
@@ -770,9 +782,9 @@ in
 
         Each profile supports fields like `providerPluginId`, `model`, `authProfile`, `auth`,
         `displayName`, `settings`, `aliases`, `variants`, `sshenv`, and `extraConfig`.
-        Display names default to the expanded profile name plus its resolved model id, so
-        versions and variants remain distinguishable. A variant can override `displayName`
-        independently while retaining the model id in its label.
+        Display names include the resolved model id without repeating a wrapper name already
+        contained in it (for example, `luna` becomes `gpt-6-luna`). Variants retain their
+        suffix, and custom `displayName` values remain available for account or provider context.
         Variants are
         generated as `bcode-<name>-<variant>` wrappers. This is the preferred extension point for
         host-private provider/account profiles because names and auth profile IDs stay in the host
