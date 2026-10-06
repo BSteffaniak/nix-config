@@ -101,7 +101,31 @@ exhaustively filled out.
 
 ### CLI route
 
-Inspect current help and response schemas. Typical supported operations are:
+Inspect current help and response schemas. When the pinned executable supports
+`session create --parent`, create lanes as children of the authenticated current
+session ID from its request-only session context. Generate and retain a child ID
+before admission, pass `--child-id`, and reconcile an uncertain result by
+retrying
+the identical creation request. Never infer the parent from a title or working
+directory. Child coordinators use their own authenticated session ID for their
+workers; parentage does not grant control or relax permissions. Older
+executables
+without this capability retain the ordinary-session route below; do not pass
+unsupported flags or substitute a different binary.
+
+```sh
+bcode session create "<run>:<lane>" --parent <current-session-id> --child-id <retained-child-id> --cwd "<shared-checkout>" --json
+```
+
+Bounded `session children <parent-id>` and `session activity <parent-id>
+--children`
+pages can supplement supervision. Follow their `next_after` cursors and preserve
+`complete`, coverage, issues, and timestamps; incomplete discovery or an idle
+coordinator never proves that descendants have settled. Continue inspecting
+exact
+worker runtime work, interactions, and canonical handoffs for acceptance.
+
+Typical supported operations are:
 
 ```sh
 bcode session create "<run>:<lane>" --cwd "<shared-checkout>" --json
