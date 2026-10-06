@@ -20,7 +20,12 @@ in
     (lib.mkIf cfg.homebrew.enable {
       homebrew = {
         enable = true;
-        onActivation.cleanup = "zap";
+        # Homebrew 7 disables the --cleanup flag emitted by nix-darwin's cleanup option.
+        onActivation.cleanup = "none";
+        onActivation.extraFlags = [
+          "--force-cleanup"
+          "--zap"
+        ];
         onActivation.upgrade = true;
       };
     })
