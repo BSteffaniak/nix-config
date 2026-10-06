@@ -20,6 +20,14 @@ in
       "sketchybar"
     ];
 
+    # Establish formula-only trust in the same user environment as brew bundle.
+    system.activationScripts.homebrew.text = lib.mkBefore ''
+      if [ -f "${config.homebrew.brewPrefix}/brew" ]; then
+        sudo --user=${lib.escapeShellArg config.homebrew.user} --set-home \
+          "${config.homebrew.brewPrefix}/brew" trust --formula felixkratz/formulae/sketchybar
+      fi
+    '';
+
     # Ensure homebrew is enabled when sketchybar is enabled
     myConfig.darwin.homebrew.enable = true;
 
