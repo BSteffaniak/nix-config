@@ -225,12 +225,14 @@ let
     };
   };
 
-  mergedPermissions = agentPermissions.mkPermissions {
-    inherit permissionsDir;
-    cfg = agentsCfg.permissions;
-    inherit basePermissionConfig;
-    overrides = agentsCfg.permissions.overrides ++ opencodeCfg.overrides ++ cfg.permissionOverrides;
-  };
+  mergedPermissions = agentPermissions.forLegacy (
+    agentPermissions.mkPermissions {
+      inherit permissionsDir;
+      cfg = agentsCfg.permissions;
+      inherit basePermissionConfig;
+      overrides = agentsCfg.permissions.overrides ++ opencodeCfg.overrides ++ cfg.permissionOverrides;
+    }
+  );
 
   # Auto-discover skill directories from configs/pi/skills/
   skillsDir = ../../../configs/pi/skills;

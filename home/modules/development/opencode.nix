@@ -138,11 +138,13 @@ let
   # Merge order: base → provider → shared permissions → host overrides (in order)
   baseConfig = builtins.fromJSON (builtins.readFile ../../../configs/opencode/opencode.json);
   tuiConfig = ../../../configs/opencode/tui.json;
-  permissionConfig = agentPermissions.mkPermissions {
-    inherit permissionsDir;
-    cfg = agentsCfg.permissions;
-    overrides = agentsCfg.permissions.overrides ++ cfg.overrides;
-  };
+  permissionConfig = agentPermissions.forLegacy (
+    agentPermissions.mkPermissions {
+      inherit permissionsDir;
+      cfg = agentsCfg.permissions;
+      overrides = agentsCfg.permissions.overrides ++ cfg.overrides;
+    }
+  );
   mergedConfigBase = lib.foldl' lib.recursiveUpdate baseConfig [
     providerConfig
     permissionConfig
