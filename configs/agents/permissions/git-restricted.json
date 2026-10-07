@@ -43,7 +43,28 @@
                     "git submodule update *": "deny"
                 },
                 "command_patterns": {
-                    "git stash ...": "deny"
+                    "git stash ...": "deny",
+                    "git checkout ...": "deny",
+                    "git switch ...": "deny",
+                    "git add ...": "deny",
+                    "git mv ...": "deny",
+                    "git rm ...": "deny",
+                    "git reset ...": "deny",
+                    "git restore ...": "deny",
+                    "git remove ...": "deny",
+                    "git commit ...": "deny",
+                    "git push ...": "deny",
+                    "git pull ...": "deny",
+                    "git merge ...": "deny",
+                    "git rebase ...": "deny",
+                    "git revert ...": "deny",
+                    "git cherry-pick ...": "deny",
+                    "git am ...": "deny",
+                    "git apply ...": "deny",
+                    "git clean ...": "deny",
+                    "git worktree add ...": "deny",
+                    "git worktree remove ...": "deny",
+                    "git submodule update ...": "deny"
                 }
             }
         },

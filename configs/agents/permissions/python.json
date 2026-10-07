@@ -9,6 +9,14 @@
                     "pip3 uninstall *": "deny",
                     "pipx install *": "deny",
                     "pipx uninstall *": "deny"
+                },
+                "command_patterns": {
+                    "pip install ...": "deny",
+                    "pip uninstall ...": "deny",
+                    "pip3 install ...": "deny",
+                    "pip3 uninstall ...": "deny",
+                    "pipx install ...": "deny",
+                    "pipx uninstall ...": "deny"
                 }
             }
         },

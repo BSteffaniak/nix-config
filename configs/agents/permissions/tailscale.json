@@ -15,6 +15,18 @@
                     "tailscale drive *": "deny",
                     "tailscale funnel *": "deny",
                     "tailscale serve *": "deny"
+                },
+                "command_patterns": {
+                    "tailscale up ...": "deny",
+                    "tailscale down ...": "deny",
+                    "tailscale set ...": "deny",
+                    "tailscale logout ...": "deny",
+                    "tailscale switch ...": "deny",
+                    "tailscale lock ...": "deny",
+                    "tailscale file cp ...": "deny",
+                    "tailscale drive ...": "deny",
+                    "tailscale funnel ...": "deny",
+                    "tailscale serve ...": "deny"
                 }
             }
         },
@@ -35,6 +47,12 @@
                     "tailscale debug *": "allow",
                     "tailscale --version": "allow",
                     "tailscale help *": "allow"
+                },
+                "command_patterns": {
+                    "tailscale status ...": "allow",
+                    "tailscale ip ...": "allow",
+                    "tailscale netcheck ...": "allow",
+                    "tailscale version ...": "allow"
                 }
             }
         }
