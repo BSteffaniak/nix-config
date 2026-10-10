@@ -3,6 +3,7 @@
     "buildSystem": "rust",
     "pname": "bmux",
     "hashField": "cargoHash",
+    "rustToolchain": "stable",
     "doCheck": false,
     "cargoBuildFlags": ["--package", "bmux_cli"]
 }
