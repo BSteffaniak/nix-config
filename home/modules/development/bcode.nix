@@ -326,10 +326,46 @@ let
       // lib.optionalAttrs (profile ? authPool && profile.authPool != null) {
         auth_pool = profile.authPool;
       };
+      milestoneModel = profile.milestoneModel or null;
+      milestoneProfileName = "${name}-milestones-small";
+      # Only connection settings are inherited; chat-model tuning and priority tiers are not.
+      milestoneConnectionSettings = lib.filterAttrs (
+        key: _value:
+        builtins.elem key [
+          "base_url"
+          "api_key_env"
+          "dialect"
+          "region"
+          "profile"
+        ]
+      ) settings;
+      milestoneProfile = {
+        display_name = "${name} milestones · ${toString milestoneModel}";
+        provider_plugin_id = profile.providerPluginId;
+        model_id = milestoneModel;
+        settings = lib.recursiveUpdate milestoneConnectionSettings (profile.milestoneSettings or { });
+        request = profile.milestoneRequest or { };
+      }
+      // lib.optionalAttrs (authProfile != null) { auth_profile = authProfile; }
+      // lib.optionalAttrs (profile ? authPool && profile.authPool != null) {
+        auth_pool = profile.authPool;
+      };
       baseOverlay = {
+        milestones = {
+          enabled = milestoneModel != null;
+          follow_title = true;
+        }
+        // lib.optionalAttrs (milestoneModel != null) {
+          model_profile = milestoneProfileName;
+        };
         model = {
           profile = name;
-          profiles.${name} = modelProfile;
+          profiles = {
+            ${name} = modelProfile;
+          }
+          // lib.optionalAttrs (milestoneModel != null) {
+            ${milestoneProfileName} = milestoneProfile;
+          };
           inherit aliases;
           compaction = profileCompaction;
         };
@@ -404,6 +440,7 @@ let
     }:
     {
       providerPluginId = "bcode.bedrock";
+      milestoneModel = "openai.gpt-oss-20b";
       inherit model;
       authProfile = "bedrock";
       settings =
@@ -458,6 +495,13 @@ let
     {
       providerPluginId = "bcode.openai-compatible";
       inherit model authProfile;
+      milestoneModel =
+        if authProvider == "openai" then
+          "gpt-5.4-mini"
+        else if authProvider == "xai" then
+          "grok-4-fast-non-reasoning"
+        else
+          null;
       authPool = if enableSubscriptionPriming then authPool else null;
       settings =
         lib.optionalAttrs (baseUrl != null) { base_url = baseUrl; }
@@ -714,7 +758,13 @@ let
     };
   };
 
-  allProfiles = builtinProfiles // cfg.profiles;
+  allProfiles = lib.mapAttrs (
+    name: profile:
+    profile
+    // lib.optionalAttrs (builtins.hasAttr name cfg.milestoneModels) {
+      milestoneModel = cfg.milestoneModels.${name};
+    }
+  ) (builtinProfiles // cfg.profiles);
 
   providerOverlays = mkProfileOverlays allProfiles // cfg.extraProviderOverlays;
 
@@ -774,6 +824,20 @@ in
       description = "Additional Bcode TOML settings merged after generated shared agent permissions.";
     };
 
+    milestoneModels = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.nullOr lib.types.str);
+      default = { };
+      description = ''
+        Explicit small-model IDs keyed by base provider wrapper name, including built-ins
+        (for example openai, sol, xai, or bedrock-opus). Enables automatic milestones for
+        those wrappers and their variants using the same provider/account connection.
+        OpenAI/ChatGPT wrappers default to gpt-5.4-mini, xAI to grok-4-fast-non-reasoning,
+        and Bedrock to openai.gpt-oss-20b. Null disables the selection. Custom profiles may
+        instead declare milestoneModel directly, with milestoneSettings/milestoneRequest
+        for independent model tuning. This map takes precedence over that field.
+      '';
+    };
+
     profiles = lib.mkOption {
       type = lib.types.attrsOf lib.types.attrs;
       default = { };
@@ -782,6 +846,15 @@ in
 
         Each profile supports fields like `providerPluginId`, `model`, `authProfile`, `auth`,
         `displayName`, `settings`, `aliases`, `variants`, `sshenv`, and `extraConfig`.
+        Set `milestoneModel` to an explicit provider-native small-model ID to enable automatic
+        milestones for that wrapper. A separate `<wrapper>-milestones-small` model profile
+        inherits provider identity, auth profile/pool, and connection settings only.
+        `milestoneSettings` and `milestoneRequest` configure auxiliary-model settings and request
+        parameters independently of the chat model. Profiles without `milestoneModel` remain
+        disabled. Variants inherit the selection and can override it or set it to null.
+        For example: profiles.my-openai.milestoneModel = "your-available-small-model-id";
+        Built-in wrappers can be configured through milestoneModels.<wrapper-name>;
+        no provider model is guessed.
         Display names include the resolved model id without repeating a wrapper name already
         contained in it (for example, `luna` becomes `gpt-6-luna`). Variants retain their
         suffix, and custom `displayName` values remain available for account or provider context.
