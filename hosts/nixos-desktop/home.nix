@@ -114,6 +114,8 @@
     # Development tool configs
     development.lazygit.enable = true;
     development.act.enable = true;
+    development.bcode.enable = true;
+    development.bcode.extraSettings.invariants.mode = "relevant";
     development.opencode.enable = true;
     development.opencode.aliases.openai-api = {
       provider = "openai";
