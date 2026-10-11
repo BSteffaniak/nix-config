@@ -166,6 +166,29 @@
         "type": "github"
       }
     },
+    "hex": {
+      "inputs": {
+        "home-manager": [
+          "home-manager"
+        ],
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791416553,
+        "narHash": "sha256-KQk2xf54aH5vaA5GcCGkLNj9UjQmCxOsRGvsgietIWs=",
+        "owner": "anomalyco",
+        "repo": "hex",
+        "rev": "104a8ac1eb87c9f393fc4ee2d434f1df30b10d1a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "anomalyco",
+        "repo": "hex",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -518,6 +541,7 @@
         "clippier-src": "clippier-src",
         "cronstrue-src": "cronstrue-src",
         "git-sshripped-src": "git-sshripped-src",
+        "hex": "hex",
         "home-manager": "home-manager",
         "homebrew-aerospace": "homebrew-aerospace",
         "homebrew-cask": "homebrew-cask",

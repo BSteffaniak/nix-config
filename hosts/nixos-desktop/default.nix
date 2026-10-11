@@ -30,6 +30,7 @@
       monitorsConfig = ./hyprland/monitors.conf;
       workspacesConfig = ./hyprland/workspaces.conf;
     };
+    desktop.hex.enableInputAccess = true;
     desktop.waybar.enable = true;
     desktop.gtk.enable = true;
     desktop.xserver.enable = true;

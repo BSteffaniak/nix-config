@@ -16,10 +16,6 @@ let
       cask = "google-chrome";
       description = "Google Chrome browser";
     };
-    hex = {
-      cask = "kitlangton-hex";
-      description = "Hex voice-to-text app";
-    };
     istatMenus = {
       cask = "istat-menus";
       description = "iStat Menus system monitor";

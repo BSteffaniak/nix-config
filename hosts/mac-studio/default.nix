@@ -31,7 +31,6 @@
     darwin.applications.enable = true;
     darwin.ghostty.enable = true;
     darwin.googleChrome.enable = true;
-    darwin.hex.enable = true;
     darwin.istatMenus.enable = true;
     darwin.microsoftEdge.enable = true;
     darwin.roon.enable = true;

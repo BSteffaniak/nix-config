@@ -17,6 +17,7 @@ in
   (overlay ./source-builds.nix)
   (overlay ./cronstrue.nix)
   (overlay ./sendsafely-java.nix)
+  (overlay ./hex.nix)
   (overlay ./github-releases.nix)
   (overlay ./minecraft-plugins.nix)
 ]

@@ -1,0 +1,10 @@
+--- a/src/linux_service.rs
++++ b/src/linux_service.rs
+@@ -466,7 +466,7 @@
+         .spawn()
+         .wrap_err("Could not run systemctl; run `hex service` in a graphical session")?;
+-    let deadline = Instant::now() + Duration::from_secs(10);
++    let deadline = Instant::now() + Duration::from_secs(75);
+     loop {
+         if let Some(status) = child.try_wait()? {
+             if !status.success() {

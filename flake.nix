@@ -21,6 +21,13 @@
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
 
+    # Linux voice dictation (upstream package and Home Manager service).
+    hex = {
+      url = "github:anomalyco/hex";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.home-manager.follows = "home-manager";
+    };
+
     # NixOS-specific inputs
     nix-minecraft.url = "github:Infinidoge/nix-minecraft";
     swww.url = "github:LGFae/swww";

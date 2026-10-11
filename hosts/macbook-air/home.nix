@@ -19,6 +19,7 @@
 
   myConfig = {
     # Desktop
+    desktop.hex.enable = true;
     desktop.aerospace.enable = true;
     desktop.sketchybar.enable = true;
     desktop.browsers.firefox.enable = true;

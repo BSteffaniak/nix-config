@@ -7,6 +7,7 @@
     ./awake.nix
     ./casks.nix
     ./cloudflare-warp.nix
+    ./hex.nix
     ./homebrew.nix
     ./keepingyouawake.nix
     ./minecraft.nix

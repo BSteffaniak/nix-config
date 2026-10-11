@@ -1,0 +1,11 @@
+--- a/src/linux_transcriber.rs
++++ b/src/linux_transcriber.rs
+@@ -116,7 +116,7 @@
+         let architecture = model.arch();
+         let capabilities = model.capabilities();
+         let language = crate::gguf_session::validate_gguf_artifact(
+-            path,
++            &path,
+             definition,
+             &architecture,
+             &variant,

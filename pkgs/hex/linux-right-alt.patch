@@ -1,0 +1,101 @@
+diff --git a/src/linux_wayland_input.rs b/src/linux_wayland_input.rs
+index 2ec1dc1..44e2132 100644
+--- a/src/linux_wayland_input.rs
++++ b/src/linux_wayland_input.rs
+@@ -27,6 +27,7 @@ const KEYS: &[(&str, KeyCode)] = &[
+     ("enter", KeyCode::KEY_ENTER),
+     ("tab", KeyCode::KEY_TAB),
+     ("backspace", KeyCode::KEY_BACKSPACE),
++    ("right_alt", KeyCode::KEY_RIGHTALT),
+     ("a", KeyCode::KEY_A),
+     ("b", KeyCode::KEY_B),
+     ("c", KeyCode::KEY_C),
+@@ -133,6 +134,12 @@ impl Pressed {
+         MODIFIERS.map(|pair| pair.into_iter().any(|key| self.contains(key)))
+     }
+ 
++    fn modifiers_except(&self, trigger: KeyCode) -> [bool; 4] {
++        MODIFIERS.map(|pair| {
++            pair.into_iter().any(|key| key != trigger && self.contains(key))
++        })
++    }
++
+     // Emit only aggregate edges: a key stays down until every keyboard releases it.
+     fn update(&mut self, input: Input) -> Option<(KeyCode, bool)> {
+         match input {
+@@ -239,7 +246,7 @@ impl HotkeyState {
+         if key == KeyCode::KEY_ESC && down {
+             return self.cancel();
+         }
+-        let modifiers = self.pressed.modifiers();
++        let modifiers = self.pressed.modifiers_except(self.trigger);
+         if let Capture::Held { second_tap } = self.capture {
+             if modifiers
+                 .iter()
+@@ -751,6 +758,51 @@ mod tests {
+         assert!(!modifiers.held());
+     }
+ 
++    fn right_alt_state() -> HotkeyState {
++        let mut state = HotkeyState::new(&LinuxHotkey {
++            control: false, alt: false, shift: false, super_key: false,
++            key: "right_alt".into(),
++        }, false).unwrap();
++        state.update(Input::Connected("keyboard".into(), HashSet::new()), Instant::now());
++        state
++    }
++
++    fn right_alt_event(state: &mut HotkeyState, key: KeyCode, value: i32) -> Option<HotkeyEvent> {
++        state.update(Input::Key("keyboard".into(), key, value), Instant::now())
++    }
++
++    #[test]
++    fn right_alt_hold_release_and_repeat() {
++        let mut state = right_alt_state();
++        assert_eq!(right_alt_event(&mut state, KeyCode::KEY_RIGHTALT, 1), Some(Start));
++        assert_eq!(right_alt_event(&mut state, KeyCode::KEY_RIGHTALT, 2), None);
++        assert_eq!(right_alt_event(&mut state, KeyCode::KEY_RIGHTALT, 0), Some(Finish));
++        assert_eq!(right_alt_event(&mut state, KeyCode::KEY_RIGHTALT, 0), None);
++    }
++
++    #[test]
++    fn right_alt_does_not_confuse_left_alt_or_other_modifiers() {
++        let mut state = right_alt_state();
++        assert_eq!(right_alt_event(&mut state, KeyCode::KEY_LEFTALT, 1), None);
++        assert_eq!(right_alt_event(&mut state, KeyCode::KEY_RIGHTALT, 1), None);
++        right_alt_event(&mut state, KeyCode::KEY_RIGHTALT, 0);
++        right_alt_event(&mut state, KeyCode::KEY_LEFTALT, 0);
++        assert_eq!(right_alt_event(&mut state, KeyCode::KEY_RIGHTALT, 1), Some(Start));
++        assert_eq!(right_alt_event(&mut state, KeyCode::KEY_LEFTALT, 1), Some(Cancel));
++        assert_eq!(right_alt_event(&mut state, KeyCode::KEY_RIGHTALT, 0), None);
++    }
++
++    #[test]
++    fn right_alt_escape_and_disconnect_cancel() {
++        let mut state = right_alt_state();
++        assert_eq!(right_alt_event(&mut state, KeyCode::KEY_RIGHTALT, 1), Some(Start));
++        assert_eq!(right_alt_event(&mut state, KeyCode::KEY_ESC, 1), Some(Cancel));
++        right_alt_event(&mut state, KeyCode::KEY_ESC, 0);
++        right_alt_event(&mut state, KeyCode::KEY_RIGHTALT, 0);
++        assert_eq!(right_alt_event(&mut state, KeyCode::KEY_RIGHTALT, 1), Some(Start));
++        assert_eq!(state.update(Input::Disconnected("keyboard".into()), Instant::now()), Some(Cancel));
++    }
++
+     #[test]
+     fn quick_release_and_repress_never_coalesce_without_locking() {
+         let mut test = Test::new(false);
+diff --git a/src/linux_settings.rs b/src/linux_settings.rs
+index 72aa0e5..0873397 100644
+--- a/src/linux_settings.rs
++++ b/src/linux_settings.rs
+@@ -127,7 +127,9 @@ impl LinuxHotkey {
+         if self.super_key {
+             parts.push("Super".to_string());
+         }
+-        let key = if self.key == "space" {
++        let key = if self.key == "right_alt" {
++            "Right Alt".into()
++        } else if self.key == "space" {
+             "Space".into()
+         } else {
+             self.key.to_ascii_uppercase()
