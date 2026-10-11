@@ -46,8 +46,13 @@ in
               enable = true;
               autoStart = false;
 
-              # Use Paper server
-              package = pkgs.paperServers.paper;
+              # Match the Java 26.3 protocol used by the Geyser preview;
+              # the locked nix-minecraft package still targets 26.3-rc-3.
+              package = pkgs.paperServers.paper.override {
+                version = "26.3-build.170";
+                url = "https://fill-data.papermc.io/v1/objects/178a7bd115d8ab069af267bca2cba567d3d23036392762189846f35e97e35a17/paper-26.3-170.jar";
+                sha256 = "178a7bd115d8ab069af267bca2cba567d3d23036392762189846f35e97e35a17";
+              };
 
               serverProperties = {
                 server-port = 25565;
@@ -60,7 +65,10 @@ in
               };
 
               whitelist = {
-                # Your whitelist entries here
+                ".FxyCorndog" = "00000000-0000-0000-0009-00000a47f6c1";
+                ".Anastasia1651" = "00000000-0000-0000-0009-01ff5856cc0a";
+                FxyCorndog = "8c082a64-336f-46ff-a9bb-3371d9ca3993";
+                AnaElise = "bd8d65a5-7525-44d9-bbf1-22dc945d5702";
               };
 
               symlinks = {

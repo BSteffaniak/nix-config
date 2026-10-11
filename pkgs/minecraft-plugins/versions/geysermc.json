@@ -1,6 +1,6 @@
 {
-    "version": "2.9.4",
-    "build": "1085",
-    "url": "https://download.geysermc.org/v2/projects/geyser/versions/2.9.4/builds/1085/downloads/spigot",
-    "sha256": "c7ac475986e8a679f0b31a5bdcd2f859090ca080fac6864e2e3693055e619a50"
+    "version": "pr.6712",
+    "build": "3091",
+    "url": "https://download.geysermc.org/v2/projects/geyserpreview/versions/pr.6712/builds/3091/downloads/spigot",
+    "sha256": "da850b4034f8bdcd7fbbadf13e992b823b81c5ae1ed0cc04a135f7e3d9ac4585"
 }
