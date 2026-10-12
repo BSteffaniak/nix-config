@@ -156,10 +156,8 @@
         enable = true;
         model = "qwen3:30b-a3b";
         extraModels = [ "qwen3:14b" ];
-        modelsToPull = [
-          "qwen3:30b-a3b"
-          "qwen3:14b"
-        ];
+        # Keep Ollama available without downloading models during activation.
+        modelsToPull = [ ];
       };
       tts.piper.enable = true;
     };
