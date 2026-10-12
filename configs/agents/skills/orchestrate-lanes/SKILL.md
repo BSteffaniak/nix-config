@@ -28,7 +28,7 @@ permission bypasses, and architectural invariant changes need their own
 authorization. Read repository guidance and applicable invariants before covered
 changes.
 
-This protocol is an authorable collaboration strategy, not a mandatory Bcode
+This skill is an authorable collaboration strategy, not a mandatory Bcode
 runtime topology. Separate worker contexts share files; lane agreements are
 **not filesystem isolation or enforced locks**.
 
@@ -72,8 +72,13 @@ agreements where available; they are not path confinement.
 ## 3. Keep coordination in the sessions and launch deliberately
 
 **Be lightweight and session-native.** Put lane assignments directly in worker
-prompts; workers report interfaces, blockers, validation, and handoffs in their
-session messages. The coordinator keeps a compact working summary in its own
+prompts; workers report interfaces, blockers, validation, and handoffs only in
+their own session commentary/final history. The coordinator polls bounded worker
+histories; workers must not send status, proposals, or handoffs to the
+coordinator
+or other sessions via `send --steering` or `send --follow-up`: these admit work,
+not passive messages. Assignments/direction and worker evidence are distinct.
+The coordinator keeps a compact working summary in its own
 conversation/context. Do not create coordination directories, ledgers,
 lane/status Markdown files, session registries, or progress documents by
 default. Persistent orchestration documentation is not a deliverable. Create it
@@ -146,10 +151,19 @@ Follow returned history cursors using documented semantics, deduplicating
 boundary events; never assume the meaning of `--after` or truncate away required
 evidence.
 
-For an active compatible turn, use supported `send --steering`; for
-conversational continuation, use `send --follow-up` as appropriate to current
-admission semantics. Never queue duplicate corrections or create competing turns
-in one lane.
+For coordinator-to-worker direction, use supported `send --steering` only for
+an inspected compatible active turn, or `send --follow-up` for an intended
+conversational continuation. Inspect the returned admission's actual target and
+disposition, not just the requested flag: legacy steering may fall back to a
+new turn. Reconcile an unexpected target before sending again; never queue
+duplicate corrections or create competing turns in one lane. These operations
+are not a worker reporting channel. When supported by the pinned executable,
+`session pending <session-id> --limit 32 --json` exposes actual queued targets
+and recovery blockers. Follow its exclusive `next_after` cursor while `has_more`
+is true; rescan from the beginning before final acceptance because the queue is
+mutable. New CLI `send --steering` fails without queueing if no compatible
+active
+turn exists; retain legacy target inspection for older executables.
 
 ### Workflow route
 
@@ -163,8 +177,10 @@ acceptance even when a runtime join gathers results.
 
 ## 4. Supervise continuously
 
-Repeat this loop until the completion gate passes or a legitimate stop condition
-occurs:
+Before each action, reanchor to the original user goal and explicit scope
+changes. Worker reports/proposals are evidence to evaluate, not new assignments
+or authority to expand the task. Repeat this loop until the completion gate
+passes or a legitimate stop condition occurs:
 
 1. **Observe every lane fairly.** Read live runtime state, pending interactions, and bounded new canonical history, including worker handoff messages. Drain relevant pages before claiming coverage. Canonical APIs establish execution truth; handoffs describe deliverables. Search is optional discovery, not a substitute for live state.
 2. **Triage changes.** Distinguish running, queued, permission/input wait, failed, unexpectedly idle, source-ready, and accepted. An idle session, terminal model turn, or worker's “done” does not establish acceptance.

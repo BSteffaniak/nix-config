@@ -16,6 +16,7 @@ coordination report by default.
 
 ## Outcomes and feedback
 
+- [ ] The original user goal and explicit scope changes anchor acceptance; worker reports/proposals remain evidence, not new assignments or scope authority.
 - [ ] Each requested deliverable has been inspected, accepted, and integrated; handoff reports alone are insufficient.
 - [ ] Interface migrations and dependent wiring are coherent, with no orphaned source-ready modules or design-only deliverables presented as implementation.
 - [ ] Every actionable feedback item is independently verified closed. Any rejected finding has an evidence-backed reason.
@@ -30,7 +31,8 @@ coordination report by default.
 
 ## Final observation and report
 
-- [ ] A fresh bounded observation of every worker and associated runtime work confirms settlement after the last feedback/integration action.
+- [ ] A fresh bounded observation of every worker's own history and associated runtime work confirms settlement after the last direction/integration action.
+- [ ] Actual steering/follow-up admission targets and dispositions were inspected and any unexpected fallback reconciled; requested flags alone do not establish where work went.
 - [ ] Relevant canonical pages are drained and any degraded/unavailable observation coverage is disclosed, not interpreted as success.
 - [ ] No unblocked in-scope work remains; the user does not need to remind the coordinator to continue workers.
 - [ ] Final session summary states delivered outcomes, actual validation/results, and limitations without a separate orchestration document.

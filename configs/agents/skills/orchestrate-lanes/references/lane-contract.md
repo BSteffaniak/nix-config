@@ -10,7 +10,7 @@ launch; do not assume access to the coordinator's conversation.
 - Run and lane ID:
 - Assignment ID / ownership revision:
 - Shared checkout (absolute path):
-- Coordinator/session to report to:
+- Coordinator/session identity (context only; report in your own session history):
 - Product intent and requested outcome:
 - Concrete lane deliverables:
 - Acceptance criteria and required evidence:
@@ -40,9 +40,9 @@ has finished.
 2. Edit only currently granted paths. Report needed cross-lane changes with exact API, file, and integration actions; do not fix them opportunistically. Publish changing interfaces early, before consumers guess them.
 3. Do not stage, commit, reset, change branches/worktrees, broadly format, edit shared manifests/lockfiles, spawn workers, or bypass permissions unless explicitly authorized in this contract.
 4. Do not restart shared services or run expensive/shared-output validation without the assigned resource reservation. Use focused checks first.
-5. Report source-ready milestones, blockers, interface changes, and completion in your session messages. Include exact evidence and remaining gaps, not optimistic readiness. Do not create status/handoff files unless explicitly required.
+5. Report source-ready milestones, blockers, proposals, interface changes, and completion only in your own session commentary/final history; the coordinator polls bounded histories. Never send these to the coordinator or other sessions via `send --steering` or `send --follow-up`: those admit tasks, not passive status. Include exact evidence and remaining gaps, not optimistic readiness. Do not create status/handoff files unless explicitly required.
 6. If blocked, state what is needed and continue independent in-scope work if safe. Do not invent missing authority or claim another lane's work.
-7. When source-ready, finish your focused checks and send a concise handoff message. Make no further edits until a new coordinator assignment. A report is not acceptance; the coordinator may send concrete corrective feedback.
+7. When source-ready, finish your focused checks and leave a concise handoff in your own session history. Make no further edits until a new coordinator assignment. A report is not acceptance; the coordinator may send concrete corrective direction.
 
 ## Validation allowance
 
@@ -54,7 +54,7 @@ has finished.
 Repository-mandated validation remains required overall; assignment controls who
 runs it and when, not whether it can be silently omitted.
 
-## Handoff message (in the worker session)
+## Handoff (in the worker's own session history)
 
 Report the relevant items concisely; no separate file or exhaustive form is
 required.
