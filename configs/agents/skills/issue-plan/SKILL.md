@@ -14,13 +14,19 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Read a GitHub issue by URL or reference, fetch its full context (title, body, labels, comments), explore the local codebase for relevant code, and produce a high-level plan for addressing the issue. The plan covers what needs to change and why, identifies key files and areas of the codebase involved, and surfaces risks or open questions. This skill is read-only — it does not modify code or create commits.
+Read a GitHub issue by URL or reference, fetch its full context (title, body,
+labels, comments), explore the local codebase for relevant code, and produce a
+high-level plan for addressing the issue. The plan covers what needs to change
+and why, identifies key files and areas of the codebase involved, and surfaces
+risks or open questions. This skill is read-only — it does not modify code or
+create commits.
 
 ## Steps
 
 ### 1. Parse issue input
 
-Accept the issue as a URL or shorthand reference. Extract the owner, repo, and issue number.
+Accept the issue as a URL or shorthand reference. Extract the owner, repo, and
+issue number.
 
 Supported formats:
 
@@ -98,9 +104,11 @@ If `gh` is not available or authentication fails, print an error and stop.
 
 ### 3. Understand the codebase context
 
-Analyze the issue content (title, body, comments) to identify keywords, file paths, function names, error messages, or other references to the codebase.
+Analyze the issue content (title, body, comments) to identify keywords, file
+paths, function names, error messages, or other references to the codebase.
 
-Use the Task tool with an explore agent to search the local repo for relevant code:
+Use the Task tool with an explore agent to search the local repo for relevant
+code:
 
 - **Keywords from the issue** — grep for error messages, feature names, API endpoints, or identifiers mentioned in the issue
 - **File paths** — if the issue mentions specific files, read them for context
@@ -130,11 +138,13 @@ Present the identified areas to the user using the Question tool:
 }
 ```
 
-If the user provides custom text naming additional areas to explore, search for those and add them to the context before proceeding.
+If the user provides custom text naming additional areas to explore, search for
+those and add them to the context before proceeding.
 
 ### 4. Draft the plan
 
-Synthesize the issue context and codebase findings into a high-level implementation plan. Use the following structure:
+Synthesize the issue context and codebase findings into a high-level
+implementation plan. Use the following structure:
 
 ```markdown
 ## Plan: <issue title>
@@ -171,11 +181,13 @@ Bulleted list of anything uncertain, risky, or requiring further discussion:
 - Need to confirm whether Z is expected behavior
 ```
 
-If the issue is simple enough that some sections would be empty or trivial, omit them. The plan should be proportional to the issue's complexity.
+If the issue is simple enough that some sections would be empty or trivial, omit
+them. The plan should be proportional to the issue's complexity.
 
 ### 5. Present the plan
 
-Display the full plan to the user. Then ask for their feedback using the Question tool:
+Display the full plan to the user. Then ask for their feedback using the
+Question tool:
 
 ```json
 {

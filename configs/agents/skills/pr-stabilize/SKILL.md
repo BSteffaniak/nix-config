@@ -14,9 +14,20 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Drive one pull request or a stack of pull requests to a stable review-ready state without requiring the user to supervise the loop. Continuously inspect CI and review feedback across the stack; prioritize failing jobs, then actionable review feedback, then base freshness. Validate every issue against the branch that owns it, apply only concrete in-scope fixes, maintain stacked branches from base to tip, push safely, and repeat until all required CI succeeds and no unresolved current review thread contains a valid blocker.
+Drive one pull request or a stack of pull requests to a stable review-ready
+state without requiring the user to supervise the loop. Continuously inspect CI
+and review feedback across the stack; prioritize failing jobs, then actionable
+review feedback, then base freshness. Validate every issue against the branch
+that owns it, apply only concrete in-scope fixes, maintain stacked branches from
+base to tip, push safely, and repeat until all required CI succeeds and no
+unresolved current review thread contains a valid blocker.
 
-The invocation authorizes this skill to edit files, run validation, commit, rebase stack descendants, force-push with lease, rerun transiently failed jobs, reply to review threads, and resolve threads. Do not pause for confirmation unless a required action is destructive beyond the named PR branches, branch ownership is ambiguous, credentials are missing, or the correct fix requires a product decision that cannot be established from repository evidence.
+The invocation authorizes this skill to edit files, run validation, commit,
+rebase stack descendants, force-push with lease, rerun transiently failed jobs,
+reply to review threads, and resolve threads. Do not pause for confirmation
+unless a required action is destructive beyond the named PR branches, branch
+ownership is ambiguous, credentials are missing, or the correct fix requires a
+product decision that cannot be established from repository evidence.
 
 ## Workflow
 

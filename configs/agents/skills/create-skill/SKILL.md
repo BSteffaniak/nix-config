@@ -14,11 +14,17 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Create a new shared agent skill by gathering requirements, selecting the appropriate structural pattern from established conventions, drafting the SKILL.md content, and writing the files to the correct location in the nix config repo. This skill encodes all the patterns and conventions used across existing skills so that new skills are consistent, well-structured, and correctly deployed.
+Create a new shared agent skill by gathering requirements, selecting the
+appropriate structural pattern from established conventions, drafting the
+SKILL.md content, and writing the files to the correct location in the nix
+config repo. This skill encodes all the patterns and conventions used across
+existing skills so that new skills are consistent, well-structured, and
+correctly deployed.
 
 ## Repo Structure
 
-Skills are managed as part of a nix configuration repo and deployed by home-manager. There are two skill roots with different purposes:
+Skills are managed as part of a nix configuration repo and deployed by
+home-manager. There are two skill roots with different purposes:
 
 - **Shared agent skills source of truth**: `configs/agents/skills/<skill-name>/SKILL.md` in the nix config repo
 - **Shared agent skills deploy to OpenCode**: `~/.config/opencode/skills/<skill-name>/SKILL.md` by nix (via `xdg.configFile`)
@@ -29,11 +35,16 @@ Skills are managed as part of a nix configuration repo and deployed by home-mana
 - **Auto-discovered**: The nix modules scan these source directories and deploy every directory they find. Creating a new skill directory is sufficient — no nix config edits are needed.
 - **NEVER create files directly in `~/.config/opencode/skills/`, `~/.pi/agent/skills/`, or `~/.pi/agent/agent-skills/`** — those directories are managed by nix and will be overwritten on rebuild.
 
-Use `configs/pi/skills/` only for skills that depend on Pi-specific behavior, such as Pi's JSONL session layout, Pi-only tools/extensions, or Pi workflows that do not apply to OpenCode. For general agent workflows, Git/GitHub workflows, writing helpers, reviews, planning, and reusable procedures, use `configs/agents/skills/` so both OpenCode and Pi can use the skill.
+Use `configs/pi/skills/` only for skills that depend on Pi-specific behavior,
+such as Pi's JSONL session layout, Pi-only tools/extensions, or Pi workflows
+that do not apply to OpenCode. For general agent workflows, Git/GitHub
+workflows, writing helpers, reviews, planning, and reusable procedures, use
+`configs/agents/skills/` so both OpenCode and Pi can use the skill.
 
 ### Finding the repo root
 
-The nix config repo is the one containing the `configs/agents/skills/` and `configs/pi/skills/` directories. Locate it:
+The nix config repo is the one containing the `configs/agents/skills/` and
+`configs/pi/skills/` directories. Locate it:
 
 ```bash
 git --no-pager rev-parse --show-toplevel
@@ -51,17 +62,23 @@ For an approved Pi-only skill, also verify:
 ls configs/pi/skills/
 ```
 
-If the current working directory is not inside the nix config repo, search for it by checking common locations or ask the user for the path.
+If the current working directory is not inside the nix config repo, search for
+it by checking common locations or ask the user for the path.
 
 ### The `_shared/` directory
 
-`configs/agents/skills/_shared/` contains reference documents shared across **multiple** skill files. Examples:
+`configs/agents/skills/_shared/` contains reference documents shared across
+**multiple** skill files. Examples:
 
 - `commit-rules.md` — Used by `commit-message`, `commit-message-write`, `commit-message-staged`, `commit-message-staged-write`
 - `code-comment-format.md` — Used by `pr-review` and `pr-annotate`
 - `pr-description-rules.md` — Used by `pr-description` and `pr-description-write`
 
-**Only add content to `_shared/` when it is genuinely referenced by 2 or more skill files.** Do not put single-skill content there. If a skill has internal reference material that only it uses, put it inline in the SKILL.md or in a subdirectory of the skill itself (e.g., `configs/agents/skills/<name>/references/`).
+**Only add content to `_shared/` when it is genuinely referenced by 2 or more
+skill files.** Do not put single-skill content there. If a skill has internal
+reference material that only it uses, put it inline in the SKILL.md or in a
+subdirectory of the skill itself (e.g.,
+`configs/agents/skills/<name>/references/`).
 
 ## SKILL.md Conventions
 
@@ -86,7 +103,8 @@ allowed-tools: <comma-separated tool list>
 - Interactive: `"<verb> <thing>. Interactive — <brief description of the workflow>."`
 - General: `"<verb> <thing> <brief context>."`
 
-**`allowed-tools`**: The **minimal** set of tools the skill actually needs. Only include tools the skill's instructions explicitly use. Common sets:
+**`allowed-tools`**: The **minimal** set of tools the skill actually needs. Only
+include tools the skill's instructions explicitly use. Common sets:
 
 | Use case                     | allowed-tools                                                          |
 | ---------------------------- | ---------------------------------------------------------------------- |
@@ -99,7 +117,8 @@ allowed-tools: <comma-separated tool list>
 | File creation                | `Write(*)`                                                             |
 | Interactive with file output | `Question(*), Write(*), Bash(mktemp:*)`                                |
 
-Any skill that permits `Bash(git:*)` or `Bash(gh:*)` must include this section immediately after its frontmatter:
+Any skill that permits `Bash(git:*)` or `Bash(gh:*)` must include this section
+immediately after its frontmatter:
 
 ```markdown
 ## Command execution
@@ -107,7 +126,9 @@ Any skill that permits `Bash(git:*)` or `Bash(gh:*)` must include this section i
 Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation.
 ```
 
-Its command examples must also show the non-interactive forms (`git --no-pager ...` and `GH_PAGER=cat GH_PROMPT_DISABLED=1 gh ...`) rather than relying only on the linked rule.
+Its command examples must also show the non-interactive forms (`git --no-pager
+...` and `GH_PAGER=cat GH_PROMPT_DISABLED=1 gh ...`) rather than relying only on
+the linked rule.
 
 ### Document structure
 
@@ -135,7 +156,9 @@ Every skill must end with a `## Rules` section. Each rule is:
 - **Rule name.** Explanation of the constraint and why it matters.
 ```
 
-Common rules that apply to many skills. Treat these as design defaults, not universal requirements; the intended invocation model and the user's explicit autonomy requirements may justify a different policy:
+Common rules that apply to many skills. Treat these as design defaults, not
+universal requirements; the intended invocation model and the user's explicit
+autonomy requirements may justify a different policy:
 
 - **User confirmation before mutations** — Prefer explicit approval when the workflow is review-driven or the mutation payload needs user judgment. Autonomous skills may instead treat invocation as authorization when that behavior is explicit in the skill's purpose and rules.
 - **Truthful output** — Never fabricate or embellish information
@@ -143,13 +166,15 @@ Common rules that apply to many skills. Treat these as design defaults, not univ
 
 ## Structural Patterns
 
-When designing a new skill, select the pattern that best fits the use case. These patterns are drawn from existing skills.
+When designing a new skill, select the pattern that best fits the use case.
+These patterns are drawn from existing skills.
 
 ### Pattern 1: Simple read-only
 
 **Used by**: `commit-message`, `commit-message-staged`, `pr-description`
 
-**When to use**: The skill generates text output for the user to copy. No files written, no external mutations, no interaction needed.
+**When to use**: The skill generates text output for the user to copy. No files
+written, no external mutations, no interaction needed.
 
 **Structure**:
 
@@ -166,11 +191,14 @@ When designing a new skill, select the pattern that best fits the use case. Thes
 
 ### Pattern 2: Simple write
 
-**Used by**: `commit-message-write`, `commit-message-staged-write`, `pr-description-write`
+**Used by**: `commit-message-write`, `commit-message-staged-write`,
+`pr-description-write`
 
-**When to use**: Same as read-only but the output is written to a file (temp file, git dir, etc.) instead of just printed.
+**When to use**: Same as read-only but the output is written to a file (temp
+file, git dir, etc.) instead of just printed.
 
-**Structure**: Same as read-only, plus a write step and a confirmation message telling the user where the file was written.
+**Structure**: Same as read-only, plus a write step and a confirmation message
+telling the user where the file was written.
 
 **Characteristics**:
 
@@ -180,11 +208,15 @@ When designing a new skill, select the pattern that best fits the use case. Thes
 
 ### Pattern 3: Read/write pair
 
-**Used by**: `commit-message` + `commit-message-write`, `pr-description` + `pr-description-write`
+**Used by**: `commit-message` + `commit-message-write`, `pr-description` +
+`pr-description-write`
 
-**When to use**: The same core logic should exist in both "print for copying" and "write to file" forms. Users pick whichever suits their workflow.
+**When to use**: The same core logic should exist in both "print for copying"
+and "write to file" forms. Users pick whichever suits their workflow.
 
-**Structure**: Two separate SKILL.md files that both reference shared rules in `_shared/`. The read-only variant just prints; the write variant adds a file-writing step.
+**Structure**: Two separate SKILL.md files that both reference shared rules in
+`_shared/`. The read-only variant just prints; the write variant adds a
+file-writing step.
 
 **Characteristics**:
 
@@ -195,7 +227,11 @@ When designing a new skill, select the pattern that best fits the use case. Thes
 
 ### Pattern 4: Interactive with gates
 
-**When to use**: The skill has a multi-step workflow where the user should control progression — selecting what to include, reviewing output, approving actions. Do not choose this pattern merely because a skill mutates state; autonomous mutation workflows are valid when invocation-level authorization is an explicit requirement.
+**When to use**: The skill has a multi-step workflow where the user should
+control progression — selecting what to include, reviewing output, approving
+actions. Do not choose this pattern merely because a skill mutates state;
+autonomous mutation workflows are valid when invocation-level authorization is
+an explicit requirement.
 
 **Structure**:
 
@@ -238,9 +274,11 @@ When designing a new skill, select the pattern that best fits the use case. Thes
 
 ### Pattern 5: Per-item review loop
 
-**Used by**: `pr-review` (Step 7), `pr-annotate` (Step 4), `work-summary` (Step 6)
+**Used by**: `pr-review` (Step 7), `pr-annotate` (Step 4), `work-summary` (Step
+6)
 
-**When to use**: The skill produces multiple items (comments, annotations, changelog lines) that the user should review and approve individually.
+**When to use**: The skill produces multiple items (comments, annotations,
+changelog lines) that the user should review and approve individually.
 
 **Structure**: A loop within a step that processes one item at a time:
 
@@ -266,7 +304,8 @@ When designing a new skill, select the pattern that best fits the use case. Thes
 
 **Used by**: `work-summary`
 
-**When to use**: The skill collects data from multiple sources (git, GitHub, Linear, databases), deduplicates, and synthesizes output.
+**When to use**: The skill collects data from multiple sources (git, GitHub,
+Linear, databases), deduplicates, and synthesizes output.
 
 **Structure**:
 
@@ -288,9 +327,12 @@ When designing a new skill, select the pattern that best fits the use case. Thes
 
 ### 1. Gather requirements
 
-If the user provides a description of the skill they want as an argument, parse it for as much information as possible. Then use the **Question tool** to fill in any gaps.
+If the user provides a description of the skill they want as an argument, parse
+it for as much information as possible. Then use the **Question tool** to fill
+in any gaps.
 
-Ask the following, skipping any that can be inferred from the user's description:
+Ask the following, skipping any that can be inferred from the user's
+description:
 
 ```json
 {
@@ -368,7 +410,8 @@ Based on the answers, determine:
 
 ### 2. Design the skill
 
-Based on the gathered requirements and the selected structural pattern, compose a design outline:
+Based on the gathered requirements and the selected structural pattern, compose
+a design outline:
 
 ```
 ## Design: <skill-name>
@@ -420,9 +463,11 @@ Handle the response:
 
 ### 3. Draft and review the SKILL.md
 
-Draft the complete SKILL.md content in one pass. Present the full file content to the user for review instead of reviewing each section individually.
+Draft the complete SKILL.md content in one pass. Present the full file content
+to the user for review instead of reviewing each section individually.
 
-Include the entire draft in chat, clearly labeled with the target path. Then ask for approval using the **Question tool**:
+Include the entire draft in chat, clearly labeled with the target path. Then ask
+for approval using the **Question tool**:
 
 ```json
 {
@@ -456,13 +501,18 @@ Handle the response:
 - **Cancel** — stop without writing files.
 - **Custom text** — treat it as revision instructions, apply it faithfully, and re-present the full draft.
 
-Do not use per-section approval by default. Only review frontmatter, purpose, individual steps, or rules separately if the user explicitly asks for a section-by-section review.
+Do not use per-section approval by default. Only review frontmatter, purpose,
+individual steps, or rules separately if the user explicitly asks for a
+section-by-section review.
 
 ### 4. Create shared resources and variants (if applicable)
 
-If the skill design calls for `_shared/` content (read/write pairs, or sharing rules with existing skills), draft the shared document as part of the same review bundle as the SKILL.md.
+If the skill design calls for `_shared/` content (read/write pairs, or sharing
+rules with existing skills), draft the shared document as part of the same
+review bundle as the SKILL.md.
 
-If the skill design calls for a read/write pair, draft the second variant's SKILL.md as part of the same review bundle as well.
+If the skill design calls for a read/write pair, draft the second variant's
+SKILL.md as part of the same review bundle as well.
 
 Present all required files together for one approval gate:
 
@@ -470,9 +520,12 @@ Present all required files together for one approval gate:
 - Any `_shared/*.md` files
 - Any variant `SKILL.md` files
 
-Ask the user to approve the complete bundle. If they request changes, update the affected files and re-present the complete bundle. Do not review shared resources or variants section-by-section unless the user explicitly asks.
+Ask the user to approve the complete bundle. If they request changes, update the
+affected files and re-present the complete bundle. Do not review shared
+resources or variants section-by-section unless the user explicitly asks.
 
-Before writing `_shared/` content, verify it is actually referenced by 2+ skill files. If not, move the content inline into the SKILL.md instead.
+Before writing `_shared/` content, verify it is actually referenced by 2+ skill
+files. If not, move the content inline into the SKILL.md instead.
 
 **Skip this step entirely if no shared resources or variants are needed.**
 
@@ -520,7 +573,8 @@ The skill will be auto-discovered and deployed on next nix rebuild.
 No other files need editing.
 ```
 
-Do not require a second approval gate after files are written. If the user asks for changes after creation, apply those edits as a normal follow-up.
+Do not require a second approval gate after files are written. If the user asks
+for changes after creation, apply those edits as a normal follow-up.
 
 ## Rules
 

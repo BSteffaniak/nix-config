@@ -1,12 +1,20 @@
 # Progress-document product and architecture contract
 
-Apply this contract whenever a progress document covers implementation, migration, integration, or another change intended to produce working product behavior. Scale it down for pure investigation or note-taking tasks where product delivery is not the objective.
+Apply this contract whenever a progress document covers implementation,
+migration, integration, or another change intended to produce working product
+behavior. Scale it down for pure investigation or note-taking tasks where
+product delivery is not the objective.
 
 ## Governing principle
 
-> Be narrow in requested product scope and uncompromising in production implementation depth. Derive the solution from the actual codebase, complete every required product and architectural layer, and never substitute a shortcut, generic ideal, or speculative abstraction for the repository's proper long-term design.
+> Be narrow in requested product scope and uncompromising in production
+> implementation depth. Derive the solution from the actual codebase, complete
+> every required product and architectural layer, and never substitute a
+> shortcut, generic ideal, or speculative abstraction for the repository's
+> proper long-term design.
 
-Narrow scope does not permit shallow implementation. Proper architecture does not permit speculative generalization.
+Narrow scope does not permit shallow implementation. Proper architecture does
+not permit speculative generalization.
 
 ## Requested product outcome
 
@@ -17,7 +25,8 @@ Preserve the user's actual intent as a bounded product outcome:
 - **Observable result** — what a user or calling system can observe when it works.
 - **Boundaries and non-goals** — what the request does not require.
 
-Do not replace this with invented personas, exhaustive acceptance scenarios, hypothetical future use cases, or unrequested polish.
+Do not replace this with invented personas, exhaustive acceptance scenarios,
+hypothetical future use cases, or unrequested polish.
 
 ## Completion path
 
@@ -31,7 +40,9 @@ intended entry point
 → observable useful result
 ```
 
-Use this path to expose missing integration. Do not optimize for a demonstration path or assume that an internal function existing means the product capability is complete.
+Use this path to expose missing integration. Do not optimize for a demonstration
+path or assume that an internal function existing means the product capability
+is complete.
 
 ## Mandatory codebase research
 
@@ -46,15 +57,24 @@ Before deciding architecture or implementation work:
 7. Use focused Git history when current code does not explain an important architectural choice.
 8. Identify every layer genuinely affected by the requested product outcome.
 
-Keep research focused on the requested capability. It must be deep enough to explain the real flow and obligations, but it must not become a general repository audit.
+Keep research focused on the requested capability. It must be deep enough to
+explain the real flow and obligations, but it must not become a general
+repository audit.
 
-Ground architectural conclusions in concrete repository evidence such as instructions, paths, symbols, tests, analogous implementations, ownership, data flow, invariants, or relevant commits. Generic best practice alone is not evidence of the correct design for a specific repository.
+Ground architectural conclusions in concrete repository evidence such as
+instructions, paths, symbols, tests, analogous implementations, ownership, data
+flow, invariants, or relevant commits. Generic best practice alone is not
+evidence of the correct design for a specific repository.
 
-Resolve architecture-affecting unknowns through repository research whenever possible. If a consequential choice cannot be resolved from available evidence, record the choice, evidence, and uncertainty explicitly rather than hiding it inside a checklist or substituting a shortcut.
+Resolve architecture-affecting unknowns through repository research whenever
+possible. If a consequential choice cannot be resolved from available evidence,
+record the choice, evidence, and uncertainty explicitly rather than hiding it
+inside a checklist or substituting a shortcut.
 
 ## Proper long-term architecture
 
-Production architecture is mandatory. Plan and implement the requested outcome through the repository's proper long-term architecture.
+Production architecture is mandatory. Plan and implement the requested outcome
+through the repository's proper long-term architecture.
 
 For this contract, proper long-term architecture means:
 
@@ -74,7 +94,11 @@ Never use or leave behind:
 - A knowingly incomplete integration with required work deferred as cleanup or follow-up.
 - A shortcut chosen because the proper integration requires more work.
 
-A compatibility adapter, staged migration mechanism, or transitional path is not automatically a shortcut. It is valid when the real production transition requires it, it fits repository architecture, its ownership and lifecycle are explicit, and the progress document includes its required completion or removal conditions.
+A compatibility adapter, staged migration mechanism, or transitional path is not
+automatically a shortcut. It is valid when the real production transition
+requires it, it fits repository architecture, its ownership and lifecycle are
+explicit, and the progress document includes its required completion or removal
+conditions.
 
 If no applicable pattern exists:
 
@@ -84,7 +108,9 @@ If no applicable pattern exists:
 4. Record the decision and repository evidence supporting it.
 5. Avoid both temporary shortcuts and generalized frameworks for unrequested future needs.
 
-A prototype or workaround is acceptable only when the user explicitly requests one. Never describe it as production-complete or let it silently replace the proper implementation.
+A prototype or workaround is acceptable only when the user explicitly requests
+one. Never describe it as production-complete or let it silently replace the
+proper implementation.
 
 ## Checklist admission rule
 
@@ -95,11 +121,13 @@ Include work only when it is required to:
 3. Preserve an architectural boundary, invariant, source of truth, lifecycle, compatibility, or operational obligation genuinely affected by the change.
 4. Verify the complete product path or affected architecture.
 
-Exclude unrelated cleanup, speculative extensibility, broad redesign, hypothetical future use cases, and polish not needed for the requested outcome.
+Exclude unrelated cleanup, speculative extensibility, broad redesign,
+hypothetical future use cases, and polish not needed for the requested outcome.
 
 ## Independent completion gates
 
-A progress document must keep these gates separate. Neither can substitute for the other.
+A progress document must keep these gates separate. Neither can substitute for
+the other.
 
 ### Product closure
 
@@ -123,4 +151,6 @@ Completion requires evidence that:
 - Validation covers the affected architectural layers and complete product path at the appropriate levels.
 - No required production work has been mislabeled as optional polish, cleanup, or follow-up.
 
-Do not mark an effort done merely because its implementation checklist is checked. Reconcile completion against both gates and the original requested product outcome.
+Do not mark an effort done merely because its implementation checklist is
+checked. Reconcile completion against both gates and the original requested
+product outcome.

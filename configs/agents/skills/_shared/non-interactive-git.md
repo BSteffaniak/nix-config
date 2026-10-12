@@ -13,7 +13,8 @@ Apply these rules to every shell invocation that uses `git` or `gh`.
 - Do not pipe output to an interactive pager such as `less` or `more`. Use non-interactive filters only when needed.
 - If a required operation has no safe non-interactive form, ask the user to perform it manually rather than launching it.
 
-`gh api --paginate` is allowed when needed: it paginates API responses and does not launch a terminal pager.
+`gh api --paginate` is allowed when needed: it paginates API responses and does
+not launch a terminal pager.
 
 ## Examples
 

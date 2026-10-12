@@ -2,7 +2,13 @@
 
 Resolve pi's `auth.json` from an [`sshenv`](https://github.com/BSteffaniak/sshenv) vault at session start, and round-trip refreshed OAuth credentials back to the vault. Activated when the per-profile shell wrapper sets `PI_SSHENV_PROFILE`; otherwise the extension is a no-op.
 
-The Nix module at `home/modules/development/pi.nix` reads `configs/pi/providers/*.json`. When a descriptor includes an `sshenv` block, the generated `pi-<name>` wrapper points pi at a per-profile `PI_CODING_AGENT_DIR` for auth/config, symlinks that profile's `sessions/` directory to the shared default `~/.pi/agent/sessions`, then exports the env-var contract this extension consumes. Descriptors without an `sshenv` block keep their original behavior (raw `pi --provider … --model …`).
+The Nix module at `home/modules/development/pi.nix` reads
+`configs/pi/providers/*.json`. When a descriptor includes an `sshenv` block, the
+generated `pi-<name>` wrapper points pi at a per-profile `PI_CODING_AGENT_DIR`
+for auth/config, symlinks that profile's `sessions/` directory to the shared
+default `~/.pi/agent/sessions`, then exports the env-var contract this extension
+consumes. Descriptors without an `sshenv` block keep their original behavior
+(raw `pi --provider … --model …`).
 
 ## What it does
 
@@ -30,11 +36,23 @@ The Nix module at `home/modules/development/pi.nix` reads `configs/pi/providers/
 
 ## Concurrency
 
-By construction, two pi instances on different profiles use different agent dirs, different `auth.json` files, and different sshenv profiles. Their per-profile `sessions/` directories are symlinked to the same default root (`~/.pi/agent/sessions`), so `/resume` and `pi -c` see the same history for the current working directory across provider wrappers without showing sessions from unrelated directories.
+By construction, two pi instances on different profiles use different agent
+dirs, different `auth.json` files, and different sshenv profiles. Their
+per-profile `sessions/` directories are symlinked to the same default root
+(`~/.pi/agent/sessions`), so `/resume` and `pi -c` see the same history for the
+current working directory across provider wrappers without showing sessions from
+unrelated directories.
 
-Two pi instances on the **same** profile share `auth.json`. The common case (neither refreshes during their session) works fine; OpenAI doesn't reject parallel use of the same access token. The rare case (both refresh simultaneously) is a brief race that pi's own retry logic handles. The extension does **not** lock by default. Set `PI_SSHENV_LOCK=1` in the wrapper environment to opt into serialization (handled in the wrapper, not here).
+Two pi instances on the **same** profile share `auth.json`. The common case
+(neither refreshes during their session) works fine; OpenAI doesn't reject
+parallel use of the same access token. The rare case (both refresh
+simultaneously) is a brief race that pi's own retry logic handles. The extension
+does **not** lock by default. Set `PI_SSHENV_LOCK=1` in the wrapper environment
+to opt into serialization (handled in the wrapper, not here).
 
-For heavy parallel use of one ChatGPT subscription, route through brouter (`pi-brouter`) instead — brouter holds OAuth centrally so refresh races don't happen.
+For heavy parallel use of one ChatGPT subscription, route through brouter
+(`pi-brouter`) instead — brouter holds OAuth centrally so refresh races don't
+happen.
 
 ## Commands
 
@@ -105,7 +123,8 @@ pi-openai
 sshenv list openai             # should include OPENAI_CODEX_AUTH_JSON_B64
 ```
 
-Repeat for any host-specific account defined via `extraProviders`. Use the `-fast` wrapper variant when you want the priority-tier alias:
+Repeat for any host-specific account defined via `extraProviders`. Use the
+`-fast` wrapper variant when you want the priority-tier alias:
 
 ```sh
 pi-<private-profile>

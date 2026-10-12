@@ -6,7 +6,8 @@ Helper scripts for creating and managing NixOS/Darwin host configurations.
 
 ### `bootstrap.sh` (Main Script)
 
-Interactive bootstrap script that guides you through creating a new host configuration.
+Interactive bootstrap script that guides you through creating a new host
+configuration.
 
 **Features:**
 
@@ -37,7 +38,10 @@ The script will prompt you for:
 
 ### `new-host-template.sh` (Template Generator)
 
-Generates `hosts/<host>/home.nix` (user-level) and, for NixOS/Darwin, `hosts/<host>/default.nix` (system-level) from command-line arguments. Called by `bootstrap.sh` but can be used standalone. Host identity (hostname, username, state versions) lives in `meta.nix`, which `bootstrap.sh` writes.
+Generates `hosts/<host>/home.nix` (user-level) and, for NixOS/Darwin,
+`hosts/<host>/default.nix` (system-level) from command-line arguments. Called by
+`bootstrap.sh` but can be used standalone. Host identity (hostname, username,
+state versions) lives in `meta.nix`, which `bootstrap.sh` writes.
 
 **Usage:**
 
@@ -93,11 +97,18 @@ Darwin-specific (default.nix):
 
 ### `source-build.sh` (Source Build Hash Manager)
 
-Manages dependency hashes (`npmDepsHash`, `cargoHash`) for source-built Nix packages. Eliminates the need to manually update hashes when flake inputs change.
+Manages dependency hashes (`npmDepsHash`, `cargoHash`) for source-built Nix
+packages. Eliminates the need to manually update hashes when flake inputs
+change.
 
-**The problem it solves:** When you run `nix flake update cronstrue` and the upstream `package-lock.json` or `Cargo.lock` changed, the hardcoded hash in the overlay becomes stale and the build breaks. This script automates hash computation so you never have to manually copy hashes from error messages.
+**The problem it solves:** When you run `nix flake update cronstrue` and the
+upstream `package-lock.json` or `Cargo.lock` changed, the hardcoded hash in the
+overlay becomes stale and the build breaks. This script automates hash
+computation so you never have to manually copy hashes from error messages.
 
-**Safety feature:** Each overlay validates the git rev at Nix evaluation time. If you run `nix flake update` and forget to update hashes, you get a clear error:
+**Safety feature:** Each overlay validates the git rev at Nix evaluation time.
+If you run `nix flake update` and forget to update hashes, you get a clear
+error:
 
 ```
 error: cronstrue: hash file is stale.
@@ -128,7 +139,10 @@ Run: ./scripts/source-build.sh update cronstrue
 - **npm** (`npmDepsHash`): Uses `prefetch-npm-deps` for fast, single-download hash computation
 - **Rust** (`cargoHash`): Uses `fetchCargoVendoredDeps` with automatic hash extraction. Downloads cargo dependencies once; they're cached for the real build
 
-**Auto-discovery:** Simple source-built packages (Rust `buildRustPackage` with no custom build steps) are **automatically discovered** from `pkgs/source-builds/configs/*.json`. No manual Nix file edits are needed — just create a config JSON, compute the hash, and the package appears in `pkgs`.
+**Auto-discovery:** Simple source-built packages (Rust `buildRustPackage` with
+no custom build steps) are **automatically discovered** from
+`pkgs/source-builds/configs/*.json`. No manual Nix file edits are needed —
+just create a config JSON, compute the hash, and the package appears in `pkgs`.
 
 **Adding a new simple source-built package:**
 
@@ -166,7 +180,10 @@ nix flake lock
 | `cargoLockFile`   | No       | Path to repo-managed lockfile for repos without `Cargo.lock`                 |
 | `complex`         | No       | Set to `true` to skip auto-discovery (use a standalone overlay file instead) |
 
-**Complex builds:** Packages that need custom toolchains, build phases, `nativeBuildInputs`, etc. should set `"complex": true` in their config and use a standalone overlay file in `overlays/`. See `overlays/cronstrue.nix` for an example.
+**Complex builds:** Packages that need custom toolchains, build phases,
+`nativeBuildInputs`, etc. should set `"complex": true` in their config and use a
+standalone overlay file in `overlays/`. See `overlays/cronstrue.nix` for an
+example.
 
 **Directory structure:**
 
@@ -178,9 +195,13 @@ pkgs/source-builds/
     my-tool.json        # { rev, cargoHash }
 ```
 
-**Important:** The `hashes/` directory contains pinned dependency hashes that Nix reads at evaluation time. These files must be committed to git so all machines use the same hashes.
+**Important:** The `hashes/` directory contains pinned dependency hashes that
+Nix reads at evaluation time. These files must be committed to git so all
+machines use the same hashes.
 
-For Rust repos that do not commit a `Cargo.lock`, set `cargoLockFile` in the package config and point it to a lock file in this repo (for example `pkgs/source-builds/locks/<name>-Cargo.lock`).
+For Rust repos that do not commit a `Cargo.lock`, set `cargoLockFile` in the
+package config and point it to a lock file in this repo (for example
+`pkgs/source-builds/locks/<name>-Cargo.lock`).
 
 **Typical workflow after updating flake inputs:**
 
@@ -191,7 +212,9 @@ nix flake update                           # Update all flake inputs
 # Commit the updated hashes/ files
 ```
 
-**Network cost:** Dependencies are downloaded exactly once during hash computation. The subsequent Nix build finds them cached in the store. No double-downloads.
+**Network cost:** Dependencies are downloaded exactly once during hash
+computation. The subsequent Nix build finds them cached in the store. No
+double-downloads.
 
 ### `clean.sh` (Nix Store Cleanup Helper)
 
@@ -235,7 +258,8 @@ Runs all update steps in one command so you do not need to remember each script.
 2. `./scripts/source-build.sh update --all`
 3. `./scripts/github-release.sh update --all`
 
-If any step fails, the script exits immediately so you can fix the issue before continuing.
+If any step fails, the script exits immediately so you can fix the issue before
+continuing.
 
 **Usage:**
 
@@ -253,11 +277,13 @@ If any step fails, the script exits immediately so you can fix the issue before 
 - `-y, --yes` - Skip confirmation prompt
 - `-h, --help` - Show help text
 
-At the end it prints `git status --short` so you can immediately see what changed.
+At the end it prints `git status --short` so you can immediately see what
+changed.
 
 ### `detect-hardware.sh` (Hardware Detection)
 
-NixOS-only script that detects hardware and suggests appropriate configuration options.
+NixOS-only script that detects hardware and suggests appropriate configuration
+options.
 
 **Features:**
 
@@ -277,11 +303,14 @@ NixOS-only script that detects hardware and suggests appropriate configuration o
 ./scripts/detect-hardware.sh
 ```
 
-Run this before bootstrapping a NixOS host to get hardware-specific recommendations.
+Run this before bootstrapping a NixOS host to get hardware-specific
+recommendations.
 
 ### `check-all-hosts.sh` (Evaluation Regression Gate)
 
-Evaluates the toplevel derivation of every host discovered from `hosts/*/meta.nix` and compares against a saved baseline. Use it to prove a refactor changed nothing, or to see exactly which hosts a change affects.
+Evaluates the toplevel derivation of every host discovered from
+`hosts/*/meta.nix` and compares against a saved baseline. Use it to prove a
+refactor changed nothing, or to see exactly which hosts a change affects.
 
 ```bash
 ./scripts/check-all-hosts.sh save      # write .host-drvs.baseline (gitignored)
@@ -290,13 +319,20 @@ Evaluates the toplevel derivation of every host discovered from `hosts/*/meta.ni
 ./scripts/check-all-hosts.sh eval      # just print current drvPaths
 ```
 
-When hosts differ, inspect with `nix-diff <old-drv> <new-drv>` (available in the dev shell). Evaluation uses `path:` so untracked files are picked up without staging. `nix flake check` exposes the same set of toplevels via the `checks` output.
+When hosts differ, inspect with `nix-diff <old-drv> <new-drv>` (available in the
+dev shell). Evaluation uses `path:` so untracked files are picked up without
+staging. `nix flake check` exposes the same set of toplevels via the `checks`
+output.
 
 ### `github-release.sh` (GitHub Release Manager)
 
-Manages pre-built binary packages from GitHub releases. Supports both interactive and non-interactive modes.
+Manages pre-built binary packages from GitHub releases. Supports both
+interactive and non-interactive modes.
 
-This script handles the full lifecycle: adding new projects, updating versions, listing status, and removing projects. It works with the auto-discovery overlay system in `overlays/github-releases.nix` — adding a new project only requires creating a config JSON file (no Nix file edits).
+This script handles the full lifecycle: adding new projects, updating versions,
+listing status, and removing projects. It works with the auto-discovery overlay
+system in `overlays/github-releases.nix` — adding a new project only requires
+creating a config JSON file (no Nix file edits).
 
 **Usage:**
 
@@ -366,14 +402,19 @@ pkgs/github-releases/
   mk-github-release.nix  # Shared Nix builder function
 ```
 
-**Important:** The `versions/` directory contains pinned version data that Nix reads at evaluation time. These files must be committed to git so that all machines see the same versions.
+**Important:** The `versions/` directory contains pinned version data that Nix
+reads at evaluation time. These files must be committed to git so that all
+machines see the same versions.
 
-**Install modes:** The per-project config supports an optional `installMode` field:
+**Install modes:** The per-project config supports an optional `installMode`
+field:
 
 - `"binary"` (default) — copies only the single binary into `$out/bin`. Use for self-contained binaries.
 - `"directory"` — copies the entire archive's top-level directory into `$out/libexec/<pname>/` and installs a wrapper script at `$out/bin/<installedBinaryName>` that execs the binary. Use when the binary expects sibling files next to it (e.g. `pi` requires `package.json` alongside the executable).
 
-**Hash resolution:** The script uses the GitHub API `digest` field (sha256) when available for fast hash lookups. Falls back to `nix-prefetch-url` for repos that don't provide digests.
+**Hash resolution:** The script uses the GitHub API `digest` field (sha256) when
+available for fast hash lookups. Falls back to `nix-prefetch-url` for repos that
+don't provide digests.
 
 ## Workflow Examples
 

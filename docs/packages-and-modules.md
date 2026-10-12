@@ -2,7 +2,8 @@
 
 Back to overview: `README.md`
 
-This repo is home-manager-first: every user-facing tool is declared in the host's `home.nix`, on every platform.
+This repo is home-manager-first: every user-facing tool is declared in the
+host's `home.nix`, on every platform.
 
 ## Rule of Thumb
 
@@ -23,7 +24,9 @@ Home Manager modules (`home/`):
 - `home/modules/` — all feature modules, grouped by area
 - `home/nixos/`, `home/darwin/`, `home/standalone/` — thin platform bridges
 
-The bridges mirror only system-owned settings (login shells, compositor enablement, a couple of cask-backed apps) from `osConfig`. They do not mirror user tools.
+The bridges mirror only system-owned settings (login shells, compositor
+enablement, a couple of cask-backed apps) from `osConfig`. They do not mirror
+user tools.
 
 ## Where to Add Packages
 
@@ -57,7 +60,9 @@ options.myConfig.tools.encryption.enable = lib.mkEnableOption "Encryption tools"
 myConfig.tools.encryption.enable = true;
 ```
 
-Module-to-module contributions (aliases, PATH entries, completion hooks) go through the internal `myConfig.shell.contrib.*` options; host files use `myConfig.shell.shared.*`, which wins on collisions.
+Module-to-module contributions (aliases, PATH entries, completion hooks) go
+through the internal `myConfig.shell.contrib.*` options; host files use
+`myConfig.shell.shared.*`, which wins on collisions.
 
 ## Hex Voice Dictation
 
@@ -82,7 +87,8 @@ with CPU inference). Native Wayland currently supports compatible wlroots
 compositors such as Hyprland/Sway, not GNOME/KDE. On standalone Linux, graphics
 integration and input permissions must be supplied by the host OS.
 
-For Wayland hotkeys on NixOS, explicitly opt in at system level in `default.nix`:
+For Wayland hotkeys on NixOS, explicitly opt in at system level in
+`default.nix`:
 
 ```nix
 myConfig.desktop.hex.enableInputAccess = true;
@@ -97,7 +103,8 @@ Autostart follows `graphical-session.target`; the desktop session must import
 its display environment into the systemd user manager and start/stop that
 session target. The shared Hyprland home module also starts/stops Hex directly
 with the compositor when `openOnLogin` is enabled, so direct Hyprland sessions
-do not depend on a session manager starting that target. Override `myConfig.desktop.hex.systemdTarget` for other session
+do not depend on a session manager starting that target. Override
+`myConfig.desktop.hex.systemdTarget` for other session
 targets. The module does not create a desktop session or install GPU drivers.
 
 After building and switching, run as your normal desktop user:
@@ -146,9 +153,11 @@ supported by the X11 backend or UI shortcut capture. The UI label displays
 
 Use `hex restart` in your desktop session, without sudo. Upstream's CLI had a
 10-second control timeout, shorter than its service's 30-second stop limit;
-`linux-service-timeout.patch` allows 75 seconds for stop/start. This does not fix
+`linux-service-timeout.patch` allows 75 seconds for stop/start. This does not
+fix
 an underlying shutdown hang: systemd may still force-kill the old process after
-30 seconds. Check `hex status` and `journalctl --user -u hex.service` if restarting
+30 seconds. Check `hex status` and `journalctl --user -u hex.service` if
+restarting
 is slow or fails.
 
 Models are not downloaded during activation. Nix owns application updates;

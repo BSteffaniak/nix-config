@@ -1,6 +1,7 @@
 # Agent Guidelines for Nix Configuration
 
-This document provides guidance for AI agents and contributors working on this Nix configuration repository.
+This document provides guidance for AI agents and contributors working on this
+Nix configuration repository.
 
 ## Architecture Overview
 
@@ -31,19 +32,31 @@ configs/           Portable standalone dot-configs symlinked by home modules
 
 ### Host Auto-Discovery
 
-Hosts are **automatically discovered** from `hosts/*/meta.nix` by `lib/hosts.nix`. It generates `nixosConfigurations`, `darwinConfigurations`, and `homeConfigurations` outputs from each host's `meta.nix`. Neither `flake.nix` nor `rebuild.sh` need manual edits when adding or removing hosts.
+Hosts are **automatically discovered** from `hosts/*/meta.nix` by
+`lib/hosts.nix`. It generates `nixosConfigurations`, `darwinConfigurations`, and
+`homeConfigurations` outputs from each host's `meta.nix`. Neither `flake.nix`
+nor `rebuild.sh` need manual edits when adding or removing hosts.
 
-`meta.nix` is the single source of host identity. It drives `networking.hostName`, `system.primaryUser`, `home.username`, `home.homeDirectory`, `system.stateVersion`, and `home.stateVersion` (all as `mkDefault`, so a host file can still override).
+`meta.nix` is the single source of host identity. It drives
+`networking.hostName`, `system.primaryUser`, `home.username`,
+`home.homeDirectory`, `system.stateVersion`, and `home.stateVersion` (all as
+`mkDefault`, so a host file can still override).
 
 ### Private Hosts (git-sshripped)
 
 Some host directories (e.g., `hosts/bs-mbpro/`) are encrypted via **[git-sshripped](https://github.com/BSteffaniak/git-sshripped)**, which uses SSH keys as recipients and Git filters for transparent encryption. On GitHub they appear as ciphertext. On machines whose SSH key is a recipient and that have run `git-sshripped unlock`, they are transparent. Encryption rules are defined in `.gitattributes`; recipient/key material lives in `.git-sshripped/`.
 
-`meta.nix` files are intentionally excluded from encryption so host discovery works on machines without the key.
+`meta.nix` files are intentionally excluded from encryption so host discovery
+works on machines without the key.
 
-**Do not move host-private content out of an encrypted host directory into shared modules.** Refactoring within the directory is fine; anything that would put that content in plaintext elsewhere in the repo is not.
+**Do not move host-private content out of an encrypted host directory into
+shared modules.** Refactoring within the directory is fine; anything that would
+put that content in plaintext elsewhere in the repo is not.
 
-`git-sshripped` is built from source via `pkgs/source-builds/configs/git-sshripped.json` and is available in the repo dev shell (`nix develop` / direnv) and via `myConfig.cliTools.utilities.gitSshripped.enable`.
+`git-sshripped` is built from source via
+`pkgs/source-builds/configs/git-sshripped.json` and is available in the repo dev
+shell (`nix develop` / direnv) and via
+`myConfig.cliTools.utilities.gitSshripped.enable`.
 
 ## Module Hierarchy
 
@@ -64,9 +77,12 @@ These own things that require root or OS integration:
 
 ### 2. Home-Manager Modules (`home/modules/`)
 
-Location: `home/modules/`, `home/common/`, plus platform bridges `home/nixos/`, `home/darwin/`, `home/standalone/`
+Location: `home/modules/`, `home/common/`, plus platform bridges `home/nixos/`,
+`home/darwin/`, `home/standalone/`
 
-These own **every user-facing tool and its configuration**: development toolchains, editors, CLI utilities, containers/devops CLIs, desktop apps and their configs, git/ssh client config, shell configuration.
+These own **every user-facing tool and its configuration**: development
+toolchains, editors, CLI utilities, containers/devops CLIs, desktop apps and
+their configs, git/ssh client config, shell configuration.
 
 **Advantages:**
 
@@ -76,7 +92,10 @@ These own **every user-facing tool and its configuration**: development toolchai
 
 ### Key Principle: user tools are declared once, in `home.nix`
 
-There is exactly one place to enable a user tool: the host's `home.nix`. System modules do **not** re-declare user-tool options, and the platform bridges (`home/nixos`, `home/darwin`) mirror only genuinely system-owned settings into home-manager:
+There is exactly one place to enable a user tool: the host's `home.nix`. System
+modules do **not** re-declare user-tool options, and the platform bridges
+(`home/nixos`, `home/darwin`) mirror only genuinely system-owned settings into
+home-manager:
 
 - `myConfig.shell.{default,fish,bash,zsh,nushell}` — so the login shell and the user shell config agree
 - Hyprland/Waybar enablement (NixOS; compositor is installed at system level)
@@ -112,7 +131,8 @@ options.myConfig.tools.archiving.enable = lib.mkEnableOption "Archive tools (7-z
 myConfig.tools.archiving.enable = true;
 ```
 
-Internal contribution points other modules write to are marked `internal = true`:
+Internal contribution points other modules write to are marked `internal =
+true`:
 
 - `myConfig.shell.contrib.*` — aliases, functions, PATH entries, completion commands, init snippets contributed by modules. Host-facing `myConfig.shell.shared.*` overrides these on key collision.
 - `myConfig.shell.resolved.*` — merged results (default shell path, merged aliases).
@@ -146,9 +166,13 @@ Each host directory contains:
 }
 ```
 
-**System config (`default.nix`)**: imports `modules/common` + the platform module directory, then sets only system-level `myConfig.*` flags plus anything host-specific (extra system packages, `networking.computerName`, user groups, fonts).
+**System config (`default.nix`)**: imports `modules/common` + the platform
+module directory, then sets only system-level `myConfig.*` flags plus anything
+host-specific (extra system packages, `networking.computerName`, user groups,
+fonts).
 
-**Home config (`home.nix`)**: all user tools, editors, shell config, CLI utilities, desktop apps.
+**Home config (`home.nix`)**: all user tools, editors, shell config, CLI
+utilities, desktop apps.
 
 ## Adding New Packages
 
@@ -158,11 +182,14 @@ Each host directory contains:
 
 ### Adding a Homebrew cask (Darwin)
 
-Add an entry to `simpleCasks` in `modules/darwin/casks.nix`. Casks that need extra config (launchd agents, defaults) get their own file using `lib/mk-cask-module.nix` — see `scroll-reverser.nix`.
+Add an entry to `simpleCasks` in `modules/darwin/casks.nix`. Casks that need
+extra config (launchd agents, defaults) get their own file using
+`lib/mk-cask-module.nix` — see `scroll-reverser.nix`.
 
 ### Adding Source-Built Packages
 
-For packages built from Git source, use the auto-discovery source-build system. Simple Rust packages require only:
+For packages built from Git source, use the auto-discovery source-build system.
+Simple Rust packages require only:
 
 1. A flake input in `flake.nix` (`<name>-src`, `flake = false`)
 2. `pkgs/source-builds/configs/<name>.json`:
@@ -177,17 +204,25 @@ For packages built from Git source, use the auto-discovery source-build system. 
 3. `nix flake lock && ./scripts/source-build.sh update <name>`
 4. Use `pkgs.<name>`
 
-`overlays/source-builds.nix` picks up configs automatically. Optional fields: `doCheck`, `cargoBuildFlags`, `nativeBuildInputs`, `buildInputs`, `rustToolchain` (`"stable"`/`"nightly"`), `env`, `postInstallFile`.
+`overlays/source-builds.nix` picks up configs automatically. Optional fields:
+`doCheck`, `cargoBuildFlags`, `nativeBuildInputs`, `buildInputs`,
+`rustToolchain` (`"stable"`/`"nightly"`), `env`, `postInstallFile`.
 
-**Complex builds** set `"complex": true` and get a standalone file in `overlays/` (see `cronstrue.nix`, `sendsafely-java.nix`). Use `lib/locked-source.nix` for the flake.lock rev + stale-hash check.
+**Complex builds** set `"complex": true` and get a standalone file in
+`overlays/` (see `cronstrue.nix`, `sendsafely-java.nix`). Use
+`lib/locked-source.nix` for the flake.lock rev + stale-hash check.
 
 ### Overlays
 
-`overlays/default.nix` returns the ordered overlay list; each file is `{ inputs }: final: prev: { … }`. Attribute _names_ in an overlay must not depend on `final` (use `prev.lib` for structural helpers) or evaluation recurses infinitely.
+`overlays/default.nix` returns the ordered overlay list; each file is `{ inputs
+}: final: prev: { … }`. Attribute _names_ in an overlay must not depend on
+`final` (use `prev.lib` for structural helpers) or evaluation recurses
+infinitely.
 
 ## Adding New Hosts
 
-Run `./bootstrap.sh`, or manually create `hosts/<name>/{meta.nix,home.nix[,default.nix]}`. No other files need editing.
+Run `./bootstrap.sh`, or manually create
+`hosts/<name>/{meta.nix,home.nix[,default.nix]}`. No other files need editing.
 
 ## Testing Changes
 
@@ -199,7 +234,9 @@ Always build before switching:
 nix flake check              # same set of toplevels as a flake check
 ```
 
-For refactors that should not change any host, save a baseline first (`./scripts/check-all-hosts.sh save`), make changes, then `compare`. Investigate any drift with `nix-diff`.
+For refactors that should not change any host, save a baseline first
+(`./scripts/check-all-hosts.sh save`), make changes, then `compare`. Investigate
+any drift with `nix-diff`.
 
 ## Common Patterns
 

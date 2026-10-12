@@ -2,7 +2,9 @@
 
 Back to overview: `README.md`
 
-All overlays live in `overlays/`. `overlays/default.nix` returns the ordered list applied to every host; each file is a plain `{ inputs }: final: prev: { … }` overlay (rust returns a list).
+All overlays live in `overlays/`. `overlays/default.nix` returns the ordered
+list applied to every host; each file is a plain `{ inputs }: final: prev: { …
+}` overlay (rust returns a list).
 
 | File                    | Provides                                                                   |
 | ----------------------- | -------------------------------------------------------------------------- |
@@ -16,7 +18,9 @@ All overlays live in `overlays/`. `overlays/default.nix` returns the ordered lis
 | `github-releases.nix`   | Auto-discovered release binaries from `pkgs/github-releases/configs`       |
 | `minecraft-plugins.nix` | `pkgs.minecraftPlugins.*` from `pkgs/minecraft-plugins/configs`            |
 
-Rule: attribute **names** an overlay defines must not depend on `final` (use `prev.lib` for helpers like `concatMapAttrs`), or evaluation recurses infinitely.
+Rule: attribute **names** an overlay defines must not depend on `final` (use
+`prev.lib` for helpers like `concatMapAttrs`), or evaluation recurses
+infinitely.
 
 ## 1) GitHub Release Binaries
 
@@ -49,7 +53,9 @@ Data locations:
 - Package configs: `pkgs/source-builds/configs/*.json`
 - Hash pins: `pkgs/source-builds/hashes/*.json`
 
-Hash files are part of the build contract and must be committed. `lib/locked-source.nix` throws at evaluation time if a hash file's `rev` does not match `flake.lock`.
+Hash files are part of the build contract and must be committed.
+`lib/locked-source.nix` throws at evaluation time if a hash file's `rev` does
+not match `flake.lock`.
 
 ### Add a Simple Source-Built Package
 
@@ -59,7 +65,8 @@ Hash files are part of the build contract and must be committed. `lib/locked-sou
 4. Run `./scripts/source-build.sh update <name>`
 5. Reference `pkgs.<name>` in home config
 
-For packages with custom build logic, set `"complex": true` and add a standalone file in `overlays/` that uses `lib/locked-source.nix`.
+For packages with custom build logic, set `"complex": true` and add a standalone
+file in `overlays/` that uses `lib/locked-source.nix`.
 
 ## More Details
 

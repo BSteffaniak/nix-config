@@ -14,7 +14,10 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Analyze a pull request's diff, identify areas where a reviewer would benefit from author-provided context, draft concise guiding comments, and post them as individual review comments on the PR. The goal is to preemptively answer "why?" questions and steer reviewer attention — not to narrate the diff.
+Analyze a pull request's diff, identify areas where a reviewer would benefit
+from author-provided context, draft concise guiding comments, and post them as
+individual review comments on the PR. The goal is to preemptively answer "why?"
+questions and steer reviewer attention — not to narrate the diff.
 
 ## Steps
 
@@ -49,13 +52,18 @@ git --no-pager log $(git merge-base HEAD $BASE_BRANCH)..HEAD --oneline
 
 #### Read full file context
 
-For each changed file, read the actual current file contents — not just the diff hunks. Annotations require understanding the surrounding code, not just the changed lines.
+For each changed file, read the actual current file contents — not just the
+diff hunks. Annotations require understanding the surrounding code, not just the
+changed lines.
 
-Focus reading effort on files with non-trivial changes. Skip lockfiles, generated code, and files where the diff is purely mechanical (formatting, renames with no logic changes).
+Focus reading effort on files with non-trivial changes. Skip lockfiles,
+generated code, and files where the diff is purely mechanical (formatting,
+renames with no logic changes).
 
 ### 3. Analyze and propose annotation areas
 
-Analyze the diff and file context to identify locations where a reviewer comment from the author would genuinely help. Look for:
+Analyze the diff and file context to identify locations where a reviewer comment
+from the author would genuinely help. Look for:
 
 - **Non-obvious decisions** — code that does something a specific way where the reason isn't self-evident from the code alone
 - **Complex logic** — dense algorithms, regex, tricky conditionals, non-obvious control flow
@@ -78,7 +86,8 @@ Analyze the diff and file context to identify locations where a reviewer comment
 - Lockfiles, generated code, CI config changes (unless genuinely surprising)
 - Anything where the diff hunk + surrounding code tells the full story
 
-**Aim for quality over quantity.** A PR with 3 well-placed annotations is better than one with 12 that mostly state the obvious.
+**Aim for quality over quantity.** A PR with 3 well-placed annotations is better
+than one with 12 that mostly state the obvious.
 
 #### Present the proposals
 
@@ -89,7 +98,9 @@ First, output a summary header:
 <url>
 ```
 
-Then use the **Question tool** to let the user select which annotations to draft. Use a single question with `multiple: true` so the user can pick any combination. Each option should have:
+Then use the **Question tool** to let the user select which annotations to
+draft. Use a single question with `multiple: true` so the user can pick any
+combination. Each option should have:
 
 - **label**: `#<N> <file>:<line>` (short, fits in the selection UI)
 - **description**: The one-line description of what the comment would explain
@@ -118,25 +129,30 @@ Example Question tool call:
 }
 ```
 
-The user can select any subset, or type a custom answer. If the user selects nothing (empty response), treat it as "none" and stop.
+The user can select any subset, or type a custom answer. If the user selects
+nothing (empty response), treat it as "none" and stop.
 
 Do NOT draft or post anything without selection.
 
 ### 4. Calibrate voice
 
-Before drafting any annotations, run `tone-clone generate` to sample the user's real writing:
+Before drafting any annotations, run `tone-clone generate` to sample the user's
+real writing:
 
 ```bash
 tone-clone generate --stdout --type issue_comment --limit 5
 ```
 
-Study the output for: sentence length, punctuation patterns, capitalization, level of formality, use of contractions, how links and code are referenced. All drafted annotations must match these patterns.
+Study the output for: sentence length, punctuation patterns, capitalization,
+level of formality, use of contractions, how links and code are referenced. All
+drafted annotations must match these patterns.
 
 If `tone-clone` is not available or returns no results, fall back to the rules and examples in the [voice and tone guide](../_shared/voice-and-tone.md).
 
 ### 5. Draft comments one-by-one
 
-For each annotation the user selected, draft a comment and present it for approval. Process them **one at a time** — do not batch.
+For each annotation the user selected, draft a comment and present it for
+approval. Process them **one at a time** — do not batch.
 
 #### Drafting rules
 
@@ -160,7 +176,8 @@ Output the header, then the ascii-art block:
 ### Annotation #<N>: `<file>:<line>`
 ```
 
-Followed by the ascii-art code+comment block (see the shared format spec for the full visual specification and examples).
+Followed by the ascii-art code+comment block (see the shared format spec for the
+full visual specification and examples).
 
 Then immediately use the **Question tool** to get the user's decision:
 
@@ -179,7 +196,10 @@ Then immediately use the **Question tool** to get the user's decision:
 }
 ```
 
-The Question tool's built-in custom answer option allows the user to type edited comment text instead of selecting Post/Skip. If the user types a custom answer, treat it as the revised comment text — re-present the updated draft and ask again.
+The Question tool's built-in custom answer option allows the user to type edited
+comment text instead of selecting Post/Skip. If the user types a custom answer,
+treat it as the revised comment text — re-present the updated draft and ask
+again.
 
 Wait for the user's response on each draft before moving to the next:
 
@@ -189,7 +209,8 @@ Wait for the user's response on each draft before moving to the next:
 
 #### Execution authorization checkpoint (mandatory)
 
-After all per-item gates are complete, present the queued annotations and require a final submit gate.
+After all per-item gates are complete, present the queued annotations and
+require a final submit gate.
 
 Use the **Question tool**:
 
@@ -214,7 +235,8 @@ Use the **Question tool**:
 }
 ```
 
-Only a direct user **Question** response of `Post queued` in this run authorizes Step 6.
+Only a direct user **Question** response of `Post queued` in this run authorizes
+Step 6.
 
 Execution mode for this run:
 
@@ -237,7 +259,10 @@ If any check fails, return draft-only output with `DRAFT_ONLY_BLOCKED` and stop.
 
 #### Determine the correct diff position
 
-The `line` parameter must reference a line in the **right side** of the diff that is part of the PR's changes. Before posting, verify the target line appears in the diff output from Step 2. If a proposed line is not in the diff, find the nearest diff line in the same hunk or skip the annotation.
+The `line` parameter must reference a line in the **right side** of the diff
+that is part of the PR's changes. Before posting, verify the target line appears
+in the diff output from Step 2. If a proposed line is not in the diff, find the
+nearest diff line in the same hunk or skip the annotation.
 
 #### Post each comment
 
@@ -269,7 +294,8 @@ GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api repos/{owner}/{repo}/pulls/{number}/com
 
 After each post, confirm success and show the URL of the posted comment.
 
-If a post fails (e.g., the line is not part of the diff), report the error and move on to the next comment. Do not retry unless the user asks.
+If a post fails (e.g., the line is not part of the diff), report the error and
+move on to the next comment. Do not retry unless the user asks.
 
 ### 7. Summary
 

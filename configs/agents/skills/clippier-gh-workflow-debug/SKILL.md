@@ -36,13 +36,16 @@ echo "$input" | grep -oP 'github\.com/([^/]+/[^/]+)/actions/runs/(\d+)'
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo view --json nameWithOwner --jq '.nameWithOwner'
 ```
 
-After extracting `OWNER/REPO` and `RUN_ID`, validate the run exists and check its status:
+After extracting `OWNER/REPO` and `RUN_ID`, validate the run exists and check
+its status:
 
 ```bash
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh run view $RUN_ID --repo $REPO --json status,conclusion,workflowName,headBranch,headSha,event,url,jobs
 ```
 
-If the run is still `in_progress`, warn the user and ask whether to proceed (artifacts may be incomplete) or wait. If the run `conclusion` is `success`, inform the user there are no failures to debug.
+If the run is still `in_progress`, warn the user and ask whether to proceed
+(artifacts may be incomplete) or wait. If the run `conclusion` is `success`,
+inform the user there are no failures to debug.
 
 Store the full JSON response for use in subsequent steps.
 
@@ -95,19 +98,25 @@ This artifact contains:
 - `failures-summary.md` — Markdown summary of all clippier failures with error output, reproduction commands, and script/command details
 - `reproduce_*.sh` — Per-job reproduction scripts that set up the exact environment variables and invoke the clippier action locally
 
-Read `failures-summary.md` to understand all clippier failures. This is the primary source of truth for clippier matrix job failures.
+Read `failures-summary.md` to understand all clippier failures. This is the
+primary source of truth for clippier matrix job failures.
 
-If the artifact doesn't exist (e.g., the `Generate Workflow Failures Summary` job didn't run or no clippier jobs failed), skip to 3b.
+If the artifact doesn't exist (e.g., the `Generate Workflow Failures Summary`
+job didn't run or no clippier jobs failed), skip to 3b.
 
 #### 3b. Non-clippier failures: Fetch job logs
 
-For each failed job that is not a clippier matrix job, fetch the relevant log output:
+For each failed job that is not a clippier matrix job, fetch the relevant log
+output:
 
 ```bash
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh run view $RUN_ID --repo $REPO --log --job $JOB_DATABASE_ID 2>&1
 ```
 
-The logs can be verbose. Extract the relevant error section by looking for failure markers like `FAILED`, `error`, non-zero exit codes, or the last N lines of the failing step (identified from the job's step list where `conclusion == "failure"`).
+The logs can be verbose. Extract the relevant error section by looking for
+failure markers like `FAILED`, `error`, non-zero exit codes, or the last N lines
+of the failing step (identified from the job's step list where `conclusion ==
+"failure"`).
 
 #### 3c. Present combined findings
 
@@ -136,7 +145,8 @@ Present all failure data to the user:
 
 ### 4. Analyze and propose fixes
 
-For each selected failure, analyze the error in context of the local codebase and propose a concrete fix.
+For each selected failure, analyze the error in context of the local codebase
+and propose a concrete fix.
 
 #### Analysis approach by failure type
 
@@ -192,11 +202,15 @@ For each failure, present:
 - **Skip** → move to next failure without applying
 - **Custom text** → adjust the fix per instructions, re-present
 
-Only direct user Question `Approve` responses in this run authorize Step 5 edits for that specific failure.
+Only direct user Question `Approve` responses in this run authorize Step 5 edits
+for that specific failure.
 
 ### 5. Apply approved fixes
 
-For each approved fix from Step 4, apply the code changes to the local codebase. Before each edit, verify a matching per-item approval artifact exists for that exact failure in this run. If approval is missing, stale, delegated, or mismatched, skip that fix.
+For each approved fix from Step 4, apply the code changes to the local codebase.
+Before each edit, verify a matching per-item approval artifact exists for that
+exact failure in this run. If approval is missing, stale, delegated, or
+mismatched, skip that fix.
 
 After applying all fixes, present a summary:
 

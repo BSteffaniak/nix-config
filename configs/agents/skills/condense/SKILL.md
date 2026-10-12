@@ -10,17 +10,23 @@ Follow the [shared user override contract](../_shared/user-overrides.md). This s
 
 ## Purpose
 
-Rewrite LLM output or user-provided text to be shorter, punchier, and easier to scan. Strips filler, tightens phrasing, and cuts redundancy while preserving all technical content and meaning. Intended for cleaning up verbose responses before sharing them with others.
+Rewrite LLM output or user-provided text to be shorter, punchier, and easier to
+scan. Strips filler, tightens phrasing, and cuts redundancy while preserving all
+technical content and meaning. Intended for cleaning up verbose responses before
+sharing them with others.
 
 ## Steps
 
 ### 1. Identify the input text
 
-Follow the input identification rules in `_shared/text-transform-rules.md`. If the user provided text as an argument, use that. Otherwise, use the last assistant message.
+Follow the input identification rules in `_shared/text-transform-rules.md`. If
+the user provided text as an argument, use that. Otherwise, use the last
+assistant message.
 
 ### 2. Condense the text
 
-Apply all preservation rules from `_shared/text-transform-rules.md`, then rewrite the text with these goals:
+Apply all preservation rules from `_shared/text-transform-rules.md`, then
+rewrite the text with these goals:
 
 - **Cut filler words and phrases.** Remove "essentially", "basically", "it's worth noting that", "in order to", "the reason for this is", and similar padding.
 - **Shorten sentences.** If a sentence can say the same thing in fewer words, rewrite it. Prefer active voice.
@@ -31,7 +37,9 @@ Apply all preservation rules from `_shared/text-transform-rules.md`, then rewrit
 
 ### 3. Output the result
 
-Print the condensed text directly. Follow the formatting rules in `_shared/text-transform-rules.md` — no preamble, no wrapper, just the transformed text.
+Print the condensed text directly. Follow the formatting rules in
+`_shared/text-transform-rules.md` — no preamble, no wrapper, just the
+transformed text.
 
 ## Rules
 

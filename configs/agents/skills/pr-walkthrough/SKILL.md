@@ -14,7 +14,11 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Walk through a large pull request as a review guide before doing a detailed line-by-line review. Gather the PR description, diff, commits, existing discussion, linked issues, and CI signals; synthesize the point of the PR; identify the main review paths and risky areas; then guide the user through focused visual drill-downs instead of dumping the entire diff.
+Walk through a large pull request as a review guide before doing a detailed
+line-by-line review. Gather the PR description, diff, commits, existing
+discussion, linked issues, and CI signals; synthesize the point of the PR;
+identify the main review paths and risky areas; then guide the user through
+focused visual drill-downs instead of dumping the entire diff.
 
 ## Prerequisites
 
@@ -57,18 +61,24 @@ Parse walkthrough depth from the user request:
 
 #### Remote context source policy
 
-For remote context, prefer GitHub API reads and `gh pr diff`. Only consider cloning if the API cannot provide enough context for a selected drill-down section. If cloning is necessary, ask for explicit approval first and perform only a shallow, single-branch clone of the PR branch into a temporary directory:
+For remote context, prefer GitHub API reads and `gh pr diff`. Only consider
+cloning if the API cannot provide enough context for a selected drill-down
+section. If cloning is necessary, ask for explicit approval first and perform
+only a shallow, single-branch clone of the PR branch into a temporary directory:
 
 ```bash
 TMP_PARENT=$(python3 -c 'import tempfile; print(tempfile.mkdtemp(prefix="pr-walkthrough-"))')
 git --no-pager clone --depth 1 --single-branch --branch "{headRefName}" "https://github.com/{owner}/{repo}.git" "$TMP_PARENT/{repo}"
 ```
 
-Never perform a full clone, never clone without a direct Question approval, and never push or edit files in the clone.
+Never perform a full clone, never clone without a direct Question approval, and
+never push or edit files in the clone.
 
 ### 2. Fetch PR evidence
 
-Gather all evidence needed for the walkthrough. Prefer read-only GitHub API calls and local file reads. Continue with partial data if an optional source is unavailable, and note the omission in the overview.
+Gather all evidence needed for the walkthrough. Prefer read-only GitHub API
+calls and local file reads. Continue with partial data if an optional source is
+unavailable, and note the omission in the overview.
 
 #### PR metadata
 
@@ -85,7 +95,8 @@ GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr diff {number} -R {owner}/{repo} --name-o
 
 #### Existing reviews, review threads, and PR comments
 
-Use GraphQL so review threads, reviews, and issue-level PR comments can be fetched together. Paginate every connection that reports `hasNextPage: true`.
+Use GraphQL so review threads, reviews, and issue-level PR comments can be
+fetched together. Paginate every connection that reports `hasNextPage: true`.
 
 ```bash
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql -f query='
@@ -130,7 +141,8 @@ GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql -f query='
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr checks {number} -R {owner}/{repo}
 ```
 
-If `gh pr checks` is unavailable or incomplete, query check suites for the head SHA:
+If `gh pr checks` is unavailable or incomplete, query check suites for the head
+SHA:
 
 ```bash
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api repos/{owner}/{repo}/commits/{head_sha}/check-runs --jq '.check_runs[] | {name, status, conclusion, html_url}'
@@ -138,7 +150,9 @@ GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api repos/{owner}/{repo}/commits/{head_sha}
 
 #### Linked issues
 
-Extract issue references from the PR title, body, commit messages, and comments: `#123`, `GH-123`, `fixes #123`, `closes owner/repo#123`, and full GitHub issue URLs. Fetch each unique issue:
+Extract issue references from the PR title, body, commit messages, and comments:
+`#123`, `GH-123`, `fixes #123`, `closes owner/repo#123`, and full GitHub issue
+URLs. Fetch each unique issue:
 
 ```bash
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh issue view {issue_number} -R {owner}/{repo} --json number,title,state,body,author,url,labels
@@ -178,11 +192,13 @@ Group files into review themes such as:
 - generated/lockfile/mechanical
 - refactor-only
 
-For each theme, capture representative files, line ranges, and a one-line explanation.
+For each theme, capture representative files, line ranges, and a one-line
+explanation.
 
 #### Score risk and hairiness
 
-Assign each meaningful file or hunk a risk level: `high`, `medium`, `low`, or `skim`.
+Assign each meaningful file or hunk a risk level: `high`, `medium`, `low`, or
+`skim`.
 
 High-risk signals include:
 
@@ -198,11 +214,13 @@ Low-risk or skim signals include:
 
 - generated files, lockfiles, snapshots, formatting-only changes, simple docs, mechanical renames
 
-Do not call something risky without evidence. Cite the files, lines, diff hunks, comments, linked issues, or CI checks that justify the classification.
+Do not call something risky without evidence. Cite the files, lines, diff hunks,
+comments, linked issues, or CI checks that justify the classification.
 
 ### 4. Present the visual overview
 
-Start with a compact dashboard, then summarize the map. Keep the overview readable enough that the user can decide where to drill in next.
+Start with a compact dashboard, then summarize the map. Keep the overview
+readable enough that the user can decide where to drill in next.
 
 Use this visual style:
 
@@ -258,7 +276,9 @@ When showing PR comments or contextual discussion next to code, use the embedded
 
 ### 5. Ask what to drill into
 
-After the overview, pause and let the user choose the next sections. Use the **Question tool** with a multi-select gate. Preselect the most relevant sections based on the PR map.
+After the overview, pause and let the user choose the next sections. Use the
+**Question tool** with a multi-select gate. Preselect the most relevant sections
+based on the PR map.
 
 ```json
 {
@@ -298,11 +318,15 @@ After the overview, pause and let the user choose the next sections. Use the **Q
 }
 ```
 
-If the user selects nothing, provide the final checklist from Step 7 and stop. If the user gives custom instructions, adapt the drill-down plan and restate it before continuing.
+If the user selects nothing, provide the final checklist from Step 7 and stop.
+If the user gives custom instructions, adapt the drill-down plan and restate it
+before continuing.
 
 ### 6. Drill into selected sections
 
-Process selected sections in an order that helps understanding: purpose and issue context first, risky areas second, comments and CI third, file-by-file tour last. Pause between major sections so the user controls pacing.
+Process selected sections in an order that helps understanding: purpose and
+issue context first, risky areas second, comments and CI third, file-by-file
+tour last. Pause between major sections so the user controls pacing.
 
 #### Hairy/risky areas
 
@@ -344,7 +368,9 @@ Summarize comments by importance, not chronology. Separate:
 - resolved/outdated threads worth knowing about
 - noise that can be ignored
 
-When a comment is attached to code, use the embedded ascii-art format from `../_shared/code-comment-format.md` with the reviewer or author as the box label.
+When a comment is attached to code, use the embedded ascii-art format from
+`../_shared/code-comment-format.md` with the reviewer or author as the box
+label.
 
 #### Linked issue context
 
@@ -357,7 +383,9 @@ For each linked issue, show:
 
 #### CI/test signals
 
-Show failing, pending, and skipped checks first. Connect failures to changed files when possible. If checks are passing but coverage looks thin, say so with evidence.
+Show failing, pending, and skipped checks first. Connect failures to changed
+files when possible. If checks are passing but coverage looks thin, say so with
+evidence.
 
 #### Suggested review order
 
@@ -382,7 +410,8 @@ For each meaningful changed file, provide:
 **Can skim?** <yes/no and why>
 ```
 
-Skip or group generated/mechanical files unless the user specifically asks to inspect them.
+Skip or group generated/mechanical files unless the user specifically asks to
+inspect them.
 
 #### Pacing gate
 
@@ -442,7 +471,8 @@ End with a concise checklist the user can use while reviewing the PR.
 - Suggested local verification: `<command>` if the repository clearly documents it; otherwise say verification command is unknown.
 ```
 
-Be explicit when the PR looks straightforward: say what was checked, what can be skimmed, and why no major risk areas were found.
+Be explicit when the PR looks straightforward: say what was checked, what can be
+skimmed, and why no major risk areas were found.
 
 ## Rules
 

@@ -11,7 +11,8 @@ When the user invokes the skill:
 
 ## Preservation rules
 
-These are hard constraints. Never violate them regardless of the transformation direction.
+These are hard constraints. Never violate them regardless of the transformation
+direction.
 
 - **Code blocks.** Never modify the contents of fenced code blocks. Reproduce them exactly. You may adjust the surrounding prose that describes them, but the code itself is untouchable.
 - **Links and references.** Preserve all URLs, file paths, issue/PR references, and commit hashes verbatim.

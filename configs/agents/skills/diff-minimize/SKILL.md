@@ -14,13 +14,22 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Analyze a branch, PR, commit, commit range, or working-tree diff to find ways to make the change smaller, cleaner, and more maintainable without changing its intended behavior. This skill focuses on staff-engineer-style diff minimization: reusing existing repository patterns, moving logic to the right owner, deleting duplicated state or implementation paths, narrowing broad changes, and simplifying the PR to the conceptual root cause. It is not a general bug review skill, though it must reject any simplification that would introduce bugs or compromise the intended behavior.
+Analyze a branch, PR, commit, commit range, or working-tree diff to find ways to
+make the change smaller, cleaner, and more maintainable without changing its
+intended behavior. This skill focuses on staff-engineer-style diff minimization:
+reusing existing repository patterns, moving logic to the right owner, deleting
+duplicated state or implementation paths, narrowing broad changes, and
+simplifying the PR to the conceptual root cause. It is not a general bug review
+skill, though it must reject any simplification that would introduce bugs or
+compromise the intended behavior.
 
 ## Steps
 
 ### 1. Parse scope
 
-Extract the review scope from the skill invocation argument. The argument is free-form natural language and may describe a PR, branch, commit, commit range, staged changes, unstaged changes, or all uncommitted changes.
+Extract the review scope from the skill invocation argument. The argument is
+free-form natural language and may describe a PR, branch, commit, commit range,
+staged changes, unstaged changes, or all uncommitted changes.
 
 #### Scope resolution
 
@@ -64,7 +73,8 @@ GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view <number> --json number,url,title,bo
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr diff <number>
 ```
 
-Use `jq` only when needed to inspect or transform GitHub JSON that cannot be handled directly with `gh --jq`.
+Use `jq` only when needed to inspect or transform GitHub JSON that cannot be
+handled directly with `gh --jq`.
 
 #### Ambiguous or missing scope gate
 
@@ -95,11 +105,13 @@ If the scope cannot be determined, ask the user with the Question tool:
 }
 ```
 
-The user may also provide a custom scope such as `last 5 commits`, `abc123..def456`, or a PR URL.
+The user may also provide a custom scope such as `last 5 commits`,
+`abc123..def456`, or a PR URL.
 
 ### 2. Gather diff and intent
 
-Collect enough information to understand what the change is trying to accomplish before suggesting any simplification.
+Collect enough information to understand what the change is trying to accomplish
+before suggesting any simplification.
 
 #### Diff data
 
@@ -138,13 +150,15 @@ If the scope includes commits, read commit messages:
 git --no-pager log --format="%h %s%n%b" <scope>
 ```
 
-If the scope is a PR, read the PR title, body, base branch, head branch, commit list, and changed files:
+If the scope is a PR, read the PR title, body, base branch, head branch, commit
+list, and changed files:
 
 ```bash
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view <number> --json title,body,baseRefName,headRefName,commits,files
 ```
 
-Use this intent data to distinguish necessary behavior changes from accidental implementation complexity.
+Use this intent data to distinguish necessary behavior changes from accidental
+implementation complexity.
 
 #### Changed file context
 
@@ -157,13 +171,17 @@ For every changed file, read enough of the current file to understand:
 - existing patterns around the changed code
 - tests or stories affected by the change
 
-Prefer reading the full file when it is reasonably sized. For very large files, read the changed hunks plus surrounding sections, imports, relevant type definitions, and related helpers.
+Prefer reading the full file when it is reasonably sized. For very large files,
+read the changed hunks plus surrounding sections, imports, relevant type
+definitions, and related helpers.
 
 ### 3. Map existing repository patterns
 
-Before recording opportunities, search for existing patterns that could make the diff smaller or better placed.
+Before recording opportunities, search for existing patterns that could make the
+diff smaller or better placed.
 
-Use changed identifiers, component names, hooks, utility names, API names, route names, state keys, and domain terms from the diff to search the repository:
+Use changed identifiers, component names, hooks, utility names, API names, route
+names, state keys, and domain terms from the diff to search the repository:
 
 ```bash
 git --no-pager grep -n "<identifier-or-domain-term>"
@@ -193,13 +211,16 @@ For Next.js or React repositories, pay extra attention to:
 - duplicated form, validation, or serialization logic
 - unnecessary changes to shared layout, provider, or global state files
 
-Keep the skill generic: apply these checks when relevant, but do not assume every repository is Next.js.
+Keep the skill generic: apply these checks when relevant, but do not assume
+every repository is Next.js.
 
 ### 4. Identify diff minimization opportunities
 
-Produce a shortlist of concrete opportunities to reduce or reorganize the diff while preserving the intended behavior.
+Produce a shortlist of concrete opportunities to reduce or reorganize the diff
+while preserving the intended behavior.
 
-This is not a general bug-finding pass. Focus on whether the same goal can be achieved with a smaller, clearer, more idiomatic change.
+This is not a general bug-finding pass. Focus on whether the same goal can be
+achieved with a smaller, clearer, more idiomatic change.
 
 #### Opportunity categories
 
@@ -227,7 +248,9 @@ Only record an opportunity if all of these are true:
 5. It can be implemented independently in one focused pass.
 6. It is more maintainable than the current implementation.
 
-Do not record vague suggestions like “clean this up” or “make this more DRY.” Every opportunity must point to specific files, patterns, and expected edits.
+Do not record vague suggestions like “clean this up” or “make this more
+DRY.” Every opportunity must point to specific files, patterns, and expected
+edits.
 
 #### Opportunity format
 
@@ -254,11 +277,13 @@ Rank opportunities by:
 4. implementation risk
 5. locality of the change
 
-Prefer high-confidence, low-risk opportunities that make the PR conceptually smaller.
+Prefer high-confidence, low-risk opportunities that make the PR conceptually
+smaller.
 
 ### 5. Present the opportunity shortlist
 
-Show the user a concise table of opportunities and ask them to choose exactly one to deep-dive.
+Show the user a concise table of opportunities and ask them to choose exactly
+one to deep-dive.
 
 #### Summary format
 
@@ -276,7 +301,8 @@ Intent summary: <one or two sentences>
 | O3  | narrow-change          | high       | medium | large       | 8     | Avoid changing the shared API type by adapting at the route boundary |
 ```
 
-If no good opportunities are found, say so directly and explain what was checked.
+If no good opportunities are found, say so directly and explain what was
+checked.
 
 #### Gate: select one opportunity
 
@@ -325,7 +351,8 @@ Handle responses:
 
 ### 6. Deep-dive the selected opportunity
 
-Read deeper context only for the selected opportunity. Do not continue evaluating or implementing unrelated opportunities.
+Read deeper context only for the selected opportunity. Do not continue
+evaluating or implementing unrelated opportunities.
 
 #### Verify the opportunity
 
@@ -409,7 +436,8 @@ Ask with the Question tool:
 }
 ```
 
-Approval here authorizes preparing an edit payload only. It does not authorize modifying files yet.
+Approval here authorizes preparing an edit payload only. It does not authorize
+modifying files yet.
 
 ### 7. Apply approved edits
 
@@ -472,7 +500,8 @@ If the payload changes after approval, ask again before editing.
 
 #### Edit files
 
-Use the Edit tool to make the approved changes. Keep edits as small and targeted as possible.
+Use the Edit tool to make the approved changes. Keep edits as small and targeted
+as possible.
 
 Do not:
 
@@ -528,7 +557,9 @@ Left for future runs:
 - O3 — <summary>
 ```
 
-If project-specific validation commands are not obvious, do not invent them. Suggest likely files or areas to validate and ask the user to run the repo’s standard checks.
+If project-specific validation commands are not obvious, do not invent them.
+Suggest likely files or areas to validate and ask the user to run the repo’s
+standard checks.
 
 ## Rules
 

@@ -14,7 +14,12 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Review how a skill execution actually went — in the current conversation or a past session — and propose targeted fixes to the skill's SKILL.md source file. The skill looks for command failures, platform incompatibilities, missing steps, unnecessary steps, incorrect assumptions, and other discrepancies between what the SKILL.md prescribed and what actually happened. Each proposed change is reviewed individually before being written to the nix repo source.
+Review how a skill execution actually went — in the current conversation or a
+past session — and propose targeted fixes to the skill's SKILL.md source file.
+The skill looks for command failures, platform incompatibilities, missing steps,
+unnecessary steps, incorrect assumptions, and other discrepancies between what
+the SKILL.md prescribed and what actually happened. Each proposed change is
+reviewed individually before being written to the nix repo source.
 
 ## Critical Path Rule
 
@@ -23,7 +28,10 @@ Skills are managed as nix config and deployed via symlinks:
 - **Source of truth**: `~/.config/nix/configs/agents/skills/<name>/SKILL.md`
 - **Symlinked to**: `~/.config/opencode/skills/<name>/SKILL.md` (managed by nix, read-only)
 
-**NEVER read from or write to `~/.config/opencode/skills/`.** That directory is a nix-managed symlink target. Any changes written there will be silently overwritten on the next nix rebuild. Always operate on the source at `~/.config/nix/configs/agents/skills/`.
+**NEVER read from or write to `~/.config/opencode/skills/`.** That directory is
+a nix-managed symlink target. Any changes written there will be silently
+overwritten on the next nix rebuild. Always operate on the source at
+`~/.config/nix/configs/agents/skills/`.
 
 ## Steps
 
@@ -33,7 +41,8 @@ Determine which skill to review. There are three modes, tried in order:
 
 #### Explicit argument
 
-If the user provides a skill name (e.g., "self-improve-skill video-analyze" or "improve the video-analyze skill"), use it directly.
+If the user provides a skill name (e.g., "self-improve-skill video-analyze" or
+"improve the video-analyze skill"), use it directly.
 
 #### Auto-detect from current conversation
 
@@ -43,11 +52,14 @@ Scan the current conversation context for skill loading indicators. Look for:
 - Skill tool invocations — the Skill tool call with a `name` parameter
 - References to a skill SKILL.md being read
 
-If exactly one skill was loaded in this conversation, use it. If multiple were loaded, ask the user which one to review.
+If exactly one skill was loaded in this conversation, use it. If multiple were
+loaded, ask the user which one to review.
 
 #### Past session via database
 
-If the user references a past session (e.g., "improve the skill from my last session", "review session ses_abc123"), query the OpenCode SQLite database to find the skill execution:
+If the user references a past session (e.g., "improve the skill from my last
+session", "review session ses_abc123"), query the OpenCode SQLite database to
+find the skill execution:
 
 ```bash
 python3 -c "
@@ -87,7 +99,9 @@ If it doesn't exist, warn the user and ask for correction.
 
 ### 2. Gather execution context
 
-Collect evidence of how the skill execution actually went. The goal is to build a list of **events** — each event is a command or action that was attempted, its result, and whether it deviated from the skill's instructions.
+Collect evidence of how the skill execution actually went. The goal is to build
+a list of **events** — each event is a command or action that was attempted,
+its result, and whether it deviated from the skill's instructions.
 
 #### From the current conversation
 
@@ -166,18 +180,21 @@ Read the skill's source file from the **nix repo** (never the symlink):
 cat ~/.config/nix/configs/agents/skills/<name>/SKILL.md
 ```
 
-Use the Read tool to read the full SKILL.md. Also check for and read any `_shared/` references:
+Use the Read tool to read the full SKILL.md. Also check for and read any
+`_shared/` references:
 
 ```bash
 # Check if the SKILL.md references any _shared/ files
 grep -o '_shared/[a-z0-9-]*\.md' ~/.config/nix/configs/agents/skills/<name>/SKILL.md
 ```
 
-If shared files are referenced, read those too — issues may be in the shared content rather than the skill itself.
+If shared files are referenced, read those too — issues may be in the shared
+content rather than the skill itself.
 
 ### 4. Analyze discrepancies
 
-Compare the SKILL.md's prescribed behavior against the actual execution events from Step 2. For each discrepancy, create a **finding** with:
+Compare the SKILL.md's prescribed behavior against the actual execution events
+from Step 2. For each discrepancy, create a **finding** with:
 
 - **Category** — what type of issue it is
 - **Severity** — how impactful it is
@@ -220,11 +237,13 @@ For each event in the timeline:
 3. If not, determine why — categorize and assess severity
 4. Draft the specific text change (old text → new text) targeting the exact lines in the SKILL.md
 
-If no discrepancies are found, report that the skill executed cleanly and no changes are needed. Do not invent problems.
+If no discrepancies are found, report that the skill executed cleanly and no
+changes are needed. Do not invent problems.
 
 ### 5. Propose changes (per-item review loop)
 
-Present each finding one at a time, ordered by severity (critical first, then important, then minor).
+Present each finding one at a time, ordered by severity (critical first, then
+important, then minor).
 
 For each finding, display:
 
@@ -294,7 +313,8 @@ Apply all approved changes to the SKILL.md source file:
 2. Apply each approved change in order (from bottom of file to top, to preserve line numbers)
 3. Write the updated file to `~/.config/nix/configs/agents/skills/<name>/SKILL.md`
 
-**Never write to `~/.config/opencode/skills/`** — that is a nix-managed symlink.
+**Never write to `~/.config/opencode/skills/`** — that is a nix-managed
+symlink.
 
 After writing, show the git diff:
 

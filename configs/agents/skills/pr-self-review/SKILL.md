@@ -14,7 +14,10 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Review your own pull request before external review. Analyze the full PR delta, identify concrete issues and risks, and return a prioritized plan of fixes. This skill is strictly internal: it never drafts comments and never submits anything to GitHub.
+Review your own pull request before external review. Analyze the full PR delta,
+identify concrete issues and risks, and return a prioritized plan of fixes. This
+skill is strictly internal: it never drafts comments and never submits anything
+to GitHub.
 
 ## Steps
 

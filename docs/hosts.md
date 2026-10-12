@@ -2,7 +2,8 @@
 
 Back to overview: `README.md`
 
-This repository discovers hosts automatically from `hosts/*/meta.nix` (see `lib/hosts.nix`).
+This repository discovers hosts automatically from `hosts/*/meta.nix` (see
+`lib/hosts.nix`).
 
 ## Host Types
 
@@ -18,7 +19,8 @@ Each host directory lives under `hosts/<hostname>/`.
 - `home.nix` (required): user-level configuration — every user tool is enabled here
 - `default.nix` (NixOS/Darwin): system-level configuration — login shells, services, hardware, casks
 
-`meta.nix` drives hostname, primary user, home directory, and both state versions, so `default.nix` no longer repeats them:
+`meta.nix` drives hostname, primary user, home directory, and both state
+versions, so `default.nix` no longer repeats them:
 
 ```nix
 {
@@ -51,7 +53,9 @@ No flake edits are required for host registration.
 
 ## Private Hosts
 
-Host directories can be encrypted with git-sshripped (see `.gitattributes`). Keep `meta.nix` plaintext so discovery works everywhere. Do not move private content out of an encrypted host directory.
+Host directories can be encrypted with git-sshripped (see `.gitattributes`).
+Keep `meta.nix` plaintext so discovery works everywhere. Do not move private
+content out of an encrypted host directory.
 
 ## NixOS Hardware Detection
 

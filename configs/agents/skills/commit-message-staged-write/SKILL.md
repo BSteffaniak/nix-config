@@ -14,7 +14,9 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Generate a commit message from currently staged changes ONLY, and write it to the repo so it's automatically pre-filled for `git commit` via the `prepare-commit-msg` hook reading `PREPARED_MSG`.
+Generate a commit message from currently staged changes ONLY, and write it to
+the repo so it's automatically pre-filled for `git commit` via the
+`prepare-commit-msg` hook reading `PREPARED_MSG`.
 
 Do not consider unstaged changes.
 

@@ -9,7 +9,9 @@ Follow the [shared user override contract](../_shared/user-overrides.md). This s
 
 ## Purpose
 
-Query the OpenCode SQLite database to retrieve past session context. Use this to recall what was discussed, what tools were used, and what changes were made in previous conversations.
+Query the OpenCode SQLite database to retrieve past session context. Use this to
+recall what was discussed, what tools were used, and what changes were made in
+previous conversations.
 
 ## Database Reference
 
@@ -88,7 +90,8 @@ for r in c.fetchall():
 "
 ```
 
-To filter by project directory, add `WHERE directory LIKE '%some/path%'` or join with `project`:
+To filter by project directory, add `WHERE directory LIKE '%some/path%'` or join
+with `project`:
 
 ```python
 c.execute('''SELECT s.id, s.title, s.directory, s.time_updated
@@ -99,7 +102,8 @@ c.execute('''SELECT s.id, s.title, s.directory, s.time_updated
 
 ### 2. Read a Session's Conversation
 
-Retrieve all text and tool parts for a session, ordered chronologically. Join with `message` to get the role:
+Retrieve all text and tool parts for a session, ordered chronologically. Join
+with `message` to get the role:
 
 ```python
 python3 -c "

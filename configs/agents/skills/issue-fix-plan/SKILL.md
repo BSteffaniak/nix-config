@@ -14,7 +14,9 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Investigate a GitHub issue with `gh`, map the reported behavior to relevant code paths in the current repository, and produce a concrete implementation plan without making code changes.
+Investigate a GitHub issue with `gh`, map the reported behavior to relevant code
+paths in the current repository, and produce a concrete implementation plan
+without making code changes.
 
 ## Prerequisites
 
@@ -124,7 +126,9 @@ For each candidate path:
 3. Assign confidence (`high`, `medium`, `low`)
 4. Note disconfirming evidence
 
-If confidence is low or evidence conflicts, use a `Question(*)` gate to choose whether to continue best-effort, narrow to one hypothesis, or request more reproduction detail.
+If confidence is low or evidence conflicts, use a `Question(*)` gate to choose
+whether to continue best-effort, narrow to one hypothesis, or request more
+reproduction detail.
 
 ### 6. Draft the implementation plan
 
@@ -148,7 +152,8 @@ Present the plan and ask via `Question(*)`:
 - Regenerate (more concise, deeper, or risk-first)
 - Custom edits
 
-Apply requested changes and re-present until approved, then print the final markdown plan.
+Apply requested changes and re-present until approved, then print the final
+markdown plan.
 
 ## Rules
 

@@ -10,7 +10,9 @@ Follow the [shared user override contract](../_shared/user-overrides.md). This s
 
 ## Purpose
 
-Analyze a bmux recording's `bmux.perf` telemetry and convert raw metrics into an actionable troubleshooting summary. This skill is diagnostics-only: it does not modify files, change config, toggle runtime settings, or make code edits.
+Analyze a bmux recording's `bmux.perf` telemetry and convert raw metrics into an
+actionable troubleshooting summary. This skill is diagnostics-only: it does not
+modify files, change config, toggle runtime settings, or make code edits.
 
 ## Prerequisites
 
@@ -73,7 +75,8 @@ Classify findings into these buckets:
 - **IPC drain/backpressure risk**
   - `drain_ipc_p95_ms > 20`
 
-Use `outlier_samples` to identify top event+metric offenders that support the classification.
+Use `outlier_samples` to identify top event+metric offenders that support the
+classification.
 
 ### 4. Produce actionable recommendations
 
@@ -84,7 +87,8 @@ Output recommendations in priority order:
 3. **Targeted next checks** tied to observed outliers/metrics.
 4. **Confidence level** (`high`, `medium`, `low`) based on data completeness.
 
-When capture quality is weak, recommend explicit recapture steps as instructions (not actions to execute), for example:
+When capture quality is weak, recommend explicit recapture steps as instructions
+(not actions to execute), for example:
 
 - ensure recording includes `custom` events
 - use a higher perf profile for next capture

@@ -14,11 +14,16 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Gather everything the user personally accomplished in a given time period across all available data sources — git commits, GitHub PRs, Linear issues, and OpenCode session history — present the raw findings for curation, then produce a polished, changelog-style summary that is accurate, professional, and ready to paste into a standup, status update, or changelog.
+Gather everything the user personally accomplished in a given time period across
+all available data sources — git commits, GitHub PRs, Linear issues, and
+OpenCode session history — present the raw findings for curation, then produce
+a polished, changelog-style summary that is accurate, professional, and ready to
+paste into a standup, status update, or changelog.
 
 ## Identity
 
-Before gathering any data, resolve the user's identity across all sources. These values are used to filter every query so that only the user's own work appears.
+Before gathering any data, resolve the user's identity across all sources. These
+values are used to filter every query so that only the user's own work appears.
 
 ```bash
 GIT_AUTHOR_NAME="$(git config user.name)"
@@ -40,7 +45,9 @@ Store these for use in all subsequent filtering.
 
 ### 1. Determine time period
 
-If the user provides a time range as an argument when invoking the skill (e.g., "last week", "last 3 days", "since Monday", "2025-03-01 to 2025-03-07"), parse it and resolve to a concrete `SINCE` date in ISO format (`YYYY-MM-DD`).
+If the user provides a time range as an argument when invoking the skill (e.g.,
+"last week", "last 3 days", "since Monday", "2025-03-01 to 2025-03-07"), parse
+it and resolve to a concrete `SINCE` date in ISO format (`YYYY-MM-DD`).
 
 If no time range is provided, use the **Question tool** to prompt:
 
@@ -72,24 +79,30 @@ If no time range is provided, use the **Question tool** to prompt:
 }
 ```
 
-The Question tool's custom answer option allows the user to type a specific date range. Parse whatever the user provides into a concrete `SINCE` date.
+The Question tool's custom answer option allows the user to type a specific date
+range. Parse whatever the user provides into a concrete `SINCE` date.
 
-Compute the `SINCE` date using `python3` (works on both macOS and Linux without platform-specific `date` flags):
+Compute the `SINCE` date using `python3` (works on both macOS and Linux without
+platform-specific `date` flags):
 
 ```bash
 # 7 days ago:
 python3 -c "from datetime import datetime, timedelta; print((datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d'))"
 ```
 
-Store both `SINCE` (ISO date string) and a human-readable label (e.g., "Mar 1-7, 2025") for use in the final output header.
+Store both `SINCE` (ISO date string) and a human-readable label (e.g., "Mar 1-7,
+2025") for use in the final output header.
 
 ### 2. Discover repositories
 
-Auto-discover git repositories from three sources. No directory paths are hardcoded — all scan targets are derived dynamically from session history and the current working directory.
+Auto-discover git repositories from three sources. No directory paths are
+hardcoded — all scan targets are derived dynamically from session history and
+the current working directory.
 
 #### a. OpenCode session directories
 
-Query the OpenCode SQLite database for distinct project directories from sessions updated within the time period:
+Query the OpenCode SQLite database for distinct project directories from
+sessions updated within the time period:
 
 ```python
 python3 -c "
@@ -106,13 +119,21 @@ for r in c.fetchall():
 "
 ```
 
-Each of these directories is a candidate git repo or worktree. For each one, check if it's inside a git repo (`git -C "$DIR" rev-parse --git-common-dir`) and collect the result.
+Each of these directories is a candidate git repo or worktree. For each one,
+check if it's inside a git repo (`git -C "$DIR" rev-parse --git-common-dir`) and
+collect the result.
 
 #### b. Derive base directories and scan for sibling repos/worktrees
 
-The session directories from Step 2a point to repos the user actively worked in, but there may be sibling repos or worktrees in the same parent directories that the user also touched (e.g., via direct git commands without an OpenCode session).
+The session directories from Step 2a point to repos the user actively worked in,
+but there may be sibling repos or worktrees in the same parent directories that
+the user also touched (e.g., via direct git commands without an OpenCode
+session).
 
-**Derive base directories** — For each session directory that resolved to a git repo, extract its parent directory. Also extract the parent of the `--git-common-dir` result (which is the main repo root). Deduplicate these parent paths — they are the base directories to scan.
+**Derive base directories** — For each session directory that resolved to a
+git repo, extract its parent directory. Also extract the parent of the
+`--git-common-dir` result (which is the main repo root). Deduplicate these
+parent paths — they are the base directories to scan.
 
 For example, if sessions reference:
 
@@ -126,7 +147,10 @@ The derived base directories would be:
 - `/home/user/projects` (parent of main repo)
 - `/home/user/.config` (parent of standalone repo)
 
-**Scan base directories for git repos and worktrees** — Worktree checkouts have a `.git` **file** (not directory) that points back to the main repo's `.git/worktrees/` folder. A naive `find -name .git -type d` will miss these. Scan for both:
+**Scan base directories for git repos and worktrees** — Worktree checkouts
+have a `.git` **file** (not directory) that points back to the main repo's
+`.git/worktrees/` folder. A naive `find -name .git -type d` will miss these.
+Scan for both:
 
 ```bash
 # For each derived base directory $BASE_DIR:
@@ -138,11 +162,14 @@ find "$BASE_DIR" -maxdepth 3 -name .git -type d 2>/dev/null
 find "$BASE_DIR" -maxdepth 3 -name .git -type f 2>/dev/null
 ```
 
-For each result, resolve to the directory containing it (strip the `/.git` suffix).
+For each result, resolve to the directory containing it (strip the `/.git`
+suffix).
 
 #### c. Enumerate all worktrees per repo
 
-For each discovered git directory, resolve its **common git directory** and run `git worktree list` to get the complete picture. This catches worktrees that live outside the scanned base directories:
+For each discovered git directory, resolve its **common git directory** and run
+`git worktree list` to get the complete picture. This catches worktrees that
+live outside the scanned base directories:
 
 ```bash
 # From any repo or worktree directory:
@@ -168,15 +195,22 @@ branch refs/heads/feature-search
 
 Collect from each entry: worktree path, HEAD commit, branch name.
 
-**Group by common repo** — Multiple worktrees that share the same `--git-common-dir` belong to the same repository. Group them together. The main worktree (the one whose path matches the common dir's parent) is the "primary" entry; the rest are linked worktrees.
+**Group by common repo** — Multiple worktrees that share the same
+`--git-common-dir` belong to the same repository. Group them together. The main
+worktree (the one whose path matches the common dir's parent) is the "primary"
+entry; the rest are linked worktrees.
 
 #### d. Current working directory
 
-If the current directory is inside a git repo or worktree, include it. Resolve its common git directory to determine which repo group it belongs to, and run `git worktree list` to discover any sibling worktrees.
+If the current directory is inside a git repo or worktree, include it. Resolve
+its common git directory to determine which repo group it belongs to, and run
+`git worktree list` to discover any sibling worktrees.
 
 #### e. Fallback: ask the user
 
-If Steps 2a-2d produce **zero** git repositories (e.g., no OpenCode sessions in the time period, and the current directory is not a git repo), use the **Question tool** to ask the user to provide one or more directories to scan:
+If Steps 2a-2d produce **zero** git repositories (e.g., no OpenCode sessions in
+the time period, and the current directory is not a git repo), use the
+**Question tool** to ask the user to provide one or more directories to scan:
 
 ```json
 {
@@ -189,15 +223,20 @@ If Steps 2a-2d produce **zero** git repositories (e.g., no OpenCode sessions in 
 }
 ```
 
-Then apply the same scan logic (find `.git` dirs/files, enumerate worktrees, group by common dir) to the user-provided path.
+Then apply the same scan logic (find `.git` dirs/files, enumerate worktrees,
+group by common dir) to the user-provided path.
 
 #### Deduplicate and present
 
-Merge all discovered paths. Deduplicate by **common git directory** (`git rev-parse --git-common-dir`), not by `--show-toplevel` — this correctly groups worktrees that share the same repo but have different toplevel paths.
+Merge all discovered paths. Deduplicate by **common git directory** (`git
+rev-parse --git-common-dir`), not by `--show-toplevel` — this correctly groups
+worktrees that share the same repo but have different toplevel paths.
 
-Strip any directories that are clearly not the user's work repos (e.g., dependencies, caches, prunable worktrees with no recent commits).
+Strip any directories that are clearly not the user's work repos (e.g.,
+dependencies, caches, prunable worktrees with no recent commits).
 
-Present the discovered repos using the **Question tool** with `multiple: true` so the user can deselect repos they don't want included:
+Present the discovered repos using the **Question tool** with `multiple: true`
+so the user can deselect repos they don't want included:
 
 ```json
 {
@@ -219,26 +258,37 @@ Present the discovered repos using the **Question tool** with `multiple: true` s
 }
 ```
 
-**Group all worktrees from the same repo into a single option.** Show the total worktree count and list a few representative branch names in the description. When selected, all worktrees for that repo are included in the data-gathering phase.
+**Group all worktrees from the same repo into a single option.** Show the total
+worktree count and list a few representative branch names in the description.
+When selected, all worktrees for that repo are included in the data-gathering
+phase.
 
 ### 3. Gather data
 
-Collect data from all four sources. Run independent queries in parallel where possible.
+Collect data from all four sources. Run independent queries in parallel where
+possible.
 
 #### a. Git commits (worktree-aware)
 
-For each selected repo group (which may contain many worktrees), use a **two-pass strategy** to capture all commits efficiently while preserving branch attribution.
+For each selected repo group (which may contain many worktrees), use a
+**two-pass strategy** to capture all commits efficiently while preserving branch
+attribution.
 
-**Pass 1: Collect all commits from the main repo** — Run a single `git log --all` from the main repo directory (or any worktree, since `--all` covers all refs). This captures every commit across all branches in one query:
+**Pass 1: Collect all commits from the main repo** — Run a single `git log
+--all` from the main repo directory (or any worktree, since `--all` covers all
+refs). This captures every commit across all branches in one query:
 
 ```bash
 git --no-pager -C "$MAIN_REPO_DIR" log --all --author="$GIT_AUTHOR_NAME" --since="$SINCE" --no-merges \
   --format="%h %ad %s %D" --date=short
 ```
 
-The `%D` format gives ref decorations (branch names, tags) for each commit, which helps attribute commits to branches.
+The `%D` format gives ref decorations (branch names, tags) for each commit,
+which helps attribute commits to branches.
 
-**Pass 2: Map commits to worktree branches** — For commits that don't have a direct ref decoration, determine which branch they belong to by checking which worktree branches contain them:
+**Pass 2: Map commits to worktree branches** — For commits that don't have a
+direct ref decoration, determine which branch they belong to by checking which
+worktree branches contain them:
 
 ```bash
 # For each worktree branch discovered in Step 2:
@@ -246,20 +296,25 @@ git --no-pager -C "$MAIN_REPO_DIR" log "$BRANCH_NAME" --author="$GIT_AUTHOR_NAME
   --format="%h" --date=short
 ```
 
-Build a mapping of commit hash -> branch name(s). If a commit appears on multiple branches (e.g., it's on master and also on a feature branch that was merged), attribute it to the **feature branch** (the more specific context).
+Build a mapping of commit hash -> branch name(s). If a commit appears on
+multiple branches (e.g., it's on master and also on a feature branch that was
+merged), attribute it to the **feature branch** (the more specific context).
 
-**For repos without worktrees** (simple single-directory repos like `worktree-setup` or `nix config`), a plain `git log` suffices:
+**For repos without worktrees** (simple single-directory repos like
+`worktree-setup` or `nix config`), a plain `git log` suffices:
 
 ```bash
 git --no-pager -C "$REPO_DIR" log --author="$GIT_AUTHOR_NAME" --since="$SINCE" --no-merges \
   --format="%h %ad %s" --date=short
 ```
 
-Collect for each commit: hash, date, subject line, repo name, branch name (from worktree mapping or ref decoration).
+Collect for each commit: hash, date, subject line, repo name, branch name (from
+worktree mapping or ref decoration).
 
 #### b. GitHub PRs
 
-Use the GitHub GraphQL API to fetch PRs authored by the user, updated within the time period. Query across all repos the user has access to:
+Use the GitHub GraphQL API to fetch PRs authored by the user, updated within the
+time period. Query across all repos the user has access to:
 
 ```bash
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql -f query='
@@ -284,9 +339,12 @@ GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql -f query='
 ' -f since="$SINCE" -f author="$GH_USERNAME"
 ```
 
-**Important:** The `search` query uses the `updated:>=` qualifier to catch PRs that were active during the period, including those opened earlier but merged/updated within the window.
+**Important:** The `search` query uses the `updated:>=` qualifier to catch PRs
+that were active during the period, including those opened earlier but
+merged/updated within the window.
 
-Collect: PR title, number, state (open/merged/closed), merge date, URL, repo, branch name, additions/deletions, commit count.
+Collect: PR title, number, state (open/merged/closed), merge date, URL, repo,
+branch name, additions/deletions, commit count.
 
 #### c. Linear issues
 
@@ -296,7 +354,8 @@ Fetch issues assigned to the user that were updated in the time period:
 linear issue list --mine --updated-after "$SINCE" --include-completed --json 2>/dev/null
 ```
 
-If the JSON flag is not available, parse the standard output. Alternatively, use the Linear GraphQL API:
+If the JSON flag is not available, parse the standard output. Alternatively, use
+the Linear GraphQL API:
 
 ```bash
 linear api --variables-json "{\"filter\": {\"assignee\": {\"isMe\": {\"eq\": true}}, \"updatedAt\": {\"gte\": \"${SINCE}T00:00:00Z\"}}}" <<'GRAPHQL'
@@ -317,11 +376,13 @@ query($filter: IssueFilter!) {
 GRAPHQL
 ```
 
-Collect: issue identifier, title, state, completion date, URL, project name, labels.
+Collect: issue identifier, title, state, completion date, URL, project name,
+labels.
 
 #### d. OpenCode sessions
 
-Query the SQLite database for sessions active in the time period. Extract session titles and working directories as supplementary context:
+Query the SQLite database for sessions active in the time period. Extract
+session titles and working directories as supplementary context:
 
 ```python
 python3 -c "
@@ -341,13 +402,17 @@ for r in c.fetchall():
 "
 ```
 
-OpenCode sessions serve as **supplementary context** — they help identify work that may not have resulted in commits (debugging, research, code review) and help connect commits to higher-level tasks. They are not primary items in the summary unless they represent significant standalone work.
+OpenCode sessions serve as **supplementary context** — they help identify work
+that may not have resulted in commits (debugging, research, code review) and
+help connect commits to higher-level tasks. They are not primary items in the
+summary unless they represent significant standalone work.
 
 ### 4. Deduplicate and organize
 
 #### Group by project area
 
-Analyze all gathered data and group items into logical project areas. Determine groupings from:
+Analyze all gathered data and group items into logical project areas. Determine
+groupings from:
 
 - Repository name (e.g., "rec-gov", "monorepo", "nix config")
 - Linear project name if available
@@ -355,7 +420,8 @@ Analyze all gathered data and group items into logical project areas. Determine 
 
 #### Merge related items
 
-A PR, its commits, and the Linear issue it references are **one logical unit of work**, not separate items. Merge them:
+A PR, its commits, and the Linear issue it references are **one logical unit of
+work**, not separate items. Merge them:
 
 1. **Match PRs to commits by branch name.** The PR's `headRefName` (e.g., `rec-gov-explore-campsite-filtering`) corresponds directly to a worktree branch name from Step 2. All commits attributed to that branch in Step 3a belong to that PR. This is the primary matching strategy and is highly reliable for worktree-based workflows where each worktree = one feature branch = one PR.
 2. **Match Linear issues to PRs/branches** by scanning PR titles, branch names, and commit messages for issue identifiers (e.g., `ENG-123`, `NDS-456`). Branch names that embed an issue slug are a strong signal.
@@ -380,7 +446,9 @@ Remove from the results:
 
 ### 5. Present findings for selection
 
-Show the organized findings grouped by project area. Use the **Question tool** with `multiple: true` so the user can deselect anything that shouldn't appear in the summary.
+Show the organized findings grouped by project area. Use the **Question tool**
+with `multiple: true` so the user can deselect anything that shouldn't appear in
+the summary.
 
 For each project area, output a header and then list the items as options:
 
@@ -420,15 +488,20 @@ For each project area, output a header and then list the items as options:
 
 All items are pre-selected by default. The user deselects what they don't want.
 
-If there are many items (10+), break the question into multiple questions grouped by project area so the selection UI stays manageable.
+If there are many items (10+), break the question into multiple questions
+grouped by project area so the selection UI stays manageable.
 
 ### 6. Draft and review items individually
 
-Process each selected item from Step 5 **one at a time**. For each item, draft a changelog-style bullet, present it with source context, and get the user's approval before moving to the next.
+Process each selected item from Step 5 **one at a time**. For each item, draft a
+changelog-style bullet, present it with source context, and get the user's
+approval before moving to the next.
 
 #### 6a. Draft a single item
 
-Write one changelog-style bullet for the item, following all the writing guidelines below. Show the raw source data above the draft so the user can verify accuracy:
+Write one changelog-style bullet for the item, following all the writing
+guidelines below. Show the raw source data above the draft so the user can
+verify accuracy:
 
 ```
 ### Item #<N>: <short label>
@@ -472,7 +545,10 @@ Use the **Question tool** to get the user's decision on this item:
 }
 ```
 
-The Question tool's built-in custom answer option allows the user to type specific edit instructions (e.g., "make it shorter", "mention the performance improvement", "reword to focus on the user impact") or provide a full rewrite of the line.
+The Question tool's built-in custom answer option allows the user to type
+specific edit instructions (e.g., "make it shorter", "mention the performance
+improvement", "reword to focus on the user impact") or provide a full rewrite of
+the line.
 
 Handle the user's response:
 
@@ -481,11 +557,13 @@ Handle the user's response:
 - **Skip** — Drop this item entirely. Move to the next item.
 - **Custom text** — Apply the user's instructions or use their rewrite. Revise the draft and re-present with the same options.
 
-**Regenerate and custom both loop back** to the same question. The cycle repeats until the user either **Approves** or **Skips** the item.
+**Regenerate and custom both loop back** to the same question. The cycle repeats
+until the user either **Approves** or **Skips** the item.
 
 #### 6c. Repeat
 
-Continue for every item selected in Step 5. Track which items were approved and which were skipped.
+Continue for every item selected in Step 5. Track which items were approved and
+which were skipped.
 
 #### Writing guidelines
 
@@ -499,11 +577,14 @@ Continue for every item selected in Step 5. Track which items were approved and 
 
 ### 7. Assemble, review, and finalize
 
-After all items have been individually reviewed, assemble the approved lines into the full summary document.
+After all items have been individually reviewed, assemble the approved lines
+into the full summary document.
 
 #### Assembly
 
-Group the approved items by project area with clear headers. Order items within each group by significance (most impactful first). Place in-progress items (open PRs, incomplete Linear issues) in a separate subsection at the end.
+Group the approved items by project area with clear headers. Order items within
+each group by significance (most impactful first). Place in-progress items (open
+PRs, incomplete Linear issues) in a separate subsection at the end.
 
 #### Format
 
@@ -542,9 +623,14 @@ Present the assembled summary and use the **Question tool**:
 }
 ```
 
-The Question tool's custom answer option allows the user to request adjustments to the overall document — reorder sections, change grouping, add an intro, tweak a specific item's wording, merge two items together, etc. Apply the changes and re-present until the user approves.
+The Question tool's custom answer option allows the user to request adjustments
+to the overall document — reorder sections, change grouping, add an intro,
+tweak a specific item's wording, merge two items together, etc. Apply the
+changes and re-present until the user approves.
 
-Since each item was already individually reviewed, a full "Regenerate" is not offered here. If the user wants to change a specific item, they can describe what they want via custom text.
+Since each item was already individually reviewed, a full "Regenerate" is not
+offered here. If the user wants to change a specific item, they can describe
+what they want via custom text.
 
 #### On approval
 

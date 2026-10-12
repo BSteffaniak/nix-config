@@ -1,14 +1,19 @@
 # Voice and Tone for GitHub Comments
 
-This guide applies to **all text that gets posted to GitHub**: review comments, PR replies, thread responses, review summary bodies. It does NOT apply to local CLI output shown to the user (summary tables, ascii-art blocks, etc., where structure is fine).
+This guide applies to **all text that gets posted to GitHub**: review comments,
+PR replies, thread responses, review summary bodies. It does NOT apply to local
+CLI output shown to the user (summary tables, ascii-art blocks, etc., where
+structure is fine).
 
 ## Core principles
 
-Write like a human developer talking to another human developer. Short, direct, no ceremony. Say what needs to be said and stop.
+Write like a human developer talking to another human developer. Short, direct,
+no ceremony. Say what needs to be said and stop.
 
 ## Never do these
 
-These are hard rules, not suggestions. If the generated text contains any of these, rewrite it before presenting to the user.
+These are hard rules, not suggestions. If the generated text contains any of
+these, rewrite it before presenting to the user.
 
 - **Bracket prefixes.** Never prefix comments with `[blocking]`, `[nit]`, `[suggestion]`, `[question]`, or any similar tag. Severity is conveyed through word choice and context, not labels.
 - **Em-dashes and en-dashes.** Never use `—` or `–` as punctuation. Not as parenthetical asides, not as separators, not for emphasis. Use commas, periods, or just start a new sentence.
@@ -41,33 +46,45 @@ These are hard rules, not suggestions. If the generated text contains any of the
 
 **Bad:**
 
-> [blocking] `result` can be undefined if the user doesn't exist. It is recommended to add a null guard before accessing `.name` to prevent a potential runtime error. Consider adding: `if (!result) throw new NotFoundError(id);`
+> [blocking] `result` can be undefined if the user doesn't exist. It is
+> recommended to add a null guard before accessing `.name` to prevent a
+> potential runtime error. Consider adding: `if (!result) throw new
+> NotFoundError(id);`
 
 **Good:**
 
-> `result` can be undefined if the query returns no rows, this'll throw at `.name`. needs a null check
+> `result` can be undefined if the query returns no rows, this'll throw at
+> `.name`. needs a null check
 
 **Bad:**
 
-> [nit] For consistency with the rest of the codebase, I would suggest renaming this variable from `getData` to `fetchData`, as that is the established convention in this project.
+> [nit] For consistency with the rest of the codebase, I would suggest renaming
+> this variable from `getData` to `fetchData`, as that is the established
+> convention in this project.
 
 **Good:**
 
-> the rest of the codebase uses `fetchData` for this pattern, might want to rename for consistency
+> the rest of the codebase uses `fetchData` for this pattern, might want to
+> rename for consistency
 
 **Bad:**
 
-> [question] I'm curious about the reasoning behind using an inline implementation here rather than leveraging the shared helper utility. Could you elaborate on that decision?
+> [question] I'm curious about the reasoning behind using an inline
+> implementation here rather than leveraging the shared helper utility. Could
+> you elaborate on that decision?
 
 **Good:**
 
-> why not use the shared helper here? is there a reason it doesn't work for this case?
+> why not use the shared helper here? is there a reason it doesn't work for this
+> case?
 
 ### PR replies (pr-address)
 
 **Bad:**
 
-> Fixed — I have wrapped the `fetch()` call in a try/catch block, matching the error handling pattern established in `src/api/client.ts:55`. This ensures that network errors are properly caught and handled.
+> Fixed — I have wrapped the `fetch()` call in a try/catch block, matching the
+> error handling pattern established in `src/api/client.ts:55`. This ensures
+> that network errors are properly caught and handled.
 
 **Good:**
 
@@ -75,15 +92,19 @@ These are hard rules, not suggestions. If the generated text contains any of the
 
 **Bad:**
 
-> This case is already handled — the caller at `src/api/client.ts:55` wraps this in a try/catch that catches and logs `ApiError`. Adding a duplicate catch here would suppress the error before it reaches the centralized handler.
+> This case is already handled — the caller at `src/api/client.ts:55` wraps
+> this in a try/catch that catches and logs `ApiError`. Adding a duplicate catch
+> here would suppress the error before it reaches the centralized handler.
 
 **Good:**
 
-> the caller in `client.ts:55` already catches this. adding another catch here would swallow the error before it hits the centralized handler
+> the caller in `client.ts:55` already catches this. adding another catch here
+> would swallow the error before it hits the centralized handler
 
 **Bad:**
 
-> Thank you for pointing this out! I've addressed this concern by implementing the suggested null guard. The fix has been applied in the latest commit.
+> Thank you for pointing this out! I've addressed this concern by implementing
+> the suggested null guard. The fix has been applied in the latest commit.
 
 **Also bad (sycophantic opener):**
 
@@ -95,11 +116,14 @@ These are hard rules, not suggestions. If the generated text contains any of the
 
 **Bad:**
 
-> We went with the inline approach here because the shared helper doesn't support async iteration (see `src/utils/helper.ts:28`). Refactoring the helper is tracked in #456.
+> We went with the inline approach here because the shared helper doesn't
+> support async iteration (see `src/utils/helper.ts:28`). Refactoring the helper
+> is tracked in #456.
 
 **Good:**
 
-> the shared helper doesn't support async iteration (`helper.ts:28`), that's why it's inline. tracked in #456
+> the shared helper doesn't support async iteration (`helper.ts:28`), that's why
+> it's inline. tracked in #456
 
 ### Review summary bodies (pr-review)
 
@@ -115,21 +139,29 @@ These are hard rules, not suggestions. If the generated text contains any of the
 
 **Good:**
 
-> caching implementation looks solid overall. main concern is a race condition in the invalidation logic, and the fallback path needs better error handling. details in the inline comments.
+> caching implementation looks solid overall. main concern is a race condition
+> in the invalidation logic, and the fallback path needs better error handling.
+> details in the inline comments.
 
 ### PR annotations (pr-annotate)
 
 **Bad:**
 
-> This function was intentionally split from the original `processAll` to enable individual item processing for the batch retry logic introduced in #234. The retry handler needs to re-process specific failed items without re-running the entire batch.
+> This function was intentionally split from the original `processAll` to enable
+> individual item processing for the batch retry logic introduced in #234. The
+> retry handler needs to re-process specific failed items without re-running the
+> entire batch.
 
 **Good:**
 
-> split out from `processAll` so the batch retry logic (#234) can re-process individual failed items without re-running the whole batch
+> split out from `processAll` so the batch retry logic (#234) can re-process
+> individual failed items without re-running the whole batch
 
 ## Writing style reference
 
-Before drafting any posted text, run `tone-clone generate` to sample the user's real writing for the relevant comment type. Match the length, punctuation, capitalization, and casualness of the samples.
+Before drafting any posted text, run `tone-clone generate` to sample the user's
+real writing for the relevant comment type. Match the length, punctuation,
+capitalization, and casualness of the samples.
 
 Use the `--type` flag to match what you're about to write:
 
@@ -141,6 +173,8 @@ Use the `--type` flag to match what you're about to write:
 | Issue comments               | `tone-clone generate --stdout --type issue_comment --limit 5`  |
 | PR/issue body text           | `tone-clone generate --stdout --type pr_body --limit 5`        |
 
-Add `--topic "relevant terms"` to get examples focused on a specific subject (e.g., `--topic "error handling"`).
+Add `--topic "relevant terms"` to get examples focused on a specific subject
+(e.g., `--topic "error handling"`).
 
-If `tone-clone` is not available or the database is empty, fall back to the rules and examples in this guide.
+If `tone-clone` is not available or the database is empty, fall back to the
+rules and examples in this guide.

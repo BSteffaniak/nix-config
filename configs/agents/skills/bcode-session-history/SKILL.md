@@ -9,9 +9,14 @@ Follow the [shared user override contract](../_shared/user-overrides.md). This s
 
 ## Purpose
 
-Use this skill when the user asks to find, recall, inspect, search, export, or troubleshoot native Bcode sessions.
+Use this skill when the user asks to find, recall, inspect, search, export, or
+troubleshoot native Bcode sessions.
 
-Canonical session storage is daemon-owned. Use only supported `bcode session ...` and related Bcode commands. Never open or query catalog/session databases, WAL files, private sidecars, or search-provider files directly. Use a source-specific history skill only when the user asks to inspect an imported session in its original external source.
+Canonical session storage is daemon-owned. Use only supported `bcode session
+...` and related Bcode commands. Never open or query catalog/session databases,
+WAL files, private sidecars, or search-provider files directly. Use a
+source-specific history skill only when the user asks to inspect an imported
+session in its original external source.
 
 ## Standard workflow
 
@@ -31,7 +36,11 @@ bcode session around SESSION_ID SEQUENCE --before 20 --after 20 --json
 bcode session inspect SESSION_ID failed-tool-calls --limit 50 --json
 ```
 
-Use the appropriate supported `session inspect` category for permissions, model/agent changes, runtime work, compaction, and terminal outcomes. Follow returned cursors for additional bounded pages. Do not substitute raw storage access when Bcode reports damaged, stale, future-version, ambiguous, or repair-required state.
+Use the appropriate supported `session inspect` category for permissions,
+model/agent changes, runtime work, compaction, and terminal outcomes. Follow
+returned cursors for additional bounded pages. Do not substitute raw storage
+access when Bcode reports damaged, stale, future-version, ambiguous, or
+repair-required state.
 
 ### 3. Search optional derived providers
 
@@ -44,13 +53,17 @@ bcode session search 'migration' --working-directory /workspace/project \
   --after-timestamp-ms 1767225600000 --before-timestamp-ms 1769817600000 --json
 ```
 
-Use `--deep` only for explicitly requested expensive or cold content. Explain selection first when scope or cost is uncertain:
+Use `--deep` only for explicitly requested expensive or cold content. Explain
+selection first when scope or cost is uncertain:
 
 ```sh
 bcode session search-explain 'segmentation fault' --content shell-output --deep --json
 ```
 
-Search is optional derived state. If no provider is eligible or available, continue with canonical list/history/around/inspect operations. Never claim shell/tool-output coverage merely because deep mode was accepted; inspect provider coverage in the response.
+Search is optional derived state. If no provider is eligible or available,
+continue with canonical list/history/around/inspect operations. Never claim
+shell/tool-output coverage merely because deep mode was accepted; inspect
+provider coverage in the response.
 
 ### 4. Export only when complete history is required
 
@@ -58,7 +71,8 @@ Search is optional derived state. If no provider is eligible or available, conti
 bcode session export SESSION_ID --format jsonl
 ```
 
-Export is an explicit potentially full-history operation. Prefer bounded commands for normal investigation.
+Export is an explicit potentially full-history operation. Prefer bounded
+commands for normal investigation.
 
 ### 5. Use explicit search maintenance only when requested
 
@@ -71,9 +85,13 @@ bcode session search-backfill-wait OPERATION_ID --after-revision REVISION --json
 bcode session search-backfill-cancel OPERATION_ID --json
 ```
 
-Operation identity and status are daemon-memory state, not durable resume. Disconnect or daemon restart can lose operation visibility. Provider-owned checkpoints can let a newly requested backfill continue safely, but do not imply reconnect-safe replay or durable transport resume.
+Operation identity and status are daemon-memory state, not durable resume.
+Disconnect or daemon restart can lose operation visibility. Provider-owned
+checkpoints can let a newly requested backfill continue safely, but do not imply
+reconnect-safe replay or durable transport resume.
 
-Rebuild and purge affect only disposable provider-owned state and require exact confirmation. Run them only when explicitly requested after reviewing status:
+Rebuild and purge affect only disposable provider-owned state and require exact
+confirmation. Run them only when explicitly requested after reviewing status:
 
 ```sh
 bcode session search-rebuild --provider PROVIDER_ID --confirm CONFIRMATION --json
@@ -104,7 +122,9 @@ Always include:
 - failures, unsupported capabilities, and incomplete coverage;
 - exact supported commands run when troubleshooting.
 
-Start with a concise summary. Distinguish canonical events from derived search hits and provider previews. If nothing is found, say so plainly and describe the bounded scope searched.
+Start with a concise summary. Distinguish canonical events from derived search
+hits and provider previews. If nothing is found, say so plainly and describe the
+bounded scope searched.
 
 ## Rules
 

@@ -14,7 +14,10 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Address GitHub Code Scanning findings end-to-end: fetch open alerts, analyze alert context in code, classify each finding, and then (with explicit user approval per alert) either apply a fix in the codebase or dismiss the alert with a documented rationale.
+Address GitHub Code Scanning findings end-to-end: fetch open alerts, analyze
+alert context in code, classify each finding, and then (with explicit user
+approval per alert) either apply a fix in the codebase or dismiss the alert with
+a documented rationale.
 
 ## Steps
 
@@ -65,7 +68,8 @@ GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api "repos/{owner}/{repo}/code-scanning/ale
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api "repos/{owner}/{repo}/code-scanning/alerts/{number}/instances?per_page=100"
 ```
 
-Then read local code context around the flagged location (`Read`, `Grep`, `Glob`) and classify into one of:
+Then read local code context around the flagged location (`Read`, `Grep`,
+`Glob`) and classify into one of:
 
 - **fix-now** - clear, low-risk, localized remediation
 - **needs-design** - valid issue but requires non-trivial behavior/API decisions
@@ -90,13 +94,17 @@ Ask:
 
 Use `Question(*)` and process alerts strictly one-by-one.
 
-Record each selection as an alert-scoped authorization artifact (`alert number` + selected action).
+Record each selection as an alert-scoped authorization artifact (`alert number`
++ selected action).
 
 #### Execution authorization checkpoint (mandatory)
 
-Before entering Step 5 or Step 6 for a given alert, restate the alert number and chosen action, then require a final **Question** confirmation (`Proceed` / `Cancel`) for that alert.
+Before entering Step 5 or Step 6 for a given alert, restate the alert number and
+chosen action, then require a final **Question** confirmation (`Proceed` /
+`Cancel`) for that alert.
 
-Only a direct user Question response of `Proceed` in this run authorizes mutation for that alert.
+Only a direct user Question response of `Proceed` in this run authorizes
+mutation for that alert.
 
 ### 5. Apply-fix path (only after approval)
 
@@ -111,7 +119,8 @@ If user chooses **Apply fix**:
 2. Show concise diff summary (`git diff -- <files>`).
 3. Ask user whether to keep or undo the patch for this alert.
 
-If keep approval is missing or the user chooses undo, revert the patch for that alert.
+If keep approval is missing or the user chooses undo, revert the patch for that
+alert.
 
 Do not auto-commit or push.
 Do not claim validation unless checks were actually run.

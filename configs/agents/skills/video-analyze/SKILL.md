@@ -10,7 +10,13 @@ Follow the [shared user override contract](../_shared/user-overrides.md). This s
 
 ## Purpose
 
-Analyze video content by extracting frames and viewing them as images. The skill locates a video file — either from a user-specified path or by finding the most recent screen recording — extracts frames at an adaptive frame rate tuned to the video's duration, and presents them for visual inspection. When more detail is needed for a specific segment, frames can be re-extracted at a higher frame rate or for a narrower time range. Designed to work seamlessly within an existing conversation without unnecessary interruptions.
+Analyze video content by extracting frames and viewing them as images. The skill
+locates a video file — either from a user-specified path or by finding the
+most recent screen recording — extracts frames at an adaptive frame rate tuned
+to the video's duration, and presents them for visual inspection. When more
+detail is needed for a specific segment, frames can be re-extracted at a higher
+frame rate or for a narrower time range. Designed to work seamlessly within an
+existing conversation without unnecessary interruptions.
 
 ## Prerequisites
 
@@ -42,7 +48,8 @@ ls -la "/path/to/video.mp4"
 
 #### Tool/source hint
 
-If the user mentions a recording tool or source (e.g., "latest screen recording", "latest obs"), map it to search directories:
+If the user mentions a recording tool or source (e.g., "latest screen
+recording", "latest obs"), map it to search directories:
 
 | Hint                                        | macOS paths                            | Linux paths             |
 | ------------------------------------------- | -------------------------------------- | ----------------------- |
@@ -51,7 +58,9 @@ If the user mentions a recording tool or source (e.g., "latest screen recording"
 | "obs"                                       | `~/Movies`                             | `~/Videos`              |
 | Generic / no hint                           | `~/Desktop`, `~/Movies`, `~/Documents` | `~/Videos`, `~/Desktop` |
 
-Search for the most recent video file in the resolved directories. Use `python3` for cross-platform compatibility (handles spaces in filenames, works on both macOS and Linux):
+Search for the most recent video file in the resolved directories. Use `python3`
+for cross-platform compatibility (handles spaces in filenames, works on both
+macOS and Linux):
 
 ```bash
 find ~/Desktop ~/Movies -maxdepth 2 \
@@ -66,7 +75,10 @@ for mtime, path in entries[:5]:
 "
 ```
 
-**Do not use `stat -f` or `find -printf`** — `stat -f '%m'` produces filesystem metadata (not file mtime) when combined with `find -exec` on macOS, and `-printf` is a GNU extension unavailable on macOS. The `python3 + os.path.getmtime()` approach is reliable on all platforms.
+**Do not use `stat -f` or `find -printf`** — `stat -f '%m'` produces
+filesystem metadata (not file mtime) when combined with `find -exec` on macOS,
+and `-printf` is a GNU extension unavailable on macOS. The `python3 +
+os.path.getmtime()` approach is reliable on all platforms.
 
 #### Disambiguation
 
@@ -76,7 +88,9 @@ for mtime, path in entries[:5]:
 
 #### Time range parsing
 
-If the user specifies a time range (e.g., "first 10 seconds", "from 1:30 to 2:00", "last 30 seconds"), parse it and store for use in Step 4. Use `python3` for robust parsing:
+If the user specifies a time range (e.g., "first 10 seconds", "from 1:30 to
+2:00", "last 30 seconds"), parse it and store for use in Step 4. Use `python3`
+for robust parsing:
 
 ```bash
 python3 -c "
@@ -90,7 +104,8 @@ python3 -c "
 
 ### 2. Probe video metadata
 
-Get the video's duration, native frame rate, resolution, and codec using `ffprobe`:
+Get the video's duration, native frame rate, resolution, and codec using
+`ffprobe`:
 
 ```bash
 ffprobe -v quiet -print_format json -show_format -show_streams "/path/to/video.mp4"
@@ -116,11 +131,13 @@ Video: recording-2026-03-24.mov
 Duration: 45.2s | FPS: 30 | Resolution: 1920x1080 | Codec: h264
 ```
 
-If the user specified "last N seconds" in their time range, the duration is needed to compute the start offset — calculate it here.
+If the user specified "last N seconds" in their time range, the duration is
+needed to compute the start offset — calculate it here.
 
 ### 3. Calculate initial frame rate
 
-Choose an extraction frame rate based on the **effective duration** — the time range being extracted (which may be the full video or a user-specified segment):
+Choose an extraction frame rate based on the **effective duration** — the time
+range being extracted (which may be the full video or a user-specified segment):
 
 | Effective duration     | Extraction FPS           |
 | ---------------------- | ------------------------ |
@@ -139,7 +156,11 @@ Choose an extraction frame rate based on the **effective duration** — the time
 
 #### Image quality tiers
 
-Frame resolution and compression are adaptive — tied to how many frames are being extracted. More frames means smaller, more compressed images. Fewer frames allows higher fidelity. This keeps total context size manageable and avoids hitting the **2000px API limit** (the model rejects images where any dimension exceeds 2000px in many-image requests).
+Frame resolution and compression are adaptive — tied to how many frames are
+being extracted. More frames means smaller, more compressed images. Fewer frames
+allows higher fidelity. This keeps total context size manageable and avoids
+hitting the **2000px API limit** (the model rejects images where any dimension
+exceeds 2000px in many-image requests).
 
 **Resolution tiers** (based on expected frame count):
 
@@ -150,7 +171,8 @@ Frame resolution and compression are adaptive — tied to how many frames are be
 | 31–80       | 800                | Many frames — shrink to stay efficient   |
 | 81–200      | 600                | Lots of frames — thumbnails for scanning |
 
-**Hard ceiling**: 2000px on any dimension, regardless of frame count. This is an API constraint that must never be violated.
+**Hard ceiling**: 2000px on any dimension, regardless of frame count. This is an
+API constraint that must never be violated.
 
 **JPEG quality tiers** (ffmpeg `-q:v` scale: 2 = best, 31 = worst):
 
@@ -160,7 +182,10 @@ Frame resolution and compression are adaptive — tied to how many frames are be
 | Detail re-extract (time range)  | 3            | ~200–500 KB       | Zooming into a segment          |
 | Full detail (user requests max) | 2            | ~300–800 KB       | Explicit "high quality" request |
 
-**Why JPEG instead of PNG?** Screen recording PNGs are typically 2–5 MB each. At 100+ frames, that's hundreds of megabytes flowing through context. JPEG at quality 5 is visually indistinguishable for screen content analysis and 10–20x smaller.
+**Why JPEG instead of PNG?** Screen recording PNGs are typically 2–5 MB each.
+At 100+ frames, that's hundreds of megabytes flowing through context. JPEG at
+quality 5 is visually indistinguishable for screen content analysis and 10–20x
+smaller.
 
 #### Combined calculation
 
@@ -233,7 +258,9 @@ mkdir -p "/tmp/video-analyze-$HASH"
 
 The directory name format is: `/tmp/video-analyze-<hash>/`
 
-If the directory already exists and contains frames from a previous extraction, note this and offer to reuse them if the video file hasn't changed. Otherwise, clear the directory first.
+If the directory already exists and contains frames from a previous extraction,
+note this and offer to reuse them if the video file hasn't changed. Otherwise,
+clear the directory first.
 
 #### Full video extraction
 
@@ -259,9 +286,12 @@ The `-vf` parameter chains two filters together:
 1. `fps=N` — Extract at N frames per second
 2. `scale=MAX_DIM:MAX_DIM:force_original_aspect_ratio=decrease:force_divisible_by=2` — Scale the frame so that **neither width nor height** exceeds MAX_DIM pixels, maintaining aspect ratio. `force_original_aspect_ratio=decrease` means it only shrinks, never upscales. `force_divisible_by=2` ensures even pixel dimensions (required by some codecs).
 
-Replace `MAX_DIM` with the value from the resolution tier calculated in Step 3 (e.g., 600, 800, 1200, or 1600).
+Replace `MAX_DIM` with the value from the resolution tier calculated in Step 3
+(e.g., 600, 800, 1200, or 1600).
 
-**Do not use `scale='min(W,iw)':-1`** — that syntax only constrains width and lets height float freely, which fails for portrait/vertical videos where height can exceed the API limit.
+**Do not use `scale='min(W,iw)':-1`** — that syntax only constrains width and
+lets height float freely, which fails for portrait/vertical videos where height
+can exceed the API limit.
 
 #### Other flags
 
@@ -278,19 +308,23 @@ ls /tmp/video-analyze-abcd1234/frame_*.jpg | wc -l
 
 #### Verify dimensions
 
-**Mandatory safety check** — always verify the first frame's dimensions before presenting any frames:
+**Mandatory safety check** — always verify the first frame's dimensions before
+presenting any frames:
 
 ```bash
 ffprobe -v quiet -select_streams v:0 -show_entries stream=width,height -of csv=p=0 /tmp/video-analyze-abcd1234/frame_0001.jpg
 ```
 
-If either dimension exceeds 2000px, the extraction failed to scale correctly. Do not present the frames. Instead:
+If either dimension exceeds 2000px, the extraction failed to scale correctly. Do
+not present the frames. Instead:
 
 1. Delete the oversized frames
 2. Re-extract with an explicitly lower `MAX_DIM` (halve the current value)
 3. Re-verify before presenting
 
-This check catches cases where the scale filter was misconfigured, the video has unusual dimensions, or the ffmpeg version handles the filter differently than expected.
+This check catches cases where the scale filter was misconfigured, the video has
+unusual dimensions, or the ffmpeg version handles the filter differently than
+expected.
 
 Report:
 
@@ -301,11 +335,19 @@ Covering 0:00 – 0:45.2 at 4 fps | max 600px | JPEG q=5
 
 ### 5. Present frames
 
-Use the Read tool to display extracted frame images. Frames are already scaled and compressed during extraction (Step 4) to be within API limits, so they can be sent through Read safely.
+Use the Read tool to display extracted frame images. Frames are already scaled
+and compressed during extraction (Step 4) to be within API limits, so they can
+be sent through Read safely.
 
 #### Context contamination check
 
-**Before presenting any frames**, check whether the current conversation already contains frame images from a previous extraction (e.g., from an earlier run of this skill in the same session). Old frames may have been extracted at full resolution before the scale filter was applied, and those oversized images persist in the conversation context — they are re-sent to the API with every message and will trigger the 2000px rejection error even if the new frames are correctly sized.
+**Before presenting any frames**, check whether the current conversation already
+contains frame images from a previous extraction (e.g., from an earlier run of
+this skill in the same session). Old frames may have been extracted at full
+resolution before the scale filter was applied, and those oversized images
+persist in the conversation context — they are re-sent to the API with every
+message and will trigger the 2000px rejection error even if the new frames are
+correctly sized.
 
 If the conversation already contains frame images from a prior extraction:
 
@@ -325,7 +367,9 @@ Read frame_0001.jpg through frame_0020.jpg
 
 #### Moderate frames (21–50)
 
-Show in batches of ~15 frames. After each batch, briefly describe what's visible and continue to the next batch. No need to ask — just proceed through all batches.
+Show in batches of ~15 frames. After each batch, briefly describe what's visible
+and continue to the next batch. No need to ask — just proceed through all
+batches.
 
 #### Many frames (> 50)
 
@@ -370,7 +414,8 @@ After presenting frames, the user can:
 
 #### Ask questions about the video content
 
-Answer based on what's visible in the extracted frames. Reference specific frames and timestamps when describing visual content.
+Answer based on what's visible in the extracted frames. Reference specific
+frames and timestamps when describing visual content.
 
 #### Request higher detail for a time range
 
@@ -402,7 +447,8 @@ If the user wants the entire video at higher detail:
 
 #### Full detail mode
 
-If the user explicitly asks for maximum quality on a small number of frames (e.g., "show me frame 45 at full resolution"):
+If the user explicitly asks for maximum quality on a small number of frames
+(e.g., "show me frame 45 at full resolution"):
 
 1. Use `pass_type = 'full'` — JPEG quality 2, max dimension 1600px
 2. Only allow this for ≤ 10 frames at a time to stay within API limits
@@ -410,7 +456,9 @@ If the user explicitly asks for maximum quality on a small number of frames (e.g
 
 #### This step loops
 
-Continue responding to questions and re-extraction requests until the user moves on to other work. The skill does not need an explicit "done" signal — it integrates naturally into the conversation flow.
+Continue responding to questions and re-extraction requests until the user moves
+on to other work. The skill does not need an explicit "done" signal — it
+integrates naturally into the conversation flow.
 
 ## Rules
 

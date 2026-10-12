@@ -1,6 +1,7 @@
 # Nix Configuration
 
-Cross-platform Nix configuration for multiple machines, with a single flake and a home-manager-first module layout.
+Cross-platform Nix configuration for multiple machines, with a single flake and
+a home-manager-first module layout.
 
 This repo manages:
 

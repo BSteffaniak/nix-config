@@ -14,13 +14,21 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Resolve Git conflicts safely across merge, rebase, cherry-pick, revert, and stash workflows by first understanding both sides of every conflict, including the chronology and intent behind each change. The skill presents a concrete resolution plan before editing, applies only approved file changes, validates the current conflict wave, and then pauses while the user manually stages and continues the Git operation. For rebases and other multi-commit sequences, it repeats this loop until every replayed commit is clean.
+Resolve Git conflicts safely across merge, rebase, cherry-pick, revert, and
+stash workflows by first understanding both sides of every conflict, including
+the chronology and intent behind each change. The skill presents a concrete
+resolution plan before editing, applies only approved file changes, validates
+the current conflict wave, and then pauses while the user manually stages and
+continues the Git operation. For rebases and other multi-commit sequences, it
+repeats this loop until every replayed commit is clean.
 
 ## Steps
 
 ### 1. Detect the conflict state
 
-Start by identifying the repository, the active Git operation, and every unmerged path. If the current directory is not a Git worktree, stop and tell the user.
+Start by identifying the repository, the active Git operation, and every
+unmerged path. If the current directory is not a Git worktree, stop and tell the
+user.
 
 ```bash
 git --no-pager rev-parse --show-toplevel
@@ -31,7 +39,8 @@ git --no-pager ls-files -u
 git --no-pager diff --name-only --diff-filter=U
 ```
 
-Use the Git directory from `git rev-parse --git-dir` to detect operation metadata in both normal repos and worktrees:
+Use the Git directory from `git rev-parse --git-dir` to detect operation
+metadata in both normal repos and worktrees:
 
 - `rebase-merge/` or `rebase-apply/` — rebase or am/rebase-apply sequence
 - `MERGE_HEAD` — merge
@@ -51,11 +60,16 @@ Classify each unmerged path from `git status --short` and `git ls-files -u`:
 | `DU`   | deleted by us   |
 | `UD`   | deleted by them |
 
-If there are no unmerged paths, do not edit files. Report whether Git still appears to be mid-operation and ask the user whether they want help continuing or a final verification pass.
+If there are no unmerged paths, do not edit files. Report whether Git still
+appears to be mid-operation and ask the user whether they want help continuing
+or a final verification pass.
 
 ### 2. Understand both sides and the chronology
 
-For each conflicted path, inspect the merge stages and nearby history before proposing a resolution. Prefer Git's staged blobs over only reading conflict markers, because markers can omit context and delete/rename conflicts may not have useful inline markers.
+For each conflicted path, inspect the merge stages and nearby history before
+proposing a resolution. Prefer Git's staged blobs over only reading conflict
+markers, because markers can omit context and delete/rename conflicts may not
+have useful inline markers.
 
 ```bash
 git --no-pager diff --merge -- <path>
@@ -66,7 +80,9 @@ git --no-pager show :2:<path>  # ours
 git --no-pager show :3:<path>  # theirs
 ```
 
-If a stage is absent, note what that means for the conflict type instead of treating it as an error. For binary files or generated files, inspect metadata and generation sources rather than inventing a manual text merge.
+If a stage is absent, note what that means for the conflict type instead of
+treating it as an error. For binary files or generated files, inspect metadata
+and generation sources rather than inventing a manual text merge.
 
 When rebasing or cherry-picking, identify the commit currently being replayed:
 
@@ -100,11 +116,13 @@ Interpret `ours` and `theirs` by operation type:
 - Cherry-pick/revert: `ours` is the current branch; `theirs` is the picked or reverted change.
 - Stash apply/pop: `ours` is the pre-stash-apply working tree/current branch; `theirs` is the stashed change.
 
-Read surrounding source files as needed to understand APIs, imports, generated artifacts, tests, and call sites. The goal is to merge intent, not text.
+Read surrounding source files as needed to understand APIs, imports, generated
+artifacts, tests, and call sites. The goal is to merge intent, not text.
 
 ### 3. Present a resolution plan before editing
 
-Before making any file changes, present a concise but complete plan. The plan must include:
+Before making any file changes, present a concise but complete plan. The plan
+must include:
 
 - **Operation state** — merge/rebase/cherry-pick/revert/stash-like conflict, current branch, target/base when known, and current replayed commit when applicable.
 - **Conflict inventory** — every unmerged path, status code, and whether stages 1/2/3 exist.
@@ -113,7 +131,8 @@ Before making any file changes, present a concise but complete plan. The plan mu
 - **Risk notes** — APIs, imports, generated files, tests, or behavioral changes that could be affected.
 - **Validation plan** — always include `git diff --check`; include targeted Bun validation only when the touched files make the command obvious.
 
-Then ask for direct approval with the Question tool. Do not edit until the user approves the plan.
+Then ask for direct approval with the Question tool. Do not edit until the user
+approves the plan.
 
 Question options:
 
@@ -121,13 +140,19 @@ Question options:
 - `Revise plan` — update the plan from the user's feedback and ask again.
 - `Stop` — do not edit; leave the working tree unchanged.
 
-If the user provides custom instructions, incorporate them into a revised plan and ask again. Approval is valid only for the current plan and current conflict wave.
+If the user provides custom instructions, incorporate them into a revised plan
+and ask again. Approval is valid only for the current plan and current conflict
+wave.
 
 ### 4. Apply only the approved resolution
 
-After the plan is approved, edit only the files and regions covered by that approved plan. Re-read each conflicted file immediately before editing so user changes made during review are not overwritten.
+After the plan is approved, edit only the files and regions covered by that
+approved plan. Re-read each conflicted file immediately before editing so user
+changes made during review are not overwritten.
 
-Use targeted edits when possible. Use full-file writes only when the file is small enough to review confidently or when conflict markers and surrounding structure make targeted replacement riskier than a clean rewrite.
+Use targeted edits when possible. Use full-file writes only when the file is
+small enough to review confidently or when conflict markers and surrounding
+structure make targeted replacement riskier than a clean rewrite.
 
 While editing:
 
@@ -137,11 +162,14 @@ While editing:
 - For modify/delete, delete/rename, binary, or generated-file conflicts, follow the approved plan. If resolving requires an index mutation such as `git rm`, `git add`, or checkout of a stage, do not perform it automatically; put the exact command in the manual checkpoint unless the user separately requested that Git mutation.
 - If new evidence shows the approved plan is wrong or incomplete, stop editing and return to Step 3 with a revised plan.
 
-Never run `git add`, `git rm`, `git commit`, `git merge --continue`, `git rebase --continue`, `git cherry-pick --continue`, `git revert --continue`, `git stash drop`, or equivalent state-advancing commands as part of this step.
+Never run `git add`, `git rm`, `git commit`, `git merge --continue`, `git rebase
+--continue`, `git cherry-pick --continue`, `git revert --continue`, `git stash
+drop`, or equivalent state-advancing commands as part of this step.
 
 ### 5. Validate the current conflict wave
 
-After applying edits, validate only the current conflict wave. Start with Git checks:
+After applying edits, validate only the current conflict wave. Start with Git
+checks:
 
 ```bash
 git --no-pager diff --check
@@ -149,9 +177,11 @@ git --no-pager status --short
 git --no-pager diff --name-only --diff-filter=U
 ```
 
-Treat any remaining unmerged path or conflict-marker warning as unresolved. Go back to Step 2 or Step 3 as appropriate.
+Treat any remaining unmerged path or conflict-marker warning as unresolved. Go
+back to Step 2 or Step 3 as appropriate.
 
-If the approved plan included an obvious targeted Bun command, run it after `git diff --check`. Examples:
+If the approved plan included an obvious targeted Bun command, run it after `git
+diff --check`. Examples:
 
 ```bash
 bun --filter <workspace> type-check
@@ -159,11 +189,17 @@ bun --filter <workspace> test
 bun test <path/to/test.spec.ts>
 ```
 
-Only run targeted package validation when the workspace and command are clear from the touched files or repository scripts. Do not run broad, slow, or side-effect-prone commands unless they were included in the approved plan. If validation fails, summarize the failure and propose a follow-up plan before editing again.
+Only run targeted package validation when the workspace and command are clear
+from the touched files or repository scripts. Do not run broad, slow, or
+side-effect-prone commands unless they were included in the approved plan. If
+validation fails, summarize the failure and propose a follow-up plan before
+editing again.
 
 ### 6. Pause for manual staging and continuation
 
-When the current conflict wave is resolved and validated, stop before changing Git operation state. Summarize what was edited and give exact next commands for the user to run manually.
+When the current conflict wave is resolved and validated, stop before changing
+Git operation state. Summarize what was edited and give exact next commands for
+the user to run manually.
 
 Command guidance by operation:
 
@@ -174,7 +210,8 @@ Command guidance by operation:
 - Stash conflict: `git add <resolved-files>` and then commit or continue the user's intended workflow. If this came from `git stash pop`, remind the user that Git usually keeps the stash entry after conflicts and they should drop it manually only after verifying the resolution.
 - Delete/rename resolutions that were intentionally left to the user: include the exact `rm`, `git rm`, `git mv`, `git add`, or checkout command needed, clearly separated from commands already performed.
 
-Then ask a Question gate and wait. Do not continue scanning until the user confirms they have run the manual commands.
+Then ask a Question gate and wait. Do not continue scanning until the user
+confirms they have run the manual commands.
 
 Question options:
 
@@ -182,11 +219,15 @@ Question options:
 - `Stop here` — end without further changes.
 - `Show commands again` — repeat the exact manual commands and ask again.
 
-If the user says the manual command produced a new error, inspect the new state and return to Step 1 or Step 2 without assuming the previous resolution was accepted.
+If the user says the manual command produced a new error, inspect the new state
+and return to Step 1 or Step 2 without assuming the previous resolution was
+accepted.
 
 ### 7. Repeat for multi-stage operations
 
-After the user confirms they manually continued, re-run conflict detection from Step 1. Do not assume a rebase, cherry-pick sequence, revert sequence, or stash recovery is complete just because one conflict wave was resolved.
+After the user confirms they manually continued, re-run conflict detection from
+Step 1. Do not assume a rebase, cherry-pick sequence, revert sequence, or stash
+recovery is complete just because one conflict wave was resolved.
 
 For rebases, use the rebase metadata to report progress when available:
 
@@ -202,7 +243,8 @@ Loop behavior:
 2. If no unmerged paths exist but Git is still mid-operation, tell the user the working tree is conflict-clean and provide the next manual continue command, then return to the Step 6 gate.
 3. If no unmerged paths exist and no operation metadata remains, proceed to the final summary.
 
-Keep wave summaries separate so the user can see which replayed commit or operation step each resolution belonged to.
+Keep wave summaries separate so the user can see which replayed commit or
+operation step each resolution belonged to.
 
 ### 8. Final summary
 
@@ -215,7 +257,9 @@ When the repository is conflict-clean, provide a final summary:
 - Commands the user already ran manually, if known.
 - Remaining follow-up, if any.
 
-If the operation is complete but the branch still has normal unstaged or staged changes, explain that these are no longer conflict markers and should be reviewed with ordinary `git diff` / `git status` workflow.
+If the operation is complete but the branch still has normal unstaged or staged
+changes, explain that these are no longer conflict markers and should be
+reviewed with ordinary `git diff` / `git status` workflow.
 
 ## Rules
 

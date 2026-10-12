@@ -12,7 +12,8 @@ Follow the [shared user override contract](../_shared/user-overrides.md). This s
 
 Follow the [non-interactive Git command rules](../_shared/non-interactive-git.md) for every `git` invocation.
 
-Git access in this skill is strictly read-only. Never stage, commit, restore, reset, checkout, switch, clean, stash, or otherwise mutate repository state.
+Git access in this skill is strictly read-only. Never stage, commit, restore,
+reset, checkout, switch, clean, stash, or otherwise mutate repository state.
 
 ## Governing contract
 
@@ -20,25 +21,39 @@ Read and follow [the progress-document product and architecture contract](../_sh
 
 Its central rule is mandatory:
 
-> Be narrow in requested product scope and uncompromising in production implementation depth. Derive the solution from the actual codebase, complete every required product and architectural layer, and never substitute a shortcut, generic ideal, or speculative abstraction for the repository's proper long-term design.
+> Be narrow in requested product scope and uncompromising in production
+> implementation depth. Derive the solution from the actual codebase, complete
+> every required product and architectural layer, and never substitute a
+> shortcut, generic ideal, or speculative abstraction for the repository's
+> proper long-term design.
 
 ## Purpose
 
-Refocus an active local progress document after implementation, discoveries, requirement changes, or accumulated history have made it stale, repetitive, contradictory, or incomplete. Rewrite it into concise durable working memory grounded in the original requested product outcome, current repository evidence, the proper long-term architecture, completed outcomes, remaining work, decisions, blockers, and validation.
+Refocus an active local progress document after implementation, discoveries,
+requirement changes, or accumulated history have made it stale, repetitive,
+contradictory, or incomplete. Rewrite it into concise durable working memory
+grounded in the original requested product outcome, current repository evidence,
+the proper long-term architecture, completed outcomes, remaining work,
+decisions, blockers, and validation.
 
-This is not merely prose cleanup. It must detect when a document tracks internal functionality but omits product closure, when completed work uses an architectural shortcut, or when its architecture was imagined without sufficient repository research.
+This is not merely prose cleanup. It must detect when a document tracks internal
+functionality but omits product closure, when completed work uses an
+architectural shortcut, or when its architecture was imagined without sufficient
+repository research.
 
 The governing cleanup principle remains:
 
 > Preserve durable truth, not historical volume.
 
-For pure investigations or non-product notes, scale down the product and architecture sections rather than forcing irrelevant structure.
+For pure investigations or non-product notes, scale down the product and
+architecture sections rather than forcing irrelevant structure.
 
 ## Steps
 
 ### 1. Resolve the progress document
 
-Use a path supplied by the user when present. Otherwise, look narrowly for likely local progress documents such as:
+Use a path supplied by the user when present. Otherwise, look narrowly for
+likely local progress documents such as:
 
 - `*progress*.md`
 - `*handoff*.md`
@@ -46,7 +61,9 @@ Use a path supplied by the user when present. Otherwise, look narrowly for likel
 
 Exclude generated, dependency, cache, and VCS directories.
 
-If exactly one strong candidate exists, state the path and continue. If multiple plausible candidates exist, list them and ask the user in normal chat to select one. Do not infer solely from modification time.
+If exactly one strong candidate exists, state the path and continue. If multiple
+plausible candidates exist, list them and ask the user in normal chat to select
+one. Do not infer solely from modification time.
 
 Read the selected document in full before drawing conclusions.
 
@@ -60,7 +77,8 @@ Use evidence in this order:
 4. Locked progress-document decisions remain binding unless later user direction or repository evidence explicitly supersedes them.
 5. Other document content is historical working memory that may be stale.
 
-Surface unresolved conflicts rather than silently selecting whichever version makes cleanup easiest.
+Surface unresolved conflicts rather than silently selecting whichever version
+makes cleanup easiest.
 
 Inspect current Git state with read-only commands where useful:
 
@@ -71,7 +89,8 @@ git --no-pager diff --stat
 git --no-pager diff --cached --stat
 ```
 
-Treat staged and unstaged changes as intentional user work unless evidence says otherwise.
+Treat staged and unstaged changes as intentional user work unless evidence says
+otherwise.
 
 ### 3. Recover the requested product outcome
 
@@ -82,15 +101,23 @@ For product-delivery work, reconstruct:
 - The observable successful result.
 - Explicit boundaries and non-goals.
 
-Use the original document, current user direction, and durable decisions. Do not infer new product requirements solely from current code. Do not invent personas, exhaustive acceptance scenarios, hypothetical future cases, or unrequested polish.
+Use the original document, current user direction, and durable decisions. Do not
+infer new product requirements solely from current code. Do not invent personas,
+exhaustive acceptance scenarios, hypothetical future cases, or unrequested
+polish.
 
-If the original product intent is irrecoverably ambiguous and the rewrite would materially change scope, surface the ambiguity before drafting. Ask in normal chat only when the user's product decision is genuinely required.
+If the original product intent is irrecoverably ambiguous and the rewrite would
+materially change scope, surface the ambiguity before drafting. Ask in normal
+chat only when the user's product decision is genuinely required.
 
 ### 4. Research the actual codebase
 
-For implementation, migration, integration, and product-delivery documents, focused repository research is mandatory before retaining or changing architecture and checklist contents.
+For implementation, migration, integration, and product-delivery documents,
+focused repository research is mandatory before retaining or changing
+architecture and checklist contents.
 
-Read applicable repository instructions and architecture documentation. Then perform the research required by the shared contract:
+Read applicable repository instructions and architecture documentation. Then
+perform the research required by the shared contract:
 
 - Trace the current end-to-end path related to the requested capability.
 - Identify product entry points and integration wiring.
@@ -100,13 +127,20 @@ Read applicable repository instructions and architecture documentation. Then per
 - Inspect relevant tests, configuration, packaging, migrations, compatibility behavior, and cleanup paths.
 - Use focused Git history when current code does not explain a consequential decision.
 
-Start from the document's paths, symbols, and claims. Expand only when imports, call sites, data flow, ownership, or module wiring require it.
+Start from the document's paths, symbols, and claims. Expand only when imports,
+call sites, data flow, ownership, or module wiring require it.
 
-Ground architectural conclusions in concrete evidence: repository instructions, paths, symbols, tests, analogous implementations, invariants, or commits. Generic best practice is not enough.
+Ground architectural conclusions in concrete evidence: repository instructions,
+paths, symbols, tests, analogous implementations, invariants, or commits.
+Generic best practice is not enough.
 
-Research must be deep enough to explain the real completion path and architectural obligations, but it must not become a general repository audit.
+Research must be deep enough to explain the real completion path and
+architectural obligations, but it must not become a general repository audit.
 
-If no established pattern exists, confirm that through focused research, identify the nearest boundaries and invariants, and use the smallest coherent long-term production design that fits them. Do not retain or introduce either a shortcut or a speculative framework.
+If no established pattern exists, confirm that through focused research,
+identify the nearest boundaries and invariants, and use the smallest coherent
+long-term production design that fits them. Do not retain or introduce either a
+shortcut or a speculative framework.
 
 ### 5. Audit product closure and architectural integrity
 
@@ -120,7 +154,8 @@ intended entry point
 → observable useful result
 ```
 
-Audit documented completed work and remaining work against two independent gates.
+Audit documented completed work and remaining work against two independent
+gates.
 
 #### Product closure audit
 
@@ -146,9 +181,14 @@ Check whether:
 - The documented design is evidence-based rather than an unrealistic greenfield ideal.
 - The design avoids speculative generalization and unrelated redesign.
 
-A compatibility adapter or staged migration mechanism is not automatically a shortcut. Evaluate whether production transition requires it, whether it fits repository architecture, and whether ownership, lifecycle, and completion/removal conditions are explicit.
+A compatibility adapter or staged migration mechanism is not automatically a
+shortcut. Evaluate whether production transition requires it, whether it fits
+repository architecture, and whether ownership, lifecycle, and
+completion/removal conditions are explicit.
 
-A checked item may become incomplete when its internal component exists but its claimed product outcome or architectural obligation does not. Do not preserve misleading completion merely to avoid resetting progress.
+A checked item may become incomplete when its internal component exists but its
+claimed product outcome or architectural obligation does not. Do not preserve
+misleading completion merely to avoid resetting progress.
 
 ### 6. Build a semantic inventory
 
@@ -186,7 +226,9 @@ Add required content omitted by the old document:
 - Required lifecycle, persistence, migration, compatibility, error, cleanup, packaging, configuration, or operational work.
 - Validation needed to establish product closure and architectural integrity.
 
-Adding omitted required production work is correction, not scope expansion. Apply the shared checklist admission rule and do not add unrelated cleanup, hypothetical extensibility, broad redesign, or unrequested polish.
+Adding omitted required production work is correction, not scope expansion.
+Apply the shared checklist admission rule and do not add unrelated cleanup,
+hypothetical extensibility, broad redesign, or unrequested polish.
 
 #### Condense
 
@@ -211,11 +253,14 @@ Remove:
 
 #### Uncertain
 
-Flag content when changing it could lose product intent, consequential rationale, or a non-reconstructable fact. Do not silently discard uncertainty.
+Flag content when changing it could lose product intent, consequential
+rationale, or a non-reconstructable fact. Do not silently discard uncertainty.
 
 ### 7. Draft the refocused document
 
-Rebuild around current truth rather than preserving stale layout by default. Retain useful custom structure, but ensure product-delivery documents make these answers obvious:
+Rebuild around current truth rather than preserving stale layout by default.
+Retain useful custom structure, but ensure product-delivery documents make these
+answers obvious:
 
 1. What product capability was requested, through what entry point, with what observable result?
 2. What does the current codebase establish about the relevant flow, ownership, and architecture?
@@ -328,9 +373,11 @@ Before previewing, confirm that the draft:
 - Every triggered lifecycle, persistence, migration, compatibility, error, cleanup, and operational obligation is represented.
 - No generic ideal, speculative framework, or unrelated redesign was introduced.
 
-Also check for contradictory status, duplicate work, checked items invalidated by current evidence, and required work mislabeled as polish or follow-up.
+Also check for contradictory status, duplicate work, checked items invalidated
+by current evidence, and required work mislabeled as polish or follow-up.
 
-Resolve safe issues before previewing. Put genuine uncertainty in the explicit uncertainty list.
+Resolve safe issues before previewing. Put genuine uncertainty in the explicit
+uncertainty list.
 
 ### 9. Present the exact refocus preview
 
@@ -344,7 +391,8 @@ Default to draft-only mode. Before editing, present:
 6. **Uncertainties** — anything requiring explicit user review.
 7. **Exact proposed document** — the complete replacement content in one markdown code block.
 
-The complete replacement content is the mutation payload. Summaries, outlines, partial snippets, and descriptions do not authorize an edit.
+The complete replacement content is the mutation payload. Summaries, outlines,
+partial snippets, and descriptions do not authorize an edit.
 
 Ask in normal chat for:
 
@@ -356,9 +404,14 @@ Do not use the Question tool. Interpret custom responses conservatively.
 
 ### 10. Apply only the approved payload
 
-Edit only after the user directly approves the exact full document shown in the immediately preceding assistant turn. Approval remains valid only while the target path, replacement content, relevant repository state, and user requirements remain unchanged.
+Edit only after the user directly approves the exact full document shown in the
+immediately preceding assistant turn. Approval remains valid only while the
+target path, replacement content, relevant repository state, and user
+requirements remain unchanged.
 
-After editing, re-read the file and verify it matches the approved payload. Report the path and remind the user that the document should generally remain untracked and uncommitted.
+After editing, re-read the file and verify it matches the approved payload.
+Report the path and remind the user that the document should generally remain
+untracked and uncommitted.
 
 ## Rules
 

@@ -5,7 +5,8 @@
 **Tmux Prefix:** `Ctrl-a`  
 **Zellij Equivalent:** `Ctrl-a` (tmux mode)
 
-Zellij uses a "tmux mode" that mimics tmux prefix behavior. Press `Ctrl-a` to enter tmux mode, then press a command key.
+Zellij uses a "tmux mode" that mimics tmux prefix behavior. Press `Ctrl-a` to
+enter tmux mode, then press a command key.
 
 ### Common Tmux Mode Commands (Ctrl-a + key):
 

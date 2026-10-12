@@ -14,7 +14,11 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-`agent-plan-permissions` helps you design safe, precise read-only command allowlists for the plan agent by using either the current conversation context or a direct ad-hoc request, comparing proposals against existing `configs/agents/permissions/*.json` patterns, and producing an exact handoff plan for later execution in the build agent.
+`agent-plan-permissions` helps you design safe, precise read-only command
+allowlists for the plan agent by using either the current conversation context
+or a direct ad-hoc request, comparing proposals against existing
+`configs/agents/permissions/*.json` patterns, and producing an exact handoff
+plan for later execution in the build agent.
 
 ## Steps
 
@@ -59,7 +63,8 @@ Normalize the selected scope into:
 
 ### 2. Locate the nix config repo and inspect permission baseline
 
-Do not assume the current working directory is the nix config repo. Resolve the repo first, then scan existing permission files.
+Do not assume the current working directory is the nix config repo. Resolve the
+repo first, then scan existing permission files.
 
 #### Resolve repo path
 
@@ -111,7 +116,8 @@ for c in uniq:
 PY
 ```
 
-If exactly one candidate is found, set it as `REPO_ROOT`. Otherwise, use the **Question tool**:
+If exactly one candidate is found, set it as `REPO_ROOT`. Otherwise, use the
+**Question tool**:
 
 ```json
 {
@@ -145,7 +151,8 @@ and build a baseline map of defaults, current allows, and current denies.
 
 ### 3. Generate candidate read-only permission rules
 
-Translate the selected scope into candidate command patterns that are precise enough to be safe and broad enough to be useful.
+Translate the selected scope into candidate command patterns that are precise
+enough to be safe and broad enough to be useful.
 
 For each command family:
 
@@ -198,7 +205,8 @@ Include a one-line safety rationale for every proposed pattern.
 
 ### 4. Review proposed patterns one-by-one
 
-Present each candidate permission pattern individually, with context and rationale, and require an explicit decision before proceeding.
+Present each candidate permission pattern individually, with context and
+rationale, and require an explicit decision before proceeding.
 
 For each item, show:
 
@@ -237,7 +245,8 @@ Handle responses:
 
 ### 5. Produce build-agent handoff (no writes)
 
-After review is complete, output a precise implementation handoff the user can run in build mode.
+After review is complete, output a precise implementation handoff the user can
+run in build mode.
 
 The handoff must include:
 

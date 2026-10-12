@@ -5,9 +5,14 @@ description: Browse and search pi conversation history from JSONL session files 
 
 ## Purpose
 
-Read pi's on-disk session log to recall what was discussed, what tools ran, and which files were touched in past conversations. Pi stores every session as a JSONL file under `~/.pi/agent/sessions/`, organized by working directory. There is no database — each line is a JSON entry, and the first line is a header with the session `cwd`.
+Read pi's on-disk session log to recall what was discussed, what tools ran, and
+which files were touched in past conversations. Pi stores every session as a
+JSONL file under `~/.pi/agent/sessions/`, organized by working directory. There
+is no database — each line is a JSON entry, and the first line is a header
+with the session `cwd`.
 
-Use this skill whenever the user asks you to "find a session", "look up what we did", "search my pi history", or similar.
+Use this skill whenever the user asks you to "find a session", "look up what we
+did", "search my pi history", or similar.
 
 ## File Layout
 
@@ -19,7 +24,9 @@ Use this skill whenever the user asks you to "find a session", "look up what we 
       <hash>/run-<N>/session.jsonl
 ```
 
-The directory name encodes the `cwd` (slashes → dashes, wrapped in `--`). **Do not parse it** — read the first line of the JSONL and use the `cwd` field instead. It's authoritative.
+The directory name encodes the `cwd` (slashes → dashes, wrapped in `--`). **Do
+not parse it** — read the first line of the JSONL and use the `cwd` field
+instead. It's authoritative.
 
 ## JSONL Schema (only what matters for reading)
 
@@ -42,7 +49,9 @@ Important quirks:
 
 ### 1. List recent sessions
 
-Default: 20 most recently modified top-level session files across all projects. Filter out nested `*/run-*/session.jsonl` subagent fan-out files unless the user asks for them.
+Default: 20 most recently modified top-level session files across all projects.
+Filter out nested `*/run-*/session.jsonl` subagent fan-out files unless the user
+asks for them.
 
 ```bash
 python3 - <<'PY'
@@ -82,7 +91,8 @@ for f in files[:20]:
 PY
 ```
 
-To filter by project directory, narrow with the encoded directory name **or** post-filter on the header `cwd`:
+To filter by project directory, narrow with the encoded directory name **or**
+post-filter on the header `cwd`:
 
 ```bash
 # Post-filter on cwd (more reliable, handles symlinks etc.)
@@ -112,7 +122,8 @@ PY
 
 ### 2. Read a session's conversation
 
-Print messages chronologically. Skip `thinking` blocks. Truncate long content in the default view; only show full content when the user asks.
+Print messages chronologically. Skip `thinking` blocks. Truncate long content in
+the default view; only show full content when the user asks.
 
 ```bash
 python3 - <<'PY'
@@ -167,7 +178,8 @@ For full untruncated output, raise `TRUNC` or remove the truncation.
 
 ### 3. Extract user prompts only
 
-The fastest way to figure out what a session was about. Lists every user-authored prompt with its timestamp.
+The fastest way to figure out what a session was about. Lists every
+user-authored prompt with its timestamp.
 
 ```bash
 python3 - <<'PY'
@@ -195,11 +207,13 @@ with open(PATH) as fh:
 PY
 ```
 
-Use this first when the user describes a session by what _they_ said in it — it cuts past tool noise and assistant chatter.
+Use this first when the user describes a session by what _they_ said in it —
+it cuts past tool noise and assistant chatter.
 
 ### 4. Search across sessions
 
-Grep a keyword across every JSONL, return matching session files plus the first user prompt as context.
+Grep a keyword across every JSONL, return matching session files plus the first
+user prompt as context.
 
 ```bash
 python3 - <<'PY'

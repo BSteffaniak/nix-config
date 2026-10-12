@@ -14,13 +14,19 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Fetch all existing review feedback on a pull request you authored (or are responsible for), categorize each comment as actionable or non-actionable, validate actionable comments against the actual codebase to catch incorrect or context-blind feedback, skip resolved/outdated threads, present a structured plan with validity assessments, and then either reply to comments, make code changes, or both — based on the user's choice.
+Fetch all existing review feedback on a pull request you authored (or are
+responsible for), categorize each comment as actionable or non-actionable,
+validate actionable comments against the actual codebase to catch incorrect or
+context-blind feedback, skip resolved/outdated threads, present a structured
+plan with validity assessments, and then either reply to comments, make code
+changes, or both — based on the user's choice.
 
 ## Steps
 
 ### 1. Determine working context
 
-Determine whether the current working directory is a local checkout of the PR's repository. This step performs **detection only** — do not clone anything yet.
+Determine whether the current working directory is a local checkout of the PR's
+repository. This step performs **detection only** — do not clone anything yet.
 
 - If the user provides a PR URL, parse `owner/repo` and `number` from the URL pattern `github.com/{owner}/{repo}/pull/{number}`.
 - If the user provides a PR number (no URL), the current directory **must** be the target repo — run `gh repo view --json nameWithOwner --jq .nameWithOwner` to extract `owner/repo`.
@@ -29,18 +35,21 @@ Determine whether the current working directory is a local checkout of the PR's 
   GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view --json number,url,title,headRefName,baseRefName
   ```
 
-After identifying the PR, determine whether the current directory is a checkout of the target repo:
+After identifying the PR, determine whether the current directory is a checkout
+of the target repo:
 
 ```bash
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null
 ```
 
-Compare the result (case-insensitive) against the `owner/repo` extracted from the PR. Record the result as one of:
+Compare the result (case-insensitive) against the `owner/repo` extracted from
+the PR. Record the result as one of:
 
 - **`local`** — CWD is a checkout of the target repo. Use local file reads for all subsequent steps.
 - **`remote`** — CWD is not a checkout of the target repo (or is not a git repo at all). Use the GitHub API for file reads in Steps 2–7. A local clone will only be created later if the user chooses to make code changes (Step 8).
 
-If the context is `remote`, also extract the PR's `headRefName` (the branch with the changes) for use in API-based file reads.
+If the context is `remote`, also extract the PR's `headRefName` (the branch with
+the changes) for use in API-based file reads.
 
 If no PR is found, inform the user and stop.
 
@@ -58,7 +67,9 @@ If no PR is found, inform the user and stop.
 
 ### 3. Fetch all review data
 
-Use a **single GraphQL query** via `gh api graphql` to fetch all review threads, reviews, and issue-level comments. Paginate using cursor-based pagination until all data is retrieved.
+Use a **single GraphQL query** via `gh api graphql` to fetch all review threads,
+reviews, and issue-level comments. Paginate using cursor-based pagination until
+all data is retrieved.
 
 #### Initial query
 
@@ -120,9 +131,17 @@ GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql -f query='
 
 #### Pagination loop
 
-After each query, check `pageInfo.hasNextPage` on each of the three connections (`reviewThreads`, `reviews`, `comments`). If any is `true`, re-run the query passing the `endCursor` value as the corresponding cursor variable (`$threadCursor`, `$reviewCursor`, `$commentCursor`). Merge the `nodes` arrays from each page. Continue until all three connections report `hasNextPage: false`.
+After each query, check `pageInfo.hasNextPage` on each of the three connections
+(`reviewThreads`, `reviews`, `comments`). If any is `true`, re-run the query
+passing the `endCursor` value as the corresponding cursor variable
+(`$threadCursor`, `$reviewCursor`, `$commentCursor`). Merge the `nodes` arrays
+from each page. Continue until all three connections report `hasNextPage:
+false`.
 
-For **nested pagination** (comments within a single review thread with 100+ comments): if any thread's `comments.pageInfo.hasNextPage` is `true`, fetch the remaining comments for that specific thread with a targeted query using the thread's `id` and the comment `endCursor`. In practice this is extremely rare.
+For **nested pagination** (comments within a single review thread with 100+
+comments): if any thread's `comments.pageInfo.hasNextPage` is `true`, fetch the
+remaining comments for that specific thread with a targeted query using the
+thread's `id` and the comment `endCursor`. In practice this is extremely rare.
 
 ### 4. Filter and categorize
 
@@ -133,7 +152,8 @@ For **nested pagination** (comments within a single review thread with 100+ comm
 
 #### Categorize
 
-Classify each unresolved review thread and each issue-level comment into one of these categories based on the comment text:
+Classify each unresolved review thread and each issue-level comment into one of
+these categories based on the comment text:
 
 | Category                           | Key           | When to use                                                                                                                                    |
 | ---------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -154,7 +174,9 @@ Classify each unresolved review thread and each issue-level comment into one of 
 
 ### 5. Validate actionable comments
 
-Before presenting results, validate every actionable comment (`code-change` and `question`) against the actual codebase. The goal is to catch reviewer comments that are wrong, missing context, or based on stale assumptions.
+Before presenting results, validate every actionable comment (`code-change` and
+`question`) against the actual codebase. The goal is to catch reviewer comments
+that are wrong, missing context, or based on stale assumptions.
 
 #### Reading files for validation
 
@@ -162,11 +184,15 @@ How you read files depends on the working context determined in Step 1:
 
 **If context is `local`:**
 
-Read files directly from the local checkout. Use the file system to read the referenced file at the specified path and line, search for patterns, check `git log`/`git blame`, etc.
+Read files directly from the local checkout. Use the file system to read the
+referenced file at the specified path and line, search for patterns, check `git
+log`/`git blame`, etc.
 
 **If context is `remote`:**
 
-Read files via the GitHub API. **Do NOT clone the repo for validation.** The GitHub API provides everything needed to validate comments without a local checkout.
+Read files via the GitHub API. **Do NOT clone the repo for validation.** The
+GitHub API provides everything needed to validate comments without a local
+checkout.
 
 - **Read a specific file at the PR's head ref:**
 
@@ -195,11 +221,13 @@ Read files via the GitHub API. **Do NOT clone the repo for validation.** The Git
   GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api repos/{owner}/{repo}/commits?path={file}&sha={headRefName} --jq '.[0]'
   ```
 
-All remote reads should use the PR's `headRefName` as the ref to ensure you're reading the current state of the PR branch, not the default branch.
+All remote reads should use the PR's `headRefName` as the ref to ensure you're
+reading the current state of the PR branch, not the default branch.
 
 #### Validation tiers
 
-Dynamically choose the validation depth based on the comment's complexity. Do not over-invest time on obvious comments, but go deep when something smells off.
+Dynamically choose the validation depth based on the comment's complexity. Do
+not over-invest time on obvious comments, but go deep when something smells off.
 
 | Tier         | When to use                                                                                                                                                                                                             | What to do                                                                                                                                                                                                                                                                                                                                     |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -254,7 +282,9 @@ Output a structured summary. The PR header, reviews, non-actionable items, and s
 
 #### Actionable items
 
-For each actionable item (code changes and questions), show a numbered header with the validity tag, then the ascii-art block with the code and reviewer's comment embedded using the "reviewer comment" variant:
+For each actionable item (code changes and questions), show a numbered header
+with the validity tag, then the ascii-art block with the code and reviewer's
+comment embedded using the "reviewer comment" variant:
 
 ```
 ### Actionable — Code Changes (<count>)
@@ -267,7 +297,8 @@ Then for each item:
 [VALID] — `user` can be undefined here; no null guard exists
 ```
 
-Followed by the ascii-art code+comment block (see the shared format spec). For example:
+Followed by the ascii-art code+comment block (see the shared format spec). For
+example:
 
 ````
 ```
@@ -292,7 +323,8 @@ Repeat for each actionable code-change item, then the questions section:
 
 With the same ascii-art format per item.
 
-Flag `DISPUTED` or `INVALID` items with the tag and evidence as before. Flag nit/optional items with `*[nit/optional]*` after the validity line.
+Flag `DISPUTED` or `INVALID` items with the tag and evidence as before. Flag
+nit/optional items with `*[nit/optional]*` after the validity line.
 
 #### Non-actionable and skipped items
 
@@ -308,13 +340,19 @@ These stay as flat one-liners — no code context needed:
 - `src/other.ts:5` — **@reviewer**: "<excerpt>" *(outdated + resolved)*
 ```
 
-**Numbering**: Number the actionable items sequentially across both code-change and question categories so the user can reference them by number.
+**Numbering**: Number the actionable items sequentially across both code-change
+and question categories so the user can reference them by number.
 
-**Validity tags are mandatory** on every actionable item. Each tag must include a one-line justification. `DISPUTED` and `INVALID` tags must cite specific file paths and line numbers as evidence.
+**Validity tags are mandatory** on every actionable item. Each tag must include
+a one-line justification. `DISPUTED` and `INVALID` tags must cite specific file
+paths and line numbers as evidence.
 
 ### 7. Prompt for action
 
-After presenting the summary, use the **Question tool** to let the user decide how to proceed. The user can choose to **reply** to comments (draft thread replies), **fix** comments (make code changes), or **both** — and can mix modes across different items.
+After presenting the summary, use the **Question tool** to let the user decide
+how to proceed. The user can choose to **reply** to comments (draft thread
+replies), **fix** comments (make code changes), or **both** — and can mix
+modes across different items.
 
 #### Determine the action mode
 
@@ -345,13 +383,19 @@ First, ask the user which action they want to take:
 }
 ```
 
-The user can also type a custom answer (e.g., "fix #1 and #3, reply to #2 and #4"). Interpret their intent and proceed accordingly.
+The user can also type a custom answer (e.g., "fix #1 and #3, reply to #2 and
+#4"). Interpret their intent and proceed accordingly.
 
-**Inference behavior:** You may infer a recommended mode from the user's wording (e.g., "reply to the PR comments", "fix the review feedback", "address all the comments"), but inference is advisory only. You must still present the selected mode and selected items and get explicit user confirmation before any mutation-capable step.
+**Inference behavior:** You may infer a recommended mode from the user's wording
+(e.g., "reply to the PR comments", "fix the review feedback", "address all the
+comments"), but inference is advisory only. You must still present the selected
+mode and selected items and get explicit user confirmation before any
+mutation-capable step.
 
 #### Select items
 
-Then, let the user select which items to act on. Use a single question with `multiple: true` so the user can pick any combination:
+Then, let the user select which items to act on. Use a single question with
+`multiple: true` so the user can pick any combination:
 
 ```json
 {
@@ -375,9 +419,11 @@ Then, let the user select which items to act on. Use a single question with `mul
 }
 ```
 
-For any `DISPUTED` or `INVALID` items, append "(recommended: skip)" to the description to signal your recommendation — but the user has final say.
+For any `DISPUTED` or `INVALID` items, append "(recommended: skip)" to the
+description to signal your recommendation — but the user has final say.
 
-The user can select any subset, or type a custom answer. If the user selects nothing, treat it as "skip" — they only wanted the summary.
+The user can select any subset, or type a custom answer. If the user selects
+nothing, treat it as "skip" — they only wanted the summary.
 
 Do NOT make any code changes or post any replies without explicit confirmation.
 
@@ -419,21 +465,26 @@ Then require explicit confirmation via the **Question tool**:
 }
 ```
 
-Record this decision as an execution authorization artifact containing mode + selected items.
+Record this decision as an execution authorization artifact containing mode +
+selected items.
 
-Only a direct user **Question** response of `Proceed` in this run authorizes Step 8 and/or Step 9.
+Only a direct user **Question** response of `Proceed` in this run authorizes
+Step 8 and/or Step 9.
 
-If explicit confirmation is missing, ambiguous, stale, or delegated, stop at draft/plan output and do not mutate code, post replies, or resolve threads.
+If explicit confirmation is missing, ambiguous, stale, or delegated, stop at
+draft/plan output and do not mutate code, post replies, or resolve threads.
 
 ### 8. Propose, apply, and verify changes
 
-Process each comment selected for fixing in Step 7 **one at a time**. For each comment, complete the full propose-apply-verify cycle before moving to the next.
+Process each comment selected for fixing in Step 7 **one at a time**. For each
+comment, complete the full propose-apply-verify cycle before moving to the next.
 
 **If no items were selected for code changes**, skip this step entirely.
 
 #### Ensure local checkout
 
-Before making any code changes, a local checkout of the PR branch is required. This check runs **once**, at the start of Step 8 (not per-comment).
+Before making any code changes, a local checkout of the PR branch is required.
+This check runs **once**, at the start of Step 8 (not per-comment).
 
 **If the working context from Step 1 is `local`:**
 
@@ -455,7 +506,9 @@ Before making any code changes, a local checkout of the PR branch is required. T
   GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr checkout {number}
   ```
 - Inform the user:
+
   > "Cloned {owner}/{repo} to `{WORK_DIR}` and checked out the PR branch. All file changes will be made there."
+
 - Use `$WORK_DIR` as the working directory for all subsequent steps (8a through 8d).
 
 #### 8a. Propose
@@ -466,23 +519,27 @@ Before making any code changes, a local checkout of the PR branch is required. T
 
 Present the proposal using the [embedded ascii-art format](../_shared/code-comment-format.md). Show the relevant code with line numbers and the reviewer's comment in a box below the target line(s), using the "reviewer comment" variant.
 
-Output the header, then the ascii-art code+comment block, followed by the proposed solution as regular markdown text:
+Output the header, then the ascii-art code+comment block, followed by the
+proposed solution as regular markdown text:
 
 ```
 ### Comment #<N>: `<file>:<line>` — @<reviewer>
 [<VALIDITY TAG>]
 ```
 
-Then the ascii-art block showing the code and reviewer's comment (see the shared format spec for the full visual specification and examples).
+Then the ascii-art block showing the code and reviewer's comment (see the shared
+format spec for the full visual specification and examples).
 
-Then the proposed solution as regular text below the ascii-art, followed by a **diff preview** showing exactly what would change:
+Then the proposed solution as regular text below the ascii-art, followed by a
+**diff preview** showing exactly what would change:
 
 ```
 **Proposed change:**
 <Brief prose description of what changes and why.>
 ```
 
-Then a fenced diff block showing the unified diff of what the change would look like:
+Then a fenced diff block showing the unified diff of what the change would look
+like:
 
 ````
 ```diff
@@ -492,9 +549,13 @@ Then a fenced diff block showing the unified diff of what the change would look 
 ```
 ````
 
-The diff preview must be a realistic unified diff — actual line numbers, actual removed/added content, enough context lines (1-2) to anchor the change. This is a preview of what will be applied if approved, not a vague description. If the change spans multiple hunks, show all of them.
+The diff preview must be a realistic unified diff — actual line numbers,
+actual removed/added content, enough context lines (1-2) to anchor the change.
+This is a preview of what will be applied if approved, not a vague description.
+If the change spans multiple hunks, show all of them.
 
-**Alternative approaches** (only include if there are multiple reasonable approaches):
+**Alternative approaches** (only include if there are multiple reasonable
+approaches):
 
 ```
 **Alternatives:**
@@ -521,7 +582,10 @@ Then use the **Question tool** to get the user's decision:
 }
 ```
 
-The Question tool's built-in custom answer option allows the user to type modified instructions instead of selecting Approve/Skip. If the user types a custom answer, treat it as modification instructions — revise the proposal accordingly and re-present for confirmation.
+The Question tool's built-in custom answer option allows the user to type
+modified instructions instead of selecting Approve/Skip. If the user types a
+custom answer, treat it as modification instructions — revise the proposal
+accordingly and re-present for confirmation.
 
 Wait for the user's response:
 
@@ -531,15 +595,19 @@ Wait for the user's response:
 
 #### 8b. Apply
 
-Before applying, verify this specific comment has a matching Step 8a `Approve` decision from a direct user Question response in this run.
+Before applying, verify this specific comment has a matching Step 8a `Approve`
+decision from a direct user Question response in this run.
 
-If that approval artifact is missing or does not match the current proposal, do not edit files for this comment.
+If that approval artifact is missing or does not match the current proposal, do
+not edit files for this comment.
 
-If approved, make the code change exactly as proposed (or as modified by the user).
+If approved, make the code change exactly as proposed (or as modified by the
+user).
 
 #### 8c. Verify
 
-Immediately after applying the change, show the result so the user can verify it:
+Immediately after applying the change, show the result so the user can verify
+it:
 
 1. Run `git diff` on the affected file(s) to show the raw diff of what changed
 2. Present a brief description alongside the diff
@@ -589,7 +657,8 @@ Handle the user's response:
 
 #### 8d. Repeat
 
-Continue the loop for every selected comment. After all comments have been processed, output a final summary:
+Continue the loop for every selected comment. After all comments have been
+processed, output a final summary:
 
 ```
 ## Changes Made
@@ -606,25 +675,33 @@ Do NOT commit the changes. The user will review and commit themselves.
 
 If a temporary clone was created at the start of Step 8, remind the user:
 
-> "All changes were made in `{WORK_DIR}`. You can review, commit, and push from that directory."
+> "All changes were made in `{WORK_DIR}`. You can review, commit, and push from
+> that directory."
 
 ### 9. Respond to PR comments
 
-Draft and post replies on the PR threads. This step handles both standalone replies (reply-only mode) and post-fix replies (after code changes).
+Draft and post replies on the PR threads. This step handles both standalone
+replies (reply-only mode) and post-fix replies (after code changes).
 
-**Note:** This step does NOT require a local checkout. All reply operations use the GitHub API directly via `gh api graphql` and `gh api`. This step works regardless of whether the working context is `local` or `remote`.
+**Note:** This step does NOT require a local checkout. All reply operations use
+the GitHub API directly via `gh api graphql` and `gh api`. This step works
+regardless of whether the working context is `local` or `remote`.
 
-**If no items were selected for replies** (and the action mode was "fix only"), skip this step.
+**If no items were selected for replies** (and the action mode was "fix only"),
+skip this step.
 
 #### Calibrate voice
 
-Before drafting any replies, run `tone-clone generate` to sample the user's real writing:
+Before drafting any replies, run `tone-clone generate` to sample the user's real
+writing:
 
 ```bash
 tone-clone generate --stdout --type pr_comment --limit 5
 ```
 
-Study the output for: sentence length, punctuation patterns, capitalization, level of formality, use of contractions, how links and code are referenced. All drafted replies must match these patterns.
+Study the output for: sentence length, punctuation patterns, capitalization,
+level of formality, use of contractions, how links and code are referenced. All
+drafted replies must match these patterns.
 
 If `tone-clone` is not available or returns no results, fall back to the rules and examples in the [voice and tone guide](../_shared/voice-and-tone.md).
 
@@ -711,7 +788,9 @@ Then use the **Question tool** to get the user's decision:
 }
 ```
 
-The Question tool's built-in custom answer option allows the user to type revised reply text. If the user types a custom answer, treat it as the edited reply — update the draft and re-present for confirmation.
+The Question tool's built-in custom answer option allows the user to type
+revised reply text. If the user types a custom answer, treat it as the edited
+reply — update the draft and re-present for confirmation.
 
 Handle the user's response on each reply:
 
@@ -722,7 +801,8 @@ Handle the user's response on each reply:
 
 #### 9d. Execution authorization checkpoint for replies (mandatory)
 
-After Step 9c per-item gates are complete, present the exact queued reply mutation plan:
+After Step 9c per-item gates are complete, present the exact queued reply
+mutation plan:
 
 - queued reply item numbers
 - which items are `Post` vs `Post + Resolve`
@@ -751,19 +831,23 @@ Then require explicit confirmation via the **Question tool**:
 }
 ```
 
-Only a direct user **Question** response of `Post queued` in this run authorizes Step 9e.
+Only a direct user **Question** response of `Post queued` in this run authorizes
+Step 9e.
 
-If this checkpoint is missing, ambiguous, stale, or delegated, stay draft-only for replies and stop.
+If this checkpoint is missing, ambiguous, stale, or delegated, stay draft-only
+for replies and stop.
 
 #### 9e. Post replies
 
-Before each mutation (post reply, post issue comment, resolve thread), verify all of the following:
+Before each mutation (post reply, post issue comment, resolve thread), verify
+all of the following:
 
 1. A matching Step 9d final checkpoint approval (`Post queued`) exists from a direct user Question response in this run.
 2. A matching Step 9c per-item approval artifact exists for that exact item in this run.
 3. The current reply mutation plan exactly matches the payload approved at Step 9d (no additions, no substitutions).
 
-If any check fails, skip all reply mutations, return draft-only output with `DRAFT_ONLY_BLOCKED`, and stop.
+If any check fails, skip all reply mutations, return draft-only output with
+`DRAFT_ONLY_BLOCKED`, and stop.
 
 For approved replies, use the GitHub GraphQL API:
 
@@ -800,7 +884,8 @@ GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql -f query='
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api repos/{owner}/{repo}/issues/{number}/comments -f body="$REPLY_BODY"
 ```
 
-After posting, confirm each reply was posted successfully and show the URL of the posted comment.
+After posting, confirm each reply was posted successfully and show the URL of
+the posted comment.
 
 ## Rules
 

@@ -14,13 +14,18 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Review a pull request as a code reviewer. Analyze the diff and surrounding code context, identify issues and areas for improvement, draft inline review comments, and submit them as a single atomic GitHub review — all with user approval before anything is posted.
+Review a pull request as a code reviewer. Analyze the diff and surrounding code
+context, identify issues and areas for improvement, draft inline review
+comments, and submit them as a single atomic GitHub review — all with user
+approval before anything is posted.
 
 ## Steps
 
 ### 1. Determine working context
 
-Determine whether the current working directory is a local checkout of the PR's repository. This step performs **detection only** — do not clone anything. This skill never needs a local clone.
+Determine whether the current working directory is a local checkout of the PR's
+repository. This step performs **detection only** — do not clone anything.
+This skill never needs a local clone.
 
 - If the user provides a PR URL, parse `owner/repo` and `number` from the URL pattern `github.com/{owner}/{repo}/pull/{number}`.
 - If the user provides a PR number (no URL), the current directory **must** be the target repo — run `gh repo view --json nameWithOwner --jq .nameWithOwner` to extract `owner/repo`.
@@ -29,22 +34,32 @@ Determine whether the current working directory is a local checkout of the PR's 
   GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view --json number,url,title,headRefName,baseRefName
   ```
 
-After identifying the PR, determine whether the current directory is a checkout of the target repo:
+After identifying the PR, determine whether the current directory is a checkout
+of the target repo:
 
 ```bash
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null
 ```
 
-Compare the result (case-insensitive) against the `owner/repo` extracted from the PR. Record the result as one of:
+Compare the result (case-insensitive) against the `owner/repo` extracted from
+the PR. Record the result as one of:
 
 - **`local`** — CWD is a checkout of the target repo. Use local file reads for code context.
 - **`remote`** — CWD is not the target repo. Use the GitHub API for all file reads.
 
-If the context is `remote`, also extract the PR's `headRefName` and `baseRefName` for use in API-based file reads.
+If the context is `remote`, also extract the PR's `headRefName` and
+`baseRefName` for use in API-based file reads.
 
-**Do not cd into a different directory to switch modes.** If the CWD isn't a checkout of the target repo but a sibling/subdirectory is (e.g., CWD is `~/GitHub` and `~/GitHub/repo-name` exists as a checkout), stay in `remote` mode and use the API. The user invoked this skill from the directory they wanted; respect that.
+**Do not cd into a different directory to switch modes.** If the CWD isn't a
+checkout of the target repo but a sibling/subdirectory is (e.g., CWD is
+`~/GitHub` and `~/GitHub/repo-name` exists as a checkout), stay in `remote` mode
+and use the API. The user invoked this skill from the directory they wanted;
+respect that.
 
-If you genuinely need a local checkout (e.g. the GitHub API is missing some context, or grep across the entire tree is needed), clone into `/tmp` only. Never use any other non-temp directory, and never modify a checkout that already exists elsewhere on disk.
+If you genuinely need a local checkout (e.g. the GitHub API is missing some
+context, or grep across the entire tree is needed), clone into `/tmp` only.
+Never use any other non-temp directory, and never modify a checkout that already
+exists elsewhere on disk.
 
 If no PR is found, inform the user and stop.
 
@@ -65,7 +80,8 @@ Gather all the information needed to perform the review.
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr view {number} -R {owner}/{repo} --json number,url,title,body,author,headRefName,baseRefName,headRefOid,additions,deletions,changedFiles
 ```
 
-Store the `headRefOid` (HEAD commit SHA) — this is needed for posting inline comments.
+Store the `headRefOid` (HEAD commit SHA) — this is needed for posting inline
+comments.
 
 #### PR diff
 
@@ -81,9 +97,12 @@ GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr diff {number} -R {owner}/{repo} --name-o
 
 #### Existing reviews and comments
 
-Fetch existing reviews to avoid duplicating feedback that has already been given.
+Fetch existing reviews to avoid duplicating feedback that has already been
+given.
 
-Write the query to a file first — inline multiline `-f query='...'` strings can be blocked by restrictive bash permission policies, and passing the query via `-F query=@file` keeps the GraphQL readable in source control too:
+Write the query to a file first — inline multiline `-f query='...'` strings
+can be blocked by restrictive bash permission policies, and passing the query
+via `-F query=@file` keeps the GraphQL readable in source control too:
 
 ```bash
 # Use the Write tool to create /tmp/pr-review-existing.graphql with:
@@ -115,7 +134,8 @@ Paginate if needed (check `pageInfo.hasNextPage`).
 
 ### 3. Analyze the diff
 
-Read and understand every changed file in the context of the broader codebase. The depth of analysis depends on the mode selected in Step 1.
+Read and understand every changed file in the context of the broader codebase.
+The depth of analysis depends on the mode selected in Step 1.
 
 #### Reading files for context
 
@@ -125,7 +145,8 @@ Read files directly from the local checkout.
 
 **If context is `remote`:**
 
-Read files via the GitHub API. **Do NOT clone the repo.** This skill never requires a local clone.
+Read files via the GitHub API. **Do NOT clone the repo.** This skill never
+requires a local clone.
 
 - **Read a specific file at the PR's head ref** — request raw content directly to skip base64 decoding (avoids the macOS `-D` vs GNU `-d` flag split):
 
@@ -205,13 +226,17 @@ Before recording a finding, check the existing reviews fetched in Step 2:
 
 ### 4. Calibrate voice
 
-Before drafting any text that will be posted to GitHub, run `tone-clone generate` to sample the user's real writing:
+Before drafting any text that will be posted to GitHub, run `tone-clone
+generate` to sample the user's real writing:
 
 ```bash
 tone-clone generate --stdout --type review_comment --limit 5
 ```
 
-Study the output for: sentence length, punctuation patterns, capitalization, level of formality, use of contractions, how links and code are referenced. All drafted comment bodies and the summary body in the next step must match these patterns.
+Study the output for: sentence length, punctuation patterns, capitalization,
+level of formality, use of contractions, how links and code are referenced. All
+drafted comment bodies and the summary body in the next step must match these
+patterns.
 
 If `tone-clone` is not available or returns no results, fall back to the rules and examples in the [voice and tone guide](../_shared/voice-and-tone.md).
 
@@ -240,9 +265,16 @@ All posted comment text must follow the [voice and tone guide](../_shared/voice-
 
 #### Summary body
 
-Draft a summary review body. Keep it short and natural. A couple sentences covering the overall impression and the most important concerns. The inline comments carry the detail, so the summary doesn't need to enumerate everything.
+Draft a summary review body. Keep it short and natural. A couple sentences
+covering the overall impression and the most important concerns. The inline
+comments carry the detail, so the summary doesn't need to enumerate everything.
 
-**The summary is about the PR, not about the review.** Do not narrate what you did or how you approached the review. Skip phrases like "went deep on...", "ignoring the small stuff per request", "the things i care about", "took a thorough pass", or anything else that describes the review process. Lead directly with the substance — what's wrong, what's worth flagging, what's good. The reader cares about the code, not how it was reviewed.
+**The summary is about the PR, not about the review.** Do not narrate what you
+did or how you approached the review. Skip phrases like "went deep on...",
+"ignoring the small stuff per request", "the things i care about", "took a
+thorough pass", or anything else that describes the review process. Lead
+directly with the substance — what's wrong, what's worth flagging, what's
+good. The reader cares about the code, not how it was reviewed.
 
 All posted text must follow the [voice and tone guide](../_shared/voice-and-tone.md).
 
@@ -278,7 +310,9 @@ For each inline comment, present using the [embedded ascii-art format](../_share
 ### Comment #<N>: `<file>:<line>` [<severity>]
 ```
 
-Then the ascii-art block showing the code context and the draft comment in a box below the target line(s). The comment body shown here is exactly what will be posted to GitHub. For example:
+Then the ascii-art block showing the code context and the draft comment in a box
+below the target line(s). The comment body shown here is exactly what will be
+posted to GitHub. For example:
 
 ````
 ```
@@ -298,7 +332,8 @@ Then the ascii-art block showing the code context and the draft comment in a box
 
 #### User editing
 
-Use the **Question tool** with `multiple: true` to let the user select which comments to include in the review:
+Use the **Question tool** with `multiple: true` to let the user select which
+comments to include in the review:
 
 ```json
 {
@@ -331,17 +366,21 @@ The user can:
 - Deselect comments to exclude them
 - Type custom text to modify specific comments (e.g., "edit #2 to say..." or "drop the nits")
 
-If the user modifies any comments, update the drafts and re-present the affected comments for confirmation.
+If the user modifies any comments, update the drafts and re-present the affected
+comments for confirmation.
 
 #### Thread reply drafts
 
-If any selected comments will be posted as thread replies (reinforcing existing review threads), present those drafts separately under a "Thread Replies" heading after the inline comments. Use the same format:
+If any selected comments will be posted as thread replies (reinforcing existing
+review threads), present those drafts separately under a "Thread Replies"
+heading after the inline comments. Use the same format:
 
 ```
 ### Thread Reply #<N>: `<file>:<line>` (replying to @<author>)
 ```
 
-Followed by the draft reply text. These go through the same approval gate — nothing is posted until the user confirms.
+Followed by the draft reply text. These go through the same approval gate —
+nothing is posted until the user confirms.
 
 Then ask for the review state:
 
@@ -370,7 +409,8 @@ Then ask for the review state:
 }
 ```
 
-If the user selects nothing (no comments and no state), treat it as "cancel" — do not submit a review.
+If the user selects nothing (no comments and no state), treat it as "cancel" —
+do not submit a review.
 
 Execution mode for this run:
 
@@ -409,7 +449,8 @@ Then use the **Question tool**:
 }
 ```
 
-Only a direct user **Question** response of `Submit` in this run authorizes Step 7.
+Only a direct user **Question** response of `Submit` in this run authorizes Step
+7.
 
 - Free-form assistant text, inferred intent, or delegated follow-up instructions are not approval.
 - Free-form user text (for example, "submit now") is not approval unless it is captured through this Step 6 **Question** checkpoint.
@@ -418,7 +459,9 @@ Only a direct user **Question** response of `Submit` in this run authorizes Step
 
 ### 7. Submit the review
 
-Post the review as a single atomic GitHub review using the `addPullRequestReview` GraphQL mutation. This submits all inline comments together as one review — not as individual comments.
+Post the review as a single atomic GitHub review using the
+`addPullRequestReview` GraphQL mutation. This submits all inline comments
+together as one review — not as individual comments.
 
 Before any mutation call, run a strict preflight:
 
@@ -431,7 +474,9 @@ Before any mutation call, run a strict preflight:
 
 If any check fails, return draft-only output with `DRAFT_ONLY_BLOCKED` and stop.
 
-First, get the PR's GraphQL node ID. Use the Write tool to create the query file (inline multiline `-f query='...'` strings can be blocked by restrictive bash permission policies):
+First, get the PR's GraphQL node ID. Use the Write tool to create the query file
+(inline multiline `-f query='...'` strings can be blocked by restrictive bash
+permission policies):
 
 ```bash
 # Use the Write tool to create /tmp/pr-review-id.graphql with:
@@ -448,7 +493,10 @@ GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql \
   --jq '.data.repository.pullRequest.id'
 ```
 
-Then submit the review. Use the Write tool to create the request body file (heredocs like `cat <<'EOF' > file EOF` are also blocked by restrictive permission policies, and writing the JSON to a file is necessary anyway so that the `comments` array passes as structured JSON, not a string):
+Then submit the review. Use the Write tool to create the request body file
+(heredocs like `cat <<'EOF' > file EOF` are also blocked by restrictive
+permission policies, and writing the JSON to a file is necessary anyway so that
+the `comments` array passes as structured JSON, not a string):
 
 ```bash
 # Use the Write tool to create /tmp/pr-review-request.json with:
@@ -472,7 +520,8 @@ Then submit the review. Use the Write tool to create the request body file (here
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql --input /tmp/pr-review-request.json
 ```
 
-Where `$EVENT` is one of `COMMENT`, `APPROVE`, or `REQUEST_CHANGES`, and `$COMMENTS_JSON` is a JSON array of objects:
+Where `$EVENT` is one of `COMMENT`, `APPROVE`, or `REQUEST_CHANGES`, and
+`$COMMENTS_JSON` is a JSON array of objects:
 
 ```json
 [
@@ -486,7 +535,9 @@ Where `$EVENT` is one of `COMMENT`, `APPROVE`, or `REQUEST_CHANGES`, and `$COMME
 
 #### Calculating diff positions
 
-The `position` field is a 1-indexed offset within the file's diff. It is NOT the line number in the file. To convert a target file line number to a diff position:
+The `position` field is a 1-indexed offset within the file's diff. It is NOT the
+line number in the file. To convert a target file line number to a diff
+position:
 
 ```bash
 GH_PAGER=cat GH_PROMPT_DISABLED=1 gh pr diff {number} -R {owner}/{repo} | python3 -c "
@@ -532,9 +583,12 @@ for line in sys.stdin:
 "
 ```
 
-Run this for each file that has comments. The `pos` value is what goes in the `position` field.
+Run this for each file that has comments. The `pos` value is what goes in the
+`position` field.
 
-If the target line is not in the diff (not an added, removed, or context line), find the nearest line that IS in the diff and adjust the comment text to reference the correct location.
+If the target line is not in the diff (not an added, removed, or context line),
+find the nearest line that IS in the diff and adjust the comment text to
+reference the correct location.
 
 After posting, confirm success and show the review URL:
 
@@ -546,7 +600,10 @@ Comments: <N> inline comments, <M> thread replies
 
 #### Replying to existing review threads
 
-When the user selects a comment that overlaps with an existing unresolved review thread (same file, same line, same concern), post a **thread reply** instead of creating a duplicate inline comment. Use the `addPullRequestReviewThreadReply` mutation. As with the main review submission, write the query to a file first:
+When the user selects a comment that overlaps with an existing unresolved review
+thread (same file, same line, same concern), post a **thread reply** instead of
+creating a duplicate inline comment. Use the `addPullRequestReviewThreadReply`
+mutation. As with the main review submission, write the query to a file first:
 
 ```bash
 # Use the Write tool to create /tmp/pr-thread-reply.graphql with:
@@ -566,9 +623,11 @@ GH_PAGER=cat GH_PROMPT_DISABLED=1 gh api graphql \
 # For short single-line bodies, -f body="..." is fine.
 ```
 
-The `$THREAD_ID` comes from the `id` field on `reviewThreads` nodes fetched in Step 2.
+The `$THREAD_ID` comes from the `id` field on `reviewThreads` nodes fetched in
+Step 2.
 
-Thread replies are posted individually (not part of the atomic review submission). Post them after the main review is submitted.
+Thread replies are posted individually (not part of the atomic review
+submission). Post them after the main review is submitted.
 
 ## Rules
 

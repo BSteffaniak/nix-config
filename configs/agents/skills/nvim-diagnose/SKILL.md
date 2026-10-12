@@ -14,10 +14,14 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Troubleshoot neovim startup errors, plugin failures, and runtime issues by capturing
-diagnostics and tracing them to their root cause in the configuration. Supports two modes:
-automatic capture via `nvim --headless` and manual input where the user pastes error text
-directly. Outputs a categorized report with source file references and actionable fix
+Troubleshoot neovim startup errors, plugin failures, and runtime issues by
+capturing
+diagnostics and tracing them to their root cause in the configuration. Supports
+two modes:
+automatic capture via `nvim --headless` and manual input where the user pastes
+error text
+directly. Outputs a categorized report with source file references and
+actionable fix
 suggestions — never edits files.
 
 ## Prerequisites
@@ -59,8 +63,10 @@ Ask the user how to gather error information:
 
 ### 2. Capture diagnostics
 
-Run headless neovim commands to gather diagnostic data. Always capture both stdout and
-stderr (`2>&1`). Use a 30-second timeout per command to avoid hangs from plugins that
+Run headless neovim commands to gather diagnostic data. Always capture both
+stdout and
+stderr (`2>&1`). Use a 30-second timeout per command to avoid hangs from plugins
+that
 block in headless mode.
 
 #### 2a. Startup errors
@@ -69,7 +75,8 @@ block in headless mode.
 nvim --headless -c 'qa!' 2>&1
 ```
 
-Errors printed to stderr during startup appear here. This is the most reliable capture —
+Errors printed to stderr during startup appear here. This is the most reliable
+capture —
 any plugin that throws during `init.lua` processing will surface.
 
 #### 2b. Startup messages
@@ -78,7 +85,8 @@ any plugin that throws during `init.lua` processing will surface.
 nvim --headless -c 'lua vim.defer_fn(function() local m = vim.api.nvim_exec2("messages", {output=true}).output; local f = io.open("/tmp/nvim-diag-msgs.txt", "w"); if f then f:write(m); f:close() end; vim.cmd("qa!") end, 3000)' 2>&1
 ```
 
-The 3-second defer allows lazy-loaded plugins to initialize and emit messages. Read
+The 3-second defer allows lazy-loaded plugins to initialize and emit messages.
+Read
 `/tmp/nvim-diag-msgs.txt` for the captured `:messages` output.
 
 If this command hangs or produces no output, fall back to:
@@ -93,9 +101,12 @@ nvim --headless -c 'redir! > /tmp/nvim-diag-msgs.txt | silent messages | redir E
 nvim --headless -c 'checkhealth' -c 'lua vim.defer_fn(function() vim.cmd("w! /tmp/nvim-diag-health.txt"); vim.cmd("qa!") end, 5000)' 2>&1
 ```
 
-Read `/tmp/nvim-diag-health.txt`, and also parse stderr/stdout from the `checkhealth`
-command itself. If the file is empty, truncated, or incomplete due to early failure,
-treat command output as authoritative and include any `ERROR`/`WARN` lines from stderr
+Read `/tmp/nvim-diag-health.txt`, and also parse stderr/stdout from the
+`checkhealth`
+command itself. If the file is empty, truncated, or incomplete due to early
+failure,
+treat command output as authoritative and include any `ERROR`/`WARN` lines from
+stderr
 in findings.
 
 #### 2d. Lazy.nvim plugin status
@@ -104,8 +115,10 @@ in findings.
 nvim --headless -c 'lua vim.defer_fn(function() local ok, lazy = pcall(require, "lazy"); if ok then for _, p in ipairs(lazy.plugins()) do local s = p._.loaded and "loaded" or (p._.cond == false and "disabled" or "not-loaded"); io.stderr:write(s .. ": " .. p.name .. "\n") end end; vim.cmd("qa!") end, 3000)' 2>&1
 ```
 
-Note: Plugins configured with `lazy = true` will show as `not-loaded` in headless mode.
-This is normal — only flag plugins that are `not-loaded` when they should be eager, or
+Note: Plugins configured with `lazy = true` will show as `not-loaded` in
+headless mode.
+This is normal — only flag plugins that are `not-loaded` when they should be
+eager, or
 that have error messages associated with them.
 
 #### 2e. Runtime dependency checks
@@ -114,8 +127,10 @@ that have error messages associated with them.
 nvim --headless -c 'lua for _, cmd in ipairs({"fzf", "rg", "fd", "node", "git", "luarocks", "stylua", "lua-language-server"}) do io.stderr:write(cmd .. ": " .. (vim.fn.executable(cmd) == 1 and "found" or "MISSING") .. "\n") end; vim.cmd("qa!")' 2>&1
 ```
 
-**If any command hangs or fails**, note it in findings and continue with the remaining
-diagnostics. Adapt command syntax as needed — the exact invocations above are starting
+**If any command hangs or fails**, note it in findings and continue with the
+remaining
+diagnostics. Adapt command syntax as needed — the exact invocations above are
+starting
 points and may need adjustment depending on the neovim version and plugin state.
 
 ### 3. Parse and categorize
@@ -182,8 +197,10 @@ Then ask which categories to investigate further:
 }
 ```
 
-Build the options dynamically from actual findings. Only show categories that have at
-least one finding. If there are no findings at all, report a clean bill of health and stop.
+Build the options dynamically from actual findings. Only show categories that
+have at
+least one finding. If there are no findings at all, report a clean bill of
+health and stop.
 
 ### 5. Deep analysis
 
@@ -214,7 +231,8 @@ Key config files to examine based on error category:
 
 #### 5b. Trace root cause
 
-For each error, read the relevant source files and determine why it occurs. Common
+For each error, read the relevant source files and determine why it occurs.
+Common
 root causes:
 
 - **Plugin API change** — A pinned version in `lazy-lock.json` has a breaking change
@@ -247,7 +265,8 @@ For each traced error, produce:
 - **Suggested fix**: <specific change to make, with before/after if helpful>
 ```
 
-Always include the file path relative to the repo root and the exact line number.
+Always include the file path relative to the repo root and the exact line
+number.
 
 ### 6. Final report
 
@@ -282,7 +301,8 @@ Present a complete structured report:
 things that could only be checked at runtime, etc.>
 ```
 
-Sort findings by severity (errors first, then warnings). Within the same severity,
+Sort findings by severity (errors first, then warnings). Within the same
+severity,
 group by category.
 
 ## Rules

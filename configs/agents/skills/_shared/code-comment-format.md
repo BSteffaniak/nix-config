@@ -1,10 +1,14 @@
 # Code Comment Display Format
 
-When presenting code alongside comments (drafts, reviewer feedback, or replies), use the ascii-art embedded format described below. This applies to all contexts: drafting annotations, reviewing reviewer comments, and drafting replies.
+When presenting code alongside comments (drafts, reviewer feedback, or replies),
+use the ascii-art embedded format described below. This applies to all contexts:
+drafting annotations, reviewing reviewer comments, and drafting replies.
 
 ## Line anatomy
 
-Every line in the ascii-art block is one of these types. The **gutter column** (the `│` after the line number) must be in the **same column on every line** — code lines, blank separators, and box lines alike.
+Every line in the ascii-art block is one of these types. The **gutter column**
+(the `│` after the line number) must be in the **same column on every line**
+— code lines, blank separators, and box lines alike.
 
 ### Code line
 
@@ -12,7 +16,9 @@ Every line in the ascii-art block is one of these types. The **gutter column** (
   <NNN> │ <code>
 ```
 
-`<NNN>` is the line number, right-aligned, padded with leading spaces to a consistent width (typically 3-5 digits depending on the file). One space after the number, then `│`, then one space, then the code.
+`<NNN>` is the line number, right-aligned, padded with leading spaces to a
+consistent width (typically 3-5 digits depending on the file). One space after
+the number, then `│`, then one space, then the code.
 
 ### Blank separator
 
@@ -20,7 +26,8 @@ Every line in the ascii-art block is one of these types. The **gutter column** (
         │
 ```
 
-Same gutter column as code lines. No content after the `│`. Used to visually separate code from comment boxes (one blank separator above and below each box).
+Same gutter column as code lines. No content after the `│`. Used to visually
+separate code from comment boxes (one blank separator above and below each box).
 
 ### Box top border
 
@@ -28,7 +35,9 @@ Same gutter column as code lines. No content after the `│`. Used to visually s
         │  ┌─ <label> ─────────────────────────────────────────┐
 ```
 
-Same gutter column. Two spaces after `│`, then `┌─ `, then the label text, then a space, then `─` repeated to fill, then `┐`. The `┐` marks the right edge of the box.
+Same gutter column. Two spaces after `│`, then `┌─ `, then the label text,
+then a space, then `─` repeated to fill, then `┐`. The `┐` marks the right
+edge of the box.
 
 ### Box content line
 
@@ -36,7 +45,9 @@ Same gutter column. Two spaces after `│`, then `┌─ `, then the label text,
         │  │ <comment text, padded with trailing spaces>       │
 ```
 
-Same gutter column. Two spaces after `│`, then `│ `, then the comment text, then trailing spaces to fill, then ` │`. The closing `│` **must be in the same column as the `┐` and `┘`**.
+Same gutter column. Two spaces after `│`, then `│ `, then the comment text,
+then trailing spaces to fill, then ` │`. The closing `│` **must be in the
+same column as the `┐` and `┘`**.
 
 ### Box bottom border
 
@@ -44,11 +55,13 @@ Same gutter column. Two spaces after `│`, then `│ `, then the comment text, 
         │  └───────────────────────────────────────────────────┘
 ```
 
-Same gutter column. Two spaces after `│`, then `└`, then `─` repeated to fill, then `┘`. The `┘` **must be in the same column as the `┐`**.
+Same gutter column. Two spaces after `│`, then `└`, then `─` repeated to
+fill, then `┘`. The `┘` **must be in the same column as the `┐`**.
 
 ## Alignment rules
 
-These are critical. The most common rendering mistakes come from violating these:
+These are critical. The most common rendering mistakes come from violating
+these:
 
 1. **The gutter `│` is in the same column on every line.** Code lines, blank separators, box borders, box content — all have `│` in the same column.
 
@@ -109,7 +122,8 @@ Box label: `@<reviewer username>`
 
 ## Example: reviewer comment with draft reply (pr-review replies)
 
-When presenting a draft reply alongside the original reviewer comment, show both boxes stacked — the reviewer's comment first, then the draft reply:
+When presenting a draft reply alongside the original reviewer comment, show both
+boxes stacked — the reviewer's comment first, then the draft reply:
 
 ````
 ```ts
@@ -130,7 +144,8 @@ When presenting a draft reply alongside the original reviewer comment, show both
 ```
 ````
 
-Box labels: `@<reviewer username>` for the original comment, `Draft reply` for the reply.
+Box labels: `@<reviewer username>` for the original comment, `Draft reply` for
+the reply.
 
 ## Guidelines
 

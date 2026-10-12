@@ -1,6 +1,7 @@
 # Graphite UI for Pi
 
-An understated Pi interface: compact single-line header, quiet working indicator, and useful footer status. No neon, no rainbow editor gimmick.
+An understated Pi interface: compact single-line header, quiet working
+indicator, and useful footer status. No neon, no rainbow editor gimmick.
 
 Commands:
 

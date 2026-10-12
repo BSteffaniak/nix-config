@@ -14,7 +14,9 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Generate a commit message for the current staged or unstaged changes. Output the message as text for the user to copy. Do not run `git commit` or write any files.
+Generate a commit message for the current staged or unstaged changes. Output the
+message as text for the user to copy. Do not run `git commit` or write any
+files.
 
 ## Steps
 

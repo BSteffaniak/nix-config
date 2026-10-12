@@ -10,7 +10,11 @@ Follow the [shared user override contract](../_shared/user-overrides.md). This s
 
 ## Purpose
 
-Use bmux recordings to debug behavior regressions by reconstructing what happened on the timeline, separating signal from polling noise, and validating whether expected request and server-event chains completed. This skill is optimized for incident triage and bug reproduction analysis (for example: split pane -> create window/context -> switch back failure).
+Use bmux recordings to debug behavior regressions by reconstructing what
+happened on the timeline, separating signal from polling noise, and validating
+whether expected request and server-event chains completed. This skill is
+optimized for incident triage and bug reproduction analysis (for example: split
+pane -> create window/context -> switch back failure).
 
 ## Prerequisites
 
@@ -21,7 +25,8 @@ Use bmux recordings to debug behavior regressions by reconstructing what happene
 
 ### 1. Resolve the recording target
 
-If the user already provided a recording ID, use it directly. Otherwise discover candidates:
+If the user already provided a recording ID, use it directly. Otherwise discover
+candidates:
 
 ```bash
 cargo run -p bmux_cli -- recording list --json
@@ -33,7 +38,8 @@ Parse and present top candidates by recency and size:
 cargo run -p bmux_cli -- recording list --json | jq -r '.recordings[] | [.id, .started_at, .event_count, .payload_bytes] | @tsv'
 ```
 
-If multiple candidates could match the repro, ask the user which one to inspect before continuing.
+If multiple candidates could match the repro, ask the user which one to inspect
+before continuing.
 
 ### 2. Build a quick timeline skeleton
 
@@ -43,7 +49,8 @@ Inspect early events to identify protocol shape and establish sequence context:
 cargo run -p bmux_cli -- recording inspect <recording-id> --json --limit 400
 ```
 
-Capture the user-expected flow in one line (example: `split pane -> create context -> reattach -> select previous context`).
+Capture the user-expected flow in one line (example: `split pane -> create
+context -> reattach -> select previous context`).
 
 Treat this as the expected chain to validate in later steps.
 
@@ -55,7 +62,8 @@ Locate the raw event file path:
 ls "$HOME/Library/Application Support/bmux/State/runtime/recordings/<recording-id>"
 ```
 
-Use `rg` to find first-pass anchors in `events.jsonl` (request names and key server events):
+Use `rg` to find first-pass anchors in `events.jsonl` (request names and key
+server events):
 
 ```bash
 rg -n '"split_pane"|"create_context"|"attach_context"|"select_context"|"client_attached"|"client_detached"' "$HOME/Library/Application Support/bmux/State/runtime/recordings/<recording-id>/events.jsonl"
@@ -65,7 +73,8 @@ Record candidate sequence numbers for each action stage.
 
 ### 4. Reduce noise and extract a high-signal stream
 
-Most recordings are dominated by `poll_events`. Filter to high-value event kinds:
+Most recordings are dominated by `poll_events`. Filter to high-value event
+kinds:
 
 - `request_start`
 - `request_done`
@@ -106,9 +115,11 @@ For each user action, verify the expected request/event chain:
 2. matching `request_done` with success outcome
 3. related `server_event` transitions (for context/window changes, especially `client_detached` and `client_attached`)
 
-For context switch issues, confirm whether `select_context` resolves to the expected session/context IDs and whether attach lifecycle events follow.
+For context switch issues, confirm whether `select_context` resolves to the
+expected session/context IDs and whether attach lifecycle events follow.
 
-When IDs differ from expectation, flag the first diverging sequence as the likely failure point.
+When IDs differ from expectation, flag the first diverging sequence as the
+likely failure point.
 
 ### 6. Produce evidence-ready findings
 
@@ -128,7 +139,8 @@ Suggested next probe:
 - <exact command and why>
 ```
 
-Include exact sequence numbers and IDs (session/context/client) whenever available.
+Include exact sequence numbers and IDs (session/context/client) whenever
+available.
 
 ### 7. Optional deep-dive loop
 
@@ -138,17 +150,20 @@ If root cause is still unclear, iterate with one focused refinement at a time:
 - include `pane_output_raw` only near the suspect window
 - compare expected and observed ID transitions side-by-side
 
-After each refinement, restate whether the failure appears client-side request handling, server state transition, or attach synchronization.
+After each refinement, restate whether the failure appears client-side request
+handling, server state transition, or attach synchronization.
 
 ## Worked example (reference)
 
-Recording `1234394d-01c4-4e3a-96d5-adb2e8c47b46` produced these useful anchors during prior analysis:
+Recording `1234394d-01c4-4e3a-96d5-adb2e8c47b46` produced these useful anchors
+during prior analysis:
 
 - `split_pane`: request start around `seq 441670`, done around `seq 441672`
 - context creation/attach transition around `seq 604476` to `seq 604484`
 - later context switch attempt (`select_context`) around `seq 3570886` to `seq 3570889`
 
-Use these as landmarks when validating repros with similar flow (`split -> new context/window -> switch back`).
+Use these as landmarks when validating repros with similar flow (`split -> new
+context/window -> switch back`).
 
 ## Rules
 

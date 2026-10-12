@@ -1,6 +1,7 @@
 # Read Last Reply
 
-Pi extension for having the latest assistant response read aloud, useful for hands-free sessions.
+Pi extension for having the latest assistant response read aloud, useful for
+hands-free sessions.
 
 ## Shortcuts
 
@@ -17,7 +18,9 @@ Pi extension for having the latest assistant response read aloud, useful for han
 
 ## Audio adapter
 
-Before TTS, the extension can rewrite an assistant reply into a more natural spoken script. This is useful for code blocks, markdown tables, file paths, commands, and dense technical lists.
+Before TTS, the extension can rewrite an assistant reply into a more natural
+spoken script. This is useful for code blocks, markdown tables, file paths,
+commands, and dense technical lists.
 
 Adapter selection:
 
@@ -31,7 +34,8 @@ The Nix-managed Pi module enables the LLM adapter by default:
 - `PI_READ_REPLY_AUDIO_ADAPTER_PROVIDER=openai`
 - `PI_READ_REPLY_AUDIO_ADAPTER_MODEL=gpt-4o-mini`
 
-If that model or API key is unavailable, the extension falls back to the current Pi model when possible, then to the heuristic adapter.
+If that model or API key is unavailable, the extension falls back to the current
+Pi model when possible, then to the heuristic adapter.
 
 ## Backends
 
@@ -47,7 +51,8 @@ Piper is configured separately by the general Home Manager TTS module:
 myConfig.tools.tts.piper.enable = true;
 ```
 
-That module installs `piper`, a default voice, the `tts-say` helper, and exports:
+That module installs `piper`, a default voice, the `tts-say` helper, and
+exports:
 
 - `TTS_BACKEND=piper`
 - `PIPER_VOICE=~/.local/share/tts/piper/voices/en_US-ryan-high.onnx`
@@ -75,6 +80,9 @@ Environment overrides:
 - `PI_READ_REPLY_PIPER_SENTENCE_SILENCE` / `PIPER_SENTENCE_SILENCE`
 - `PI_READ_REPLY_PIPER_VOLUME` / `PIPER_VOLUME`
 
-The extension strips residual markdown formatting and truncates long adapted scripts so it does not read forever.
+The extension strips residual markdown formatting and truncates long adapted
+scripts so it does not read forever.
 
-After deploying through home-manager, restart Pi from a fresh shell to pick up the Piper package and environment variables. `/reload` is enough only for extension code changes inside an already-correct environment.
+After deploying through home-manager, restart Pi from a fresh shell to pick up
+the Piper package and environment variables. `/reload` is enough only for
+extension code changes inside an already-correct environment.

@@ -14,19 +14,36 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Audit a project's third-party dependencies and produce actionable removal plans. The driving principle: if a dependency is core to the functionality of your project, you should own that logic yourself — you cannot depend on core functionality you don't control.
+Audit a project's third-party dependencies and produce actionable removal plans.
+The driving principle: if a dependency is core to the functionality of your
+project, you should own that logic yourself — you cannot depend on core
+functionality you don't control.
 
-Removal doesn't have to be all-or-nothing. For deeply integrated dependencies, the skill supports phased migration plans — reducing usage incrementally across contained, well-scoped sessions. Each phase targets a specific subset of call sites or a specific module, producing a self-contained unit of work that can be completed in a single session and leaves the codebase in a working state.
+Removal doesn't have to be all-or-nothing. For deeply integrated dependencies,
+the skill supports phased migration plans — reducing usage incrementally
+across contained, well-scoped sessions. Each phase targets a specific subset of
+call sites or a specific module, producing a self-contained unit of work that
+can be completed in a single session and leaves the codebase in a working state.
 
-The skill detects which package ecosystems are in use (Cargo, npm/yarn/pnpm/bun, Go modules, pip/Poetry), inventories direct dependencies, analyzes how each is actually used in the codebase, and scores them on a removal-value vs replacement-effort matrix. For dependencies the user selects, it guides them through choosing a replacement strategy — full rewrite, minimal implementation, stdlib swap, switching to a lighter alternative, or phased migration — and produces a structured plan that can be executed immediately in the same session. The skill can run as a broad audit across all ecosystems, be scoped to a single ecosystem (e.g., "cargo"), or target a specific dependency by name (e.g., "lodash").
+The skill detects which package ecosystems are in use (Cargo, npm/yarn/pnpm/bun,
+Go modules, pip/Poetry), inventories direct dependencies, analyzes how each is
+actually used in the codebase, and scores them on a removal-value vs
+replacement-effort matrix. For dependencies the user selects, it guides them
+through choosing a replacement strategy — full rewrite, minimal
+implementation, stdlib swap, switching to a lighter alternative, or phased
+migration — and produces a structured plan that can be executed immediately in
+the same session. The skill can run as a broad audit across all ecosystems, be
+scoped to a single ecosystem (e.g., "cargo"), or target a specific dependency by
+name (e.g., "lodash").
 
 ### 1. Parse scope
 
-Determine what to audit from the invocation argument. The skill supports three modes:
+Determine what to audit from the invocation argument. The skill supports three
+modes:
 
 | Input                                                                 | Mode             | Behavior                                                              |
 | --------------------------------------------------------------------- | ---------------- | --------------------------------------------------------------------- |
-| _(no argument)_                                                       | Broad audit      | Auto-detect all ecosystems in the project, inventory all dependencies |
+| *(no argument)*                                                       | Broad audit      | Auto-detect all ecosystems in the project, inventory all dependencies |
 | Ecosystem name: `cargo`, `rust`, `node`, `npm`, `go`, `python`, `pip` | Ecosystem filter | Restrict to that ecosystem only                                       |
 | Dependency name: `lodash`, `serde`, `tokio`                           | Single-dep       | Skip broad scan, go straight to deep analysis of that one dependency  |
 
@@ -61,11 +78,15 @@ Scan the project root for manifest files:
 | `go.mod`                                                    | Go                       |
 | `pyproject.toml`, `requirements.txt`, `setup.py`, `Pipfile` | Python                   |
 
-If no manifest files are found for the specified ecosystem, report the error and stop.
+If no manifest files are found for the specified ecosystem, report the error and
+stop.
 
 **Single-dep mode:**
 
-When a specific dependency name is given, search all detected manifest files to find which ecosystem it belongs to. If found in multiple ecosystems (unlikely but possible), ask the user which one to analyze. If not found in any manifest, report that the dependency isn't used in this project.
+When a specific dependency name is given, search all detected manifest files to
+find which ecosystem it belongs to. If found in multiple ecosystems (unlikely
+but possible), ask the user which one to analyze. If not found in any manifest,
+report that the dependency isn't used in this project.
 
 ### 2. Discover project & dependencies
 
@@ -80,7 +101,9 @@ Parse manifest and lock files to build a dependency inventory.
 cargo metadata --format-version 1 --no-deps | jq '.packages[0].dependencies[] | {name, kind, req}'
 ```
 
-If `cargo metadata` is unavailable, fall back to reading `Cargo.toml` directly and parsing `[dependencies]`, `[dev-dependencies]`, and `[build-dependencies]` sections.
+If `cargo metadata` is unavailable, fall back to reading `Cargo.toml` directly
+and parsing `[dependencies]`, `[dev-dependencies]`, and `[build-dependencies]`
+sections.
 
 Classify each dependency as:
 
@@ -95,7 +118,8 @@ Classify each dependency as:
 cat package.json | jq '{dependencies, devDependencies, peerDependencies}'
 ```
 
-For workspaces/monorepos, check for `workspaces` field in the root `package.json` and scan each workspace's `package.json` as well. Classify as:
+For workspaces/monorepos, check for `workspaces` field in the root
+`package.json` and scan each workspace's `package.json` as well. Classify as:
 
 - **runtime** — `dependencies`
 - **dev-only** — `devDependencies`
@@ -133,11 +157,14 @@ Build a table of all discovered dependencies:
 | 3 | lodash    | npm       | runtime | 4.17.21 |
 ```
 
-If in single-dep mode, skip the full inventory and present only the target dependency's entry, then proceed directly to Step 3 for that dependency.
+If in single-dep mode, skip the full inventory and present only the target
+dependency's entry, then proceed directly to Step 3 for that dependency.
 
 ### 3. Analyze usage & complexity
 
-For each direct dependency (or the single target dep), perform a deep codebase analysis. This is the most critical step — all downstream scoring depends on accurate usage data.
+For each direct dependency (or the single target dep), perform a deep codebase
+analysis. This is the most critical step — all downstream scoring depends on
+accurate usage data.
 
 #### 3a. Find imports and usages
 
@@ -174,7 +201,9 @@ rg "(import ${dep_name}|from ${dep_name})" --type py -c
 
 #### 3b. Determine API surface used
 
-For each dependency, identify the specific functions, types, traits, or methods that are actually called or referenced. Read the files that import the dependency and catalog:
+For each dependency, identify the specific functions, types, traits, or methods
+that are actually called or referenced. Read the files that import the
+dependency and catalog:
 
 - **Functions/methods called** — e.g., `serde::Serialize`, `lodash.debounce`, `filepath.Walk`
 - **Types/structs used** — e.g., `tokio::Runtime`, `express.Router`
@@ -222,7 +251,8 @@ Rate **high**, **medium**, or **low** based on:
 | Maintenance risk   | Unmaintained / single maintainer / known CVEs | Maintained but infrequent updates | Actively maintained, widely used |
 | Usage breadth      | Used across many modules                      | Used in a few modules             | Used in one place                |
 
-A dependency that is core to the project's functionality is **always** high removal value regardless of other factors — this is the primary signal.
+A dependency that is core to the project's functionality is **always** high
+removal value regardless of other factors — this is the primary signal.
 
 #### Replacement effort (how hard to remove)
 
@@ -254,7 +284,8 @@ Value      Med   |  P2 ★★   |  P3 ★    |  P4      |
 - **P4** — Low priority. Only if specifically motivated.
 - **P5** — Not worth removing. The effort exceeds the benefit.
 
-Sort dependencies by priority (P1 first), then by removal value within the same priority tier.
+Sort dependencies by priority (P1 first), then by removal value within the same
+priority tier.
 
 ### 5. Present findings
 
@@ -284,7 +315,8 @@ Found **N** direct dependencies across **M** ecosystems.
 
 #### Gate: select dependencies to plan
 
-Use the Question tool to let the user select which dependencies to create removal plans for. Pre-select all P1 and P2 dependencies:
+Use the Question tool to let the user select which dependencies to create
+removal plans for. Pre-select all P1 and P2 dependencies:
 
 ```json
 {
@@ -308,13 +340,15 @@ Use the Question tool to let the user select which dependencies to create remova
 }
 ```
 
-If in **single-dep mode**, skip this gate — there's only one dependency to plan for. Show the analysis summary and proceed directly to Step 6.
+If in **single-dep mode**, skip this gate — there's only one dependency to
+plan for. Show the analysis summary and proceed directly to Step 6.
 
 If the user selects no dependencies, confirm they want to end the audit.
 
 ### 6. Per-dependency replacement planning
 
-Process each selected dependency one at a time using the per-item review loop pattern.
+Process each selected dependency one at a time using the per-item review loop
+pattern.
 
 #### For each dependency:
 
@@ -372,11 +406,16 @@ Process each selected dependency one at a time using the per-item review loop pa
 }
 ```
 
-The available strategies and their descriptions should be tailored to each specific dependency based on the analysis. Not all strategies apply to every dependency — only show strategies that make sense. Always include **Keep** as the last option. **Phased migration** should always be offered for dependencies rated as hard effort.
+The available strategies and their descriptions should be tailored to each
+specific dependency based on the analysis. Not all strategies apply to every
+dependency — only show strategies that make sense. Always include **Keep** as
+the last option. **Phased migration** should always be offered for dependencies
+rated as hard effort.
 
 **6c. Draft the replacement plan:**
 
-Based on the chosen strategy, draft a plan. The plan format depends on the strategy.
+Based on the chosen strategy, draft a plan. The plan format depends on the
+strategy.
 
 **For minimal implementation, stdlib swap, alternative dep, or full rewrite:**
 
@@ -480,7 +519,8 @@ Repeat 6a-6d for every selected dependency.
 
 ### 7. Assemble plan & hand off
 
-After all selected dependencies have been processed, compile the approved plans into a structured summary.
+After all selected dependencies have been processed, compile the approved plans
+into a structured summary.
 
 #### Summary format
 

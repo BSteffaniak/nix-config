@@ -14,7 +14,8 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Generate a PR title and description for the current branch. Output as markdown text for the user to copy. Do not write any files.
+Generate a PR title and description for the current branch. Output as markdown
+text for the user to copy. Do not write any files.
 
 ## Steps
 

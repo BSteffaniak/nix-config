@@ -14,7 +14,9 @@ Pi extension for brouter route visibility and lightweight routing correction.
 - Fetches brouter session timelines from `GET /v1/brouter/sessions/<id>/events`.
 
 Set `BROUTER_URL` to override the default `http://127.0.0.1:8080`.
-Set `BROUTER_EXTENSION_ALWAYS=1` to inject metadata into every provider payload; by default the extension only injects for `auto`, `brouter/auto`, `profile:*`, and `group:*` payloads.
+Set `BROUTER_EXTENSION_ALWAYS=1` to inject metadata into every provider payload;
+by default the extension only injects for `auto`, `brouter/auto`, `profile:*`,
+and `group:*` payloads.
 
 ## Commands
 

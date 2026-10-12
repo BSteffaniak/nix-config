@@ -14,7 +14,9 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 
 ## Purpose
 
-Generate a commit message for the current staged or unstaged changes, and write it to the repo so it's automatically pre-filled for lazygit's commit panel via `LAZYGIT_PENDING_COMMIT`.
+Generate a commit message for the current staged or unstaged changes, and write
+it to the repo so it's automatically pre-filled for lazygit's commit panel via
+`LAZYGIT_PENDING_COMMIT`.
 
 ## Steps
 

@@ -12,7 +12,8 @@ Follow the [shared user override contract](../_shared/user-overrides.md). This s
 
 Follow the [non-interactive Git command rules](../_shared/non-interactive-git.md) for every `git` invocation.
 
-Git access in this skill is strictly read-only. Never stage, commit, restore, reset, checkout, switch, clean, stash, or otherwise mutate repository state.
+Git access in this skill is strictly read-only. Never stage, commit, restore,
+reset, checkout, switch, clean, stash, or otherwise mutate repository state.
 
 ## Governing contract
 
@@ -20,7 +21,9 @@ Read [the progress-document product and architecture contract](../_shared/progre
 
 ## Purpose
 
-Reconstruct the current context of a paused multi-session effort by comparing its local progress document with the repository as it exists now. Gather enough accurate knowledge to understand:
+Reconstruct the current context of a paused multi-session effort by comparing
+its local progress document with the repository as it exists now. Gather enough
+accurate knowledge to understand:
 
 - The original requested product outcome.
 - The intended entry point and observable result.
@@ -33,25 +36,33 @@ The governing principle is:
 
 > Reconstruct current context accurately, then stop.
 
-This skill is for knowledge gathering only. It does not rewrite the progress document, modify code, run validation, recommend a next task, reorder the plan, ask how to continue, or begin implementation.
+This skill is for knowledge gathering only. It does not rewrite the progress
+document, modify code, run validation, recommend a next task, reorder the plan,
+ask how to continue, or begin implementation.
 
-Use `local-progress-doc` to create or initially plan a document. Use `refocus-progress-doc` when the goal is to repair, rewrite, or simplify one.
+Use `local-progress-doc` to create or initially plan a document. Use
+`refocus-progress-doc` when the goal is to repair, rewrite, or simplify one.
 
 ## Steps
 
 ### 1. Resolve the progress document
 
-Use a path supplied by the user when available. Otherwise, search narrowly for likely local working documents:
+Use a path supplied by the user when available. Otherwise, search narrowly for
+likely local working documents:
 
 - `*progress*.md`
 - `*handoff*.md`
 - `local-*.md`
 
-Exclude generated, dependency, cache, and VCS directories. Do not perform an unbounded filesystem search.
+Exclude generated, dependency, cache, and VCS directories. Do not perform an
+unbounded filesystem search.
 
-If exactly one strong candidate exists, use it and state the path. If multiple plausible candidates exist, list them with enough context for the user to choose and stop. Do not ask a question or infer solely from modification time.
+If exactly one strong candidate exists, use it and state the path. If multiple
+plausible candidates exist, list them with enough context for the user to choose
+and stop. Do not ask a question or infer solely from modification time.
 
-If no plausible document exists, report that no progress document could be resolved and stop.
+If no plausible document exists, report that no progress document could be
+resolved and stop.
 
 Read the selected document in full before drawing conclusions.
 
@@ -77,11 +88,13 @@ Distinguish among:
 3. **Repository evidence** — what current code and Git state support.
 4. **Unresolved context** — what read-only inspection cannot establish.
 
-Do not treat checkbox state, confident wording, old handoff notes, or commit messages as conclusive proof.
+Do not treat checkbox state, confident wording, old handoff notes, or commit
+messages as conclusive proof.
 
 ### 3. Establish repository context
 
-Read applicable repository instructions and architecture documentation. Treat binding instructions as authoritative context.
+Read applicable repository instructions and architecture documentation. Treat
+binding instructions as authoritative context.
 
 Inspect current Git state with non-interactive, read-only commands such as:
 
@@ -113,7 +126,9 @@ Do not assume a clean worktree or default branch.
 
 ### 4. Research the relevant codebase context
 
-Start with paths, modules, symbols, tests, and concepts named by the progress document. Read enough surrounding implementation to understand the real product and architecture context:
+Start with paths, modules, symbols, tests, and concepts named by the progress
+document. Read enough surrounding implementation to understand the real product
+and architecture context:
 
 - Intended product entry point and existing wiring.
 - Current end-to-end flow related to the requested capability.
@@ -123,13 +138,19 @@ Start with paths, modules, symbols, tests, and concepts named by the progress do
 - Relevant tests, configuration, packaging, migrations, compatibility behavior, and integration paths.
 - Focused Git history when current code does not explain an important decision.
 
-Expand only when imports, call sites, module wiring, ownership, data flow, or repository architecture show that adjacent areas matter. Research should be sufficient to reconstruct context, not become an exhaustive code review or a new implementation plan.
+Expand only when imports, call sites, module wiring, ownership, data flow, or
+repository architecture show that adjacent areas matter. Research should be
+sufficient to reconstruct context, not become an exhaustive code review or a new
+implementation plan.
 
-Architectural claims require concrete repository evidence such as instructions, paths, symbols, tests, analogous implementations, invariants, or commits. Label generic inference as inference rather than repository truth.
+Architectural claims require concrete repository evidence such as instructions,
+paths, symbols, tests, analogous implementations, invariants, or commits. Label
+generic inference as inference rather than repository truth.
 
 ### 5. Reconstruct product and architecture status
 
-When the document covers product-delivery work, reconstruct the evidenced canonical path:
+When the document covers product-delivery work, reconstruct the evidenced
+canonical path:
 
 ```text
 intended entry point
@@ -163,9 +184,12 @@ Assess architectural integrity factually:
 - Whether architectural decisions are grounded in repository evidence or appear to be unsupported ideals.
 - Whether the design appears to introduce speculative generalization beyond the request.
 
-Do not automatically label a compatibility adapter or migration path as a shortcut. Report its purpose, fit, ownership, lifecycle, and documented completion/removal conditions when evidence exists.
+Do not automatically label a compatibility adapter or migration path as a
+shortcut. Report its purpose, fit, ownership, lifecycle, and documented
+completion/removal conditions when evidence exists.
 
-These are context findings, not recommendations. Do not construct a corrected design or decide what should be implemented next.
+These are context findings, not recommendations. Do not construct a corrected
+design or decide what should be implemented next.
 
 ### 6. Reconcile document and repository knowledge
 
@@ -182,9 +206,12 @@ Build a neutral account identifying:
 - Blockers and unresolved questions.
 - Required validation commands and historical validation results.
 
-Preserve the progress document's ordering when reporting remaining work. Do not optimize, reprioritize, select a restart point, or turn coverage gaps into a new plan.
+Preserve the progress document's ordering when reporting remaining work. Do not
+optimize, reprioritize, select a restart point, or turn coverage gaps into a new
+plan.
 
-Do not run builds, tests, linters, formatters, or other validation commands. Report validation knowledge only.
+Do not run builds, tests, linters, formatters, or other validation commands.
+Report validation knowledge only.
 
 ### 7. Present the context brief
 
@@ -265,9 +292,11 @@ Use the sections that contain useful information:
 <Compact neutral account of where the effort currently stands>
 ```
 
-Omit empty sections. Clearly distinguish verified facts, reasonable inferences, document claims, historical results, and unresolved uncertainty.
+Omit empty sections. Clearly distinguish verified facts, reasonable inferences,
+document claims, historical results, and unresolved uncertainty.
 
-End after the context brief. Do not add recommendations, corrected checklist items, next steps, readiness ratings, offers to continue, or questions.
+End after the context brief. Do not add recommendations, corrected checklist
+items, next steps, readiness ratings, offers to continue, or questions.
 
 ## Rules
 
