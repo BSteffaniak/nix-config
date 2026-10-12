@@ -38,6 +38,8 @@ in
         # Nix system paths (POSIX shells get these from set-environment/nix-daemon.sh,
         # but nushell cannot source POSIX shell scripts)
         let nix_paths = [
+          # NixOS setuid wrappers must precede unwrapped system binaries.
+          "/run/wrappers/bin"
           $"($env.HOME)/.nix-profile/bin"
           $"/etc/profiles/per-user/($env.USER)/bin"
           "/run/current-system/sw/bin"
