@@ -12,6 +12,7 @@ pkgs.mkShell {
     nix-diff # deep derivation diffing (scripts/check-all-hosts.sh)
 
     # Formatting (non-nix files)
+    clang-tools # clang-format (Objective-C)
     nodePackages.prettier # ./fmt.sh (markdown, yaml, json, etc.)
     shfmt # Shell script formatter
 
