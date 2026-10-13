@@ -13,6 +13,35 @@
     ../../modules/nixos
   ];
 
+  # Keep temporary build/test files off the root disk. Deploy with a boot
+  # rebuild and reboot, rather than mounting over a live /tmp.
+  boot.tmp.useTmpfs = false;
+
+  fileSystems."/tmp" = {
+    device = "/hdd/tmp";
+    fsType = "none";
+    depends = [ "/hdd" ];
+    options = [
+      "bind"
+      "x-systemd.requires=hdd-tmp-directory.service"
+    ];
+  };
+
+  # Normal tmpfiles setup runs after local mounts, so provision the bind
+  # source separately before tmp.mount, and only after /hdd is mounted.
+  systemd.services.hdd-tmp-directory = {
+    description = "Prepare temporary directory on /hdd";
+    requires = [ "hdd.mount" ];
+    after = [ "hdd.mount" ];
+    before = [ "tmp.mount" ];
+    unitConfig.DefaultDependencies = false;
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.coreutils}/bin/install -d -m 1777 -o root -g root /hdd/tmp";
+    };
+  };
+
   # Host-specific system settings. User tools live in home.nix.
   myConfig = {
     # Boot configuration
