@@ -13,6 +13,13 @@
     ../../modules/nixos
   ];
 
+  # Sledge owns user tooling in Home Manager; the system only registers its
+  # ordered login entry. Ordinary Hyprland stays available as recovery.
+  services.displayManager = lib.mkIf config.home-manager.users.braden.myConfig.desktop.sledge.enable {
+    sessionPackages = [ config.home-manager.users.braden.programs.sledgeHyprland.sessionPackage ];
+    defaultSession = "hyprland-sledge";
+  };
+
   # Keep temporary build/test files off the root disk. Deploy with a boot
   # rebuild and reboot, rather than mounting over a live /tmp.
   boot.tmp.useTmpfs = false;

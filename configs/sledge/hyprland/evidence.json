@@ -1,0 +1,29 @@
+{
+    "schema": "sledge.exact-build-review.v1",
+    "purpose": "User-approved personal NixOS Hyprland integration, reviewed by coordinator against independently observed VM consumer evidence; not physical-host certification.",
+    "scope": "Exact stock Hyprland 0.52.2 ELF/SDK/compiler/plugin; revision2 feature3 send_key hotkeys and modifier-release taps.",
+    "reviewer": "Bcode coordinator; independently reran validate_tap.py --lifecycle on fresh worker VM evidence and checked installed artifact digests.",
+    "build_id": "sledge-stock-v1:b9f2e3b35c55c4ebbdfa5d6fb2ffec78ed9e5f2dab863ee0730c6df649f3d22e",
+    "descriptor_sha256": "b5df40669c9ddfdfaab8241173f46cd1ea9f3d58c67df1f899dd2453a7959360",
+    "plugin_sha256": "ba8d56b96bbe4128180ecdb835e5192e5d7ea0f9ea8df7ca1837dd455522872b",
+    "reports": {
+        "tap_consumer_and_lifecycle": {
+            "path": "/hdd/sledge-tap-qualification/r4/vm.log",
+            "sha256": "1a5000536d7ab84a4cc4d010d668cdc5e70f8533fa4280afa41be5869986308c"
+        }
+    },
+    "verified": [
+        "Two consecutive RightAlt triple-release Ctrl+Enter actions; original releases precede Enter; Ctrl-only at Enter Down/Up; modifier-free sentinel.",
+        "Chord, held modifier, timeout, split-device, unknown-key, focus and reload negatives.",
+        "Authoritative guest lock and IME recipients receive ordinary RightAlt events, with no action/application leakage.",
+        "Repeated real-XKB modifier regression and exact pinned SDK plugin build.",
+        "Workspace fmt, offline clippy/tests, machete and 36 harness tests."
+    ],
+    "limitations": [
+        "No physical-host fresh-login test yet; no guarantee of full macOS parity.",
+        "No input-source actions or broad cross-build ABI support.",
+        "VM used candidate-only catalogue admission for the final qualified-mode plugin; supported daemon/session startup binding requires a subsequent build and validation.",
+        "Older feature1 stress/death/hotplug reports are historical regression context, not fresh evidence for this exact plugin.",
+        "Trusted personal-package review, not cryptographic authorization or VM attestation."
+    ]
+}

@@ -1,0 +1,16 @@
+{
+    "acceptance_sha256": "813cb17dd4f3699b145efe2c20f2732c6337e2966bf924e6a0220a9290802a10",
+    "approval_revision": 3,
+    "build_id": "b9f2e3b35c55c4ebbdfa5d6fb2ffec78ed9e5f2dab863ee0730c6df649f3d22e",
+    "compiler_drv": "/nix/store/8irhr0clpj0yy01v0ps5yn2w144zcq2m-gcc-wrapper-14.3.0.drv",
+    "compositor_path": "/nix/store/n13h1pmiv6n05w0lkd7fbaywg1fc9b4p-hyprland-0.52.2/bin/.Hyprland-wrapped",
+    "compositor_sha256": "8dee6b387615f14e8ce6c1f7bbd0b58524c31d783061093423e6a3fc6f89b9ca",
+    "descriptor_sha256": "b5df40669c9ddfdfaab8241173f46cd1ea9f3d58c67df1f899dd2453a7959360",
+    "evidence_sha256": "63d6c1d674ba4f670908f607dcc1f7da4c60384361a130d123ffb6266bc51807",
+    "feature_mask": 3,
+    "plugin_sha256": "ba8d56b96bbe4128180ecdb835e5192e5d7ea0f9ea8df7ca1837dd455522872b",
+    "qualification_revision": 2,
+    "sdk_api_hash": "unknown_aq_0.9_hu_0.10_hg_0.4_hc_0.1_hlg_0.6",
+    "sdk_drv": "/nix/store/4zwfhvvhkmlpsc4576z6wb1wa45nrmc8-hyprland-0.52.2.drv",
+    "source_hash": "93b62967f96000f7d8fa2a5086dfd5040203d887e3e25e57e34937e6a2aa14e9"
+}

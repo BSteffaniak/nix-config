@@ -1,0 +1,13 @@
+{
+    "acceptance_revision": 1,
+    "entries": [
+        {
+            "approval_revision": 3,
+            "build_id": "sledge-stock-v1:b9f2e3b35c55c4ebbdfa5d6fb2ffec78ed9e5f2dab863ee0730c6df649f3d22e",
+            "descriptor_sha256": "b5df40669c9ddfdfaab8241173f46cd1ea9f3d58c67df1f899dd2453a7959360",
+            "evidence_sha256": "63d6c1d674ba4f670908f607dcc1f7da4c60384361a130d123ffb6266bc51807",
+            "feature_mask": 3,
+            "qualification_revision": 2
+        }
+    ]
+}

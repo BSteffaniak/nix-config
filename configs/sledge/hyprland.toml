@@ -1,0 +1,26 @@
+# Exact-build Hyprland hotkeys and modifier-release taps; input-source actions unsupported.
+[daemon]
+log_level = "info"
+
+[app_aliases.ghostty]
+linux = "wayland:com.mitchellh.ghostty"
+
+[app_aliases.kitty]
+linux = "wayland:kitty"
+
+[app_aliases.wezterm]
+linux = "wayland:org.wezfurlong.wezterm"
+
+[[binding]]
+trigger = { tap = "RightAlt", count = 3, within_ms = 600 }
+action = { type = "send_key", key = "Return", mods = ["ctrl"] }
+
+[[binding]]
+action = { type = "send_key", key = "KeyS", mods = ["ctrl"] }
+trigger = { key = "Semicolon", mods = ["ctrl"] }
+when = { app_in = ["ghostty", "kitty", "wezterm"] }
+
+[[binding]]
+action = { type = "send_key", key = "KeyT", mods = ["alt"] }
+trigger = { key = "KeyK", mods = ["alt"] }
+when = { app_in = ["ghostty", "kitty", "wezterm"] }

@@ -14,12 +14,10 @@
 #     re-signs it with the per-host self-signed identity, and kicks the
 #     LaunchAgent so it picks up the new binary.
 #
-# Linux path (future):
-#   - Currently a no-op. See the commented block at the bottom of this file
-#     for the expected shape once sledge ships a Linux backend.
-#   - The option itself is declarable on Linux so a Linux host can flip it
-#     on aspirationally; nothing else happens until the guard at the top of
-#     the macOS block is relaxed.
+# Linux path:
+#   - sledge-hyprland.nix provides a separate, explicitly ordered login session.
+#   - Linux hotkeys and exact-build acceptance remain separate from Darwin.
+#   - Enabling installs tools; it does not mutate the active compositor.
 #
 # Why home-manager rather than nix-darwin's system.activationScripts?
 #   The activation script needs the user's login keychain (for signing)
@@ -39,6 +37,7 @@ let
   cfg = config.myConfig.desktop.sledge;
 in
 {
+  imports = [ ./sledge-hyprland.nix ];
   options.myConfig.desktop.sledge = {
     enable = lib.mkEnableOption "Sledge keyboard remap daemon";
   };

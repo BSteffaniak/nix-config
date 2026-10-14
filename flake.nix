@@ -109,6 +109,11 @@
       url = "github:BSteffaniak/sshenv";
       flake = false;
     };
+    # Local reviewed Hyprland backend; macOS keeps its existing source pin.
+    sledge-hyprland-src = {
+      url = "path:/hdd/GitHub/sledge";
+      flake = false;
+    };
     sledge-src = {
       url = "github:BSteffaniak/sledge";
       flake = false;

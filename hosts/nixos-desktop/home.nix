@@ -47,6 +47,7 @@
 
   # Enable standalone config modules
   myConfig = {
+    desktop.sledge.enable = true;
     desktop.hex = {
       enable = true;
       settings = {

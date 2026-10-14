@@ -23,12 +23,15 @@ log_level = "info"
 
 [app_aliases.ghostty]
 macos = "com.mitchellh.ghostty"
+linux = "wayland:com.mitchellh.ghostty"
 
 [app_aliases.kitty]
 macos = "net.kovidgoyal.kitty"
+linux = "wayland:kitty"
 
 [app_aliases.wezterm]
 macos = "com.github.wez.wezterm"
+linux = "wayland:org.wezfurlong.wezterm"
 
 [app_aliases.iterm2]
 macos = "com.googlecode.iterm2"

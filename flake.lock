@@ -560,6 +560,7 @@
         "nixpkgs-unstable": "nixpkgs-unstable",
         "rust-overlay": "rust-overlay",
         "sendsafely-java-src": "sendsafely-java-src",
+        "sledge-hyprland-src": "sledge-hyprland-src",
         "sledge-src": "sledge-src",
         "sshenv-src": "sshenv-src",
         "swww": "swww",
@@ -622,6 +623,19 @@
         "owner": "BSteffaniak",
         "repo": "sendsafely-java",
         "type": "github"
+      }
+    },
+    "sledge-hyprland-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1791991194,
+        "narHash": "sha256-kR5FbrSTQ15pGahAA3AluiAwCw58wq5x8g6YiR7w7aw=",
+        "path": "/hdd/GitHub/sledge",
+        "type": "path"
+      },
+      "original": {
+        "path": "/hdd/GitHub/sledge",
+        "type": "path"
       }
     },
     "sledge-src": {
