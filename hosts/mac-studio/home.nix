@@ -7,7 +7,44 @@
   ...
 }:
 
+let
+  externalTmp = "/Volumes/ehdd/tmp/${config.home.username}";
+  # Run at shell startup, not evaluation/activation: the drive may be absent.
+  selectTmp = pkgs.writeShellScript "mac-studio-select-tmp" ''
+    set -eu
+    volume=/Volumes/ehdd
+    info=$(/usr/sbin/diskutil info -plist "$volume" 2>/dev/null) || info=""
+    uuid=$(printf '%s' "$info" | /usr/bin/plutil -extract VolumeUUID raw -o - - 2>/dev/null) || uuid=""
+    mountpoint=$(printf '%s' "$info" | /usr/bin/plutil -extract MountPoint raw -o - - 2>/dev/null) || mountpoint=""
+    ownership=$(printf '%s' "$info" | /usr/bin/plutil -extract GlobalPermissionsEnabled raw -o - - 2>/dev/null) || ownership=""
+    if [ "$uuid" = 97676AC9-C0F3-47E3-93C2-F12D10243564 ] && \
+       [ "$mountpoint" = "$volume" ] && [ "$ownership" = true ] && \
+       [ ! -L "$volume/tmp" ] && [ ! -L ${lib.escapeShellArg externalTmp} ] && \
+       [ -d ${lib.escapeShellArg externalTmp} ] && [ -w ${lib.escapeShellArg externalTmp} ] && \
+       [ "$(/usr/bin/stat -f '%u:%Lp' ${lib.escapeShellArg externalTmp})" = "$(/usr/bin/id -u):700" ]; then
+      printf '%s/\n' ${lib.escapeShellArg externalTmp}
+    else
+      /usr/bin/getconf DARWIN_USER_TEMP_DIR
+    fi
+  '';
+in
 {
+  # Applies to new shells and their children, not Finder apps or the Nix daemon.
+  myConfig.shell.shared = {
+    bashInit = ''
+      export TMPDIR="$(${selectTmp})"
+    '';
+    zshInit = ''
+      export TMPDIR="$(${selectTmp})"
+    '';
+    fishInit = ''
+      set -gx TMPDIR (${selectTmp})
+    '';
+    nushellEnv = ''
+      $env.TMPDIR = (${selectTmp} | str trim)
+    '';
+  };
+
   # Fish shell - feature-based configuration
   myConfig.shell.fish = {
     # Zellij
