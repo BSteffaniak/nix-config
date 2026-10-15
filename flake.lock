@@ -628,14 +628,17 @@
     "sledge-hyprland-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1791991194,
-        "narHash": "sha256-kR5FbrSTQ15pGahAA3AluiAwCw58wq5x8g6YiR7w7aw=",
-        "path": "/hdd/GitHub/sledge",
-        "type": "path"
+        "lastModified": 1791977400,
+        "narHash": "sha256-DlOgiTzb50H0AVNflzEy80JT5KlJELmOjnbzlQklnYY=",
+        "owner": "BSteffaniak",
+        "repo": "sledge",
+        "rev": "c30e0359994517c03f9fc7f063b2d0f0b4d3ccc5",
+        "type": "github"
       },
       "original": {
-        "path": "/hdd/GitHub/sledge",
-        "type": "path"
+        "owner": "BSteffaniak",
+        "repo": "sledge",
+        "type": "github"
       }
     },
     "sledge-src": {
