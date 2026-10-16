@@ -62,6 +62,7 @@
     };
 
     # Shared development tools and overlays
+    git-hooks.url = "git+ssh://git@github.com/BSteffaniak/git-hooks";
     neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
     rust-overlay = {
       url = "github:oxalica/rust-overlay";

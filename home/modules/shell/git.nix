@@ -1,6 +1,7 @@
 # Git configuration.
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -8,6 +9,7 @@
 
 let
   cfg = config.myConfig.shell.git;
+  postCommit = inputs.git-hooks.packages.${pkgs.stdenv.hostPlatform.system}.post-commit;
 in
 {
   options.myConfig.shell.git = {
@@ -94,11 +96,8 @@ in
           GIT_DIR="$(git rev-parse --git-dir)"
           rm -f "$GIT_DIR/PREPARED_MSG"
 
-          # Existing post-commit logic: work-hours commit date adjuster
-          BINARY="$HOME/.config/git/hooks/post-commit/target/release/post-commit"
-          if [ -x "$BINARY" ]; then
-              "$BINARY"
-          fi
+          # Use a Nix-built hook so its runtime libraries remain in the closure.
+          ${lib.getExe postCommit}
         '';
         prepare-commit-msg = pkgs.writeShellScript "prepare-commit-msg" ''
           MSGFILE="$1"
