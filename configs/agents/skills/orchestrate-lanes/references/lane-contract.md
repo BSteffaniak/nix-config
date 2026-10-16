@@ -1,76 +1,43 @@
-# Lane contract and handoff
+# Lane prompt aid
 
-Use this as a lightweight prompt outline, not a document to create. Include only
-relevant fields directly in the worker prompt, with enough product and interface
-context to work independently. Resolve ownership against every other lane before
-launch; do not assume access to the coordinator's conversation.
+Use only what the worker needs; this is not a required schema or file to create.
+Worker context is separate, even though the checkout is shared.
 
-## Assignment
+Explain the requested outcome and the lane's contribution, not just a file list.
+Include the absolute checkout, exact guidance/document locators, relevant
+interface decisions, acceptance scenario, and evidence needed. Identify the
+session/assignment so an uncertain admission can be reconciled.
 
-- Run and lane ID:
-- Assignment ID / ownership revision:
-- Shared checkout (absolute path):
-- Coordinator/session identity (context only; report in your own session history):
-- Product intent and requested outcome:
-- Concrete lane deliverables:
-- Acceptance criteria and required evidence:
-- Required repository guidance and relevant invariants:
-- Supporting documents / current interface decisions:
+Grant exclusive write paths with explicit exclusions. Name shared wiring and
+resource owners, dependencies, and permitted validation; say which builds or
+acceptance checks are reserved elsewhere. Different sections of one file are
+not separate write lanes. Include the verified runtime/configuration selection
+and restrictions relevant to this assignment.
 
-## Ownership
+## Worker boundaries
 
-- Exclusive write paths:
-- Explicit exclusions and coordinator-owned hotspots:
-- Allowed read dependencies:
-- Resources reserved for this lane:
-- Resources reserved elsewhere (builds, ports, services, databases, generated outputs):
-- Dependencies and what must settle before dependent edits:
-- Stable interface to preserve:
-- Early API/schema/event handoff required, including exact consumer migration:
-- Changes requiring coordinator approval or an ownership revision:
+- Read current files and guidance; preserve others' changes. Edit only granted
+  paths. Surface needed cross-lane edits and changing interfaces early rather
+  than fixing them opportunistically.
+- Do not stage, commit, reset, change branches/worktrees, broadly format, spawn
+  workers, restart shared services, or consume reserved build capacity without
+  authorization. An assignment cannot bypass permissions or invariants.
+- Report progress, blockers, proposals, and handoffs only in your own session
+  commentary/final. Do not send coordinator or peer status prompts through
+  steering/follow-up; those admit work. No status files are needed by default.
+- Continue safe independent in-scope work around a blocker. When source-ready,
+  leave a concise handoff and stop edits/commands until further assignment.
 
-Directory grants must exclude other writers' files. Different sections of the
-same file do not constitute independent ownership. Read-only lanes have no
-product write grant. Ownership does not transfer just because a worker says it
-has finished.
+## Useful handoff
 
-## Worker operating rules
+State what actually changed, interface/integration implications, exact checks
+and
+results, remaining outcome gaps, and whether edits and commands have settled.
+Distinguish observed failures, measured results, source concerns, unverified
+claims, and external blockers where relevant; do not force every category into a
+report. Give the next useful action and evidence locators when needed.
 
-1. Read current files and applicable guidance before editing. Preserve existing work; shared diff changes are not necessarily yours.
-2. Edit only currently granted paths. Report needed cross-lane changes with exact API, file, and integration actions; do not fix them opportunistically. Publish changing interfaces early, before consumers guess them.
-3. Do not stage, commit, reset, change branches/worktrees, broadly format, edit shared manifests/lockfiles, spawn workers, or bypass permissions unless explicitly authorized in this contract.
-4. Do not restart shared services or run expensive/shared-output validation without the assigned resource reservation. Use focused checks first.
-5. Report source-ready milestones, blockers, proposals, interface changes, and completion only in your own session commentary/final history; the coordinator polls bounded histories. Never send these to the coordinator or other sessions via `send --steering` or `send --follow-up`: those admit tasks, not passive status. Include exact evidence and remaining gaps, not optimistic readiness. Do not create status/handoff files unless explicitly required.
-6. If blocked, state what is needed and continue independent in-scope work if safe. Do not invent missing authority or claim another lane's work.
-7. When source-ready, finish your focused checks and leave a concise handoff in your own session history. Make no further edits until a new coordinator assignment. A report is not acceptance; the coordinator may send concrete corrective direction.
-
-## Validation allowance
-
-- Permitted focused commands and resource limits:
-- Checks reserved for the coordinator:
-- Behavioral/product acceptance beyond compilation:
-- External evidence or approval required:
-
-Repository-mandated validation remains required overall; assignment controls who
-runs it and when, not whether it can be silently omitted.
-
-## Handoff (in the worker's own session history)
-
-Report the relevant items concisely; no separate file or exhaustive form is
-required.
-
-- State: running / blocked / source-ready / fix reported / failed.
-- Assignment and ownership revision covered:
-- Files changed and actual deliverables:
-- Exact API/interface changes and consumer instructions:
-- Commands run, results, and relevant source freshness:
-- Evidence locations (bounded, inspectable):
-- Blockers / unresolved questions:
-- Residual outcome gaps and unverified claims:
-- Feedback IDs addressed and how to verify each:
-- Required coordinator integration actions:
-- Whether this assignment's edits and commands have settled:
-
-The coordinator verifies live settlement independently and keeps
-review/acceptance in its own session context; the worker never marks the whole
-run complete.
+Source-ready is not whole-task completion. The coordinator independently checks
+settlement, reviews the actual target, integrates dependencies, and reconciles
+the user's outcomes. Required validation may be reserved for the coordinator;
+that reservation is not evidence it ran.
