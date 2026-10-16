@@ -1,0 +1,72 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Shared agent permissions (Nix input, not a runtime schema)",
+    "type": "object",
+    "properties": {
+        "agent": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "permission": {
+                        "type": "object",
+                        "properties": {
+                            "bash": { "$ref": "#/$defs/rules" },
+                            "command": { "$ref": "#/$defs/rules" },
+                            "command_patterns": { "$ref": "#/$defs/rules" },
+                            "command_policy": { "$ref": "#/$defs/policy" },
+                            "compatibility": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "opencode": { "$ref": "#/$defs/fallback" },
+                                    "pi": { "$ref": "#/$defs/fallback" }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "$defs": {
+        "rules": {
+            "type": "object",
+            "propertyNames": { "minLength": 1 },
+            "additionalProperties": { "enum": ["allow", "ask", "deny"] }
+        },
+        "layer": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "command": { "$ref": "#/$defs/rules" },
+                "command_patterns": { "$ref": "#/$defs/rules" }
+            }
+        },
+        "policy": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["version", "layers"],
+            "properties": {
+                "version": { "const": 1 },
+                "layers": {
+                    "type": "array",
+                    "items": { "$ref": "#/$defs/layer" }
+                }
+            }
+        },
+        "fallback": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["bash"],
+            "properties": {
+                "bash": {
+                    "allOf": [
+                        { "$ref": "#/$defs/rules" },
+                        { "required": ["*"] }
+                    ]
+                }
+            }
+        }
+    }
+}

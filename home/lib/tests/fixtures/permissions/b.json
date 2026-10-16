@@ -1,0 +1,12 @@
+{
+    "agent": {
+        "plan": {
+            "permission": {
+                "command_policy": {
+                    "version": 1,
+                    "layers": [{ "command": { "tool *": "allow" } }]
+                }
+            }
+        }
+    }
+}

@@ -138,17 +138,18 @@ let
   # Merge order: base → provider → shared permissions → host overrides (in order)
   baseConfig = builtins.fromJSON (builtins.readFile ../../../configs/opencode/opencode.json);
   tuiConfig = ../../../configs/opencode/tui.json;
-  permissionConfig = agentPermissions.forLegacy (
-    agentPermissions.mkPermissions {
-      inherit permissionsDir;
-      cfg = agentsCfg.permissions;
-      overrides = agentsCfg.permissions.overrides ++ cfg.overrides;
-    }
+  permissionConfig = agentPermissions.mkPermissions {
+    inherit permissionsDir;
+    cfg = agentsCfg.permissions;
+    overrides = agentsCfg.permissions.overrides ++ cfg.overrides;
+  };
+  # Project after merging defaults: explicit fallbacks replace the entire bash map.
+  mergedConfigBase = agentPermissions.forLegacyTarget "opencode" (
+    lib.foldl' lib.recursiveUpdate baseConfig [
+      providerConfig
+      permissionConfig
+    ]
   );
-  mergedConfigBase = lib.foldl' lib.recursiveUpdate baseConfig [
-    providerConfig
-    permissionConfig
-  ];
   mergedConfig =
     let
       withBrouter =

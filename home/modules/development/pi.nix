@@ -225,7 +225,7 @@ let
     };
   };
 
-  mergedPermissions = agentPermissions.forLegacy (
+  mergedPermissions = agentPermissions.forLegacyTarget "pi" (
     agentPermissions.mkPermissions {
       inherit permissionsDir;
       cfg = agentsCfg.permissions;

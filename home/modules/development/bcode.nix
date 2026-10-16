@@ -83,7 +83,7 @@ let
     overrides = agentsCfg.permissions.overrides ++ cfg.permissionOverrides;
   };
 
-  bcodePermissions = mergedPermissions;
+  bcodePermissions = agentPermissions.forBcode mergedPermissions;
 
   renameBcodePermissionCategory =
     permissions:
