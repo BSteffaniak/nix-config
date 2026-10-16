@@ -179,6 +179,11 @@ in
       nix-direnv.enable = cfg.direnv.nix-direnv;
     };
 
+    # Global Clippier publishing preferences
+    xdg.configFile."clippier/clippier.toml" = lib.mkIf cfg.clippier.enable {
+      source = ../../../configs/clippier/clippier.toml;
+    };
+
     # Package installs
     home.packages = lib.mkMerge [
       (lib.mkIf cfg.jq.enable [ pkgs.jq ])
