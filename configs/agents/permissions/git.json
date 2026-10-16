@@ -16,6 +16,21 @@
                     "git reflog delete *": "deny",
                     "git gc --prune=now *": "deny",
                     "git update-ref -d *": "deny"
+                },
+                "command_patterns": {
+                    "git [--no-pager] push --force ...": "deny",
+                    "git [--no-pager] push --force-with-lease ...": "deny",
+                    "git [--no-pager] push -f ...": "deny",
+                    "git [--no-pager] reset --hard ...": "deny",
+                    "git [--no-pager] clean -f ...": "deny",
+                    "git [--no-pager] clean -fd ...": "deny",
+                    "git [--no-pager] clean -fx ...": "deny",
+                    "git [--no-pager] clean -fdx ...": "deny",
+                    "git [--no-pager] filter-branch ...": "deny",
+                    "git [--no-pager] reflog expire ...": "deny",
+                    "git [--no-pager] reflog delete ...": "deny",
+                    "git [--no-pager] gc --prune=now ...": "deny",
+                    "git [--no-pager] update-ref -d ...": "deny"
                 }
             }
         },
