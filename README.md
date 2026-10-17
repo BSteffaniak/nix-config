@@ -41,6 +41,26 @@ darwin-rebuild build --flake .#<host>
 home-manager build --flake .#<user>@<host>
 ```
 
+## Managed Configuration Files
+
+Managed Home Manager files and system `/etc` files receive a generated-file
+warning when their format supports comments. The warning points to
+`~/.config/nix` (expanded for the configured user) and directs all editors to
+change the sources there, then run `./rebuild.sh` from that checkout.
+
+Set `myConfig.generatedFiles.repositoryPath` in the home or system configuration
+if the checkout lives elsewhere. Set `myConfig.generatedFiles.enable = false`
+to disable notices for that layer, or set `generatedHeader = false` on an
+individual `home.file` or `environment.etc` entry to opt out.
+For XDG entries, set the opt-out on the corresponding `home.file` target.
+
+Headers use the format's comment syntax and preserve shebangs and XML
+declarations. Strict JSON, binary files, unrecognized formats, and mutable
+out-of-store symlinks remain unchanged. The complete managed-target lists and
+editing instructions are in `~/.config/nix-managed-files.txt` and
+`/etc/nix/managed-files.txt`, including targets without inline warnings.
+Files installed outside these file-management options are not rewritten.
+
 ## Repository Layout
 
 ```text

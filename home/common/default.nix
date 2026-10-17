@@ -2,7 +2,17 @@
 { ... }:
 
 {
-  imports = [ ../modules ];
+  imports = [
+    ../modules
+    (import ../../lib/generated-files-module.nix {
+      fileOption = [
+        "home"
+        "file"
+      ];
+      defaultRepositoryPath = config: "${config.home.homeDirectory}/.config/nix";
+      noticeTarget = ".config/nix-managed-files.txt";
+    })
+  ];
 
   # Let Home Manager install and manage itself
   programs.home-manager.enable = true;

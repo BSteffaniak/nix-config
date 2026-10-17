@@ -8,6 +8,19 @@
   imports = [
     ./services
     ./shell.nix
+    (import ../../lib/generated-files-module.nix {
+      fileOption = [
+        "environment"
+        "etc"
+      ];
+      defaultRepositoryPath =
+        config:
+        let
+          home = config.users.users.${config.myConfig.username}.home;
+        in
+        if home == null then "~/.config/nix" else "${home}/.config/nix";
+      noticeTarget = "nix/managed-files.txt";
+    })
   ];
 
   # Options shared by every system configuration. User-facing feature flags
