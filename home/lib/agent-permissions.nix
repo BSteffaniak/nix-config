@@ -32,10 +32,21 @@ let
     only [ "opencode" "pi" ] value
     && builtins.all (
       target:
-      only [ "bash" ] value.${target}
-      && value.${target} ? bash
-      && ruleMap value.${target}.bash
-      && value.${target}.bash ? "*"
+      only [ "bash" "patterns" ] value.${target}
+      && (value.${target} ? bash || value.${target} ? patterns)
+      && (!(value.${target} ? bash) || (ruleMap value.${target}.bash && value.${target}.bash ? "*"))
+      && (
+        !(value.${target} ? patterns)
+        || (
+          builtins.isAttrs value.${target}.patterns
+          && builtins.all (
+            pattern:
+            pattern != ""
+            && ruleMap value.${target}.patterns.${pattern}
+            && value.${target}.patterns.${pattern} != { }
+          ) (builtins.attrNames value.${target}.patterns)
+        )
+      )
     ) (builtins.attrNames value);
   validatePermission =
     permission:
@@ -50,7 +61,7 @@ let
     else if permission ? command_policy && !(validPolicy permission.command_policy) then
       fail "command_policy must be { version = 1; layers = [ { command = {...}; command_patterns = {...}; } ... ]; }"
     else if permission ? compatibility && !(validCompatibility permission.compatibility) then
-      fail "compatibility must contain explicit opencode/pi { bash = { \"*\" = action; ... }; } complete replacements"
+      fail "compatibility targets accept a complete bash replacement with a '*' default and/or explicit per-pattern rules"
     else
       permission;
   mapPermissions =
@@ -138,7 +149,24 @@ let
                 );
               }
               // lib.optionalAttrs (b ? compatibility) {
-                compatibility = checkMap "${name} compatibility target" (a.compatibility or { }) b.compatibility;
+                compatibility = lib.mapAttrs (
+                  target: value:
+                  let
+                    previous = a.compatibility.${target} or { };
+                  in
+                  value
+                  // lib.optionalAttrs (value ? bash) {
+                    bash =
+                      if previous ? bash && previous.bash != value.bash then
+                        fail "conflicting ${name} compatibility ${target} bash replacement"
+                      else
+                        value.bash;
+                  }
+                  // lib.optionalAttrs (value ? patterns) {
+                    patterns = checkMap "${name} compatibility ${target} pattern" (previous.patterns or { }
+                    ) value.patterns;
+                  }
+                ) b.compatibility;
               };
           }
         )
@@ -197,7 +225,10 @@ let
         value = action;
       }) names
     else
-      fail "cannot project command pattern ${builtins.toJSON pattern}; supply permission.compatibility.<target>.bash as a complete target-compatible replacement (a stricter fallback is permitted)";
+      fail "cannot project command pattern ${builtins.toJSON pattern}; supply permission.compatibility.<target>.patterns for this pattern or .bash as a complete replacement";
+
+  # Per-pattern replacements preserve all unrelated categories, defaults and rules.
+  # Unlike .bash, .patterns is not a complete agent policy replacement.
 
   forLegacyTarget =
     target: permissions:
@@ -216,7 +247,29 @@ let
           let
             permission = validatePermission (agent.permission or { });
             fallback = permission.compatibility.${target}.bash or null;
-            rules = lib.concatLists (lib.mapAttrsToList expand (permission.command_patterns or { }));
+            patternFallbacks = permission.compatibility.${target}.patterns or { };
+            checkedFallbacks = builtins.mapAttrs (
+              pattern: rules:
+              if !(builtins.hasAttr pattern (permission.command_patterns or { })) then
+                fail "${target} fallback names unknown command pattern ${builtins.toJSON pattern}"
+              else if
+                builtins.any (action: action != permission.command_patterns.${pattern}) (builtins.attrValues rules)
+              then
+                fail "${target} pattern fallback must preserve the source action for ${builtins.toJSON pattern}"
+              else
+                rules
+            ) patternFallbacks;
+            rules = builtins.deepSeq checkedFallbacks (
+              lib.concatLists (
+                lib.mapAttrsToList (
+                  pattern: action:
+                  if builtins.hasAttr pattern checkedFallbacks then
+                    lib.mapAttrsToList (name: value: { inherit name value; }) checkedFallbacks.${pattern}
+                  else
+                    expand pattern action
+                ) (permission.command_patterns or { })
+              )
+            );
             projected = lib.foldl' (
               result: rule:
               if result ? ${rule.name} && result.${rule.name} != rule.value then
@@ -232,25 +285,27 @@ let
               else
                 projected;
           in
-          if !(agent ? permission) then
-            agent
-          else
-            agent
-            // {
-              permission =
-                removeAttrs permission [
-                  "command"
-                  "command_patterns"
-                  "command_policy"
-                  "compatibility"
-                ]
-                // lib.optionalAttrs (
-                  fallback != null
-                  || permission ? command
-                  || permission ? command_patterns
-                  || permission ? command_policy
-                ) { inherit bash; };
-            }
+          builtins.deepSeq checkedFallbacks (
+            if !(agent ? permission) then
+              agent
+            else
+              agent
+              // {
+                permission =
+                  removeAttrs permission [
+                    "command"
+                    "command_patterns"
+                    "command_policy"
+                    "compatibility"
+                  ]
+                  // lib.optionalAttrs (
+                    fallback != null
+                    || permission ? command
+                    || permission ? command_patterns
+                    || permission ? command_policy
+                  ) { inherit bash; };
+              }
+          )
         ) permissions.agent;
       };
 in

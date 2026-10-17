@@ -109,6 +109,32 @@ semantics: Nix cannot prove arbitrary regex/glob policy inclusion. Do not use a
 blanket allow to suppress an evaluation error. Target-specific provider configs
 outside this shared generator are not governed by this translation.
 
+## Scoped legacy projections
+
+`compatibility.<target>.patterns` maps an exact `command_patterns` key to an
+explicit nonempty raw-glob rule map. Those rules replace only that pattern's
+projection, retaining the agent default and all unrelated command rules.
+Unknown source keys, action changes, empty projections, and conflicting
+projected
+rules fail evaluation. Compatibility remains reviewed policy data, not a Nix
+parser for the advanced DSL. Whole-map `.bash` replacements remain supported;
+ordered policies still require a whole-map replacement.
+
+Git deny projections intentionally use conservative substring globs, covering
+options and common wrappers/paths at the cost of false positives. Legacy allows
+remain finite direct/no-pager forms; they do not use wildcard option prefixes.
+Neither raw-glob backend offers Bcode's parsed-shell security contract. Bcode's
+Git deny rules use `<options>*`; plan-mode read allows use explicit benign
+options
+and `-C` value pairs instead, so an option value cannot accidentally grant push.
+
+Normal/restricted/yolo variants retain distinct intent: normal build permits
+ordinary push but denies destructive forms; restricted build denies push;
+yolo build adds no Git restrictions. Worktree-specific rules are unchanged.
+Restricted stash reads are allowed while known mutations, default save, and
+leading stash options are denied. Plan branch/config allows are limited to read
+forms rather than granting arbitrary mutation arguments.
+
 ## Pure evaluation tests (no activation)
 
 From the repository root:

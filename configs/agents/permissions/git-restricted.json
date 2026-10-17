@@ -40,31 +40,267 @@
                     "git stash store": "deny",
                     "git worktree add *": "deny",
                     "git worktree remove *": "deny",
-                    "git submodule update *": "deny"
+                    "git submodule update *": "deny",
+                    "git stash list": "allow",
+                    "git stash list *": "allow",
+                    "git stash show": "allow",
+                    "git stash show *": "allow",
+                    "git --no-pager stash list": "allow",
+                    "git --no-pager stash list *": "allow",
+                    "git --no-pager stash show": "allow",
+                    "git --no-pager stash show *": "allow"
                 },
                 "command_patterns": {
-                    "git [--no-pager] stash ...": "deny",
-                    "git [--no-pager] checkout ...": "deny",
-                    "git [--no-pager] switch ...": "deny",
-                    "git [--no-pager] add ...": "deny",
-                    "git [--no-pager] mv ...": "deny",
-                    "git [--no-pager] rm ...": "deny",
-                    "git [--no-pager] reset ...": "deny",
-                    "git [--no-pager] restore ...": "deny",
-                    "git [--no-pager] remove ...": "deny",
-                    "git [--no-pager] commit ...": "deny",
-                    "git [--no-pager] push ...": "deny",
-                    "git [--no-pager] pull ...": "deny",
-                    "git [--no-pager] merge ...": "deny",
-                    "git [--no-pager] rebase ...": "deny",
-                    "git [--no-pager] revert ...": "deny",
-                    "git [--no-pager] cherry-pick ...": "deny",
-                    "git [--no-pager] am ...": "deny",
-                    "git [--no-pager] apply ...": "deny",
-                    "git [--no-pager] clean ...": "deny",
+                    "git <options>* checkout ...": "deny",
+                    "git <options>* switch ...": "deny",
+                    "git <options>* add ...": "deny",
+                    "git <options>* mv ...": "deny",
+                    "git <options>* rm ...": "deny",
+                    "git <options>* reset ...": "deny",
+                    "git <options>* restore ...": "deny",
+                    "git <options>* remove ...": "deny",
+                    "git <options>* commit ...": "deny",
+                    "git <options>* push ...": "deny",
+                    "git <options>* pull ...": "deny",
+                    "git <options>* merge ...": "deny",
+                    "git <options>* rebase ...": "deny",
+                    "git <options>* revert ...": "deny",
+                    "git <options>* cherry-pick ...": "deny",
+                    "git <options>* am ...": "deny",
+                    "git <options>* apply ...": "deny",
+                    "git <options>* clean ...": "deny",
                     "git [--no-pager] worktree add ...": "deny",
                     "git [--no-pager] worktree remove ...": "deny",
-                    "git [--no-pager] submodule update ...": "deny"
+                    "git <options>* submodule update ...": "deny",
+                    "git <options>* stash": "deny",
+                    "git <options>* stash push ...": "deny",
+                    "git <options>* stash save ...": "deny",
+                    "git <options>* stash drop ...": "deny",
+                    "git <options>* stash pop ...": "deny",
+                    "git <options>* stash apply ...": "deny",
+                    "git <options>* stash clear ...": "deny",
+                    "git <options>* stash create ...": "deny",
+                    "git <options>* stash store ...": "deny",
+                    "git <options>* stash branch ...": "deny",
+                    "git <options>* stash export ...": "deny",
+                    "git <options>* stash import ...": "deny",
+                    "git <options>* stash --include-untracked ...": "deny",
+                    "git <options>* stash -u ...": "deny",
+                    "git <options>* stash /-.*/ ...": "deny"
+                },
+                "compatibility": {
+                    "opencode": {
+                        "patterns": {
+                            "git <options>* checkout ...": {
+                                "*git *checkout*": "deny"
+                            },
+                            "git <options>* switch ...": {
+                                "*git *switch*": "deny"
+                            },
+                            "git <options>* add ...": {
+                                "*git *add*": "deny"
+                            },
+                            "git <options>* mv ...": {
+                                "*git *mv*": "deny"
+                            },
+                            "git <options>* rm ...": {
+                                "*git *rm*": "deny"
+                            },
+                            "git <options>* reset ...": {
+                                "*git *reset*": "deny"
+                            },
+                            "git <options>* restore ...": {
+                                "*git *restore*": "deny"
+                            },
+                            "git <options>* remove ...": {
+                                "*git *remove*": "deny"
+                            },
+                            "git <options>* commit ...": {
+                                "*git *commit*": "deny"
+                            },
+                            "git <options>* push ...": {
+                                "*git *push*": "deny"
+                            },
+                            "git <options>* pull ...": {
+                                "*git *pull*": "deny"
+                            },
+                            "git <options>* merge ...": {
+                                "*git *merge*": "deny"
+                            },
+                            "git <options>* rebase ...": {
+                                "*git *rebase*": "deny"
+                            },
+                            "git <options>* revert ...": {
+                                "*git *revert*": "deny"
+                            },
+                            "git <options>* cherry-pick ...": {
+                                "*git *cherry-pick*": "deny"
+                            },
+                            "git <options>* am ...": {
+                                "*git *am*": "deny"
+                            },
+                            "git <options>* apply ...": {
+                                "*git *apply*": "deny"
+                            },
+                            "git <options>* clean ...": {
+                                "*git *clean*": "deny"
+                            },
+                            "git <options>* submodule update ...": {
+                                "*git *submodule*update*": "deny"
+                            },
+                            "git <options>* stash": {
+                                "*git *stash": "deny"
+                            },
+                            "git <options>* stash push ...": {
+                                "*git *stash*push*": "deny"
+                            },
+                            "git <options>* stash save ...": {
+                                "*git *stash*save*": "deny"
+                            },
+                            "git <options>* stash drop ...": {
+                                "*git *stash*drop*": "deny"
+                            },
+                            "git <options>* stash pop ...": {
+                                "*git *stash*pop*": "deny"
+                            },
+                            "git <options>* stash apply ...": {
+                                "*git *stash*apply*": "deny"
+                            },
+                            "git <options>* stash clear ...": {
+                                "*git *stash*clear*": "deny"
+                            },
+                            "git <options>* stash create ...": {
+                                "*git *stash*create*": "deny"
+                            },
+                            "git <options>* stash store ...": {
+                                "*git *stash*store*": "deny"
+                            },
+                            "git <options>* stash branch ...": {
+                                "*git *stash*branch*": "deny"
+                            },
+                            "git <options>* stash export ...": {
+                                "*git *stash*export*": "deny"
+                            },
+                            "git <options>* stash import ...": {
+                                "*git *stash*import*": "deny"
+                            },
+                            "git <options>* stash --include-untracked ...": {
+                                "*git *stash*--include-untracked*": "deny"
+                            },
+                            "git <options>* stash -u ...": {
+                                "*git *stash*-u*": "deny"
+                            },
+                            "git <options>* stash /-.*/ ...": {
+                                "*git *stash -*": "deny"
+                            }
+                        }
+                    },
+                    "pi": {
+                        "patterns": {
+                            "git <options>* checkout ...": {
+                                "*git *checkout*": "deny"
+                            },
+                            "git <options>* switch ...": {
+                                "*git *switch*": "deny"
+                            },
+                            "git <options>* add ...": {
+                                "*git *add*": "deny"
+                            },
+                            "git <options>* mv ...": {
+                                "*git *mv*": "deny"
+                            },
+                            "git <options>* rm ...": {
+                                "*git *rm*": "deny"
+                            },
+                            "git <options>* reset ...": {
+                                "*git *reset*": "deny"
+                            },
+                            "git <options>* restore ...": {
+                                "*git *restore*": "deny"
+                            },
+                            "git <options>* remove ...": {
+                                "*git *remove*": "deny"
+                            },
+                            "git <options>* commit ...": {
+                                "*git *commit*": "deny"
+                            },
+                            "git <options>* push ...": {
+                                "*git *push*": "deny"
+                            },
+                            "git <options>* pull ...": {
+                                "*git *pull*": "deny"
+                            },
+                            "git <options>* merge ...": {
+                                "*git *merge*": "deny"
+                            },
+                            "git <options>* rebase ...": {
+                                "*git *rebase*": "deny"
+                            },
+                            "git <options>* revert ...": {
+                                "*git *revert*": "deny"
+                            },
+                            "git <options>* cherry-pick ...": {
+                                "*git *cherry-pick*": "deny"
+                            },
+                            "git <options>* am ...": {
+                                "*git *am*": "deny"
+                            },
+                            "git <options>* apply ...": {
+                                "*git *apply*": "deny"
+                            },
+                            "git <options>* clean ...": {
+                                "*git *clean*": "deny"
+                            },
+                            "git <options>* submodule update ...": {
+                                "*git *submodule*update*": "deny"
+                            },
+                            "git <options>* stash": {
+                                "*git *stash": "deny"
+                            },
+                            "git <options>* stash push ...": {
+                                "*git *stash*push*": "deny"
+                            },
+                            "git <options>* stash save ...": {
+                                "*git *stash*save*": "deny"
+                            },
+                            "git <options>* stash drop ...": {
+                                "*git *stash*drop*": "deny"
+                            },
+                            "git <options>* stash pop ...": {
+                                "*git *stash*pop*": "deny"
+                            },
+                            "git <options>* stash apply ...": {
+                                "*git *stash*apply*": "deny"
+                            },
+                            "git <options>* stash clear ...": {
+                                "*git *stash*clear*": "deny"
+                            },
+                            "git <options>* stash create ...": {
+                                "*git *stash*create*": "deny"
+                            },
+                            "git <options>* stash store ...": {
+                                "*git *stash*store*": "deny"
+                            },
+                            "git <options>* stash branch ...": {
+                                "*git *stash*branch*": "deny"
+                            },
+                            "git <options>* stash export ...": {
+                                "*git *stash*export*": "deny"
+                            },
+                            "git <options>* stash import ...": {
+                                "*git *stash*import*": "deny"
+                            },
+                            "git <options>* stash --include-untracked ...": {
+                                "*git *stash*--include-untracked*": "deny"
+                            },
+                            "git <options>* stash -u ...": {
+                                "*git *stash*-u*": "deny"
+                            },
+                            "git <options>* stash /-.*/ ...": {
+                                "*git *stash -*": "deny"
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -82,7 +318,6 @@
                     "git diff *": "allow",
                     "git diff-tree *": "allow",
                     "git branch": "allow",
-                    "git branch *": "allow",
                     "git ls-tree": "allow",
                     "git ls-tree *": "allow",
                     "git ls-files": "allow",
@@ -107,22 +342,180 @@
                     "git stash list *": "allow",
                     "git stash show": "allow",
                     "git stash show *": "allow",
-                    "git config *": "allow",
                     "git rev-list *": "allow",
                     "git cat-file *": "allow",
                     "git name-rev *": "allow",
                     "git for-each-ref *": "allow",
                     "git count-objects *": "allow",
                     "git worktree list": "allow",
-                    "git worktree list *": "allow"
+                    "git worktree list *": "allow",
+                    "git branch --list": "allow",
+                    "git branch --list *": "allow",
+                    "git branch -l": "allow",
+                    "git branch -l *": "allow",
+                    "git branch --show-current": "allow",
+                    "git config --get *": "allow",
+                    "git config --get-all *": "allow",
+                    "git config --get-regexp *": "allow",
+                    "git config --list": "allow",
+                    "git config --list *": "allow",
+                    "git config -l": "allow",
+                    "git config -l *": "allow"
                 },
                 "command_patterns": {
-                    "git [--no-pager] diff ...": "allow",
-                    "git [--no-pager] log ...": "allow",
-                    "git [--no-pager] show ...": "allow",
-                    "git [--no-pager] status ...": "allow",
-                    "git [--no-pager] stash list ...": "allow",
-                    "git [--no-pager] stash show ...": "allow"
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* diff ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* log ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* show ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* status ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* stash list ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* stash show ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* branch --list ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* branch --show-current ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get-all ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get-regexp ...": "allow"
+                },
+                "compatibility": {
+                    "opencode": {
+                        "patterns": {
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* diff ...": {
+                                "git diff": "allow",
+                                "git diff *": "allow",
+                                "git --no-pager diff": "allow",
+                                "git --no-pager diff *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* log ...": {
+                                "git log": "allow",
+                                "git log *": "allow",
+                                "git --no-pager log": "allow",
+                                "git --no-pager log *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* show ...": {
+                                "git show": "allow",
+                                "git show *": "allow",
+                                "git --no-pager show": "allow",
+                                "git --no-pager show *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* status ...": {
+                                "git status": "allow",
+                                "git status *": "allow",
+                                "git --no-pager status": "allow",
+                                "git --no-pager status *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* stash list ...": {
+                                "git stash list": "allow",
+                                "git stash list *": "allow",
+                                "git --no-pager stash list": "allow",
+                                "git --no-pager stash list *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* stash show ...": {
+                                "git stash show": "allow",
+                                "git stash show *": "allow",
+                                "git --no-pager stash show": "allow",
+                                "git --no-pager stash show *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* branch --list ...": {
+                                "git branch --list": "allow",
+                                "git branch --list *": "allow",
+                                "git --no-pager branch --list": "allow",
+                                "git --no-pager branch --list *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* branch --show-current ...": {
+                                "git branch --show-current": "allow",
+                                "git branch --show-current *": "allow",
+                                "git --no-pager branch --show-current": "allow",
+                                "git --no-pager branch --show-current *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get ...": {
+                                "git config --get": "allow",
+                                "git config --get *": "allow",
+                                "git --no-pager config --get": "allow",
+                                "git --no-pager config --get *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get-all ...": {
+                                "git config --get-all": "allow",
+                                "git config --get-all *": "allow",
+                                "git --no-pager config --get-all": "allow",
+                                "git --no-pager config --get-all *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get-regexp ...": {
+                                "git config --get-regexp": "allow",
+                                "git config --get-regexp *": "allow",
+                                "git --no-pager config --get-regexp": "allow",
+                                "git --no-pager config --get-regexp *": "allow"
+                            }
+                        }
+                    },
+                    "pi": {
+                        "patterns": {
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* diff ...": {
+                                "git diff": "allow",
+                                "git diff *": "allow",
+                                "git --no-pager diff": "allow",
+                                "git --no-pager diff *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* log ...": {
+                                "git log": "allow",
+                                "git log *": "allow",
+                                "git --no-pager log": "allow",
+                                "git --no-pager log *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* show ...": {
+                                "git show": "allow",
+                                "git show *": "allow",
+                                "git --no-pager show": "allow",
+                                "git --no-pager show *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* status ...": {
+                                "git status": "allow",
+                                "git status *": "allow",
+                                "git --no-pager status": "allow",
+                                "git --no-pager status *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* stash list ...": {
+                                "git stash list": "allow",
+                                "git stash list *": "allow",
+                                "git --no-pager stash list": "allow",
+                                "git --no-pager stash list *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* stash show ...": {
+                                "git stash show": "allow",
+                                "git stash show *": "allow",
+                                "git --no-pager stash show": "allow",
+                                "git --no-pager stash show *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* branch --list ...": {
+                                "git branch --list": "allow",
+                                "git branch --list *": "allow",
+                                "git --no-pager branch --list": "allow",
+                                "git --no-pager branch --list *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* branch --show-current ...": {
+                                "git branch --show-current": "allow",
+                                "git branch --show-current *": "allow",
+                                "git --no-pager branch --show-current": "allow",
+                                "git --no-pager branch --show-current *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get ...": {
+                                "git config --get": "allow",
+                                "git config --get *": "allow",
+                                "git --no-pager config --get": "allow",
+                                "git --no-pager config --get *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get-all ...": {
+                                "git config --get-all": "allow",
+                                "git config --get-all *": "allow",
+                                "git --no-pager config --get-all": "allow",
+                                "git --no-pager config --get-all *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get-regexp ...": {
+                                "git config --get-regexp": "allow",
+                                "git config --get-regexp *": "allow",
+                                "git --no-pager config --get-regexp": "allow",
+                                "git --no-pager config --get-regexp *": "allow"
+                            }
+                        }
+                    }
                 }
             }
         }

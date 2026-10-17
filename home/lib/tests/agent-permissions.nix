@@ -14,7 +14,6 @@ let
       permissionsDir = ../../../configs/agents/permissions;
       cfg = c;
     };
-  hash = x: builtins.hashString "sha256" (builtins.toJSON x);
   fragment = permission: { agent.plan = { inherit permission; }; };
   permission = x: x.agent.plan.permission;
   fails = x: !(builtins.tryEval (builtins.deepSeq x true)).success;
@@ -63,13 +62,13 @@ let
     "tool [a]*"
   ];
   tests = {
-    shippedVariantsStayLegacy =
+    shippedVariantsUseReviewedCompatibility =
       builtins.all
         (
           variant:
-          builtins.all (
-            agent: !(agent.permission or { } ? command_policy) && !(agent.permission or { } ? compatibility)
-          ) (builtins.attrValues (merged variant).agent)
+          builtins.deepSeq (p.forLegacyTarget "pi" (merged variant)) (
+            builtins.deepSeq (p.forLegacyTarget "opencode" (merged variant)) true
+          )
         )
         [
           cfg
@@ -92,19 +91,6 @@ let
             }
           )
         ];
-    yoloVariantsProjectBothTargets =
-      let
-        permissions = merged (
-          cfg
-          // {
-            yolo = [
-              "git"
-              "brew"
-            ];
-          }
-        );
-      in
-      p.forLegacyTarget "opencode" permissions == p.forLegacyTarget "pi" permissions;
     explicitIncludeAndOverrideOrder =
       let
         result = p.mkPermissions {
@@ -189,29 +175,77 @@ let
       )).bash == {
         "*" = "deny";
       };
-    oldBcodeOutput =
-      hash (p.forBcode (merged cfg))
-      == "4e8c059f0b160b511fdc4549899811641b58d9767ac2cbcf1890eb3c6a68e0c6";
-    oldOpenCodeOutput =
-      hash (p.forLegacyTarget "opencode" (merged cfg))
-      == "a76f5f87dbe6cd341bb581f09bd9d4b97288a2b735d4424119989169cad52871";
-    oldPiOutput =
-      hash (p.forLegacyTarget "pi" (merged cfg))
-      == "a76f5f87dbe6cd341bb581f09bd9d4b97288a2b735d4424119989169cad52871";
-    restrictedOptionalNoPagerPreserved =
-      hash (
-        p.forLegacy (
-          merged (
-            cfg
-            // {
-              restricted = [
-                "git"
-                "brew"
-              ];
-            }
-          )
+    configuredGitOptionsPreserved =
+      (p.forBcode (merged (cfg // { restricted = [ "git" ]; })))
+      .agent.build.permission.command_patterns."git <options>* push ..." == "deny";
+    projectedGitOptionsAreRestrictions =
+      builtins.all
+        (
+          target:
+          (p.forLegacyTarget target (merged (cfg // { restricted = [ "git" ]; })))
+          .agent.build.permission.bash."*git *push*" == "deny"
         )
-      ) == "b00179c5d31f40b86f5d456091fcbb001df76185a06f66f507bfc41c971bb4e7";
+        [
+          "pi"
+          "opencode"
+        ];
+    unrelatedRulesSurvivePatternFallbacks =
+      builtins.all
+        (
+          target:
+          let
+            x =
+              (p.forLegacyTarget target (merged (cfg // { restricted = [ "git" ]; })))
+              .agent.build.permission.bash;
+          in
+          x."sudo *" == "deny" && x."git stash list" == "allow"
+        )
+        [
+          "pi"
+          "opencode"
+        ];
+    planMutationsNotGranted =
+      builtins.all
+        (
+          variant:
+          let
+            x = (p.forBcode (merged variant)).agent.plan.permission.bash;
+          in
+          !(x ? "git branch *") && !(x ? "git config *") && x."git branch --list" == "allow"
+        )
+        [
+          cfg
+          (cfg // { restricted = [ "git" ]; })
+          (cfg // { yolo = [ "git" ]; })
+        ];
+    patternFallbackUnknownSourceFails = fails (
+      p.forLegacyTarget "pi" (fragment {
+        compatibility.pi.patterns."absent" = {
+          "tool *" = "deny";
+        };
+      })
+    );
+    patternFallbackCannotChangeAction = fails (
+      p.forLegacyTarget "pi" (fragment {
+        command_patterns."tool <options>* remove ..." = "deny";
+        compatibility.pi.patterns."tool <options>* remove ..." = {
+          "tool *" = "allow";
+        };
+      })
+    );
+    patternFallbackKeepsDefaults =
+      (permission (
+        p.forLegacyTarget "pi" (fragment {
+          command."*" = "deny";
+          command_patterns."tool <options>* status ..." = "allow";
+          compatibility.pi.patterns."tool <options>* status ..." = {
+            "tool status" = "allow";
+          };
+        })
+      )).bash == {
+        "*" = "deny";
+        "tool status" = "allow";
+      };
     layersAppendNotMergeSortOrDeduplicate =
       (permission ordered).command_policy.layers == [
         layerA

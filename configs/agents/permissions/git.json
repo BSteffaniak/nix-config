@@ -18,19 +18,128 @@
                     "git update-ref -d *": "deny"
                 },
                 "command_patterns": {
-                    "git [--no-pager] push --force ...": "deny",
-                    "git [--no-pager] push --force-with-lease ...": "deny",
-                    "git [--no-pager] push -f ...": "deny",
-                    "git [--no-pager] reset --hard ...": "deny",
-                    "git [--no-pager] clean -f ...": "deny",
-                    "git [--no-pager] clean -fd ...": "deny",
-                    "git [--no-pager] clean -fx ...": "deny",
-                    "git [--no-pager] clean -fdx ...": "deny",
-                    "git [--no-pager] filter-branch ...": "deny",
-                    "git [--no-pager] reflog expire ...": "deny",
-                    "git [--no-pager] reflog delete ...": "deny",
-                    "git [--no-pager] gc --prune=now ...": "deny",
-                    "git [--no-pager] update-ref -d ...": "deny"
+                    "git <options>* push --force ...": "deny",
+                    "git <options>* push --force-with-lease ...": "deny",
+                    "git <options>* push -f ...": "deny",
+                    "git <options>* reset --hard ...": "deny",
+                    "git <options>* clean -f ...": "deny",
+                    "git <options>* clean -fd ...": "deny",
+                    "git <options>* clean -fx ...": "deny",
+                    "git <options>* clean -fdx ...": "deny",
+                    "git <options>* filter-branch ...": "deny",
+                    "git <options>* reflog expire ...": "deny",
+                    "git <options>* reflog delete ...": "deny",
+                    "git <options>* gc --prune=now ...": "deny",
+                    "git <options>* update-ref -d ...": "deny",
+                    "git <options>* push [<arg>]* --force ...": "deny",
+                    "git <options>* push [<arg>]* --force-with-lease ...": "deny",
+                    "git <options>* push [<arg>]* -f ...": "deny"
+                },
+                "compatibility": {
+                    "opencode": {
+                        "patterns": {
+                            "git <options>* push --force ...": {
+                                "*git *push*--force*": "deny"
+                            },
+                            "git <options>* push --force-with-lease ...": {
+                                "*git *push*--force-with-lease*": "deny"
+                            },
+                            "git <options>* push -f ...": {
+                                "*git *push*-f*": "deny"
+                            },
+                            "git <options>* reset --hard ...": {
+                                "*git *reset*--hard*": "deny"
+                            },
+                            "git <options>* clean -f ...": {
+                                "*git *clean*-f*": "deny"
+                            },
+                            "git <options>* clean -fd ...": {
+                                "*git *clean*-fd*": "deny"
+                            },
+                            "git <options>* clean -fx ...": {
+                                "*git *clean*-fx*": "deny"
+                            },
+                            "git <options>* clean -fdx ...": {
+                                "*git *clean*-fdx*": "deny"
+                            },
+                            "git <options>* filter-branch ...": {
+                                "*git *filter-branch*": "deny"
+                            },
+                            "git <options>* reflog expire ...": {
+                                "*git *reflog*expire*": "deny"
+                            },
+                            "git <options>* reflog delete ...": {
+                                "*git *reflog*delete*": "deny"
+                            },
+                            "git <options>* gc --prune=now ...": {
+                                "*git *gc*--prune=now*": "deny"
+                            },
+                            "git <options>* update-ref -d ...": {
+                                "*git *update-ref*-d*": "deny"
+                            },
+                            "git <options>* push [<arg>]* --force ...": {
+                                "*git *push*--force*": "deny"
+                            },
+                            "git <options>* push [<arg>]* --force-with-lease ...": {
+                                "*git *push*--force-with-lease*": "deny"
+                            },
+                            "git <options>* push [<arg>]* -f ...": {
+                                "*git *push*-f*": "deny"
+                            }
+                        }
+                    },
+                    "pi": {
+                        "patterns": {
+                            "git <options>* push --force ...": {
+                                "*git *push*--force*": "deny"
+                            },
+                            "git <options>* push --force-with-lease ...": {
+                                "*git *push*--force-with-lease*": "deny"
+                            },
+                            "git <options>* push -f ...": {
+                                "*git *push*-f*": "deny"
+                            },
+                            "git <options>* reset --hard ...": {
+                                "*git *reset*--hard*": "deny"
+                            },
+                            "git <options>* clean -f ...": {
+                                "*git *clean*-f*": "deny"
+                            },
+                            "git <options>* clean -fd ...": {
+                                "*git *clean*-fd*": "deny"
+                            },
+                            "git <options>* clean -fx ...": {
+                                "*git *clean*-fx*": "deny"
+                            },
+                            "git <options>* clean -fdx ...": {
+                                "*git *clean*-fdx*": "deny"
+                            },
+                            "git <options>* filter-branch ...": {
+                                "*git *filter-branch*": "deny"
+                            },
+                            "git <options>* reflog expire ...": {
+                                "*git *reflog*expire*": "deny"
+                            },
+                            "git <options>* reflog delete ...": {
+                                "*git *reflog*delete*": "deny"
+                            },
+                            "git <options>* gc --prune=now ...": {
+                                "*git *gc*--prune=now*": "deny"
+                            },
+                            "git <options>* update-ref -d ...": {
+                                "*git *update-ref*-d*": "deny"
+                            },
+                            "git <options>* push [<arg>]* --force ...": {
+                                "*git *push*--force*": "deny"
+                            },
+                            "git <options>* push [<arg>]* --force-with-lease ...": {
+                                "*git *push*--force-with-lease*": "deny"
+                            },
+                            "git <options>* push [<arg>]* -f ...": {
+                                "*git *push*-f*": "deny"
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -48,7 +157,6 @@
                     "git diff *": "allow",
                     "git diff-tree *": "allow",
                     "git branch": "allow",
-                    "git branch *": "allow",
                     "git ls-files": "allow",
                     "git ls-files *": "allow",
                     "git ls-remote": "allow",
@@ -71,14 +179,180 @@
                     "git stash list *": "allow",
                     "git stash show": "allow",
                     "git stash show *": "allow",
-                    "git config *": "allow",
                     "git rev-list *": "allow",
                     "git cat-file *": "allow",
                     "git name-rev *": "allow",
                     "git for-each-ref *": "allow",
                     "git count-objects *": "allow",
                     "git worktree list": "allow",
-                    "git worktree list *": "allow"
+                    "git worktree list *": "allow",
+                    "git branch --list": "allow",
+                    "git branch --list *": "allow",
+                    "git branch -l": "allow",
+                    "git branch -l *": "allow",
+                    "git branch --show-current": "allow",
+                    "git config --get *": "allow",
+                    "git config --get-all *": "allow",
+                    "git config --get-regexp *": "allow",
+                    "git config --list": "allow",
+                    "git config --list *": "allow",
+                    "git config -l": "allow",
+                    "git config -l *": "allow"
+                },
+                "command_patterns": {
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* diff ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* log ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* show ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* status ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* stash list ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* stash show ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* branch --list ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* branch --show-current ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get-all ...": "allow",
+                    "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get-regexp ...": "allow"
+                },
+                "compatibility": {
+                    "pi": {
+                        "patterns": {
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* diff ...": {
+                                "git diff": "allow",
+                                "git diff *": "allow",
+                                "git --no-pager diff": "allow",
+                                "git --no-pager diff *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* log ...": {
+                                "git log": "allow",
+                                "git log *": "allow",
+                                "git --no-pager log": "allow",
+                                "git --no-pager log *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* show ...": {
+                                "git show": "allow",
+                                "git show *": "allow",
+                                "git --no-pager show": "allow",
+                                "git --no-pager show *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* status ...": {
+                                "git status": "allow",
+                                "git status *": "allow",
+                                "git --no-pager status": "allow",
+                                "git --no-pager status *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* stash list ...": {
+                                "git stash list": "allow",
+                                "git stash list *": "allow",
+                                "git --no-pager stash list": "allow",
+                                "git --no-pager stash list *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* stash show ...": {
+                                "git stash show": "allow",
+                                "git stash show *": "allow",
+                                "git --no-pager stash show": "allow",
+                                "git --no-pager stash show *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* branch --list ...": {
+                                "git branch --list": "allow",
+                                "git branch --list *": "allow",
+                                "git --no-pager branch --list": "allow",
+                                "git --no-pager branch --list *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* branch --show-current ...": {
+                                "git branch --show-current": "allow",
+                                "git branch --show-current *": "allow",
+                                "git --no-pager branch --show-current": "allow",
+                                "git --no-pager branch --show-current *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get ...": {
+                                "git config --get": "allow",
+                                "git config --get *": "allow",
+                                "git --no-pager config --get": "allow",
+                                "git --no-pager config --get *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get-all ...": {
+                                "git config --get-all": "allow",
+                                "git config --get-all *": "allow",
+                                "git --no-pager config --get-all": "allow",
+                                "git --no-pager config --get-all *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get-regexp ...": {
+                                "git config --get-regexp": "allow",
+                                "git config --get-regexp *": "allow",
+                                "git --no-pager config --get-regexp": "allow",
+                                "git --no-pager config --get-regexp *": "allow"
+                            }
+                        }
+                    },
+                    "opencode": {
+                        "patterns": {
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* diff ...": {
+                                "git diff": "allow",
+                                "git diff *": "allow",
+                                "git --no-pager diff": "allow",
+                                "git --no-pager diff *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* log ...": {
+                                "git log": "allow",
+                                "git log *": "allow",
+                                "git --no-pager log": "allow",
+                                "git --no-pager log *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* show ...": {
+                                "git show": "allow",
+                                "git show *": "allow",
+                                "git --no-pager show": "allow",
+                                "git --no-pager show *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* status ...": {
+                                "git status": "allow",
+                                "git status *": "allow",
+                                "git --no-pager status": "allow",
+                                "git --no-pager status *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* stash list ...": {
+                                "git stash list": "allow",
+                                "git stash list *": "allow",
+                                "git --no-pager stash list": "allow",
+                                "git --no-pager stash list *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* stash show ...": {
+                                "git stash show": "allow",
+                                "git stash show *": "allow",
+                                "git --no-pager stash show": "allow",
+                                "git --no-pager stash show *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* branch --list ...": {
+                                "git branch --list": "allow",
+                                "git branch --list *": "allow",
+                                "git --no-pager branch --list": "allow",
+                                "git --no-pager branch --list *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* branch --show-current ...": {
+                                "git branch --show-current": "allow",
+                                "git branch --show-current *": "allow",
+                                "git --no-pager branch --show-current": "allow",
+                                "git --no-pager branch --show-current *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get ...": {
+                                "git config --get": "allow",
+                                "git config --get *": "allow",
+                                "git --no-pager config --get": "allow",
+                                "git --no-pager config --get *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get-all ...": {
+                                "git config --get-all": "allow",
+                                "git config --get-all *": "allow",
+                                "git --no-pager config --get-all": "allow",
+                                "git --no-pager config --get-all *": "allow"
+                            },
+                            "git [-C <arg> | /-C.+/ | --no-pager | --literal-pathspecs | --no-optional-locks]* config --get-regexp ...": {
+                                "git config --get-regexp": "allow",
+                                "git config --get-regexp *": "allow",
+                                "git --no-pager config --get-regexp": "allow",
+                                "git --no-pager config --get-regexp *": "allow"
+                            }
+                        }
+                    }
                 }
             }
         }
