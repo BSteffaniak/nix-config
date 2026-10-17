@@ -268,7 +268,12 @@ let
   };
 
   finalSettingsRaw = lib.recursiveUpdate (lib.recursiveUpdate baseSettings bcodePermissions) cfg.extraSettings;
-  finalSettings = normalizeBcodeAgentConfig finalSettingsRaw;
+  finalSettings = normalizeBcodeAgentConfig (
+    finalSettingsRaw
+    // lib.optionalAttrs (cfg.sharedAuthPools != { }) {
+      auth_pool_config = "auth-pools.toml";
+    }
+  );
 
   # Only generate fast variants for models with documented Fast/priority support.
   openAiFastModels = [
@@ -520,12 +525,7 @@ let
         // lib.optionalAttrs (authProvider == "openai") { mode = "chatgpt"; }
         // lib.optionalAttrs (baseUrl != null) { base_url = baseUrl; };
       };
-      extraConfig = lib.optionalAttrs enableSubscriptionPriming {
-        auth.pools.${authPool} = {
-          provider_plugin_id = "bcode.openai-compatible";
-          priming.enabled = true;
-        };
-      };
+      extraConfig = { };
       variants =
         variants
         // lib.optionalAttrs (fastModel != null) {
@@ -766,7 +766,13 @@ let
     }
   ) (builtinProfiles // cfg.profiles);
 
-  providerOverlays = mkProfileOverlays allProfiles // cfg.extraProviderOverlays;
+  providerOverlays = lib.mapAttrs (
+    _name: overlay:
+    overlay
+    // lib.optionalAttrs (cfg.sharedAuthPools != { }) {
+      auth_pool_config = "../auth-pools.toml";
+    }
+  ) (mkProfileOverlays allProfiles // cfg.extraProviderOverlays);
 
   providerSshenv = lib.filterAttrs (_name: spec: spec != null) (
     mkProfileSshenv allProfiles // cfg.extraProviderSshenv
@@ -822,6 +828,25 @@ in
       type = lib.types.attrs;
       default = { };
       description = "Additional Bcode TOML settings merged after generated shared agent permissions.";
+    };
+
+    sharedAuthPools = lib.mkOption {
+      type = lib.types.attrsOf tomlFormat.type;
+      default = lib.optionalAttrs cfg.providers.openai.subscriptionPriming.enable {
+        openai = {
+          provider_plugin_id = "bcode.openai-compatible";
+          automatic_provider = "openai";
+          automatic_group = "subscription";
+          priming.enabled = true;
+        };
+      };
+      description = ''
+        Shared authentication pool policies, emitted once in bcode/auth-pools.toml.
+        Base configuration and model presets explicitly reference this file. Account
+        enrollment, runtime membership, cooldowns and interactive preferences stay in
+        Bcode-managed state; credentials stay in their existing vaults. Do not also
+        declare these pools in extraSettings or profile extraConfig.
+      '';
     };
 
     milestoneModels = lib.mkOption {
@@ -1202,6 +1227,14 @@ in
         xdg.configFile."bcode/skills".source = skillsDir;
 
         myConfig.shell.contrib.functions = providerWrapperCommands;
+      }
+      {
+        xdg.configFile = lib.optionalAttrs (cfg.sharedAuthPools != { }) {
+          "bcode/auth-pools.toml".source = tomlFormat.generate "bcode-auth-pools.toml" {
+            schema_version = 1;
+            auth.pools = cfg.sharedAuthPools;
+          };
+        };
       }
       {
         xdg.configFile = lib.mapAttrs' (name: overlay: {
