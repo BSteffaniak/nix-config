@@ -10,6 +10,7 @@
                 "properties": {
                     "permission": {
                         "type": "object",
+                        "not": { "required": ["compatibility"] },
                         "properties": {
                             "bash": {
                                 "$ref": "#/$defs/rules"
@@ -22,18 +23,6 @@
                             },
                             "command_policy": {
                                 "$ref": "#/$defs/policy"
-                            },
-                            "compatibility": {
-                                "type": "object",
-                                "additionalProperties": false,
-                                "properties": {
-                                    "opencode": {
-                                        "$ref": "#/$defs/fallback"
-                                    },
-                                    "pi": {
-                                        "$ref": "#/$defs/fallback"
-                                    }
-                                }
                             }
                         }
                     }
@@ -78,43 +67,6 @@
                     }
                 }
             }
-        },
-        "fallback": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "bash": {
-                    "allOf": [
-                        {
-                            "$ref": "#/$defs/rules"
-                        },
-                        {
-                            "required": ["*"]
-                        }
-                    ]
-                },
-                "patterns": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "allOf": [
-                            {
-                                "$ref": "#/$defs/rules"
-                            },
-                            {
-                                "minProperties": 1
-                            }
-                        ]
-                    }
-                }
-            },
-            "anyOf": [
-                {
-                    "required": ["bash"]
-                },
-                {
-                    "required": ["patterns"]
-                }
-            ]
         }
     }
 }

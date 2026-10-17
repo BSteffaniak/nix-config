@@ -1,5 +1,6 @@
 { lib }:
 let
+  compiler = import ../permission-compiler.nix { inherit lib; };
   p = import ../agent-permissions.nix { inherit lib; };
   cfg = {
     autoDiscover = true;
@@ -39,10 +40,6 @@ let
       };
     };
   compose = inputs: p.compose { inherit inputs; };
-  fallbacks = {
-    opencode.bash."*" = "deny";
-    pi.bash."*" = "ask";
-  };
   ordered = compose [
     (fragment { command."*" = "ask"; })
     (policy [ layerA ])
@@ -62,7 +59,24 @@ let
     "tool [a]*"
   ];
   tests = {
-    shippedVariantsUseReviewedCompatibility =
+    exactReportHasNoDiagnostics = (compiler.report "pi" "tool status" "allow").diagnostics == [ ];
+    restrictionReportPreservesRules =
+      let
+        r = compiler.report "opencode" "tool <options>* remove ..." "deny";
+      in
+      r.rules == compiler.compile "opencode" "tool <options>* remove ..." "deny"
+      && r.diagnostics == [ "conservative raw-glob restriction may deny additional commands" ];
+    subsetReportPreservesRules =
+      let
+        r = compiler.report "pi" "tool [--plain]* status ..." "allow";
+      in
+      r.rules == compiler.compile "pi" "tool [--plain]* status ..." "allow"
+      &&
+        r.diagnostics
+        == [ "emitting finite literal subset; optional dynamic/repeated forms remain ungranted" ];
+    reportRejectsUnsafeAllow = fails (compiler.report "pi" "tool <arg>" "allow");
+    reportRejectsUnknownBackend = fails (compiler.report "unknown" "tool status" "allow");
+    shippedVariantsCompileAutomatically =
       builtins.all
         (
           variant:
@@ -158,23 +172,6 @@ let
       in
       p.forLegacyTarget "opencode" (lib.recursiveUpdate base (merged cfg))
       == lib.recursiveUpdate base (p.forLegacy (merged cfg));
-    openCodeFallbackReplacesBaseDefaults =
-      let
-        base = builtins.fromJSON (builtins.readFile ../../../configs/opencode/opencode.json);
-      in
-      (permission (
-        p.forLegacyTarget "opencode" (
-          lib.recursiveUpdate base (fragment {
-            command_policy = {
-              version = 1;
-              layers = [ layerA ];
-            };
-            compatibility = fallbacks;
-          })
-        )
-      )).bash == {
-        "*" = "deny";
-      };
     configuredGitOptionsPreserved =
       (p.forBcode (merged (cfg // { restricted = [ "git" ]; })))
       .agent.build.permission.command_patterns."git <options>* push ..." == "deny";
@@ -189,7 +186,7 @@ let
           "pi"
           "opencode"
         ];
-    unrelatedRulesSurvivePatternFallbacks =
+    unrelatedRulesSurviveCompilation =
       builtins.all
         (
           target:
@@ -218,34 +215,6 @@ let
           (cfg // { restricted = [ "git" ]; })
           (cfg // { yolo = [ "git" ]; })
         ];
-    patternFallbackUnknownSourceFails = fails (
-      p.forLegacyTarget "pi" (fragment {
-        compatibility.pi.patterns."absent" = {
-          "tool *" = "deny";
-        };
-      })
-    );
-    patternFallbackCannotChangeAction = fails (
-      p.forLegacyTarget "pi" (fragment {
-        command_patterns."tool <options>* remove ..." = "deny";
-        compatibility.pi.patterns."tool <options>* remove ..." = {
-          "tool *" = "allow";
-        };
-      })
-    );
-    patternFallbackKeepsDefaults =
-      (permission (
-        p.forLegacyTarget "pi" (fragment {
-          command."*" = "deny";
-          command_patterns."tool <options>* status ..." = "allow";
-          compatibility.pi.patterns."tool <options>* status ..." = {
-            "tool status" = "allow";
-          };
-        })
-      )).bash == {
-        "*" = "deny";
-        "tool status" = "allow";
-      };
     layersAppendNotMergeSortOrDeduplicate =
       (permission ordered).command_policy.layers == [
         layerA
@@ -284,10 +253,6 @@ let
       (fragment { command_patterns.x = "deny"; })
       (fragment { command_patterns.x = "allow"; })
     ]);
-    fallbackConflictFails = fails (compose [
-      (fragment { compatibility = fallbacks; })
-      (fragment { compatibility.pi.bash."*" = "deny"; })
-    ]);
     invalidVersionFails = fails (
       p.forBcode (fragment {
         command_policy = {
@@ -302,88 +267,135 @@ let
         command_patterns.x = "oops";
       })
     );
-    orderedNeedsFallbackBothTargets = builtins.all (target: fails (p.forLegacyTarget target ordered)) [
+    orderedFailsBothTargets = builtins.all (target: fails (p.forLegacyTarget target ordered)) [
       "opencode"
       "pi"
     ];
     evenEmptyPolicyIsOptIn = fails (p.forLegacy (policy [ ]));
-    advancedFailsClosed = builtins.all (
-      pattern:
-      builtins.all
-        (
-          target:
-          fails (
-            p.forLegacyTarget target (fragment {
-              command_patterns.${pattern} = "deny";
-            })
-          )
-        )
-        [
-          "opencode"
-          "pi"
-        ]
-    ) advancedPatterns;
     advancedBcodeStringsPreserved = builtins.all (
       pattern:
       (permission (
         p.forBcode (fragment {
           command_patterns.${pattern} = "deny";
-          compatibility = fallbacks;
         })
       )) == {
         command_patterns.${pattern} = "deny";
       }
     ) advancedPatterns;
-    targetFallbacksIndependent =
+    compatibilityRemoved = fails (
+      p.forBcode (fragment {
+        compatibility.pi.bash."*" = "deny";
+      })
+    );
+    requiredDynamicAllowFails =
       builtins.all
         (
-          target:
-          (permission (
-            p.forLegacyTarget target (fragment {
-              command."*" = "allow";
-              bash."tool *" = "allow";
-              command_patterns."tool /secret/" = "deny";
-              command_policy = {
-                version = 1;
-                layers = [
-                  layerA
-                  layerB
-                ];
-              };
-              compatibility = fallbacks;
-              external_directory = "deny";
+          pattern:
+          fails (
+            p.forLegacy (fragment {
+              command_patterns.${pattern} = "allow";
             })
-          )) == {
-            bash = fallbacks.${target}.bash;
-            external_directory = "deny";
-          }
+          )
         )
         [
-          "opencode"
-          "pi"
+          "tool <arg>"
+          "tool <options>* status ..."
+          "tool /abc/"
         ];
-    missingTargetFails = fails (
-      p.forLegacyTarget "pi" (fragment {
-        command_patterns."tool <arg>" = "deny";
-        compatibility.opencode = fallbacks.opencode;
-      })
-    );
-    incompleteFallbackFails = fails (
+    finiteAlternatives =
+      (permission (
+        p.forLegacy (fragment {
+          command_patterns."tool [a|b c] show" = "allow";
+        })
+      )).bash == {
+        "tool show" = "allow";
+        "tool a show" = "allow";
+        "tool b c show" = "allow";
+      };
+    repeatedAllowSubset =
+      (permission (
+        p.forLegacy (fragment {
+          command_patterns."tool [-C <arg>|--plain]* status ..." = "allow";
+        })
+      )).bash == {
+        "tool status" = "allow";
+        "tool status *" = "allow";
+        "tool --plain status" = "allow";
+        "tool --plain status *" = "allow";
+      };
+    quotedLiteral =
+      (permission (
+        p.forLegacy (fragment {
+          command_patterns."tool 'status'" = "allow";
+        })
+      )).bash."tool status" == "allow";
+    globLiteralFails = fails (
       p.forLegacy (fragment {
-        compatibility.opencode.bash."tool *" = "deny";
+        command_patterns."tool 'x?'" = "allow";
       })
     );
-    unknownMetadataFails = fails (
-      p.forBcode (fragment {
-        compatibility.bcode = fallbacks.pi;
-      })
-    );
-    projectedConflictFails = fails (
+    malformedPatternsFail =
+      builtins.all
+        (
+          pattern:
+          fails (
+            p.forLegacy (fragment {
+              command_patterns.${pattern} = "deny";
+            })
+          )
+        )
+        [
+          "tool [a[b]]"
+          "tool [a|]"
+          "tool /x/g"
+          "tool [<unknown>]"
+          "tool 'unfinished"
+          "tool ... extra"
+        ];
+    arbitraryRegexRestriction =
+      (permission (
+        p.forLegacy (fragment {
+          command_patterns."tool /a[bc]+/ ..." = "deny";
+        })
+      )).bash."*tool *" == "deny";
+    regexClassSlash =
+      (permission (
+        p.forLegacy (fragment {
+          command_patterns."tool /a[/]b/ ..." = "deny";
+        })
+      )).bash."*tool *" == "deny";
+    boundedExpansion = fails (
       p.forLegacy (fragment {
-        command."git status" = "allow";
-        command_patterns."git [--no-pager] status ..." = "deny";
+        command_patterns."tool [a|b] [c|d] [e|f] [g|h] [i|j] [k|l]" = "allow";
       })
     );
+    projectionConflictFails = fails (
+      p.forLegacy (fragment {
+        command."tool status" = "deny";
+        command_patterns."tool status" = "allow";
+      })
+    );
+    orderedJSONRoundTrips =
+      let
+        x = p.forLegacy (merged cfg);
+      in
+      builtins.fromJSON (p.legacyJSON "opencode" x) == x;
+    openCodePrecedenceSerialization =
+      p.legacyJSON "opencode" {
+        agent.plan.permission.bash = {
+          "*" = "deny";
+          "tool *" = "deny";
+          "tool status" = "allow";
+        };
+      }
+      == ''{"agent":{"plan":{"permission":{"bash":{"*":"deny","tool *":"deny","tool status":"allow"}}}}}'';
+    backendTieAgreement =
+      p.legacyJSON "opencode" {
+        agent.plan.permission.bash = {
+          "a*b" = "deny";
+          "ab*" = "allow";
+        };
+      } == ''{"agent":{"plan":{"permission":{"bash":{"ab*":"allow","a*b":"deny"}}}}}'';
     literalOptionalProjection =
       (permission (
         p.forLegacy (fragment {
@@ -408,7 +420,7 @@ let
         [
           "..."
           ""
-          "tool  status"
+          "tool [status"
         ];
     unknownTargetFails = fails (p.forLegacyTarget "unknown" { });
     noMetadataForNoPermission =

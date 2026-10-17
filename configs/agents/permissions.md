@@ -1,155 +1,138 @@
-# Shared command permissions: compatibility lane
+# Shared command permissions
 
-`permissions.schema.json` describes the shared JSON input. Nothing in this lane
-opts a deployed agent into advanced mode. Upgrade the Bcode runtime **before**
-adding advanced grammar or `command_policy` to enabled permission files. Do not
-activate these examples on an older runtime. Nix validation does not replace the
-runtime grammar parser.
+Define command policy once in `permissions/*.json`. `permissions.schema.json`
+describes the input; the shared Nix generator composes defaults, discovered or
+explicit files, then overrides. Discovery is sorted; explicit input order is
+preserved. Conflicting identical rule keys fail rather than silently overwrite
+one another. Defaults remain overridable.
 
-## Bcode contract
+## Bcode
 
-Without `command_policy`, legacy command evaluation is unchanged. The generic
-word DSL accepts literals, optional alternatives/groups (`[...]`), repeated
-groups (`[...]*`), `<arg>`, `/regex/imsx`, `<options>*`, and trailing `...`.
-Nix preserves these strings verbatim; it does not translate or parse advanced
-patterns for Bcode.
+`forBcode` preserves `command_patterns` verbatim. Upgrade the runtime before
+activating advanced grammar. The runtime, not Nix, validates Rust regex syntax
+and evaluates parsed operation facts.
 
-Opt-in runtime contract (Nix notation):
+The DSL supports literals, quoted/escaped values, optional groups and
+alternatives
+(`[a | b c]`), repeated groups (`[...]*`), `<arg>`, `<options>*`, whole-value
+`/regex/imsx`, and trailing `...`.
 
-```nix
-permission.command_policy = {
-  version = 1;
-  layers = [
-    { command = { "git *" = "deny"; }; }
-    { command_patterns = { "git [--no-pager] status ..." = "allow"; }; }
-  ];
-};
-```
+`command_policy = { version = 1; layers = [...]; }` opts Bcode into ordered
+layers. The implicit base is `command`/`bash` plus `command_patterns`. The last
+matching layer wins, with deny > ask > allow within each layer. Layer lists
+concatenate in input order, never sort or deduplicate. Legacy targets reject
+ordered policies, including empty ones, rather than guess equivalent glob
+precedence.
 
-Legacy `command` (including the existing `bash` alias) and `command_patterns`
-remain the implicit base. For each command leaf independently, the **last
-matching layer wins**; within a layer **deny > ask > allow**. An unmatched layer
-does not erase an earlier decision. Layers are a list: never sorted, flattened,
-deduplicated, or recursively merged. Empty policies still opt into the new mode.
+## Automatic legacy compilation
 
-`mkPermissions` composes defaults, discovered/explicit input files, then
-override
-files. Discovery is sorted by base filename; explicit `include` and `overrides`
-lists retain caller order. Layer lists concatenate in that order. Defaults are
-overridable, but conflicting identical command keys (including bash/command
-aliases), word-pattern keys, or compatibility targets across user inputs and
-overrides fail evaluation. Identical rules are allowed. Express intentional
-command overrides as separate ordered layers, not duplicate map keys. JSON
-itself
-cannot safely represent duplicate keys; do not put duplicates within a file.
+`home/lib/permission-compiler.nix` owns parsing and lowering; permission files
+have no per-agent translation tables. Obsolete `compatibility` metadata is
+rejected with an error. Unrelated permissions and explicit legacy `bash` rules
+remain intact. Projection conflicts fail evaluation.
 
-## OpenCode and Pi: explicit replacement, not best-effort flattening
+The compiler has bounded input/token lengths and a 256-alternative expansion
+limit. It recognizes quoted/escaped literals, optional alternatives, repetition,
+placeholders, regex delimiters (including escaped slashes and character
+classes),
+and trailing rest. Nested groups and unsupported syntax fail with rule/target
+context. This is deliberately not a second shell parser or Rust regex validator.
 
-The old finite literal/optional-single-literal projection is retained, including
-`git [--no-pager] ...` and exact plus trailing-rest variants. It operates only
-on literal word spellings, not shell quoting, assignments, substitutions, or
-embedded scripts. This is the historical compatibility surface, **not** a proof
-that raw globs and parsed shell words are equivalent for arbitrary shell text.
+- Finite literal alternatives expand automatically. Trailing `...` emits the
+  direct command and its argument-suffix glob.
+- Dynamic restrictions use conservative substring globs, including an executable
+  prefix wildcard to cover common wrappers and paths. Options/placeholders,
+  optional groups and repetition overmatch rather than omit a restriction.
+- A regex consisting of a plain prefix plus `.*`/`.+` retains that prefix for
+  restrictions. Other regexes become a wildcard, not a dropped deny. This can
+  reject additional commands; details are available in the opt-in report.
+- Allows never use wildcard option prefixes or dynamic argument placeholders.
+  Optional dynamic branches are omitted; repeated groups emit zero or one
+  finite literal branch. These finite subsets are described in the opt-in report;
+  omitted forms receive the remaining policy/default, not an automatic allow.
+- Required dynamic allow values, unsafe literal shell/glob characters, unsupported
+  constructs, and ordered policies fail generation. `ask` is lowered like a
+  restriction, so it can conservatively prompt for additional commands.
 
-Precedence was inspected in the available target sources:
+For example, `git <options>* push ...` compiles centrally to a conservative
+deny;
+no Git-specific mapping exists in the compiler. A read allow with benign literal
+options and `-C <arg>` branches emits direct and finite benign-option forms, but
+not wildcard `-C` values.
 
-- `opencode-dev/packages/opencode/src/util/wildcard.ts`: ascending pattern length,
-  then lexical order, with the last match winning. `tool/bash.ts` uses
-  `allStructured`: command head plus an ordered tail subsequence, not exact parsed
-  word matching. `?` is a wildcard as well as `*`.
-- Newer `opencode/packages/core/src/permission.ts`: last matching rule in a flat
-  list. Neither ordering can encode arbitrary Bcode layer decisions using a JSON
-  map. Check the target version when authoring an exception.
-- This repository's `configs/pi/extensions/agent-modes/index.ts`: anchored text
-  globs (`*` only), exact patterns before wildcard patterns, then non-wildcard
-  character count, then length. It checks split command parts. This differs from
-  both OpenCode variants and from Bcode's parsed command leaves.
+### Opt-in translation report
 
-Advanced regex, argument captures, options, alternatives/groups, repetition, or
-**any** ordered policy require explicit per-target compatibility replacements.
-Absent a replacement, evaluation fails with the target/pattern and remediation;
-no deny is dropped and no automatic broadened allow is generated. Conflicting
-finite projections also fail rather than choosing one action.
-
-Example **JSON input**, with deliberately stricter legacy replacements:
-
-```json
-{
-  "agent": {
-    "plan": {
-      "permission": {
-        "command_policy": {
-          "version": 1,
-          "layers": [
-            { "command_patterns": { "tool /safe.*/i <arg>": "allow" } }
-          ]
-        },
-        "compatibility": {
-          "opencode": { "bash": { "*": "deny" } },
-          "pi": { "bash": { "*": "deny" } }
-        }
-      }
-    }
-  }
-}
-```
-
-`compatibility.<target>.bash` **replaces the entire final bash map**, including
-base defaults and old command rules; it is not merged as exceptions. A `"*"`
-default is mandatory to prevent target defaults from filling gaps with allows.
-Other permission categories remain unchanged. Only the selected target's
-replacement is used. Bcode receives the original command maps and ordered
-layers,
-with all `compatibility` metadata removed; legacy outputs contain neither
-`compatibility`, `command_policy`, `command`, nor `command_patterns`.
-
-An explicit stricter fallback (including deny-all) is supported. Authors are
-responsible for reviewing any exceptions under the target's actual matching
-semantics: Nix cannot prove arbitrary regex/glob policy inclusion. Do not use a
-blanket allow to suppress an evaluation error. Target-specific provider configs
-outside this shared generator are not governed by this translation.
-
-## Scoped legacy projections
-
-`compatibility.<target>.patterns` maps an exact `command_patterns` key to an
-explicit nonempty raw-glob rule map. Those rules replace only that pattern's
-projection, retaining the agent default and all unrelated command rules.
-Unknown source keys, action changes, empty projections, and conflicting
-projected
-rules fail evaluation. Compatibility remains reviewed policy data, not a Nix
-parser for the advanced DSL. Whole-map `.bash` replacements remain supported;
-ordered policies still require a whole-map replacement.
-
-Git deny projections intentionally use conservative substring globs, covering
-options and common wrappers/paths at the cost of false positives. Legacy allows
-remain finite direct/no-pager forms; they do not use wildcard option prefixes.
-Neither raw-glob backend offers Bcode's parsed-shell security contract. Bcode's
-Git deny rules use `<options>*`; plan-mode read allows use explicit benign
-options
-and `-C` value pairs instead, so an option value cannot accidentally grant push.
-
-Normal/restricted/yolo variants retain distinct intent: normal build permits
-ordinary push but denies destructive forms; restricted build denies push;
-yolo build adds no Git restrictions. Worktree-specific rules are unchanged.
-Restricted stash reads are allowed while known mutations, default save, and
-leading stash options are denied. Plan branch/config allows are limited to read
-forms rather than granting arbitrary mutation arguments.
-
-## Pure evaluation tests (no activation)
-
-From the repository root:
+Normal evaluation is quiet; unsupported/unsafe translations still throw errors.
+Inspect a rule explicitly when you need translation details:
 
 ```sh
 nix eval --impure --json --expr '
-  let flake = builtins.getFlake (toString ./.);
-  in import ./home/lib/tests/agent-permissions.nix { lib = flake.inputs.nixpkgs.lib; }
+  let f = builtins.getFlake (toString ./.);
+      compiler = import ./home/lib/permission-compiler.nix { lib = f.inputs.nixpkgs.lib; };
+  in compiler.report "opencode" "git <options>* push ..." "deny"
 '
 ```
 
-These evaluate directly from the working tree (new files need not be staged),
-without evaluating encrypted host modules. They snapshot pre-lane output hashes,
-check list composition/order, conflict handling, literal projection, advanced
-string preservation, target fallbacks, and fail-closed errors. `nix flake check`
-remains the broader repository check; an encrypted-host failure is not
-permission
-to decrypt, edit, or relocate host-private configuration.
+The report returns `rules` and `diagnostics` as data, without emitting traces.
+It uses the same compiler and validation as ordinary generation.
+
+### Backend matching and serialization
+
+Pi's actual matcher is in
+`configs/pi/extensions/agent-modes/permission-rules.ts`, shared by its runtime
+and behavioral tests. Pi chooses greatest literal specificity, then pattern
+length; ties retain input order.
+
+OpenCode 1.18.34 uses last-match evaluation. Use
+`agentPermissions.legacyJSON "opencode" config`, not plain `builtins.toJSON`,
+when emitting compiled OpenCode configurations. It orders broad defaults before
+specific rules using Pi's specificity/length policy, reversing tie order so the
+same first tie wins under last-match evaluation. The Home Manager module uses
+this serializer for the main generated config. Provider-only files remain
+outside this shared policy compilation.
+
+The emitted literal alphabet excludes wildcard/escape syntax, so backend
+escaping differences cannot turn a literal allow into a wildcard. Existing raw
+`bash` patterns retain their native backend interpretation. Neither backend has
+Bcode's parsed-shell authorization contract; conservative raw-glob projection
+is not a general proof of argv-policy equivalence. A more-specific explicit
+legacy rule can still carve out a broader restriction; test policy composition,
+not just individual translations.
+
+Normal/restricted/yolo retain distinct intent: normal build allows ordinary
+push but denies destructive forms; restricted build denies push; yolo adds no
+Git restrictions. Stash reads remain available; plan branch/config permissions
+remain limited to read forms. Worktree-specific permissions are unchanged.
+
+## Validation (no activation)
+
+Pure compiler/composition tests:
+
+```sh
+nix eval --impure --json --expr '
+  let f = builtins.getFlake (toString ./.);
+  in import ./home/lib/tests/agent-permissions.nix { lib = f.inputs.nixpkgs.lib; }
+'
+```
+
+`home/lib/tests/generated-permissions.nix` produces all three variants,
+preserving
+backend JSON ordering. Feed its JSON output to:
+
+```sh
+bun home/lib/tests/generated-permissions.test.ts /path/to/generated.json
+```
+
+This executes the actual Pi matcher on strings, not commands. Without
+`OPENCODE_WILDCARD_MODULE`, OpenCode is explicitly reported as unchecked. To
+exercise its wildcard semantics, supply that variable with a local copy of
+`packages/core/src/util/wildcard.ts` from the deployed OpenCode release
+(reviewed
+against v1.18.34). That mode uses upstream wildcard code and last-match
+resolution, not the full OpenCode agent/config loader.
+
+The generated Bcode values can also be passed to Bcode's existing
+`generated_nix_policies` integration test after normalizing `bash` to `command`.
+No Nix switch, provider call, or daemon replacement is part of these checks.
+`nix flake check` remains the broader repository check; encrypted-host failures
+are not permission to decrypt or relocate private configuration.

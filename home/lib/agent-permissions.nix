@@ -27,27 +27,6 @@ let
     && (policy.version or null) == 1
     && builtins.isList (policy.layers or null)
     && builtins.all validLayer policy.layers;
-  validCompatibility =
-    value:
-    only [ "opencode" "pi" ] value
-    && builtins.all (
-      target:
-      only [ "bash" "patterns" ] value.${target}
-      && (value.${target} ? bash || value.${target} ? patterns)
-      && (!(value.${target} ? bash) || (ruleMap value.${target}.bash && value.${target}.bash ? "*"))
-      && (
-        !(value.${target} ? patterns)
-        || (
-          builtins.isAttrs value.${target}.patterns
-          && builtins.all (
-            pattern:
-            pattern != ""
-            && ruleMap value.${target}.patterns.${pattern}
-            && value.${target}.patterns.${pattern} != { }
-          ) (builtins.attrNames value.${target}.patterns)
-        )
-      )
-    ) (builtins.attrNames value);
   validatePermission =
     permission:
     if
@@ -60,8 +39,8 @@ let
       fail "command maps must contain nonempty patterns and allow/ask/deny actions"
     else if permission ? command_policy && !(validPolicy permission.command_policy) then
       fail "command_policy must be { version = 1; layers = [ { command = {...}; command_patterns = {...}; } ... ]; }"
-    else if permission ? compatibility && !(validCompatibility permission.compatibility) then
-      fail "compatibility targets accept a complete bash replacement with a '*' default and/or explicit per-pattern rules"
+    else if permission ? compatibility then
+      fail "compatibility tables are no longer supported; use shared command_patterns"
     else
       permission;
   mapPermissions =
@@ -120,7 +99,7 @@ let
         lib.mapAttrs (
           key: value:
           if builtins.hasAttr key a && a.${key} != value then
-            fail "conflicting ${context} rule ${builtins.toJSON key}; use an explicit ordered layer (and legacy fallbacks)"
+            fail "conflicting ${context} rule ${builtins.toJSON key}; use an explicit ordered layer (legacy targets cannot represent arbitrary ordered policies)"
           else
             value
         ) b;
@@ -147,89 +126,14 @@ let
                 command_patterns = checkMap "${name} command_patterns" (a.command_patterns or { }) (
                   b.command_patterns or { }
                 );
-              }
-              // lib.optionalAttrs (b ? compatibility) {
-                compatibility = lib.mapAttrs (
-                  target: value:
-                  let
-                    previous = a.compatibility.${target} or { };
-                  in
-                  value
-                  // lib.optionalAttrs (value ? bash) {
-                    bash =
-                      if previous ? bash && previous.bash != value.bash then
-                        fail "conflicting ${name} compatibility ${target} bash replacement"
-                      else
-                        value.bash;
-                  }
-                  // lib.optionalAttrs (value ? patterns) {
-                    patterns = checkMap "${name} compatibility ${target} pattern" (previous.patterns or { }
-                    ) value.patterns;
-                  }
-                ) b.compatibility;
               };
           }
         )
       ) right.agent;
     };
 
-  # Only the historical finite literal subset can be expanded to text globs.
-  expand =
-    pattern: action:
-    let
-      words = lib.splitString " " pattern;
-      validWord =
-        word:
-        builtins.match "[-A-Za-z0-9_./:=+@,%~]+" word != null
-        && builtins.match "/.*/[A-Za-z]*" word == null;
-      optionalWord =
-        word:
-        if lib.hasPrefix "[" word && lib.hasSuffix "]" word then
-          let
-            inner = lib.removeSuffix "]" (lib.removePrefix "[" word);
-          in
-          if validWord inner then inner else null
-        else
-          null;
-      rest = lib.last words == "...";
-      body = if rest then lib.init words else words;
-      valid =
-        pattern != ""
-        && builtins.stringLength pattern <= 1024
-        && builtins.length words <= 32
-        && body != [ ]
-        && builtins.length (builtins.filter (w: optionalWord w != null) body) <= 8
-        && builtins.all (w: validWord w || optionalWord w != null) body
-        && validWord (builtins.head body);
-      combinations = lib.foldl' (
-        prefixes: word:
-        let
-          optional = optionalWord word;
-        in
-        if optional == null then
-          map (prefix: prefix ++ [ word ]) prefixes
-        else
-          prefixes ++ map (prefix: prefix ++ [ optional ]) prefixes
-      ) [ [ ] ] body;
-      names = lib.concatMap (
-        tokens:
-        let
-          name = lib.concatStringsSep " " tokens;
-        in
-        [ name ] ++ lib.optional rest "${name} *"
-      ) combinations;
-    in
-    if valid then
-      map (name: {
-        inherit name;
-        value = action;
-      }) names
-    else
-      fail "cannot project command pattern ${builtins.toJSON pattern}; supply permission.compatibility.<target>.patterns for this pattern or .bash as a complete replacement";
-
-  # Per-pattern replacements preserve all unrelated categories, defaults and rules.
-  # Unlike .bash, .patterns is not a complete agent policy replacement.
-
+  # Parse once and lower automatically; target runtimes still own glob matching.
+  compiler = import ./permission-compiler.nix { inherit lib; };
   forLegacyTarget =
     target: permissions:
     if
@@ -240,74 +144,30 @@ let
     then
       fail "unknown legacy target ${target}"
     else
-      permissions
-      // lib.optionalAttrs (permissions ? agent) {
-        agent = lib.mapAttrs (
-          _: agent:
-          let
-            permission = validatePermission (agent.permission or { });
-            fallback = permission.compatibility.${target}.bash or null;
-            patternFallbacks = permission.compatibility.${target}.patterns or { };
-            checkedFallbacks = builtins.mapAttrs (
-              pattern: rules:
-              if !(builtins.hasAttr pattern (permission.command_patterns or { })) then
-                fail "${target} fallback names unknown command pattern ${builtins.toJSON pattern}"
-              else if
-                builtins.any (action: action != permission.command_patterns.${pattern}) (builtins.attrValues rules)
-              then
-                fail "${target} pattern fallback must preserve the source action for ${builtins.toJSON pattern}"
-              else
-                rules
-            ) patternFallbacks;
-            rules = builtins.deepSeq checkedFallbacks (
-              lib.concatLists (
-                lib.mapAttrsToList (
-                  pattern: action:
-                  if builtins.hasAttr pattern checkedFallbacks then
-                    lib.mapAttrsToList (name: value: { inherit name value; }) checkedFallbacks.${pattern}
-                  else
-                    expand pattern action
-                ) (permission.command_patterns or { })
-              )
-            );
-            projected = lib.foldl' (
-              result: rule:
-              if result ? ${rule.name} && result.${rule.name} != rule.value then
-                fail "conflicting legacy bash rule ${builtins.toJSON rule.name}; supply permission.compatibility.${target}.bash"
-              else
-                result // { ${rule.name} = rule.value; }
-            ) ((permission.bash or { }) // (permission.command or { })) rules;
-            bash =
-              if fallback != null then
-                fallback
-              else if permission ? command_policy then
-                fail "${target} cannot represent ordered command_policy precedence; supply permission.compatibility.${target}.bash as a complete replacement (a stricter fallback is permitted)"
-              else
-                projected;
-          in
-          builtins.deepSeq checkedFallbacks (
-            if !(agent ? permission) then
-              agent
+      mapPermissions (
+        raw:
+        let
+          permission = validatePermission raw;
+          rules = lib.concatLists (
+            lib.mapAttrsToList (compiler.compile target) (permission.command_patterns or { })
+          );
+          bash = lib.foldl' (
+            result: rule:
+            if result ? ${rule.name} && result.${rule.name} != rule.value then
+              fail "${target}: conflicting projected bash rule ${builtins.toJSON rule.name}"
             else
-              agent
-              // {
-                permission =
-                  removeAttrs permission [
-                    "command"
-                    "command_patterns"
-                    "command_policy"
-                    "compatibility"
-                  ]
-                  // lib.optionalAttrs (
-                    fallback != null
-                    || permission ? command
-                    || permission ? command_patterns
-                    || permission ? command_policy
-                  ) { inherit bash; };
-              }
-          )
-        ) permissions.agent;
-      };
+              result // { ${rule.name} = rule.value; }
+          ) ((permission.bash or { }) // (permission.command or { })) rules;
+        in
+        if permission ? command_policy then
+          fail "${target}: ordered command_policy is not representable by raw globs; keep shared policies order-independent"
+        else
+          removeAttrs permission [
+            "command"
+            "command_patterns"
+          ]
+          // lib.optionalAttrs (permission ? command || permission ? command_patterns) { inherit bash; }
+      ) permissions;
 in
 {
   # Pure composition entry point, also used by evaluation tests.
@@ -371,8 +231,8 @@ in
       inputs = map (p: builtins.fromJSON (builtins.readFile p)) paths;
     };
 
-  forBcode =
-    permissions: mapPermissions (p: removeAttrs (validatePermission p) [ "compatibility" ]) permissions;
+  forBcode = permissions: mapPermissions validatePermission permissions;
   inherit forLegacyTarget;
+  legacyJSON = compiler.toJSON;
   forLegacy = forLegacyTarget "opencode";
 }

@@ -7,27 +7,13 @@ import type {
     ExtensionContext,
 } from "@mariozechner/pi-coding-agent";
 
-type Action = "allow" | "deny" | "ask";
-type ModeName = "build" | "plan";
-
-type ModeConfig = {
-    tools?: Record<string, boolean>;
-    permission?: {
-        bash?: Record<string, Action>;
-        external_directory?: Action;
-    };
-};
-
-type PermissionConfig = {
-    agent?: Record<string, ModeConfig>;
-};
-
-type Rule = {
-    pattern: string;
-    action: Action;
-    regex: RegExp;
-    specificity: number;
-};
+import { deniedCommandPart, compileRules } from "./permission-rules";
+import type {
+    Action,
+    ModeName,
+    ModeConfig,
+    PermissionConfig,
+} from "./permission-rules";
 
 const CONFIG_PATH = `${homedir()}/.pi/agent/agent-permissions.json`;
 const READ_TOOLS = ["read", "grep", "find", "ls"];
@@ -58,67 +44,6 @@ function loadConfig(): PermissionConfig {
 
 function modeConfig(config: PermissionConfig, mode: ModeName): ModeConfig {
     return config.agent?.[mode] ?? DEFAULT_CONFIG.agent![mode]!;
-}
-
-function globToRegex(pattern: string): RegExp {
-    let source = "";
-    for (const char of pattern) {
-        if (char === "*") {
-            source += ".*";
-        } else if ("\\^$+?.()|{}[]".includes(char)) {
-            source += `\\${char}`;
-        } else {
-            source += char;
-        }
-    }
-    return new RegExp(`^${source}$`);
-}
-
-function ruleSpecificity(pattern: string): number {
-    const nonWildcardChars = pattern.replaceAll("*", "").length;
-    const exactBonus = pattern.includes("*") ? 0 : 1000;
-    return exactBonus + nonWildcardChars;
-}
-
-function compileRules(config: ModeConfig): Rule[] {
-    return Object.entries(config.permission?.bash ?? {}).map(
-        ([pattern, action]) => ({
-            pattern,
-            action,
-            regex: globToRegex(pattern),
-            specificity: ruleSpecificity(pattern),
-        }),
-    );
-}
-
-function matchingRule(command: string, rules: Rule[]): Rule | undefined {
-    return rules
-        .filter((rule) => rule.regex.test(command))
-        .sort(
-            (a, b) =>
-                b.specificity - a.specificity ||
-                b.pattern.length - a.pattern.length,
-        )[0];
-}
-
-function commandParts(command: string): string[] {
-    const parts = command
-        .split(/\s*(?:&&|\|\||;|\|)\s*/)
-        .map((part) => part.trim())
-        .filter(Boolean);
-    return parts.length > 0 ? parts : [command];
-}
-
-function deniedCommandPart(
-    command: string,
-    rules: Rule[],
-): { command: string; rule?: Rule; action: Action } | undefined {
-    for (const part of commandParts(command)) {
-        const rule = matchingRule(part, rules);
-        const action = rule?.action ?? "deny";
-        if (action !== "allow") return { command: part, rule, action };
-    }
-    return undefined;
 }
 
 function activeToolsFor(

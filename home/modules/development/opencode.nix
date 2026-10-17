@@ -143,7 +143,7 @@ let
     cfg = agentsCfg.permissions;
     overrides = agentsCfg.permissions.overrides ++ cfg.overrides;
   };
-  # Project after merging defaults: explicit fallbacks replace the entire bash map.
+  # Compile after merging defaults, preserving unrelated command rules.
   mergedConfigBase = agentPermissions.forLegacyTarget "opencode" (
     lib.foldl' lib.recursiveUpdate baseConfig [
       providerConfig
@@ -257,7 +257,7 @@ in
   config = lib.mkIf cfg.enable (
     lib.mkMerge [
       {
-        xdg.configFile."opencode/opencode.json".text = builtins.toJSON mergedConfig;
+        xdg.configFile."opencode/opencode.json".text = agentPermissions.legacyJSON "opencode" mergedConfig;
         xdg.configFile."opencode/tui.json".source = tuiConfig;
       }
 
