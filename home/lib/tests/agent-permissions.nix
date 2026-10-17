@@ -180,7 +180,7 @@ let
         (
           target:
           (p.forLegacyTarget target (merged (cfg // { restricted = [ "git" ]; })))
-          .agent.build.permission.bash."*git *push*" == "deny"
+          .agent.build.permission.bash."*git * push *" == "deny"
         )
         [
           "pi"

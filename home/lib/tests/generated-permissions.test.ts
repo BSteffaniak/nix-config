@@ -50,6 +50,9 @@ for (const [variant, targets] of Object.entries(generated) as [string, any][]) {
             "git stash show",
             "git branch --list",
             "git config --get user.name",
+            "git config --get example.remove",
+            "git config --get example.commit",
+            "git show example.switch",
         ]) {
             expect("plan", command, "allow");
             expect("build", command, "allow");
@@ -79,6 +82,11 @@ for (const [variant, targets] of Object.entries(generated) as [string, any][]) {
         }
         if (variant === "restricted") {
             for (const command of [
+                "git am",
+                "git am /tmp/example.patch",
+                "git -C /tmp am /tmp/example.patch",
+                "env git am /tmp/example.patch",
+                "/usr/bin/git am /tmp/example.patch",
                 "git push",
                 "git -C /tmp push",
                 "git -c key=value push",

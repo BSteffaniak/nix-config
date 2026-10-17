@@ -255,48 +255,37 @@ let
         t: t.kind == "group" && (t.repeat || builtins.any (b: !(builtins.all safeLiteral b)) t.branches)
       ) ast;
       allows = lib.foldl' (acc: t: cartesian acc (finite t)) [ [ ] ] ast;
-      # Restrictions deliberately overmatch, including wrappers/executable paths.
-      # Unknown regexes become '*', never an omitted restriction.
-      denyToken =
+      # Approximate dynamic values, but retain spaces around each literal word.
+      # A missing/repeated value needs separate zero-value and nonempty forms;
+      # '*am*' must never stand in for the command word 'am'. These remain raw
+      # text globs, not parsed-shell authorization or exact option matching.
+      restriction =
         t:
         if safeLiteral t then
-          t.value
+          [ [ t.value ] ]
         else if t.kind == "regex" then
-          regexPrefix t
+          [ [ (regexPrefix t + "*") ] ]
+        else if t.kind == "arg" then
+          [ [ "*" ] ]
         else if
           builtins.elem t.kind [
-            "arg"
             "options"
             "rest"
             "group"
           ]
         then
-          ""
+          [
+            [ ]
+            [ "*" ]
+          ]
         else
           fail "${context}: literal contains unsupported shell/glob syntax";
-      denyParts = map denyToken ast;
-      # Keep an executable boundary for the common literal executable case.
-      denyName =
-        "*"
-        + (builtins.head denyParts)
-        + (
-          if builtins.length ast > 1 then " " + lib.concatStringsSep "*" (builtins.tail denyParts) else ""
-        );
-      # An all-dynamic suffix may consume zero values. Avoid a required space
-      # after the executable in that case.
-      dynamicOnly = builtins.all (
-        t:
-        builtins.elem t.kind [
-          "options"
-          "rest"
-          "group"
-        ]
-      ) (builtins.tail ast);
+      restrictions = lib.foldl' (acc: t: cartesian acc (restriction t)) [ [ ] ] ast;
       names =
         if action == "allow" || exact then
           map (xs: lib.concatStringsSep " " xs) allows
         else
-          [ (if dynamicOnly then "*" + builtins.head denyParts + "*" else denyName) ];
+          map (xs: "*" + lib.concatStringsSep " " xs) restrictions;
       normalize =
         s:
         let

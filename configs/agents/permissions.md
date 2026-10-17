@@ -40,9 +40,11 @@ context. This is deliberately not a second shell parser or Rust regex validator.
 
 - Finite literal alternatives expand automatically. Trailing `...` emits the
   direct command and its argument-suffix glob.
-- Dynamic restrictions use conservative substring globs, including an executable
-  prefix wildcard to cover common wrappers and paths. Options/placeholders,
-  optional groups and repetition overmatch rather than omit a restriction.
+- Dynamic restrictions retain spaces around literal words and expand zero/nonzero
+  argument sequences separately. An executable prefix wildcard covers common
+  wrappers and paths, but literal words are not substring matches: denying `am`
+  must not deny a config read of `user.name`. Options/placeholders and groups
+  still conservatively overmatch rather than omit a restriction.
 - A regex consisting of a plain prefix plus `.*`/`.+` retains that prefix for
   restrictions. Other regexes become a wildcard, not a dropped deny. This can
   reject additional commands; details are available in the opt-in report.
