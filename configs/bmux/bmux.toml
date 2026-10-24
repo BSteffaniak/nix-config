@@ -1,10 +1,15 @@
 # ---------------------------------------------------------------------------
-# Server gateway
+# Authenticated remote access (Iroh/QUIC over UDP, not the retired TLS gateway).
+# Remote devices must pair through bmux.connections before accessing this runtime.
+# Keep direct ingress explicit; do not opt into public relay infrastructure.
 # ---------------------------------------------------------------------------
-[server.gateway]
-enabled = true
-listen = "0.0.0.0:7443"
-quick = true
+[plugins.settings."bmux.connections".remote]
+allow_full_runtime_ingress = true
+bind_addr = "0.0.0.0:7443"
+auto_start = true
+
+[plugins.settings."bmux.connections".remote.relay]
+mode = "disabled"
 
 # ---------------------------------------------------------------------------
 # Scrollback
