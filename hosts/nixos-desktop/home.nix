@@ -59,7 +59,7 @@
           key = "right_alt";
         };
         double_tap_lock = false;
-        paste_with_shift = false;
+        paste_with_shift = true;
         sound_effect_volume = 0.5;
         transcription = {
           model = "parakeet_unified_en";

@@ -52,9 +52,10 @@ in
       };
       description = ''
         Linux settings in Hex's native JSON schema. Null leaves UI-managed settings
-        untouched. Otherwise activation writes a writable settings file, preserving
-        Hex's ability to save via atomic rename; declared settings replace UI edits
-        on the next activation. Restart Hex after changes. Do not include secrets:
+        untouched. Otherwise the user service installs writable settings before each
+        start, preserving Hex's ability to save via atomic rename. Declared settings
+        replace UI edits on restart. Changes alter the service definition so Home
+        Manager restarts a running service on switch. Do not include secrets:
         the generated settings are stored in the Nix store. macOS ignores this option.
       '';
     };
@@ -84,24 +85,30 @@ in
     })
 
     (lib.mkIf (cfg.enable && linuxSupported && cfg.settings != null) {
-      home.activation.hexSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] (
-        let
-          settingsFile = (pkgs.formats.json { }).generate "hex-linux-settings.json" (
-            {
-              schema_version = 1;
-              paste_with_shift = false;
-            }
-            // cfg.settings
-          );
-          directory = "${config.xdg.dataHome}/voice-control";
-        in
-        ''
-          run ${pkgs.coreutils}/bin/mkdir -p ${lib.escapeShellArg directory}
-          if ! ${pkgs.diffutils}/bin/cmp -s ${settingsFile} ${lib.escapeShellArg "${directory}/linux-settings.json"}; then
-            run ${pkgs.coreutils}/bin/install -m 600 ${settingsFile} ${lib.escapeShellArg "${directory}/linux-settings.json.nix-new"}
-            run ${pkgs.coreutils}/bin/mv -f ${lib.escapeShellArg "${directory}/linux-settings.json.nix-new"} ${lib.escapeShellArg "${directory}/linux-settings.json"}
-          fi
-        ''
+      systemd.user.services.hex.Service.ExecStart = lib.mkForce (
+        lib.getExe (
+          pkgs.writeShellApplication {
+            name = "hex-apply-settings";
+            runtimeInputs = [ pkgs.coreutils ];
+            text =
+              let
+                settingsFile = (pkgs.formats.json { }).generate "hex-linux-settings.json" (
+                  {
+                    schema_version = 1;
+                    paste_with_shift = false;
+                  }
+                  // cfg.settings
+                );
+                directory = "${config.xdg.dataHome}/voice-control";
+              in
+              ''
+                mkdir -p ${lib.escapeShellArg directory}
+                install -m 600 ${settingsFile} ${lib.escapeShellArg "${directory}/linux-settings.json.nix-new"}
+                mv -f ${lib.escapeShellArg "${directory}/linux-settings.json.nix-new"} ${lib.escapeShellArg "${directory}/linux-settings.json"}
+                exec ${lib.getExe config.programs.hex.package} service
+              '';
+          }
+        )
       );
     })
 

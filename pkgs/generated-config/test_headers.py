@@ -68,6 +68,26 @@ class GeneratedHeaderTests(unittest.TestCase):
         )
         self.assertEqual(self.annotate(b'{"a": 1}', "x.conf"), b'{"a": 1}')
 
+    def test_systemd_dependency_links_are_preserved(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            unit = source / "home-manager-test.service"
+            unit.write_text("[Service]\nType=oneshot\n")
+            for suffix in ("wants", "requires", "upholds"):
+                dependencies = source / ("multi-user.target." + suffix)
+                dependencies.mkdir()
+                (dependencies / unit.name).symlink_to("../" + unit.name)
+            output = root / "out"
+            module.generate(source, output, "systemd/system", "/checkout")
+            for suffix in ("wants", "requires", "upholds"):
+                link = output / ("multi-user.target." + suffix) / unit.name
+                self.assertTrue(link.is_symlink())
+                self.assertEqual(link.readlink(), Path("../" + unit.name))
+                self.assertEqual(link.resolve(), output / unit.name)
+            self.assertIn("DO NOT EDIT", (output / unit.name).read_text())
+
     def test_directory_generation(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

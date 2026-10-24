@@ -116,6 +116,14 @@ def annotate(data, target, repository):
 
 
 def generate(source, output, target, repository, ancestors=()):
+    # systemd dependency directories must contain symlinks, not annotated copies.
+    # Keep relative targets relative so they still refer to sibling generated units.
+    if source.is_symlink() and any(
+        part.endswith((".wants", ".requires", ".upholds"))
+        for part in Path(target).parts
+    ):
+        output.symlink_to(os.readlink(source))
+        return
     # Application bundles are software, not configuration trees.
     if (
         target.lstrip("/").startswith("Applications/")

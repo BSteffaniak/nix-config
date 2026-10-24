@@ -138,9 +138,13 @@ myConfig.desktop.hex.settings = {
 ```
 
 The default `settings = null` leaves UI-managed preferences untouched. When set,
-activation installs a writable `linux-settings.json` in the user data directory;
-Hex can still save UI changes, but the next activation restores the declared
-settings. Restart Hex after activation to load changes. Settings are public Nix
+the service installs a writable `linux-settings.json` before every start, after
+upstream's graphical-session readiness check. Hex can still save UI changes,
+but restarting restores the declared settings. The generated startup wrapper
+references the settings' Nix store path, so settings changes alter the service
+unit and Home Manager's normal systemd switch restarts a running Hex service.
+A build alone does not activate changes: use a rebuild **switch**, not only
+`build`, `--diff`, or `--boot`. Settings are public Nix
 store content: never include secrets. These native Linux settings are ignored
 on macOS. Model downloads remain a separate manual step.
 
