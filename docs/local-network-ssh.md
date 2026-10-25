@@ -59,6 +59,18 @@ before `dns`; retain existing distro resolver entries. If using UFW, allow mDNS
 Do not enable incoming SSH if this machine should only be a client. Configure
 its authorized public keys separately; never copy private keys between hosts.
 
+## Windows desktop
+
+The external Windows host already runs Bonjour and resolves as
+`desktop-tko79vi.local`. Shared Home Manager configuration provides the
+`windows-desktop` alias with user `brade`, without representing Windows as a
+Nix-managed host or renaming its computer. Activate the client configuration
+before using `ssh windows-desktop`. Each client needs its own public key
+installed on Windows; alias generation does not grant access. For this Windows
+administrator account, the existing SSH configuration uses
+`C:\ProgramData\ssh\administrators_authorized_keys` (shared across administrator
+accounts), with access restricted to SYSTEM and Administrators.
+
 ## Verification
 
 On a configured client:
