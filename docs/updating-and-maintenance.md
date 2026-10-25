@@ -56,8 +56,8 @@ This runs flake updates plus source-build and GitHub-release update steps.
 ## Formatting
 
 ```bash
-./fmt.sh
-./fmt.sh --check
+clippier fmt
+clippier fmt --check
 ```
 
 ## Cleanup

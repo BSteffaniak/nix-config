@@ -7,13 +7,13 @@ pkgs.mkShell {
     git-sshripped
 
     # Nix development
-    nixfmt-rfc-style # ./fmt.sh
+    nixfmt-rfc-style # clippier fmt (Nix)
     nvd # ./rebuild.sh --diff
     nix-diff # deep derivation diffing (scripts/check-all-hosts.sh)
 
     # Formatting (non-nix files)
     clang-tools # clang-format (Objective-C)
-    nodePackages.prettier # ./fmt.sh (markdown, yaml, json, etc.)
+    nodePackages.prettier # clippier fmt (CSS, JSON, TypeScript, YAML)
     shfmt # Shell script formatter
 
     # Shells (for the interactive handoff below)

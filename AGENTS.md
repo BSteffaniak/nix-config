@@ -142,7 +142,7 @@ true`:
 - No `with lib;`. Use `lib.` prefixes or `inherit (lib) …;`.
 - Prefer precise option types (`attrsOf`, `submodule`, upstream types like `options.programs.ssh.matchBlocks.type`) over `types.attrs`, except for free-form JSON/TOML passthrough settings.
 - Kebab-case file names; camelCase option names.
-- Run `./fmt.sh` (nixfmt + prettier) before committing.
+- Run `clippier fmt` (configured in `clippier.toml`) before committing.
 
 ## Host Configuration Structure
 
