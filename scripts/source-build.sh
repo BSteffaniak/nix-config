@@ -231,8 +231,9 @@ compute_cargo_hash() {
 let
   pkgs = import $nixpkgs_path { system = builtins.currentSystem; };
   cargoVendorPythonPath = builtins.toString $CARGO_VENDOR_PYTHONPATH;
+  fetchCargoVendor = import $REPO_ROOT/pkgs/source-builds/fetch-cargo-vendor.nix { inherit pkgs; };
 in
-pkgs.rustPlatform.fetchCargoVendor {
+fetchCargoVendor {
   src = $vendor_src;
   name = "${pname}-vendor";
   hash = "";
@@ -269,6 +270,16 @@ EOF
 		err "Could not extract cargoHash from nix build output."
 		err "Build output:"
 		echo "$build_output" | tail -20 >&2
+		return 1
+	fi
+
+	# The hash mismatch only validates the staging fetch, not vendor assembly.
+	# Build the complete vendor output before allowing the caller to save it.
+	info "Validating assembled cargo dependencies..." >&2
+	local verified_expr
+	verified_expr="${nix_expr/hash = \"\";/hash = \"$hash\";}"
+	if ! nix build --impure --no-link --expr "$verified_expr" >&2; then
+		err "Cargo vendor assembly failed; leaving saved hash unchanged."
 		return 1
 	fi
 

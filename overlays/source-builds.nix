@@ -18,7 +18,12 @@ let
   configs = readJsonDir ../pkgs/source-builds/configs;
   hashesDir = ../pkgs/source-builds/hashes;
   hooksDir = ../pkgs/source-builds/hooks;
-  cargoVendorPythonPath = ../pkgs/source-builds/cargo-vendor-sitecustomize;
+  fetchCargoVendorFor =
+    rustPlatform:
+    import ../pkgs/source-builds/fetch-cargo-vendor.nix {
+      pkgs = final;
+      inherit rustPlatform;
+    };
 
   isSimpleBuild = config: config.buildSystem == "rust" && !(config.complex or false);
 
@@ -46,6 +51,10 @@ let
         hashFile = hashesDir + "/${name}.json";
         updateCommand = "./scripts/source-build.sh update ${name}";
       };
+      rustPlatform = rustPlatformFor (config.rustToolchain or null);
+      buildRustPackage = rustPlatform.buildRustPackage.override {
+        fetchCargoVendor = fetchCargoVendorFor rustPlatform;
+      };
       pkgsByName = names: map (n: final.${n}) names;
       cargoBuildFlags = config.cargoBuildFlags or [ ];
       nativeBuildInputs = pkgsByName (config.nativeBuildInputs or [ ]);
@@ -55,16 +64,14 @@ let
       { }
     else
       {
-        ${config.pname} = (rustPlatformFor (config.rustToolchain or null)).buildRustPackage (
+        ${config.pname} = buildRustPackage (
           {
             inherit (config) pname;
             version = "unstable";
             inherit (source) src;
             ${config.hashField} = source.hashes.${config.hashField};
+            depsExtraArgs.env.PYTHONPATH = "${../pkgs/source-builds/cargo-vendor-sitecustomize}";
             doCheck = config.doCheck or true;
-            depsExtraArgs = {
-              env.PYTHONPATH = "${cargoVendorPythonPath}";
-            };
           }
           // prev.lib.optionalAttrs (cargoBuildFlags != [ ]) { inherit cargoBuildFlags; }
           // prev.lib.optionalAttrs (nativeBuildInputs != [ ]) { inherit nativeBuildInputs; }

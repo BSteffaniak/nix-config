@@ -1,0 +1,34 @@
+--- a/fetch-cargo-vendor-util.py
++++ b/fetch-cargo-vendor-util.py
+@@ -297,6 +297,15 @@
+ 
+             source_info = parse_git_source(pkg["source"], lockfile_version)
+ 
++            # A directory source cannot distinguish equal name/version pairs
++            # from different origins. Give each Git source its own directory
++            # source instead of mixing it with crates.io or other Git sources.
++            source_key = source[0:source.find("#")]
++            vendor_key = "git-" + hashlib.sha256(source_key.encode()).hexdigest()
++            source_dir = out_dir / vendor_key
++            source_dir.mkdir(exist_ok=True)
++            crate_out_dir = source_dir / dir_name
++
+             git_sha_rev = source_info["git_sha_rev"]
+             git_tree = vendor_staging_dir / "git" / git_sha_rev
+ 
+@@ -315,11 +323,14 @@
+ 
+             seen_source_keys.add(source_key)
+ 
++            config_lines.append(f'[source."{vendor_key}"]')
++            config_lines.append(f'directory = "@vendor@/{vendor_key}"')
++
+             config_lines.append(f'[source."{source_key}"]')
+             config_lines.append(f'git = "{source_info["url"]}"')
+             if source_info["type"] is not None:
+                 config_lines.append(f'{source_info["type"]} = "{source_info["value"]}"')
+-            config_lines.append('replace-with = "vendored-sources"')
++            config_lines.append(f'replace-with = "{vendor_key}"')
+ 
+         elif source.startswith("registry+"):
+ 
