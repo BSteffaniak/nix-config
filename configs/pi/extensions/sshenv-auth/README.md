@@ -64,7 +64,7 @@ happen.
 Descriptors live in two places:
 
 - `configs/pi/providers/<name>.json` — in-repo, public.
-- `myConfig.development.pi.extraProviders.<name>` in a host home.nix — inline. Useful for encrypted hosts (`hosts/bs-mbpro/` is git-sshripped) so private profiles never appear in plaintext on GitHub. Inline entries win on name collisions.
+- `myConfig.development.pi.extraProviders.<name>` in a host home.nix — inline. Useful for encrypted hosts managed with git-sshripped so private profiles never appear in plaintext on GitHub. Inline entries win on name collisions.
 
 Both use the same shape:
 

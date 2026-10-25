@@ -8,7 +8,6 @@ system hostnames remain unchanged so rebuild auto-detection keeps working.
 | --------------- | --------------------- | ------------- |
 | `mac-studio`    | `mac-studio.local`    | `bsteffaniak` |
 | `macbook-air`   | `macbook-air.local`   | `braden`      |
-| `bs-mbpro`      | `bs-mbpro.local`      | `braden`      |
 | `nixos-desktop` | `nixos-desktop.local` | `braden`      |
 | `ubuntu-laptop` | `ubuntu-laptop.local` | `braden`      |
 

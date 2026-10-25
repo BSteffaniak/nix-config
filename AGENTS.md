@@ -8,7 +8,7 @@ Nix configuration repository.
 This configuration manages multiple hosts across different platforms:
 
 - **NixOS** (nixos-desktop) - Full NixOS system configuration
-- **nix-darwin** (macbook-air, mac-studio, bs-mbpro) - macOS with nix-darwin
+- **nix-darwin** (macbook-air, mac-studio) - macOS with nix-darwin
 - **Standalone home-manager** (ubuntu-laptop) - Home-manager only on non-NixOS Linux
 
 ### Repository Layout
@@ -44,7 +44,7 @@ nor `rebuild.sh` need manual edits when adding or removing hosts.
 
 ### Private Hosts (git-sshripped)
 
-Some host directories (e.g., `hosts/bs-mbpro/`) are encrypted via **[git-sshripped](https://github.com/BSteffaniak/git-sshripped)**, which uses SSH keys as recipients and Git filters for transparent encryption. On GitHub they appear as ciphertext. On machines whose SSH key is a recipient and that have run `git-sshripped unlock`, they are transparent. Encryption rules are defined in `.gitattributes`; recipient/key material lives in `.git-sshripped/`.
+Private host directories can be encrypted via **[git-sshripped](https://github.com/BSteffaniak/git-sshripped)**, which uses SSH keys as recipients and Git filters for transparent encryption. On GitHub they appear as ciphertext. On machines whose SSH key is a recipient and that have run `git-sshripped unlock`, they are transparent. Encryption rules are defined in `.gitattributes`; recipient/key material lives in `.git-sshripped/`.
 
 `meta.nix` files are intentionally excluded from encryption so host discovery
 works on machines without the key.
