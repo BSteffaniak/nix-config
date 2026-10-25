@@ -18,7 +18,6 @@
     ./ssh.nix
     ./system-defaults.nix
     ./system-limits.nix
-    ./tailscale.nix
   ];
 
   nix.package = pkgs.nix;

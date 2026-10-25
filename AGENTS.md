@@ -69,7 +69,7 @@ Location: `modules/common/`, `modules/nixos/`, `modules/darwin/`
 These own things that require root or OS integration:
 
 - Login shells (`myConfig.shell.{fish,bash,zsh,nushell}.enable`, `myConfig.shell.default`) — `/etc/shells`, default user shell
-- Daemons and services (`myConfig.services.*`: sshd, tailscale, docker, avahi, observability, minecraft)
+- Daemons and services (`myConfig.services.*`: sshd, docker, avahi, observability, minecraft)
 - Boot, hardware, networking, audio, locale, security (`modules/nixos/`)
 - macOS system defaults, Homebrew casks, launchd daemons, Touch ID (`modules/darwin/`)
 

@@ -21,7 +21,6 @@
     shell.nushell.enable = true;
 
     services.sshd.enable = true;
-    services.tailscale.enable = false;
 
     # Darwin-specific
     darwin.homebrew.enable = true;

@@ -14,7 +14,7 @@ host's `home.nix`, on every platform.
 
 System modules (`modules/`):
 
-- `modules/common/` — login shells, sshd/tailscale options, baseline packages
+- `modules/common/` — login shells, sshd options, baseline packages
 - `modules/nixos/` — boot, hardware, desktop compositor, services, system settings
 - `modules/darwin/` — Homebrew casks (`casks.nix`), system defaults, launchd daemons, security
 
