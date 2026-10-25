@@ -71,6 +71,15 @@ administrator account, the existing SSH configuration uses
 `C:\ProgramData\ssh\administrators_authorized_keys` (shared across administrator
 accounts), with access restricted to SYSTEM and Administrators.
 
+## Scar laptop
+
+The Windows laptop `Scar` resolves as `scar.local`; the shared `scar` alias logs
+in as `brade`. Activate the client configuration before using `ssh scar`.
+Its existing OpenSSH firewall rule permits Private networks only. On trusted
+home Wi-Fi, mark the connection Private rather than adding a duplicate firewall
+rule; leave public/untrusted networks Public. Key authorization is separate from
+network discovery, and each client must have its public key installed.
+
 ## Verification
 
 On a configured client:
