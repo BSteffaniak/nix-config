@@ -2,6 +2,7 @@
   config,
   lib,
   options,
+  hostMeta ? { },
   ...
 }:
 
@@ -11,6 +12,12 @@ in
 {
   options.myConfig.shell.ssh = {
     enable = lib.mkEnableOption "SSH client configuration";
+
+    fleetAliases.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Generate local-network SSH aliases from discovered host names and usernames when the SSH client is enabled";
+    };
 
     matchBlocks = lib.mkOption {
       # Reuse home-manager's own submodule type so host blocks are validated.
@@ -32,12 +39,20 @@ in
     programs.ssh = {
       enable = true;
       enableDefaultConfig = false;
-      matchBlocks = cfg.matchBlocks // {
-        "*" = {
-          controlMaster = "auto";
-          controlPersist = "10m";
+      matchBlocks =
+        lib.optionalAttrs cfg.fleetAliases.enable (
+          lib.mapAttrs (name: meta: {
+            hostname = "${name}.local";
+            user = meta.username;
+          }) hostMeta
+        )
+        // cfg.matchBlocks
+        // {
+          "*" = {
+            controlMaster = "auto";
+            controlPersist = "10m";
+          };
         };
-      };
     };
   };
 }

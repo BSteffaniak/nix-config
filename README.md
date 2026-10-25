@@ -81,6 +81,7 @@ Files installed outside these file-management options are not rewritten.
 General docs:
 
 - `docs/hosts.md` - host model, adding hosts, bootstrap/manual setup
+- `docs/local-network-ssh.md` - Bonjour/Avahi names, SSH aliases, and Ubuntu setup
 - `docs/packages-and-modules.md` - module hierarchy and package placement rules
 - `docs/overlays.md` - GitHub release and source-built overlay workflows
 - `docs/updating-and-maintenance.md` - rebuild/update/maintenance workflow

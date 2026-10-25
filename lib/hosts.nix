@@ -75,7 +75,7 @@ let
     android_sdk.accept_license = true;
   };
 
-  specialArgs = { inherit inputs myLib; };
+  specialArgs = { inherit inputs myLib hostMeta; };
 
   # Home Manager integration shared by NixOS and Darwin.
   # `bridge` is the platform-specific home module (home/nixos or home/darwin).
@@ -101,11 +101,21 @@ let
 
   # Host identity derived from meta.nix; everything is mkDefault so a host
   # default.nix can still override.
-  mkIdentityModule = meta: {
-    myConfig.username = lib.mkDefault meta.username;
-    networking.hostName = lib.mkDefault meta.hostname;
-    system.stateVersion = lib.mkDefault meta.stateVersion;
-  };
+  mkIdentityModule =
+    name: meta:
+    {
+      myConfig.username = lib.mkDefault meta.username;
+      networking = {
+        hostName = lib.mkDefault meta.hostname;
+      }
+      // lib.optionalAttrs (meta.type == "darwin") {
+        localHostName = lib.mkDefault name;
+      };
+      system.stateVersion = lib.mkDefault meta.stateVersion;
+    }
+    // lib.optionalAttrs (meta.type == "nixos") {
+      services.avahi.hostName = lib.mkDefault name;
+    };
 
   # ── Builders ─────────────────────────────────────────────────────
   mkNixosHost =
@@ -123,7 +133,7 @@ let
           inherit name meta;
           bridge = ../home/nixos;
         })
-        (mkIdentityModule meta)
+        (mkIdentityModule name meta)
         {
           nixpkgs.config = nixpkgsConfig;
           nixpkgs.overlays = extras.overlays ++ overlays meta.system;
@@ -149,7 +159,7 @@ let
           inherit name meta;
           bridge = ../home/darwin;
         })
-        (mkIdentityModule meta)
+        (mkIdentityModule name meta)
         (
           { config, ... }:
           {
