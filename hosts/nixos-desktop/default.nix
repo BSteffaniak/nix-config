@@ -107,7 +107,6 @@
       telegram-desktop
       discord
       microsoft-edge
-      kitty
       fuseiso
       udiskie
       xclip
