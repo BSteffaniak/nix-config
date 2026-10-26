@@ -188,6 +188,7 @@
     development.rust = {
       enable = true;
       includeNightly = true;
+      buildJobs = 4;
       bpfLinker = true;
     };
 

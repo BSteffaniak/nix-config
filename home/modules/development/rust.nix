@@ -83,6 +83,16 @@ in
       '';
     };
 
+    buildJobs = lib.mkOption {
+      type = lib.types.nullOr lib.types.ints.positive;
+      default = null;
+      description = ''
+        Default parallel jobs per Cargo invocation. Null preserves Cargo's default.
+        Projects, environment variables, and --jobs can override this; independent
+        Cargo invocations do not share a job budget.
+      '';
+    };
+
     disableIncrementalCompilation = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -134,13 +144,20 @@ in
     # Install Rust toolchains and tools via home-manager
     home.packages = rustPackages ++ (lib.optional cfg.bpfLinker pkgs.unstable.bpf-linker);
 
-    # Reduce target directory disk usage unless a host opts out
-    home.file.".cargo/config.toml" = lib.mkIf cfg.disableIncrementalCompilation {
-      text = ''
-        [build]
-        incremental = false
-      '';
-    };
+    # Keep Cargo's native defaults in one file; no toolchain or shell wrappers.
+    home.file.".cargo/config.toml" =
+      lib.mkIf (cfg.disableIncrementalCompilation || cfg.buildJobs != null)
+        {
+          text = ''
+            [build]
+          ''
+          + lib.optionalString cfg.disableIncrementalCompilation ''
+            incremental = false
+          ''
+          + lib.optionalString (cfg.buildJobs != null) ''
+            jobs = ${toString cfg.buildJobs}
+          '';
+        };
 
     # Add ~/.cargo/bin to PATH for cargo-installed binaries
     home.sessionPath = [ "$HOME/.cargo/bin" ];

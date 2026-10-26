@@ -20,6 +20,12 @@
     defaultSession = "hyprland-sledge";
   };
 
+  # Bound daemon build concurrency separately from interactive Cargo jobs.
+  nix.settings = {
+    max-jobs = 2;
+    cores = 2;
+  };
+
   # Keep temporary build/test files off the root disk. Deploy with a boot
   # rebuild and reboot, rather than mounting over a live /tmp.
   boot.tmp.useTmpfs = false;
@@ -88,6 +94,7 @@
     # System configuration
     system.networking.enable = true;
     system.security.enable = true;
+    system.memoryPressure.enable = true;
     system.audio.enable = true;
     system.locale.enable = true;
     system.locale.timeZone = "America/New_York";
