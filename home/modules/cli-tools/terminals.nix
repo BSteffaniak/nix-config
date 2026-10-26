@@ -66,6 +66,7 @@ in
   config = {
     home.packages = lib.mkMerge [
       (lib.mkIf cfg.bmux.enable [ pkgs.bmux ])
+      (lib.mkIf (cfg.ghostty.enable && pkgs.stdenv.isLinux) [ pkgs.ghostty ])
       (lib.mkIf installGhosttyTerminfo [ ghosttyTerminfo ])
     ];
 

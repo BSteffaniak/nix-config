@@ -74,6 +74,7 @@
       terminals.bmux.enable = true;
       terminals.zellij.enable = true;
       terminals.tmux.enable = true;
+      terminals.ghostty.enable = true;
 
       monitoring.bottom.enable = true;
       monitoring.htop.enable = true;
