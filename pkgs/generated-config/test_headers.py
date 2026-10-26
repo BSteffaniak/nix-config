@@ -85,7 +85,7 @@ class GeneratedHeaderTests(unittest.TestCase):
                 link = output / ("multi-user.target." + suffix) / unit.name
                 self.assertTrue(link.is_symlink())
                 self.assertEqual(link.readlink(), Path("../" + unit.name))
-                self.assertEqual(link.resolve(), output / unit.name)
+                self.assertEqual(link.resolve(), (output / unit.name).resolve())
             self.assertIn("DO NOT EDIT", (output / unit.name).read_text())
 
     def test_directory_generation(self):
