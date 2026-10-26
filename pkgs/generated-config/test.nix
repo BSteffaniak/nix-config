@@ -17,6 +17,17 @@ let
     target = "tmpfiles.d/00-nixos.conf";
     repositoryPath = "/checkout";
   };
+  # A path value must remain a tracked build input, not a context-free string.
+  pathFile = wrap {
+    source = ../../configs/hyprland/display_off.sh;
+    target = "display_off.sh";
+    repositoryPath = "/checkout";
+  };
+  pathDirectory = wrap {
+    source = ../../configs/hyprland;
+    target = ".config/hypr";
+    repositoryPath = "/checkout";
+  };
 in
 pkgs.runCommand "generated-config-wildcard-test" { } ''
   mkdir -p "$out/tmpfiles.d"
@@ -29,4 +40,7 @@ pkgs.runCommand "generated-config-wildcard-test" { } ''
   grep -q '^d /run/avahi-daemon ' "$out/tmpfiles.d/00-nixos.conf"
   grep -q '^L+ /run/opengl-driver ' "$out/tmpfiles.d/graphics-driver.conf"
   grep -q '^d /run/avahi-daemon ' ${direct}
+  grep -q 'DO NOT EDIT' ${pathFile}
+  test -r ${pathDirectory}/display_off.sh
+  grep -q 'DO NOT EDIT' ${pathDirectory}/display_off.sh
 ''

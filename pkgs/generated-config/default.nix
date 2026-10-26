@@ -16,7 +16,7 @@ let
   wrapped =
     runCommand "managed-${lib.strings.sanitizeDerivationName (baseNameOf target)}"
       {
-        source = lib.removeSuffix "/*" (toString source);
+        source = if contents then lib.removeSuffix "/*" source else source;
         inherit target repositoryPath;
         nativeBuildInputs = [ python3 ];
         preferLocalBuild = true;
