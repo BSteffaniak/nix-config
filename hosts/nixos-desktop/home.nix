@@ -12,7 +12,14 @@
   myConfig.desktop.gtk = {
     enable = true;
     theme = "Juno";
-    themePackage = pkgs.juno-theme;
+    themePackage = pkgs.juno-theme.overrideAttrs (old: {
+      # GTK 3 requires two stops, even for a solid-color gradient.
+      postInstall = (old.postInstall or "") + ''
+        substituteInPlace "$out/share/themes/Juno/gtk-3.0/gtk-dark.css" \
+          --replace-fail 'linear-gradient(to right, #2a393e)' \
+          'linear-gradient(to right, #2a393e, #2a393e)'
+      '';
+    });
     iconTheme = "Papirus-Dark";
     iconThemePackage = pkgs.papirus-icon-theme;
     cursorTheme = "Bibata-Modern-Classic";
