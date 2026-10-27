@@ -491,12 +491,8 @@ let
       baseUrl ? null,
       dialect ? null,
       variants ? { },
-      subscriptionPriming ? cfg.providers.openai.subscriptionPriming.enable,
-      authPool ? "openai",
+      authPool ? cfg.providers.openai.authPool,
     }:
-    let
-      enableSubscriptionPriming = authProvider == "openai" && subscriptionPriming;
-    in
     {
       providerPluginId = "bcode.openai-compatible";
       inherit model authProfile;
@@ -507,7 +503,7 @@ let
           "grok-4-fast-non-reasoning"
         else
           null;
-      authPool = if enableSubscriptionPriming then authPool else null;
+      authPool = if authProvider == "openai" then authPool else null;
       settings =
         lib.optionalAttrs (baseUrl != null) { base_url = baseUrl; }
         // lib.optionalAttrs (dialect != null) { inherit dialect; };
@@ -832,12 +828,12 @@ in
 
     sharedAuthPools = lib.mkOption {
       type = lib.types.attrsOf tomlFormat.type;
-      default = lib.optionalAttrs cfg.providers.openai.subscriptionPriming.enable {
-        openai = {
+      default = {
+        "${cfg.providers.openai.authPool}" = {
           provider_plugin_id = "bcode.openai-compatible";
           automatic_provider = "openai";
           automatic_group = "subscription";
-          priming.enabled = true;
+          priming.enabled = cfg.providers.openai.subscriptionPriming.enable;
         };
       };
       description = ''
@@ -989,6 +985,12 @@ in
       };
 
       openai = {
+        authPool = lib.mkOption {
+          type = lib.types.str;
+          default = "openai";
+          description = "Shared subscription pool identity for enrollment policy and model profiles; independent of priming.";
+        };
+
         model = lib.mkOption {
           type = lib.types.str;
           default = "gpt-6-sol";
