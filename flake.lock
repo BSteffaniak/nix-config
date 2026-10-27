@@ -720,11 +720,11 @@
     "sledge-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1793014200,
-        "narHash": "sha256-RuZ37IWLGMVodtDGhVHz8ZLsgvj0nhXAb4ax7DsnptI=",
+        "lastModified": 1793067650,
+        "narHash": "sha256-A3rjm4jJ3gLW+pFPRX1B7reShJSNi/MjGz9v1mNFd9Y=",
         "owner": "BSteffaniak",
         "repo": "sledge",
-        "rev": "c1cef7d428a4b0ec13645d8ec4d74c1c53cb45eb",
+        "rev": "3e9a5288eb9b9f10c7ca02a5bf3ba98fe71eec51",
         "type": "github"
       },
       "original": {
