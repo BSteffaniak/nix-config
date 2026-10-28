@@ -57,6 +57,7 @@
     editors.neovim.useNightly = true;
 
     # Tools
+    tools.ai.claudeCode.enable = true;
     tools.awake.enable = true;
     tools.tts.piper.enable = true;
 
