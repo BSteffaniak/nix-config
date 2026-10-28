@@ -204,6 +204,7 @@
       archiving.enable = true;
       mapping.enable = true;
       encryption.enable = true;
+      ai.claudeCode.enable = true;
       ai.gemini.enable = true;
       ai.ollama.enable = true;
       tts.piper.enable = true;

@@ -56,6 +56,9 @@ in
 
     # AI tools
     ai = {
+      claudeCode = {
+        enable = lib.mkEnableOption "Claude Code CLI";
+      };
       gemini = {
         enable = lib.mkEnableOption "Google Gemini CLI";
       };
@@ -101,6 +104,7 @@ in
       ++ (lib.optional cfg.encryption.enable age)
       ++ (lib.optional cfg.web.enable httrack)
       ++ (lib.optional cfg.database.postgresql.enable postgresql)
+      ++ (lib.optional cfg.ai.claudeCode.enable unstable.claude-code)
       ++ (lib.optional cfg.ai.gemini.enable unstable.gemini-cli)
       ++ (lib.optional cfg.ai.ollama.enable ollama);
 
