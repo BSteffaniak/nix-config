@@ -2,6 +2,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 
@@ -19,17 +20,17 @@
       (
         lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           desired_shell="${config.myConfig.shell.resolved.defaultShellPath}"
-          username="$(id -un)"
-          current_shell="$(awk -F: -v user="$username" '$1 == user { print $7 }' /etc/passwd)"
-          desired_name="$(basename "$desired_shell")"
-          current_name="$(basename "$current_shell")"
+          username="$(${pkgs.coreutils}/bin/id -un)"
+          current_shell="$(${pkgs.gawk}/bin/awk -F: -v user="$username" '$1 == user { print $7 }' /etc/passwd)"
+          desired_name="$(${pkgs.coreutils}/bin/basename "$desired_shell")"
+          current_name="$(${pkgs.coreutils}/bin/basename "$current_shell")"
 
           if [ -n "$current_shell" ] && [ "$current_name" != "$desired_name" ]; then
             echo "[home-manager] Login shell mismatch detected for $username"
             echo "[home-manager] Current : $current_shell"
             echo "[home-manager] Desired : $desired_shell"
 
-            if [ -f /etc/shells ] && ! grep -Fxq "$desired_shell" /etc/shells; then
+            if [ -f /etc/shells ] && ! ${pkgs.gnugrep}/bin/grep -Fxq "$desired_shell" /etc/shells; then
               echo "[home-manager] '$desired_shell' is not listed in /etc/shells"
               echo "[home-manager] Add it to /etc/shells first, then run: chsh -s '$desired_shell' '$username'"
             else

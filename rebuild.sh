@@ -153,9 +153,21 @@ if [[ "$DIFF_MODE" == true ]]; then
 # ── Home-Manager Switch ───────────────────────────────────────────
 elif [[ "$PLATFORM" == "Home-Manager" ]]; then
 	echo "Rebuilding $CURRENT_HOSTNAME ($PLATFORM using $FLAKE_PATH)..."
-	echo "   Command: home-manager switch --flake \"$FLAKE_PATH\" ${EXTRA_ARGS[*]:-}"
+	if command -v home-manager &>/dev/null; then
+		HOME_MANAGER_CMD=(home-manager)
+	else
+		if ! command -v nix &>/dev/null; then
+			echo "Neither home-manager nor nix was found in PATH. Install Nix (or load its shell environment) first."
+			exit 1
+		fi
+		echo "home-manager not found; bootstrapping with the flake's pinned Home Manager input..."
+		HOME_MANAGER_CMD=(nix run --inputs-from "$SCRIPT_DIR" home-manager --)
+	fi
+	printf '   Command: '
+	printf '%q ' "${HOME_MANAGER_CMD[@]}" switch --flake "$FLAKE_PATH" "${EXTRA_ARGS[@]}"
 	echo ""
-	home-manager switch --flake "$FLAKE_PATH" "${EXTRA_ARGS[@]}"
+	echo ""
+	"${HOME_MANAGER_CMD[@]}" switch --flake "$FLAKE_PATH" "${EXTRA_ARGS[@]}"
 
 # ── Normal Rebuild (NixOS / Darwin) ───────────────────────────────
 else
