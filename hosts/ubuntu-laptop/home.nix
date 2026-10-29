@@ -73,6 +73,7 @@
 
     # Optional extra login session; GNOME remains the fallback.
     desktop.hyprland.standalone.enable = true;
+    desktop.hyprland.monitorsConfig = ./monitors.conf;
 
     # Desktop utilities previously installed as common Home Manager packages
     desktop.utilities = {

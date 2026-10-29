@@ -5,8 +5,12 @@ Enable it with `myConfig.desktop.hyprland.standalone.enable` in the host's
 `home.nix`.
 The standalone module uses Home Manager's generic-Linux GPU integration with
 Nixpkgs Mesa drivers for the Intel GPU. No third-party apt repository or nixGL
-input is required. Do not enable the shared `desktop.hyprland.enable` alongside
-this option: that config has different desktop assumptions.
+input is required. The standalone option enables the shared Hyprland, Waybar,
+Fuzzel, and Waypaper configuration modules. Both desktop and laptop use
+`configs/hyprland/hyprland.conf` and `configs/waybar/`; standalone integration
+only adds the launcher, portals, locker, and required supporting packages.
+Laptop monitor overrides live in `hosts/ubuntu-laptop/monitors.conf`; no private
+NixOS desktop monitor/workspace files are copied.
 
 ## Install
 
@@ -53,7 +57,8 @@ rerun `setup-hyprland` before entering a new Hyprland session.
 - Super+Q: Ghostty terminal
 - Super+R: application launcher (Fuzzel)
 - Super+C: close focused window
-- Super+F: fullscreen
+- Super+F: window switcher
+- Super+E: Thunar file manager
 - Super+V: toggle floating
 - Super+arrows: focus windows
 - Super+1–9: workspace; add Shift to move a window
@@ -62,10 +67,16 @@ rerun `setup-hyprland` before entering a new Hyprland session.
 - Super+Shift+E: exit the session
 
 Wi-Fi can be configured with Ubuntu Settings or `nmcli`; use `pavucontrol` for
-audio. This is a minimal laptop session, not the shared desktop's wallpaper and
-monitor layout. Brightness and volume keys are configured. Waybar,
-notifications,
-and a Polkit authentication agent start with the Hyprland session.
+audio. Shared appearance, keybindings, window rules, wallpaper controls, and
+Waybar now apply here too. Brightness and volume keys are configured.
+Notifications and a Polkit authentication agent start with the session.
+
+Wallpaper images themselves are not copied from the desktop. Put images in
+`~/Pictures/wallpapers`, then run `waypaper` to select one. The swww backend
+starts at login and the shared random-wallpaper script changes it periodically.
+Waybar is started by the shared Hyprland config, not a second user service.
+Existing sessions need a logout/login to replace the old systemd-started bar
+and run the shared startup commands.
 
 ## Validate and recover
 

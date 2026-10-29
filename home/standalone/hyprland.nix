@@ -38,6 +38,27 @@ let
       ${hyprland}/bin/Hyprland
     '';
   };
+  wallpaperStartup = pkgs.writeShellApplication {
+    name = "start-hyprland-wallpaper";
+    runtimeInputs = [
+      pkgs.swww
+      pkgs.waypaper
+      pkgs.coreutils
+    ];
+    text = ''
+      swww-daemon &
+      # The shared config also restores wallpaper; retry after the daemon is ready.
+      for ((attempt = 0; attempt < 50; attempt++)); do
+        if swww query >/dev/null 2>&1; then
+          waypaper --restore
+          exit 0
+        fi
+        sleep 0.1
+      done
+      echo "swww did not become ready; check the session log." >&2
+      exit 1
+    '';
+  };
   setup = pkgs.writeShellApplication {
     name = "setup-hyprland";
     runtimeInputs = [ pkgs.coreutils ];
@@ -108,10 +129,16 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = pkgs.stdenv.isLinux && !config.myConfig.desktop.hyprland.enable;
-        message = "The standalone Hyprland session supplies its own laptop config; do not also enable the shared desktop Hyprland config.";
+        assertion = pkgs.stdenv.isLinux;
+        message = "The standalone Hyprland session requires Linux.";
       }
     ];
+
+    myConfig.desktop = {
+      hyprland.enable = true;
+      waybar.enable = true;
+      utilities.enable = true;
+    };
 
     targets.genericLinux.enable = true;
     targets.genericLinux.gpu.enable = true;
@@ -123,6 +150,20 @@ in
       pkgs.wl-clipboard
       pkgs.brightnessctl
       pkgs.pavucontrol
+      pkgs.waybar
+      pkgs.waypaper
+      pkgs.hyprpaper
+      pkgs.swww
+      pkgs.networkmanagerapplet
+      pkgs.xfce.thunar
+      pkgs.playerctl
+      pkgs.wireplumber
+      pkgs.jq
+      pkgs.fzf
+      pkgs.bibata-cursors
+      pkgs.nerd-fonts.jetbrains-mono
+      pkgs.libsForQt5.qt5ct
+      pkgs.kdePackages.qt6ct
     ];
 
     wayland.windowManager.hyprland = {
@@ -138,61 +179,13 @@ in
         "XDG_DATA_DIRS"
         "PATH"
       ];
-      settings = {
-        "$mod" = "SUPER";
-        monitor = ",preferred,auto,1";
-        general = {
-          gaps_in = 4;
-          gaps_out = 8;
-          border_size = 2;
-          layout = "dwindle";
-        };
-        input = {
-          kb_layout = "us";
-          touchpad = {
-            natural_scroll = true;
-            tap-to-click = true;
-          };
-        };
-        decoration.rounding = 8;
-        exec-once = [ "${pkgs.ghostty}/bin/ghostty" ];
-        bind = [
-          "$mod, Q, exec, ${pkgs.ghostty}/bin/ghostty"
-          "$mod, R, exec, ${pkgs.fuzzel}/bin/fuzzel"
-          "$mod, C, killactive,"
-          "$mod, V, togglefloating,"
-          "$mod, F, fullscreen,"
-          "$mod, L, exec, ${lockCommand}"
-          "$mod SHIFT, E, exit,"
-          "$mod, left, movefocus, l"
-          "$mod, right, movefocus, r"
-          "$mod, up, movefocus, u"
-          "$mod, down, movefocus, d"
-        ]
-        ++ lib.concatMap (
-          n:
-          let
-            w = toString n;
-          in
-          [
-            "$mod, ${w}, workspace, ${w}"
-            "$mod SHIFT, ${w}, movetoworkspace, ${w}"
-          ]
-        ) (lib.range 1 9);
-        bindm = [
-          "$mod, mouse:272, movewindow"
-          "$mod, mouse:273, resizewindow"
-        ];
-        bindel = [
-          ", XF86AudioRaiseVolume, exec, ${pkgs.wireplumber}/bin/wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"
-          ", XF86AudioLowerVolume, exec, ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
-          ", XF86MonBrightnessUp, exec, ${pkgs.brightnessctl}/bin/brightnessctl set +5%"
-          ", XF86MonBrightnessDown, exec, ${pkgs.brightnessctl}/bin/brightnessctl set 5%-"
-        ];
-        bindl = [
-          ", XF86AudioMute, exec, ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
-        ];
-      };
+      extraConfig = lib.mkAfter ''
+        # Standalone host integration, after the shared desktop configuration.
+        bind = SUPER, L, exec, ${lockCommand}
+        bind = SUPER SHIFT, E, exit,
+        input:touchpad:tap-to-click = true
+        exec-once = ${lib.getExe wallpaperStartup}
+      '';
     };
 
     # The host's system portal service does not know Nix's portal search paths.
@@ -294,37 +287,6 @@ in
         }
       ];
     };
-    programs.waybar = {
-      enable = true;
-      systemd = {
-        enable = true;
-        target = "hyprland-session.target";
-      };
-      settings.mainBar = {
-        layer = "top";
-        position = "top";
-        modules-left = [ "hyprland/workspaces" ];
-        modules-right = [
-          "pulseaudio"
-          "network"
-          "battery"
-          "clock"
-        ];
-        clock.format = "{:%a %d %b  %H:%M}";
-        battery.format = "Battery {capacity}%";
-        network = {
-          format-wifi = "{essid}";
-          format-ethernet = "Ethernet";
-          format-disconnected = "Offline";
-        };
-        pulseaudio.format = "Volume {volume}%";
-      };
-      style = ''
-        * { font-family: sans-serif; font-size: 13px; }
-        window#waybar { background: #202020; color: #eeeeee; }
-        #workspaces button { color: #eeeeee; }
-        #battery, #clock, #network, #pulseaudio { padding: 0 10px; }
-      '';
-    };
+    # The shared config starts Waybar; don't also start a second systemd bar.
   };
 }
