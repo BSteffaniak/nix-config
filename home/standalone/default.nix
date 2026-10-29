@@ -7,7 +7,10 @@
 }:
 
 {
-  imports = [ ../common ];
+  imports = [
+    ../common
+    ./hyprland.nix
+  ];
 
   # Enable XDG base directories
   xdg.enable = true;
