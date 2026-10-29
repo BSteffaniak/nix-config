@@ -19,8 +19,12 @@ let
       fi
       # GDM does not necessarily load Home Manager's session environment.
       if [[ -f "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]]; then
+        # Home Manager's POSIX environment script expects unset variables to
+        # expand to empty strings; writeShellApplication enables nounset.
+        set +u
         # shellcheck source=/dev/null
         source "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+        set -u
       fi
       export PATH="$HOME/.nix-profile/bin:$PATH"
       export XDG_DATA_DIRS="$HOME/.nix-profile/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
@@ -65,12 +69,14 @@ let
       sudo ${lib.getExe config.targets.genericLinux.gpu.setupPackage}
       desktop=$(mktemp)
       trap 'rm -f "$desktop"' EXIT
+      # GDM checks TryExec before authentication, when private profile paths
+      # may be inaccessible. Exec is resolved after login as the session user.
+      # Omit TryExec rather than exposing ~/.local/state to the greeter.
       cat > "$desktop" <<EOF
       [Desktop Entry]
       Name=Hyprland (Nix)
       Comment=Experimental Nix-managed Hyprland; existing desktop sessions remain available
       Exec=$HOME/.nix-profile/bin/start-hyprland
-      TryExec=$HOME/.nix-profile/bin/start-hyprland
       Type=Application
       DesktopNames=Hyprland
       EOF
