@@ -20,6 +20,12 @@
     development.go.enable = true;
     development.python.enable = true;
     development.zig.enable = true;
+    development.openssl.enable = true;
+    development.lazygit.enable = true;
+    development.act.enable = true;
+    development.bcode.enable = true;
+    development.bcode.extraSettings.invariants.mode = "relevant";
+    development.lspmux.enable = true;
     development.opencode.enable = true;
     development.opencode.aliases.openai-api = {
       provider = "openai";
@@ -43,6 +49,7 @@
     devops.kubernetes.enable = true;
     devops.cloud.enable = true;
     devops.infrastructure.enable = true;
+    devops.github.enable = true;
 
     # Shell configuration
     shell.fish.enable = true;
@@ -59,6 +66,8 @@
     # Tools
     tools.ai.claudeCode.enable = true;
     tools.awake.enable = true;
+    tools.archiving.enable = true;
+    tools.encryption.enable = true;
     tools.tts.piper.enable = true;
 
     # Optional extra login session; GNOME remains the fallback.
@@ -83,6 +92,7 @@
 
       monitoring.bottom.enable = true;
       monitoring.htop.enable = true;
+      monitoring.ncdu.enable = true;
 
       fileTools.fzf.enable = true;
       fileTools.ripgrep.enable = true;
