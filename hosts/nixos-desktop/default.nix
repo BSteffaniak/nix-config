@@ -100,6 +100,89 @@
     system.locale.timeZone = "America/New_York";
   };
 
+  # A separate, fresh world; Greenfield retains its existing package and data.
+  services.minecraft-servers.servers.new-dc = {
+    enable = true;
+    autoStart = false;
+    # Source-restricted rules below, rather than globally opening these ports.
+    openFirewall = false;
+
+    package = pkgs.paperServers.paper.override {
+      version = "26.3-build.227";
+      url = "https://fill-data.papermc.io/v1/objects/416b7d105b1d0192df4afa4b29d2800d9dbeda092a82fbc5b511248a54adde15/paper-26.3-227.jar";
+      sha256 = "416b7d105b1d0192df4afa4b29d2800d9dbeda092a82fbc5b511248a54adde15";
+    };
+
+    serverProperties = {
+      server-port = 25566;
+      level-name = "world";
+      level-seed = "";
+      gamemode = "survival";
+      difficulty = "normal";
+      max-players = 20;
+      view-distance = 10;
+      simulation-distance = 10;
+      motd = "New DC - Java & Bedrock Crossplay";
+      white-list = true;
+      online-mode = true;
+      # Floodgate players do not have Java profile signing keys.
+      enforce-secure-profile = false;
+    };
+
+    whitelist = config.services.minecraft-servers.servers.greenfield.whitelist;
+    symlinks = {
+      "plugins/GeyserMC.jar" = pkgs.minecraftPlugins.geysermc-stable;
+      "plugins/Floodgate.jar" = pkgs.minecraftPlugins.floodgate;
+      "plugins/ViaVersion.jar" = pkgs.minecraftPlugins.viaversion-stable;
+      "plugins/ViaBackwards.jar" = pkgs.minecraftPlugins.viabackwards;
+    };
+    # Copy a writable config: Geyser fills defaults and migrates it on startup.
+    files."plugins/Geyser-Spigot/config.yml".value = {
+      config-version = 9;
+      bedrock = {
+        address = "0.0.0.0";
+        port = 19133;
+        # Keep RakNet for older supported Bedrock clients and NetherNet for
+        # current clients. Each transport needs a distinct UDP listener.
+        transport = "both";
+        webrtc-port = 19134;
+        signaling.stun-discovery = false;
+        clone-remote-port = false;
+      };
+      java.auth-type = "floodgate";
+    };
+  };
+
+  # Geyser's NetherNet JNI library dynamically loads OpenSSL by soname.
+  systemd.services.minecraft-server-new-dc.environment.LD_LIBRARY_PATH = lib.makeLibraryPath [
+    pkgs.openssl
+  ];
+
+  # Permit New DC only from private IPv4 LAN/VPN source ranges. Public IPv4
+  # and IPv6 remain closed; add explicit VPN ranges here if needed later.
+  networking.firewall.extraCommands =
+    lib.concatMapStringsSep "\n"
+      (subnet: ''
+        iptables -A nixos-fw -s ${subnet} -p tcp -m multiport --dports 25566,19133 -j nixos-fw-accept
+        iptables -A nixos-fw -s ${subnet} -p udp -m multiport --dports 19133,19134 -j nixos-fw-accept
+      '')
+      [
+        "10.0.0.0/8"
+        "172.16.0.0/12"
+        "192.168.0.0/16"
+      ];
+  networking.firewall.extraStopCommands =
+    lib.concatMapStringsSep "\n"
+      (subnet: ''
+        iptables -D nixos-fw -s ${subnet} -p tcp -m multiport --dports 25566,19133 -j nixos-fw-accept 2>/dev/null || true
+        iptables -D nixos-fw -s ${subnet} -p udp -m multiport --dports 19133,19134 -j nixos-fw-accept 2>/dev/null || true
+      '')
+      [
+        "10.0.0.0/8"
+        "172.16.0.0/12"
+        "192.168.0.0/16"
+      ];
+
   # User configuration
   users.users.${config.myConfig.username} = {
     isNormalUser = true;

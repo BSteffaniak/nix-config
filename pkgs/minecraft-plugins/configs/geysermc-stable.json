@@ -1,0 +1,11 @@
+{
+    "pname": "geysermc-stable",
+    "type": "geyser-api",
+    "project": "geyser",
+    "variant": "spigot",
+    "meta": {
+        "description": "GeyserMC release channel for new Minecraft servers",
+        "homepage": "https://geysermc.org",
+        "license": "mit"
+    }
+}

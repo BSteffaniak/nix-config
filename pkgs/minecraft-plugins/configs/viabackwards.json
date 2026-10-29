@@ -1,0 +1,13 @@
+{
+    "pname": "viabackwards",
+    "type": "github-release",
+    "owner": "ViaVersion",
+    "repo": "ViaBackwards",
+    "assetPattern": "ViaBackwards-*.jar",
+    "stripVersionPrefix": "v",
+    "meta": {
+        "description": "ViaBackwards - older Java clients on newer Minecraft servers",
+        "homepage": "https://github.com/ViaVersion/ViaBackwards",
+        "license": "gpl3"
+    }
+}

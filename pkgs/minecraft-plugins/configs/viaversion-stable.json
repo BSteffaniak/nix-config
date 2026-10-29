@@ -1,0 +1,13 @@
+{
+    "pname": "viaversion-stable",
+    "type": "github-release",
+    "owner": "ViaVersion",
+    "repo": "ViaVersion",
+    "assetPattern": "ViaVersion-*.jar",
+    "stripVersionPrefix": "v",
+    "meta": {
+        "description": "ViaVersion release channel for new Minecraft servers",
+        "homepage": "https://github.com/ViaVersion/ViaVersion",
+        "license": "gpl3"
+    }
+}
