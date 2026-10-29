@@ -66,6 +66,7 @@
       utilities.media.flac.enable = true;
       utilities.media.mediainfo.enable = true;
       utilities.opencodeUpstream.enable = true;
+      utilities.codexUpstream.enable = true;
       utilities.sshenv.enable = true;
       utilities.clippier.enable = true;
       utilities.worktreeSetup.enable = true;
