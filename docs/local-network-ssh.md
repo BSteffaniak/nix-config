@@ -49,23 +49,25 @@ Enrollment is a two-pass process:
 
 1. Build and activate Home Manager on the originating computer to generate its
    key. Read only `~/.ssh/id_ed25519_fleet.pub` for enrollment.
-2. Add that public key to `myConfig.shell.ssh.fleet.peers.<alias>.publicKey`
-   on the receiving computers. Rebuild and activate those configurations before
-   testing the dedicated identity. Add shared public enrollment data to a shared
-   home module only when it is not host-private content.
+2. Add that public key once to `keys.<alias>.publicKey` in
+   `configs/ssh-fleet.nix`. Store the verified server key as `hostKey` there too.
+   Rebuild and activate participating hosts to distribute enrollment. The shared
+   module derives names and usernames from host discovery; only Windows needs
+   explicit identity data in `externalHosts`. No per-host peer files or IPs are
+   needed. Public data originating in encrypted host files must stay private.
 
-For example (replace the illustrative key strings with real public keys):
+Each participating host only needs this in its `home.nix`:
 
 ```nix
-myConfig.shell.ssh.fleet = {
-  enable = true;
-  peers.mac-studio = {
-    publicKey = "ssh-ed25519 <client-public-key>";
-    hostKey = "ssh-ed25519 <verified-server-public-key>";
-    hostNames = [ "mac-studio" "mac-studio.local" ];
-  };
-};
+myConfig.shell.ssh.fleet.enable = true;
 ```
+
+`myConfig.shell.ssh.fleet.peers` remains available for exceptional local
+policy overrides. Its default is the shared registry, including Ubuntu and Scar.
+The Macs and NixOS currently retain enrolled legacy client keys; enrolling a
+new dedicated key must precede switching their client identity. All enrolled
+client keys are trusted for this user account on participating hosts—this is
+an explicit all-to-all trust policy, not merely a naming inventory.
 
 Verify server fingerprints on the destination's console before enrolling
 `hostKey`; `ssh-keyscan` alone does not authenticate a server. Home Manager

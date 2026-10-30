@@ -10,6 +10,23 @@
 let
   cfg = config.myConfig.shell.ssh;
   fleet = cfg.fleet;
+  registry = import ../../../configs/ssh-fleet.nix;
+  identities =
+    lib.mapAttrs (name: meta: {
+      hostname = "${name}.local";
+      inherit (meta) username;
+    }) hostMeta
+    // registry.externalHosts;
+  enrolledPeers = lib.mapAttrs (
+    name: keys:
+    keys
+    // {
+      hostNames = [
+        name
+        identities.${name}.hostname
+      ];
+    }
+  ) (lib.filterAttrs (name: _: builtins.hasAttr name identities) registry.keys);
   clientKeys = lib.filter (key: key != null) (
     map (peer: peer.publicKey) (builtins.attrValues fleet.peers)
   );
@@ -23,16 +40,13 @@ let
       lib.mapAttrs (
         name: meta:
         lib.hm.dag.entryAnywhere {
-          hostname = "${name}.local";
+          hostname = meta.hostname;
           user = meta.username;
         }
-      ) hostMeta
+      ) identities
     )
     // cfg.matchBlocks;
-  fleetAliases = builtins.attrNames hostMeta ++ [
-    "scar"
-    "windows-desktop"
-  ];
+  fleetAliases = builtins.attrNames identities;
 in
 {
   options.myConfig.shell.ssh = {
@@ -47,8 +61,8 @@ in
     fleet = {
       enable = lib.mkEnableOption "locally generated dedicated fleet credentials and declarative public-key enrollment";
       peers = lib.mkOption {
-        default = { };
-        description = "Enrolled fleet public keys only; verify host keys out of band before adding them";
+        default = enrolledPeers;
+        description = "Shared fleet enrollment, derived from configs/ssh-fleet.nix and host discovery; host-local overrides remain possible";
         type = lib.types.attrsOf (
           lib.types.submodule (
             { name, ... }: {

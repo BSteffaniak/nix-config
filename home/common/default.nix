@@ -20,19 +20,6 @@
   # User-facing tools installed on every managed host.
   myConfig.cliTools.utilities.sendsafely.enable = true;
 
-  # External Windows hosts advertise their existing computer names on the LAN.
-  # They are SSH destinations, not systems built by this flake.
-  myConfig.shell.ssh.matchBlocks = lib.mkIf config.myConfig.shell.ssh.fleetAliases.enable {
-    scar = {
-      hostname = lib.mkDefault "scar.local";
-      user = lib.mkDefault "brade";
-    };
-    windows-desktop = {
-      hostname = lib.mkDefault "desktop-tko79vi.local";
-      user = lib.mkDefault "brade";
-    };
-  };
-
   myConfig.shell.contrib = {
     sessionPath = [
       "$HOME/.local/bin"
