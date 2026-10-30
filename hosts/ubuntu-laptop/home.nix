@@ -11,6 +11,9 @@
     ../../home/standalone/ubuntu.nix
   ];
 
+  # No automatic locking on this host (idle or before suspend).
+  services.swayidle.enable = lib.mkForce false;
+
   # Enable all the development tools and features
   myConfig = {
     # Development environments
