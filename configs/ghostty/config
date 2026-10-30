@@ -8,5 +8,8 @@ mouse-scroll-multiplier = 0.25
 # Required for Alt+key bindings in zellij/tmux/etc to work on macOS
 macos-option-as-alt = true
 
+# Let terminal applications handle Ctrl+Enter instead of toggling fullscreen.
+keybind = ctrl+enter=unbind
+
 keybind = ctrl+slash=increase_font_size:1
 keybind = ctrl+minus=decrease_font_size:1
