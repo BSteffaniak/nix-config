@@ -34,6 +34,65 @@ Build before switching each destination's system configuration and each client's
 Home Manager configuration. Nothing takes effect on other machines merely by
 updating this checkout.
 
+## Dedicated fleet credentials (Home Manager)
+
+`myConfig.shell.ssh.fleet.enable = true` enables a dedicated
+`~/.ssh/id_ed25519_fleet` identity. Ubuntu opts in first; leave other hosts on
+existing identities until their new public keys have been enrolled. Generation
+runs locally during activation, not during evaluation or builds. The key has no
+passphrase for unattended LAN logins; the private file is mode 0600 and never
+belongs in Git or the Nix store. Existing keys are not replaced. A lost private
+key requires explicit re-enrollment; an orphaned public key is not silently
+rotated.
+
+Enrollment is a two-pass process:
+
+1. Build and activate Home Manager on the originating computer to generate its
+   key. Read only `~/.ssh/id_ed25519_fleet.pub` for enrollment.
+2. Add that public key to `myConfig.shell.ssh.fleet.peers.<alias>.publicKey`
+   on the receiving computers. Rebuild and activate those configurations before
+   testing the dedicated identity. Add shared public enrollment data to a shared
+   home module only when it is not host-private content.
+
+For example (replace the illustrative key strings with real public keys):
+
+```nix
+myConfig.shell.ssh.fleet = {
+  enable = true;
+  peers.mac-studio = {
+    publicKey = "ssh-ed25519 <client-public-key>";
+    hostKey = "ssh-ed25519 <verified-server-public-key>";
+    hostNames = [ "mac-studio" "mac-studio.local" ];
+  };
+};
+```
+
+Verify server fingerprints on the destination's console before enrolling
+`hostKey`; `ssh-keyscan` alone does not authenticate a server. Home Manager
+writes
+public server keys to `.ssh/fleet_known_hosts` and enables strict verification
+for fleet aliases, retaining the normal known-hosts file as a fallback. Fleet
+identities are limited to the generated aliases (including the Windows aliases),
+not GitHub or arbitrary SSH destinations. Explicit identity settings remain
+usable as overrides.
+
+Authorized keys are maintained in a marked block within `authorized_keys`;
+other entries are preserved and changed files are backed up. Removing a peer
+revokes its entry in that block on the next activation. Copies previously added
+outside the block remain authorized and must be separately reviewed for full
+revocation. A symlinked `authorized_keys` is refused rather than overwritten.
+Disabling the feature does not delete credentials or revoke access; remove peer
+entries and activate while enabled before disabling it.
+
+Windows is not managed by Home Manager: retain its locally generated dedicated
+fleet key and install enrolled client keys in the SSH server's configured
+authorization file with its existing ACLs. The Ubuntu SSH server, Avahi, and
+firewall still need the OS setup below. This feature does not enable a server.
+
+Regression checks: `python3 scripts/test-ssh-fleet.py`. After enrollment, test
+fresh connections with `BatchMode=yes`, `ControlPath=none`, and
+`StrictHostKeyChecking=yes`; installed keys alone do not prove connectivity.
+
 ## Ubuntu (standalone Home Manager)
 
 Home Manager configures the SSH client, not OS services. On the Ubuntu laptop,

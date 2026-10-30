@@ -58,6 +58,7 @@
     shell.nushell.enable = true;
     shell.git.enable = true;
     shell.ssh.enable = true;
+    shell.ssh.fleet.enable = true;
 
     # Editors
     editors.neovim.enable = true;
