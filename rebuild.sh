@@ -111,11 +111,53 @@ for arg in "$@"; do
 	fi
 done
 
+# ── Locate existing Nix tools ──────────────────────────────────────
+if [[ "$PLATFORM" == "Darwin" ]]; then
+	# Fresh shells may not have loaded the profiles created by the installer.
+	for profile_bin in /run/current-system/sw/bin /nix/var/nix/profiles/default/bin "$HOME/.nix-profile/bin"; do
+		if [[ -d "$profile_bin" ]]; then
+			export PATH="$PATH:$profile_bin"
+		fi
+	done
+fi
+
 # ── First-time nix-darwin setup ────────────────────────────────────
 if [[ "$PLATFORM" == "Darwin" ]] && ! command -v darwin-rebuild &>/dev/null; then
 	if ! command -v nix &>/dev/null; then
-		echo "Neither darwin-rebuild nor nix was found in PATH. Install Nix (or load its shell environment) first."
-		exit 1
+		echo "Nix was not found in PATH or its standard installation locations."
+		echo "Setup can download and run the official installer from https://nixos.org/nix/install."
+		echo "This installs the Nix daemon and may request administrator access."
+		printf 'Install Nix now? [y/N] '
+		if ! read -r REPLY; then
+			REPLY=""
+		fi
+		case "$REPLY" in
+		y | Y | yes | YES) ;;
+		*)
+			echo "Setup cancelled; Nix was not installed."
+			exit 1
+			;;
+		esac
+
+		INSTALLER="$(mktemp -t nix-install.XXXXXX)"
+		if ! curl --proto '=https' --tlsv1.2 -fL https://nixos.org/nix/install -o "$INSTALLER"; then
+			rm -f "$INSTALLER"
+			echo "Could not download the Nix installer; setup stopped."
+			exit 1
+		fi
+		if ! sh "$INSTALLER" --daemon; then
+			rm -f "$INSTALLER"
+			echo "Nix installation failed; setup stopped."
+			exit 1
+		fi
+		rm -f "$INSTALLER"
+
+		# The installer cannot update this process's environment.
+		export PATH="$PATH:/nix/var/nix/profiles/default/bin:$HOME/.nix-profile/bin"
+		if ! command -v nix &>/dev/null; then
+			echo "The installer finished, but nix is still unavailable. Open a new terminal and rerun ./rebuild.sh."
+			exit 1
+		fi
 	fi
 
 	echo "darwin-rebuild was not found in PATH."
@@ -134,7 +176,7 @@ if [[ "$PLATFORM" == "Darwin" ]] && ! command -v darwin-rebuild &>/dev/null; the
 		;;
 	esac
 
-	nix run --inputs-from "$SCRIPT_DIR" nix-darwin -- build --flake "$FLAKE_PATH" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
+	nix --extra-experimental-features 'nix-command flakes' run --inputs-from "$SCRIPT_DIR" nix-darwin -- build --flake "$FLAKE_PATH" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
 	sudo ./result/sw/bin/darwin-rebuild switch --flake "$FLAKE_PATH" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
 	echo "nix-darwin setup complete. Open a new terminal before running ./rebuild.sh again."
 	exit 0
