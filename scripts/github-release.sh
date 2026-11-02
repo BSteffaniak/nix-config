@@ -133,7 +133,11 @@ get_asset_hash() {
 fetch_release() {
 	local owner="$1"
 	local repo="$2"
+	local tag_pattern="${3:-}"
 	local api_url="https://api.github.com/repos/$owner/$repo/releases/latest"
+	if [ -n "$tag_pattern" ]; then
+		api_url="https://api.github.com/repos/$owner/$repo/releases?per_page=100"
+	fi
 
 	local release_json
 	release_json=$(curl -sL -H "Accept: application/vnd.github+json" "$api_url")
@@ -144,6 +148,15 @@ fetch_release() {
 		message=$(echo "$release_json" | jq -r '.message')
 		err "GitHub API error for $owner/$repo: $message"
 		return 1
+	fi
+
+	if [ -n "$tag_pattern" ]; then
+		release_json=$(echo "$release_json" | jq --arg pattern "$tag_pattern" \
+			'[.[] | select(.draft == false and (.tag_name | test($pattern)))] | max_by(.published_at)')
+		if [ "$release_json" = "null" ]; then
+			err "No release matching '$tag_pattern' in the latest 100 releases for $owner/$repo"
+			return 1
+		fi
 	fi
 
 	echo "$release_json"
@@ -296,8 +309,9 @@ update_project() {
 
 	info "Fetching latest release for ${BOLD}$owner/$repo${NC}..."
 
-	local release_json
-	release_json=$(fetch_release "$owner" "$repo") || return 1
+	local release_json tag_pattern
+	tag_pattern=$(jq -r '.releaseTagPattern // empty' "$config_file")
+	release_json=$(fetch_release "$owner" "$repo" "$tag_pattern") || return 1
 
 	local tag_name version
 	tag_name=$(echo "$release_json" | jq -r '.tag_name')
@@ -338,6 +352,7 @@ update_project() {
 
 	while IFS= read -r platform; do
 		asset_name=$(jq -r ".platforms[\"$platform\"]" "$config_file")
+		asset_name="${asset_name//\{version\}/$version}"
 
 		local asset_json
 		asset_json=$(echo "$release_json" | jq --arg name "$asset_name" '.assets[] | select(.name == $name)')

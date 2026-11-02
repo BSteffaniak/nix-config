@@ -1,0 +1,18 @@
+{
+    "version": "0.1.7-nightly.20261031.4004",
+    "tag": "v0.1.7-nightly.20261031.4004",
+    "platforms": {
+        "aarch64-darwin": {
+            "url": "https://github.com/pingdotgg/t3code/releases/download/v0.1.7-nightly.20261031.4004/t3-0.1.7-nightly.20261031.4004-darwin-arm64.tar.gz",
+            "sha256": "d9ef02ad08e145f081a4de15f9f94e24a5cd26f03a531ac051e1a03101219ca5"
+        },
+        "aarch64-linux": {
+            "url": "https://github.com/pingdotgg/t3code/releases/download/v0.1.7-nightly.20261031.4004/t3-0.1.7-nightly.20261031.4004-linux-arm64.tar.gz",
+            "sha256": "ceb8cbe905349fec7ca0e678b71cc1c886cdf697e1175a0ed799d9a326cb71f1"
+        },
+        "x86_64-linux": {
+            "url": "https://github.com/pingdotgg/t3code/releases/download/v0.1.7-nightly.20261031.4004/t3-0.1.7-nightly.20261031.4004-linux-x64.tar.gz",
+            "sha256": "97ed174cc4876e659c602f161275ce9329b78a9c3e7ca39674acf62547a9ba38"
+        }
+    }
+}

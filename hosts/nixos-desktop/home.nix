@@ -206,6 +206,7 @@
       mapping.enable = true;
       encryption.enable = true;
       ai.claudeCode.enable = true;
+      ai.t3code.enable = true;
       ai.gemini.enable = true;
       ai.ollama.enable = true;
       tts.piper.enable = true;

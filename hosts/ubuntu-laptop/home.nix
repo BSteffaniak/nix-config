@@ -69,6 +69,7 @@
 
     # Tools
     tools.ai.claudeCode.enable = true;
+    tools.ai.t3code.enable = true;
     tools.awake.enable = true;
     tools.archiving.enable = true;
     tools.encryption.enable = true;

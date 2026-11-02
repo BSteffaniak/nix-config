@@ -69,6 +69,9 @@ in
       claudeCode = {
         enable = lib.mkEnableOption "Claude Code CLI";
       };
+      t3code = {
+        enable = lib.mkEnableOption "T3 Code nightly CLI and browser UI";
+      };
       gemini = {
         enable = lib.mkEnableOption "Google Gemini CLI";
       };
@@ -115,6 +118,7 @@ in
       ++ (lib.optional cfg.web.enable httrack)
       ++ (lib.optional cfg.database.postgresql.enable postgresql)
       ++ (lib.optional cfg.ai.claudeCode.enable claudeCode)
+      ++ (lib.optional cfg.ai.t3code.enable t3code-nightly)
       ++ (lib.optional cfg.ai.gemini.enable unstable.gemini-cli)
       ++ (lib.optional cfg.ai.ollama.enable ollama);
 

@@ -1,0 +1,20 @@
+{
+    "owner": "pingdotgg",
+    "repo": "t3code",
+    "pname": "t3code-nightly",
+    "binaryName": "t3",
+    "installedBinaryName": "t3",
+    "installMode": "directory",
+    "stripVersionPrefix": "v",
+    "releaseTagPattern": "^v[0-9].*-nightly\\.",
+    "platforms": {
+        "aarch64-darwin": "t3-{version}-darwin-arm64.tar.gz",
+        "aarch64-linux": "t3-{version}-linux-arm64.tar.gz",
+        "x86_64-linux": "t3-{version}-linux-x64.tar.gz"
+    },
+    "meta": {
+        "description": "T3 Code CLI and browser UI (nightly, with orchestration v2)",
+        "homepage": "https://github.com/pingdotgg/t3code",
+        "license": "mit"
+    }
+}

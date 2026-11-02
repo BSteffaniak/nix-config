@@ -156,6 +156,7 @@
       database.postgresql.enable = true;
       tts.piper.enable = true;
       ai.claudeCode.enable = true;
+      ai.t3code.enable = true;
       ai.ollama.enable = true;
     };
   };

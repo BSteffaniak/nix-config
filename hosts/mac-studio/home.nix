@@ -191,6 +191,7 @@ in
       archiving.enable = true;
       encryption.enable = true;
       ai.claudeCode.enable = true;
+      ai.t3code.enable = true;
       ai.ollama = {
         enable = true;
         model = "qwen3:30b-a3b";

@@ -412,6 +412,19 @@ field:
 - `"binary"` (default) — copies only the single binary into `$out/bin`. Use for self-contained binaries.
 - `"directory"` — copies the entire archive's top-level directory into `$out/libexec/<pname>/` and installs a wrapper script at `$out/bin/<installedBinaryName>` that execs the binary. Use when the binary expects sibling files next to it (e.g. `pi` requires `package.json` alongside the executable).
 
+**Release selection:** By default, updates use GitHub's latest stable release.
+Set `releaseTagPattern` to a regular expression to select the newest published,
+non-draft matching release from the latest 100 releases (including prereleases).
+Asset names in `platforms` may contain `{version}`, expanded after
+`stripVersionPrefix` is applied.
+
+**T3 Code nightly:** `myConfig.tools.ai.t3code.enable` installs the pinned CLI
+and browser UI (`t3`), not the Electron desktop app. Run `t3` to open the UI,
+or `t3 serve` for a foreground server without opening a browser. Update the
+shared pin with `./scripts/github-release.sh update t3code`, then rebuild each
+host. Use Nix for updates rather than `t3 update`; no background service is
+enabled automatically. The selected nightly includes orchestration v2.
+
 **Hash resolution:** The script uses the GitHub API `digest` field (sha256) when
 available for fast hash lookups. Falls back to `nix-prefetch-url` for repos that
 don't provide digests.
