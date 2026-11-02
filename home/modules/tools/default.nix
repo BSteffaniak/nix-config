@@ -11,6 +11,16 @@
 
 let
   cfg = config.myConfig.tools;
+  claudeCode = pkgs.symlinkJoin {
+    name = "claude-code-with-ca-certs";
+    paths = [ pkgs.unstable.claude-code ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      # The bundled runtime does not reliably use the system CA bundle by default.
+      wrapProgram "$out/bin/claude" \
+        --set-default NODE_EXTRA_CA_CERTS /etc/ssl/certs/ca-certificates.crt
+    '';
+  };
   ollamaHost =
     let
       url = cfg.ai.ollama.serverUrl;
@@ -104,7 +114,7 @@ in
       ++ (lib.optional cfg.encryption.enable age)
       ++ (lib.optional cfg.web.enable httrack)
       ++ (lib.optional cfg.database.postgresql.enable postgresql)
-      ++ (lib.optional cfg.ai.claudeCode.enable unstable.claude-code)
+      ++ (lib.optional cfg.ai.claudeCode.enable claudeCode)
       ++ (lib.optional cfg.ai.gemini.enable unstable.gemini-cli)
       ++ (lib.optional cfg.ai.ollama.enable ollama);
 
