@@ -9,6 +9,7 @@
 
 let
   cfg = config.myConfig.shell.git;
+  tomlFormat = pkgs.formats.toml { };
   postCommit = inputs.git-hooks.packages.${pkgs.stdenv.hostPlatform.system}.post-commit;
 in
 {
@@ -70,6 +71,22 @@ in
       '';
     };
 
+    hooks.settings = lib.mkOption {
+      type = tomlFormat.type;
+      default = { };
+      description = "Post-commit timestamp hook settings. Whitelisted paths and remotes skip timestamp adjustment.";
+      example = lib.literalExpression ''
+        {
+          whitelist.paths = [ "/absolute/path/to/repo" ];
+          settings.work_hours = {
+            start = "08:00";
+            end = "20:00";
+            weekdays_only = true;
+          };
+        }
+      '';
+    };
+
     signing = {
       key = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
@@ -86,6 +103,11 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # The hook reads this fixed path, independently of XDG_CONFIG_HOME.
+    home.file.".config/git/hooks/config.toml" = lib.mkIf (cfg.hooks.settings != { }) {
+      source = tomlFormat.generate "git-hook-config.toml" cfg.hooks.settings;
+    };
+
     programs.git = {
       enable = true;
       hooks = {
