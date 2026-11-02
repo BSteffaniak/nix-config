@@ -111,6 +111,35 @@ for arg in "$@"; do
 	fi
 done
 
+# ── First-time nix-darwin setup ────────────────────────────────────
+if [[ "$PLATFORM" == "Darwin" ]] && ! command -v darwin-rebuild &>/dev/null; then
+	if ! command -v nix &>/dev/null; then
+		echo "Neither darwin-rebuild nor nix was found in PATH. Install Nix (or load its shell environment) first."
+		exit 1
+	fi
+
+	echo "darwin-rebuild was not found in PATH."
+	echo "First-time setup will build using this flake's pinned nix-darwin, then activate $HOST_NAME with sudo."
+	echo "This applies the full system configuration, even when --diff or --compare was requested."
+	echo "If nix-darwin is already installed, cancel and load its shell environment instead."
+	printf 'Install and activate nix-darwin now? [y/N] '
+	if ! read -r REPLY; then
+		REPLY=""
+	fi
+	case "$REPLY" in
+	y | Y | yes | YES) ;;
+	*)
+		echo "Setup cancelled; no build or activation was performed."
+		exit 1
+		;;
+	esac
+
+	nix run --inputs-from "$SCRIPT_DIR" nix-darwin -- build --flake "$FLAKE_PATH" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
+	sudo ./result/sw/bin/darwin-rebuild switch --flake "$FLAKE_PATH" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
+	echo "nix-darwin setup complete. Open a new terminal before running ./rebuild.sh again."
+	exit 0
+fi
+
 # ── Diff Mode ──────────────────────────────────────────────────────
 if [[ "$DIFF_MODE" == true ]]; then
 	if [[ "$PLATFORM" == "Home-Manager" ]]; then
