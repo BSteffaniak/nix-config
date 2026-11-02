@@ -95,6 +95,7 @@ esac
 ACTION="switch"
 DIFF_MODE=false
 EXTRA_ARGS=()
+# Bash 3.2 treats empty arrays as unset under nounset; guard expansions below.
 
 for arg in "$@"; do
 	if [[ "$arg" == "--boot" ]]; then
@@ -123,7 +124,7 @@ if [[ "$DIFF_MODE" == true ]]; then
 	echo "-> Running build..."
 	echo "   Command: $BASE_REBUILD_CMD build --flake \"$FLAKE_PATH\" ${EXTRA_ARGS[*]:-}"
 	echo ""
-	$BASE_REBUILD_CMD build --flake "$FLAKE_PATH" "${EXTRA_ARGS[@]}"
+	$BASE_REBUILD_CMD build --flake "$FLAKE_PATH" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
 	BUILD_EXIT=$?
 
 	if [[ $BUILD_EXIT -ne 0 ]]; then
@@ -164,10 +165,10 @@ elif [[ "$PLATFORM" == "Home-Manager" ]]; then
 		HOME_MANAGER_CMD=(nix run --inputs-from "$SCRIPT_DIR" home-manager --)
 	fi
 	printf '   Command: '
-	printf '%q ' "${HOME_MANAGER_CMD[@]}" switch --flake "$FLAKE_PATH" "${EXTRA_ARGS[@]}"
+	printf '%q ' "${HOME_MANAGER_CMD[@]}" switch --flake "$FLAKE_PATH" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
 	echo ""
 	echo ""
-	"${HOME_MANAGER_CMD[@]}" switch --flake "$FLAKE_PATH" "${EXTRA_ARGS[@]}"
+	"${HOME_MANAGER_CMD[@]}" switch --flake "$FLAKE_PATH" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
 
 # ── Normal Rebuild (NixOS / Darwin) ───────────────────────────────
 else
@@ -176,10 +177,10 @@ else
 	if [[ "$NEEDS_SUDO" == true ]]; then
 		echo "   Command: sudo $BASE_REBUILD_CMD $ACTION --flake \"$FLAKE_PATH\" ${EXTRA_ARGS[*]:-}"
 		echo ""
-		sudo $BASE_REBUILD_CMD $ACTION --flake "$FLAKE_PATH" "${EXTRA_ARGS[@]}"
+		sudo $BASE_REBUILD_CMD $ACTION --flake "$FLAKE_PATH" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
 	else
 		echo "   Command: $BASE_REBUILD_CMD $ACTION --flake \"$FLAKE_PATH\" ${EXTRA_ARGS[*]:-}"
 		echo ""
-		$BASE_REBUILD_CMD $ACTION --flake "$FLAKE_PATH" "${EXTRA_ARGS[@]}"
+		$BASE_REBUILD_CMD $ACTION --flake "$FLAKE_PATH" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
 	fi
 fi
