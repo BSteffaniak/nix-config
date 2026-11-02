@@ -1,7 +1,7 @@
 manifest_version = 1
-encryption_algorithm = "AES_SIV_V1"
-strict_mode = false
-repo_key_id = "93069bafce0aaac4cee77b71f0f117c60acf60d5ccfb2a106f5d0298349964fc"
+encryption_algorithm = "AES_SIV_MOVABLE_V1"
+strict_mode = true
+repo_key_id = "3e0e7b4b3ceb6a1e06421a3cd35477864a553fe21efd5f4f63a572716aba9cf4"
 min_recipients = 1
 allowed_key_types = ["ssh-ed25519", "ssh-rsa"]
 require_doctor_clean_for_rotate = false

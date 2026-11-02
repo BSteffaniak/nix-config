@@ -14,11 +14,12 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # Install AeroSpace via homebrew cask
-    # Note: The tap is declared in flake.nix (nix-homebrew.taps)
-    homebrew.casks = [
-      "aerospace"
-    ];
+    # Bundle cleanup resets trust to the Brewfile declarations. Keep item-specific
+    # trust here rather than granting it in a pre-activation command.
+    # The pinned nix-darwin cask options do not yet expose `trusted`.
+    homebrew.extraConfig = ''
+      cask "nikitabobko/tap/aerospace", trusted: true
+    '';
 
     # Ensure homebrew is enabled when aerospace is enabled
     myConfig.darwin.homebrew.enable = true;

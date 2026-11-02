@@ -6,22 +6,9 @@
 {
   config,
   lib,
-  pkgs,
   inputs,
   ...
 }:
-let
-  # Work around nikitabobko/homebrew-tap#4 changing the minimum macOS
-  # requirement into an exact Ventura-only requirement.
-  patchedHomebrewAerospace = pkgs.runCommand "homebrew-aerospace-patched" { } ''
-    cp -R ${inputs.homebrew-aerospace} "$out"
-    chmod -R u+w "$out"
-    substituteInPlace "$out/Casks/aerospace.rb" \
-      --replace-fail \
-      'depends_on macos: :ventura' \
-      'depends_on macos: ">= :ventura"'
-  '';
-in
 {
   nix-homebrew = {
     enable = true;
@@ -31,7 +18,8 @@ in
     taps = {
       "homebrew/homebrew-core" = inputs.homebrew-core;
       "homebrew/homebrew-cask" = inputs.homebrew-cask;
-      "nikitabobko/homebrew-tap" = patchedHomebrewAerospace;
+      # Current Homebrew treats the upstream :ventura requirement as a minimum.
+      "nikitabobko/homebrew-tap" = inputs.homebrew-aerospace;
       "FelixKratz/homebrew-formulae" = inputs.homebrew-felixkratz;
       "schpet/homebrew-tap" = inputs.homebrew-linear;
     };

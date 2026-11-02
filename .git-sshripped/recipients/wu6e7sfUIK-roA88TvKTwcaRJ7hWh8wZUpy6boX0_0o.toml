@@ -1,0 +1,4 @@
+fingerprint = "wu6e7sfUIK-roA88TvKTwcaRJ7hWh8wZUpy6boX0_0o"
+key_type = "ssh-ed25519"
+public_key_line = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOB/dTxtG9NWyaW3vQAwrQtn6o/tHEP1OFGsFo2VhXF6 bsteffaniak@bs-mbpro"
+source = "LOCAL_FILE"

@@ -14,18 +14,11 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # Install SketchyBar via homebrew
-    # Note: The tap (FelixKratz/formulae) is declared in flake.nix (nix-homebrew.taps)
-    homebrew.brews = [
-      "sketchybar"
-    ];
-
-    # Establish formula-only trust in the same user environment as brew bundle.
-    system.activationScripts.homebrew.text = lib.mkBefore ''
-      if [ -f "${config.homebrew.brewPrefix}/brew" ]; then
-        sudo --user=${lib.escapeShellArg config.homebrew.user} --set-home \
-          "${config.homebrew.brewPrefix}/brew" trust --formula felixkratz/formulae/sketchybar
-      fi
+    # Bundle cleanup resets trust to the Brewfile declarations. Keep item-specific
+    # trust here rather than granting it in a pre-activation command.
+    # The pinned nix-darwin brew options do not yet expose `trusted`.
+    homebrew.extraConfig = ''
+      brew "felixkratz/formulae/sketchybar", trusted: true
     '';
 
     # Ensure homebrew is enabled when sketchybar is enabled
