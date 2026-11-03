@@ -141,6 +141,7 @@
     # Shell
     shell.git.enable = true;
     shell.ssh.enable = true;
+    shell.ssh.fleet.enable = true;
 
     # Development tool configs
     development.lazygit.enable = true;

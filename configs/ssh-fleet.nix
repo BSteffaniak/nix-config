@@ -1,6 +1,6 @@
 # Shared public enrollment data. Never put private keys here.
 # Managed identities come from hosts/*/meta.nix; only external hosts need identity data.
-# The Macs and NixOS retain their existing client keys until dedicated-key enrollment.
+# Mac Studio and MacBook Air retain existing client keys until dedicated-key enrollment.
 {
   keys = {
     bs-mbpro = {
@@ -12,7 +12,7 @@
       hostKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE5fHd3wdBw2WWpjCaSZYGoesCZDHHfoaVll+BJKDTk3";
     };
     nixos-desktop = {
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAB5PaZhj+szrHa9R+HLl1KsE//vo94NCoG1fjMmeW1s";
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIElyWeP+9RpDDwGdpWaxuQ9QL3XHyG/A/YbMqHj1qs98";
       hostKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG4bmG26A3jHhRzs+/ndbThThA/8gKxgZAlRf/ywfLBx";
     };
     macbook-air = {
