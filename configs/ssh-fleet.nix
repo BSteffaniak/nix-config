@@ -3,6 +3,10 @@
 # The Macs and NixOS retain their existing client keys until dedicated-key enrollment.
 {
   keys = {
+    bs-mbpro = {
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMjHqBui3v2ER7Ukmy/4geanclbffQmMEkfScuWIlZMo";
+      hostKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBYso0i2RfI1EZVzIfb6kFQQrX/Ik3sO6CBxSnLARhU0";
+    };
     scar = {
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILwWidMp+nkWG5YU7/qxqUqcq0X6IMYWo9FYMTqCkpeN";
       hostKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE5fHd3wdBw2WWpjCaSZYGoesCZDHHfoaVll+BJKDTk3";
