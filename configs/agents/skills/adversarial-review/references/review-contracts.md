@@ -134,7 +134,8 @@ run authorized tests but cannot supply the independent verdict.
 ## Coordinator checkpoint and final report
 
 Keep concise conversation checkpoints when the state meaningfully changes:
-original scope and candidate identity, mode/limits/round, sessions and
+original scope and candidate identity, mode/explicit user limits or actual
+constraints/round, sessions and
 ownership,
 finding IDs and current dispositions, validation evidence/gaps, pending work,
 and
@@ -163,19 +164,21 @@ behavior, enforcement, lifecycle, and review quality. Do not claim the latter
 from
 static text checks or simulated reports.
 
-| Scenario                                                     | Expected behavior                                                                                                                                                       |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "Review my changes" with both branch commits and local edits | Infer from explicit conversation if possible; otherwise ask which comparison before dispatch.                                                                           |
-| Staged and unstaged versions of the same file differ         | Review index content for staged-only; preserve both versions and staging. Any safe fix is a clearly identified local candidate overlay, not an updated staged snapshot. |
-| PR/commit target differs from checkout                       | Inspect exact objects; do not checkout or repair a different version by accident. Request an authorized workspace if needed.                                            |
-| Real regression plus plausible false positive                | Separate adjudicator accepts the regression and rejects the false positive with code evidence. Only accepted work is fixed.                                             |
-| Valid issue with elaborate proposed abstraction              | Revise to the smallest sound remedy and adjudicate it before implementation.                                                                                            |
-| Unrelated existing defect or user edit                       | Defer unrelated defect with rationale; do not modify the user's unrelated work or silently expand scope.                                                                |
-| Read-only reviewer wants to run a test that writes fixtures  | Request coordinator-owned authorized validation; do not execute it in the read-only lane.                                                                               |
-| Fix introduces a regression                                  | Independent fix review reports it; adjudicate, fix, revalidate, and repeat the final full-scope pass.                                                                   |
-| Review-only invocation                                       | Review and adjudicate without edits, including when a critical valid finding exists.                                                                                    |
-| Source changes mid-wave                                      | Invalidate affected evidence, reconcile work, and repin; do not certify mixed snapshots.                                                                                |
-| Consequential adjudicators disagree                          | Obtain discriminating evidence or another assessment; no majority vote or automatic author preference.                                                                  |
-| Worker fails, output is truncated, or observation is lost    | Report a coverage gap; reconcile admissions/runtime before retrying, never infer a clean pass.                                                                          |
-| Round/spend limit, interruption, or A-to-B-to-A fixes        | Stop or reassess within authority; preserve checkpoint and live-work status, report incomplete, and never manufacture success.                                          |
-| Complete final review finds nothing actionable               | Succeed only with accepted fixes independently verified, required checks passing on that state, and all live work reconciled.                                           |
+| Scenario                                                                 | Expected behavior                                                                                                                                                       |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Review my changes" with both branch commits and local edits             | Infer from explicit conversation if possible; otherwise ask which comparison before dispatch.                                                                           |
+| Staged and unstaged versions of the same file differ                     | Review index content for staged-only; preserve both versions and staging. Any safe fix is a clearly identified local candidate overlay, not an updated staged snapshot. |
+| PR/commit target differs from checkout                                   | Inspect exact objects; do not checkout or repair a different version by accident. Request an authorized workspace if needed.                                            |
+| Real regression plus plausible false positive                            | Separate adjudicator accepts the regression and rejects the false positive with code evidence. Only accepted work is fixed.                                             |
+| Valid issue with elaborate proposed abstraction                          | Revise to the smallest sound remedy and adjudicate it before implementation.                                                                                            |
+| Unrelated existing defect or user edit                                   | Defer unrelated defect with rationale; do not modify the user's unrelated work or silently expand scope.                                                                |
+| Read-only reviewer wants to run a test that writes fixtures              | Request coordinator-owned authorized validation; do not execute it in the read-only lane.                                                                               |
+| Fix introduces a regression                                              | Independent fix review reports it; adjudicate, fix, revalidate, and repeat the final full-scope pass.                                                                   |
+| Review-only invocation                                                   | Review and adjudicate without edits, including when a critical valid finding exists.                                                                                    |
+| Source changes mid-wave                                                  | Invalidate affected evidence, reconcile work, and repin; do not certify mixed snapshots.                                                                                |
+| Consequential adjudicators disagree                                      | Obtain discriminating evidence or another assessment; no majority vote or automatic author preference.                                                                  |
+| Worker fails, output is truncated, or observation is lost                | Report a coverage gap; reconcile admissions/runtime before retrying, never infer a clean pass.                                                                          |
+| More than five rounds or four useful concurrent workers                  | Continue until readiness criteria are met; do not invent round or worker caps. Choose concurrency from independent work and actual resource capacity.                   |
+| Repeated A-to-B-to-A fixes                                               | Reassess requirements and seek discriminating evidence, then continue useful authorized work; repetition alone is not a successful stopping condition.                  |
+| Explicit user limit, actual runtime/resource constraint, or interruption | Reconcile live work and preserve the checkpoint; report incomplete rather than manufacturing success.                                                                   |
+| Complete final review finds nothing actionable                           | Succeed only with accepted fixes independently verified, required checks passing on that state, and all live work reconciled.                                           |

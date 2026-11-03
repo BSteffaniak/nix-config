@@ -1,6 +1,6 @@
 ---
 name: adversarial-review
-description: Harden PRs, branches, commits, or local changes through independent adversarial reviews, review adjudication, and bounded autonomous fix-and-verify loops.
+description: Harden PRs, branches, commits, or local changes through independent adversarial reviews, review adjudication, and autonomous fix-and-verify loops until ready.
 allowed-tools: Bash(bcode:*), Bash(git:*), Bash(gh:*), Bash(python3:*), Read(*), Write(*), Edit(*), Question(*)
 ---
 
@@ -113,7 +113,7 @@ overwriting
 or staging them. External source changes invalidate affected findings/checks;
 reconcile and repin before proceeding, never silently accept a moving target.
 
-### 2. Plan independent risk-based lanes and limits
+### 2. Plan independent risk-based lanes
 
 Map the change to entry points, callers, trust boundaries, and intended
 behavior.
@@ -137,16 +137,20 @@ product intent and source state, but their own focus. No worker spawns
 additional
 workers without coordinator admission.
 
-State limits before execution. Unless the user specifies otherwise, use at most
-**four concurrent workers and five review rounds**, including the final
-full-scope
-pass. A round is inspection, adjudication, then optional fixes and validation.
-Respect tighter runtime, time, or spend limits; do not invent an enforceable
-cost
-cap when usage cannot be observed. Honor user-specified limits, and disclose any
-unavailable metering. Never silently extend a limit. Reserve capacity for a
-final
-pass; if fixes consume it, report incomplete rather than skip verification.
+Continue review, adjudication, fixes, and validation until the readiness
+criteria
+below are met. Do not invent default caps on rounds, workers, elapsed time, or
+spending. Size concurrency to independent useful work, safe ownership, and
+actual
+resource capacity rather than a fixed worker count. A round is inspection,
+adjudication, then optional fixes and validation; counting rounds tracks
+progress,
+not permission to stop. Honor explicit user limits and actual enforced runtime
+or
+resource constraints, disclose unavailable metering, and never silently extend a
+user limit. An interruption by such a constraint is incomplete work, not
+readiness;
+never skip final verification to fit an invented allowance.
 
 Default fix threshold: evidence-backed, change-related defects or concrete
 maintainability costs whose benefit justifies the change and regression risk.
@@ -262,8 +266,9 @@ anchoring; adjudicators may consult earlier findings afterward to reconcile
 them.
 A final pass that triggers changes is not final: validate those changes and
 review
-the resulting candidate again within the limits. Checks remain valid only while
-their relevant source/context is unchanged.
+the resulting candidate again until the readiness criteria are met. Checks
+remain
+valid only while their relevant source/context is unchanged.
 
 ### 7. Converge or stop honestly
 
@@ -280,9 +285,11 @@ Detect repeated findings, alternating fixes, diminishing returns, and expanding
 scope. Reassess the underlying requirement and seek targeted evidence instead of
 starting another generic polish wave. Ask only when intent, architecture, or
 permission actually blocks progress. Do not repeatedly ask approval for routine
-accepted fixes.
+accepted fixes. Repetition or diminishing returns calls for a better approach,
+not an arbitrary stopping point; continue useful authorized work until ready.
 
-At a round/time/spend limit, unavailable dependency, unresolved consequential
+At an explicit user limit or actual enforced runtime/resource constraint,
+unavailable dependency, unresolved consequential
 dispute, stop request, or interruption, stop admissions and reconcile live work
 under orchestrate-lanes. Report **incomplete/blocked/stopped**, not success.
 Preserve
@@ -316,5 +323,7 @@ changeset.
   and validation, not publication, Git history/index changes, or invariant changes.
 - **Preserve user work.** Never confuse the selected source with checkout contents
   or overwrite unrelated edits to manufacture a clean result.
-- **Bounded convergence.** Respect stated limits, recheck after every fix, and
-  distinguish successful completion from exhausted, blocked, or partial work.
+- **Readiness-driven convergence.** Continue until the completion criteria are met,
+  without invented round, worker, time, or spend caps. Honor explicit user limits
+  and actual constraints; distinguish interrupted, blocked, or partial work from
+  successful completion.
