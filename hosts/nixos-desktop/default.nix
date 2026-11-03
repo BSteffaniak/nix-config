@@ -9,6 +9,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./root-large-dir.nix
     ../../modules/common
     ../../modules/nixos
   ];
