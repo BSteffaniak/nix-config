@@ -184,6 +184,21 @@ in
       source = ../../../configs/clippier/clippier.toml;
     };
 
+    # One switch owns the package (below), preferences, and upstream-generated hook.
+    xdg.configFile."worktree-setup/config.toml" =
+      lib.mkIf (cfg.worktreeSetup.enable && !pkgs.stdenv.hostPlatform.isDarwin)
+        {
+          source = ../../../configs/worktree-setup/config.toml;
+        };
+    programs.git = lib.mkIf cfg.worktreeSetup.enable {
+      enable = true;
+      hooks.post-checkout = pkgs.runCommand "worktree-setup-post-checkout" { } ''
+        ${lib.getExe' pkgs.worktree-setup "worktree-setup"} hook render post-checkout \
+          --executable ${lib.escapeShellArg (lib.getExe' pkgs.worktree-setup "worktree-setup")} > "$out"
+        chmod +x "$out"
+      '';
+    };
+
     # Package installs
     home.packages = lib.mkMerge [
       (lib.mkIf cfg.jq.enable [ pkgs.jq ])
@@ -221,22 +236,31 @@ in
     # security policy file at ~/.sshenv/config.toml.
     # When autoBindings is enabled, we provide a base set of pi-* bindings.
     # User declarativeBindings are merged on top (user wins on name conflicts).
-    home.file = lib.mkIf cfg.sshenv.enable (
-      let
-        base = if cfg.sshenv.autoBindings then autoSshenvBindings else { };
-        final = base // cfg.sshenv.declarativeBindings;
-      in
-      lib.mapAttrs' (name: value: {
-        name = ".sshenv/bindings.d/${name}.toml";
-        value.text = bindingsFragmentToToml name value;
-      }) final
-      // {
-        ".sshenv/config.toml".text = ''
-          [security]
-          unencrypted_ssh_keys = "${cfg.sshenv.unencryptedSshKeys}"
-        '';
+    home.file = lib.mkMerge [
+      {
+        "Library/Application Support/worktree-setup/config.toml" =
+          lib.mkIf (cfg.worktreeSetup.enable && pkgs.stdenv.hostPlatform.isDarwin)
+            {
+              source = ../../../configs/worktree-setup/config.toml;
+            };
       }
-    );
+      (lib.mkIf cfg.sshenv.enable (
+        let
+          base = if cfg.sshenv.autoBindings then autoSshenvBindings else { };
+          final = base // cfg.sshenv.declarativeBindings;
+        in
+        lib.mapAttrs' (name: value: {
+          name = ".sshenv/bindings.d/${name}.toml";
+          value.text = bindingsFragmentToToml name value;
+        }) final
+        // {
+          ".sshenv/config.toml".text = ''
+            [security]
+            unencrypted_ssh_keys = "${cfg.sshenv.unencryptedSshKeys}"
+          '';
+        }
+      ))
+    ];
 
     # Ensure shims are regenerated whenever bindings change.
     home.activation.sshenvSyncShims = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

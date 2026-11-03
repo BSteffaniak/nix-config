@@ -1,0 +1,9 @@
+# Personal defaults, deployed together with the worktree-setup package.
+[hooks]
+setup_reminder = true
+
+[remove]
+branch_delete = "ASK"
+
+[security]
+allow_path_escape = false

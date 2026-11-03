@@ -818,11 +818,11 @@
     "worktree-setup-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1777740963,
-        "narHash": "sha256-HbZEs175FBshWXvpYK2KT0hVi0efWkCL06FVWemq6PE=",
+        "lastModified": 1793709000,
+        "narHash": "sha256-BWj5h2fJ+TMEef/m/EF9Zyw1NlSwNOa4AiK4HkgLvCs=",
         "owner": "BSteffaniak",
         "repo": "worktree-setup",
-        "rev": "b054006ecca7719642b3cca4da5bdbf09addf123",
+        "rev": "f809a760353142afac4e1da0edceaba17c9d5ddd",
         "type": "github"
       },
       "original": {
