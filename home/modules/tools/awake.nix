@@ -28,7 +28,7 @@ let
       status  Show current stay-awake state
 
     Notes:
-      - macOS requires myConfig.darwin.awake.enable for privileged pmset handling.
+      - macOS uses a privileged daemon enabled automatically by the nix-darwin configuration.
       - Linux uses the stay-awake-lid user systemd service.
     USAGE
     }
@@ -51,7 +51,7 @@ let
       ensure_state_dir() {
         if [[ ! -d "$state_dir" ]]; then
           echo "stay-awake daemon has not initialized $state_dir yet." >&2
-          echo "Run darwin-rebuild after enabling myConfig.darwin.awake.enable, or wait a few seconds and retry." >&2
+          echo "Run darwin-rebuild to apply myConfig.tools.awake.enable from home.nix, or wait a few seconds and retry." >&2
           exit 1
         fi
       }

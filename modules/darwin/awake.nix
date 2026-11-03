@@ -14,7 +14,8 @@
 }:
 
 let
-  cfg = config.myConfig.darwin.awake;
+  # The user-facing Home Manager option is the single source of enablement.
+  cfg = config.home-manager.users.${username}.myConfig.tools.awake;
   username = config.myConfig.username;
   homeDir = "/Users/${username}";
   stateDir = "${homeDir}/.local/state/stay-awake";
@@ -145,10 +146,6 @@ let
   '';
 in
 {
-  options.myConfig.darwin.awake = {
-    enable = lib.mkEnableOption "privileged stay-awake backend for one-shot closed-lid sessions";
-  };
-
   config = lib.mkIf cfg.enable {
     launchd.daemons.stay-awake = {
       serviceConfig = {

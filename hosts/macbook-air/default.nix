@@ -24,7 +24,6 @@
 
     # Darwin-specific
     darwin.homebrew.enable = true;
-    darwin.awake.enable = true;
     darwin.systemDefaults.enable = true;
     darwin.systemDefaults.darkMode = true;
     darwin.applications.enable = true;
