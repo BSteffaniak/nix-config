@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="color-scheme" content="light" />
+    <title>VW_TITLE</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #172635;
+        --muted: #495b68;
+        --paper: #f5f4ef;
+        --card: #ffffff;
+        --line: #c9d1d3;
+        --accent: #075e66;
+        --wash: #e8f3f1;
+        --code: #142632;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-padding-top: 1.5rem; }
+      body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.65 system-ui, sans-serif; }
+      a { color: var(--accent); text-underline-offset: .2em; }
+      a:hover { text-decoration-thickness: .15em; }
+      :focus-visible { outline: 3px solid #9b4700; outline-offset: 4px; }
+      .skip { position: absolute; left: 1rem; top: -6rem; padding: .5rem 1rem; background: white; z-index: 10; }
+      .skip:focus { top: 1rem; }
+      .layout { max-width: 1440px; margin: auto; display: grid; grid-template-columns: 245px minmax(0, 1fr); }
+      .sidebar { position: sticky; top: 0; height: 100vh; overflow: auto; padding: 2.5rem 1.5rem; border-right: 1px solid var(--line); }
+      .brand, .eyebrow { color: var(--accent); font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 750; }
+      nav ul { list-style: none; padding: 0; }
+      nav li { margin: .8rem 0; }
+      nav a { display: block; font-size: .92rem; }
+      main { min-width: 0; padding: 3.5rem clamp(1.25rem, 4vw, 4rem); }
+      header { padding-bottom: 2.5rem; }
+      h1, h2, h3 { line-height: 1.18; text-wrap: balance; }
+      h1 { font-size: clamp(2.4rem, 5vw, 4.3rem); letter-spacing: -.045em; margin: .8rem 0 1.5rem; }
+      h2 { font-size: clamp(1.7rem, 3vw, 2.25rem); letter-spacing: -.025em; }
+      h3 { font-size: 1.1rem; }
+      p, li { max-width: 76ch; }
+      .lead { font-size: 1.2rem; color: var(--muted); }
+      .scope { color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
+      section { border-top: 1px solid var(--line); padding: 2.5rem 0; }
+      .comparison, .code-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+      .panel, .decision { min-width: 0; padding: 1.25rem; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+      .panel > :first-child, .decision > :first-child { margin-top: 0; }
+      .panel > :last-child, .decision > :last-child { margin-bottom: 0; }
+      .callout { border-left: 4px solid var(--accent); padding: 1rem 1.25rem; background: var(--wash); border-radius: 0 8px 8px 0; }
+      .badge { display: inline-block; font-size: .75rem; font-weight: 700; background: var(--wash); color: var(--accent); border: 1px solid var(--line); border-radius: 999px; padding: .15rem .65rem; }
+      .flow { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; padding: 1.25rem; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+      .flow > * { min-width: 0; overflow-wrap: anywhere; }
+      figure { margin: 1.5rem 0; min-width: 0; }
+      img, svg { display: block; max-width: 100%; height: auto; }
+      figcaption { font-size: .88rem; color: var(--muted); margin-top: .7rem; }
+      .image-zoom[open] { max-width: 100%; overflow: auto; }
+      .image-zoom[open] img { max-width: none; }
+      pre { background: var(--code); color: #edf5f7; padding: 1.25rem; border-radius: 8px; overflow: auto; font-size: .85rem; line-height: 1.65; tab-size: 2; }
+      code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+      :not(pre) > code { font-size: .88em; overflow-wrap: anywhere; }
+      details { margin: 1rem 0; padding: 1rem; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+      summary { cursor: pointer; font-weight: 650; }
+      table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+      th, td { text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); padding: .8rem .5rem; overflow-wrap: anywhere; }
+      .table-scroll { overflow-x: auto; }
+      button { font: inherit; color: var(--accent); background: var(--card); border: 1px solid var(--accent); border-radius: 6px; padding: .5rem .8rem; cursor: pointer; }
+      [hidden] { display: none !important; }
+      footer { color: var(--muted); font-size: .85rem; padding: 1.5rem 0; border-top: 1px solid var(--line); }
+      @media (max-width: 850px) {
+        .layout { grid-template-columns: minmax(0, 1fr); }
+        .sidebar { position: static; height: auto; padding: 1.25rem; border-right: 0; border-bottom: 1px solid var(--line); }
+        nav ul { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; }
+        nav li { margin: 0; }
+        main { padding-top: 2rem; }
+        .comparison, .code-grid { grid-template-columns: minmax(0, 1fr); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+      }
+      @media print {
+        body { background: white; font-size: 10pt; }
+        .layout { display: block; }
+        .sidebar, .skip, button { display: none !important; }
+        main { padding: 0; }
+        section { padding: 1.2rem 0; }
+        h1 { font-size: 30pt; }
+        h2, h3, summary { break-after: avoid; }
+        details::details-content { content-visibility: visible; }
+        details > * { display: block; }
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; color: black; background: #f1f1f1; }
+        .comparison, .code-grid { display: block; }
+        .panel, figure { break-inside: avoid; margin: .75rem 0; }
+        .image-zoom[open] img { max-width: 100%; }
+        a { color: inherit; }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to walkthrough</a>
+    <div class="layout">
+      <aside class="sidebar">
+        <p class="brand">Visualize work</p>
+        <nav aria-label="Walkthrough chapters">
+          <ul>
+            <li><a href="#overview">At a glance</a></li>
+            <li><a href="#map">Map of the work</a></li>
+            <!-- VW_NAV -->
+            <li><a href="#decisions">Decisions &amp; tradeoffs</a></li>
+            <li><a href="#verification">Verification</a></li>
+            <li><a href="#provenance">Sources &amp; scope</a></li>
+          </ul>
+        </nav>
+        <button type="button" id="toggle-details" hidden>Expand all details</button>
+      </aside>
+      <main id="main">
+        <header>
+          <p class="eyebrow">An evidence-backed walkthrough</p>
+          <h1>VW_TITLE</h1>
+          <p class="lead">VW_OUTCOME</p>
+          <p class="scope">VW_SCOPE</p>
+        </header>
+        <section id="overview" aria-labelledby="overview-heading">
+          <h2 id="overview-heading">At a glance</h2>
+          <!-- VW_OVERVIEW -->
+        </section>
+        <section id="map" aria-labelledby="map-heading">
+          <h2 id="map-heading">Map of the work</h2>
+          <!-- VW_MAP -->
+        </section>
+        <!-- VW_CHAPTERS -->
+        <section id="decisions" aria-labelledby="decisions-heading">
+          <h2 id="decisions-heading">Decisions &amp; tradeoffs</h2>
+          <!-- VW_DECISIONS -->
+        </section>
+        <section id="verification" aria-labelledby="verification-heading">
+          <h2 id="verification-heading">Verification &amp; remaining gaps</h2>
+          <!-- VW_VERIFICATION -->
+        </section>
+        <section id="provenance" aria-labelledby="provenance-heading">
+          <h2 id="provenance-heading">Sources &amp; scope</h2>
+          <!-- VW_PROVENANCE -->
+        </section>
+        <footer>
+          This is a snapshot, not a live status page. Reports may contain private
+          code or screenshots; review before sharing.
+        </footer>
+      </main>
+    </div>
+    <script>
+      const details = [...document.querySelectorAll('main details')];
+      const toggle = document.getElementById('toggle-details');
+      const updateToggle = () => {
+        toggle.textContent = details.every((item) => item.open)
+          ? 'Collapse all details'
+          : 'Expand all details';
+      };
+      if (details.length) {
+        toggle.hidden = false;
+        toggle.addEventListener('click', () => {
+          const expand = !details.every((item) => item.open);
+          details.forEach((item) => { item.open = expand; });
+          updateToggle();
+        });
+        details.forEach((item) => item.addEventListener('toggle', updateToggle));
+      }
+      let printState;
+      window.addEventListener('beforeprint', () => {
+        if (printState) return;
+        printState = details.map((item) => item.open);
+        details.forEach((item) => { item.open = true; });
+      });
+      window.addEventListener('afterprint', () => {
+        if (!printState) return;
+        details.forEach((item, index) => { item.open = printState[index]; });
+        printState = undefined;
+        updateToggle();
+      });
+    </script>
+  </body>
+</html>
