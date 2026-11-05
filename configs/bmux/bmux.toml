@@ -47,11 +47,8 @@ smoothing-ms = "500"
 brightness-min = "0.6"
 brightness-max = "1"
 
-[composition]
-active_profile = "zellij_compat"
-
-# Personal bindings migrated from the former modal bmux configuration. Keep
-# these local rather than expanding the canonical zellij_compat profile.
+# Personal bindings, without an inherited compatibility profile that adds
+# conflicting multi-key prefixes (such as Ctrl+t tab commands).
 [keybindings.modes.insert.bindings]
 "ctrl+a \"" = "split_focused_horizontal"
 "ctrl+a %" = "split_focused_vertical"
