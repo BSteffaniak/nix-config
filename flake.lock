@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "bcode-git-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793881800,
+        "narHash": "sha256-8BTbhWTSHbPqBNu+fXyOiTXqMiHIL5pTyjBB7m3nNPA=",
+        "ref": "refs/heads/master",
+        "rev": "0b3c8fd1791f60690b62153bf5f8b44e3a96f233",
+        "revCount": 4458,
+        "type": "git",
+        "url": "ssh://git@github.com/BSteffaniak/bcode"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/BSteffaniak/bcode"
+      }
+    },
     "bcode-src": {
       "flake": false,
       "locked": {
@@ -589,6 +605,7 @@
     },
     "root": {
       "inputs": {
+        "bcode-git-src": "bcode-git-src",
         "bcode-src": "bcode-src",
         "bmux-src": "bmux-src",
         "brouter-src": "brouter-src",

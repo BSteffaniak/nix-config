@@ -102,6 +102,10 @@
       url = "git+ssh://git@github.com/BSteffaniak/bmux";
       flake = false;
     };
+    bcode-git-src = {
+      url = "git+ssh://git@github.com/BSteffaniak/bcode";
+      flake = false;
+    };
     bcode-src = {
       url = "git+ssh://git@github.com/BSteffaniak/bcode";
       flake = false;

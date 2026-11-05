@@ -1,0 +1,9 @@
+{
+    "flakeInput": "bcode-git-src",
+    "buildSystem": "rust",
+    "pname": "bcode-git",
+    "hashField": "cargoHash",
+    "doCheck": false,
+    "rustToolchain": "stable",
+    "cargoBuildFlags": ["--package", "bcode_git_ui_cli", "--bin", "bcode-git"]
+}

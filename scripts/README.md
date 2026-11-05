@@ -326,16 +326,24 @@ output.
 
 ### `check-bcode-git-config.sh` (bcode git Settings Check)
 
-Validates `configs/bcode-git/config.toml` (the bcode git settings that
-`home/modules/development/bcode.nix` nests into `bcode.toml`) against the
-settings
-schema of a `bcode-git` binary. Nix does not build `bcode-git`, so pass the one
-built
-from the bcode checkout you run:
+Validates `configs/bcode-git/config.toml` against the settings schema of a
+`bcode-git` binary. The standalone Home Manager module installs this config at
+`~/.config/bcode-git/config.toml`; the Bcode module also nests it into
+`bcode.toml`.
+Use the installed binary, or pass an explicit build:
 
 ```bash
+./scripts/check-bcode-git-config.sh
 ./scripts/check-bcode-git-config.sh ~/GitHub/bcode/target/release/bcode-git
 BCODE_GIT=... ./scripts/check-bcode-git-config.sh
+```
+
+Bcode and standalone Bcode Git use independent source pins and dependency
+hashes:
+
+```bash
+./scripts/source-build.sh update bcode --refresh
+./scripts/source-build.sh update bcode-git --refresh
 ```
 
 The file is checked in isolation (no user, repository or environment

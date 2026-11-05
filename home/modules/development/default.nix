@@ -17,6 +17,7 @@
     ./brouter-proxy.nix
     ./agents.nix
     ./bcode.nix
+    ./bcode-git.nix
     ./opencode.nix
     ./pi.nix
     ./lspmux.nix
