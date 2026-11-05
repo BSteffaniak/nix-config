@@ -3,11 +3,11 @@
 ## Gathering Changes
 
 1. Determine what changed:
-   - Run `git diff --cached --stat` to check for staged changes
-   - If there are staged changes, use `git diff --cached` for the full diff
-   - If nothing is staged, use `git diff` for unstaged changes instead
+   - Run `git --no-pager diff --cached --stat` to check for staged changes
+   - If there are staged changes, use `git --no-pager diff --cached` for the full diff
+   - If nothing is staged, use `git --no-pager diff` for unstaged changes instead
    - If both are empty, inform the user there is nothing to commit
-2. Optionally run `git log --oneline -10` to see recent commit style for context
+2. Optionally run `git --no-pager log --oneline -10` to see recent commit style for context
 3. Analyze the diff carefully — understand the specific, concrete changes
 
 ## Commit Message Rules

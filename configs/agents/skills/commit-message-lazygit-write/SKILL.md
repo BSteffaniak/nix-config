@@ -10,6 +10,12 @@ Follow the [shared user override contract](../_shared/user-overrides.md). This s
 
 ## Command execution
 
+**Never invoke bare `git`.** Every Git invocation must include the global
+`--no-pager` option before the subcommand: `git --no-pager …`. This applies
+inside scripts, command substitutions, pipelines, and compound commands.
+Before submitting a shell command, check every Git invocation. Piping output
+or expecting short output is not a substitute; pagers can hang until timeout.
+
 Follow the [non-interactive Git and GitHub command rules](../_shared/non-interactive-git.md) for every `git` or `gh` invocation. These rules are mandatory even when an example below omits the environment prefix for brevity.
 
 ## Purpose
@@ -25,7 +31,7 @@ Follow the [Gathering Changes](../_shared/commit-rules.md#gathering-changes) ste
 4. Compose the commit message following the [Commit Message Rules](../_shared/commit-rules.md#commit-message-rules)
 5. Write the message to the lazygit pending commit file:
    ```bash
-   git_dir=$(git rev-parse --git-dir)
+   git_dir=$(git --no-pager rev-parse --git-dir)
    # Write the commit message to:
    # - $git_dir/LAZYGIT_PENDING_COMMIT (for lazygit's commit panel pre-fill)
    ```
