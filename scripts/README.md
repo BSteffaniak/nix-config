@@ -324,6 +324,27 @@ dev shell). Evaluation uses `path:` so untracked files are picked up without
 staging. `nix flake check` exposes the same set of toplevels via the `checks`
 output.
 
+### `check-bcode-git-config.sh` (bcode git Settings Check)
+
+Validates `configs/bcode-git/config.toml` (the bcode git settings that
+`home/modules/development/bcode.nix` nests into `bcode.toml`) against the
+settings
+schema of a `bcode-git` binary. Nix does not build `bcode-git`, so pass the one
+built
+from the bcode checkout you run:
+
+```bash
+./scripts/check-bcode-git-config.sh ~/GitHub/bcode/target/release/bcode-git
+BCODE_GIT=... ./scripts/check-bcode-git-config.sh
+```
+
+The file is checked in isolation (no user, repository or environment
+configuration);
+problems are printed with their key and the script exits non-zero. TOML syntax
+errors
+also fail Nix evaluation, since the module reads the file with
+`builtins.fromTOML`.
+
 ### `github-release.sh` (GitHub Release Manager)
 
 Manages pre-built binary packages from GitHub releases. Supports both

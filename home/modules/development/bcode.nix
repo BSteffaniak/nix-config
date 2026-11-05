@@ -203,11 +203,20 @@ let
         };
     };
 
+  # bcode git settings use the same schema as a standalone ~/.config/bcode-git/config.toml;
+  # bcode.toml carries them under [plugins.config."bcode.git".ui].
+  gitUiSettings =
+    if cfg.git.enable then
+      lib.recursiveUpdate (builtins.fromTOML (builtins.readFile cfg.git.settingsFile)) cfg.git.settings
+    else
+      { enabled = false; };
+
   baseSettings = {
     plugins.enabled = [
       "bcode.openai-compatible"
       "bcode.bedrock"
     ];
+    plugins.config."bcode.git".ui = gitUiSettings;
 
     worktree.setup.direnv_allow = true;
 
@@ -818,6 +827,29 @@ in
       type = lib.types.listOf lib.types.path;
       default = [ ];
       description = "Bcode-specific agent permission JSON files merged after shared permission files.";
+    };
+
+    git = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether `bcode git` is available; false sets `ui.enabled = false`.";
+      };
+
+      settingsFile = lib.mkOption {
+        type = lib.types.path;
+        default = ../../../configs/bcode-git/config.toml;
+        description = ''
+          bcode git settings in the dedicated bcode-git config format (the git UI schema at the
+          root), nested into bcode.toml under [plugins.config."bcode.git".ui].
+        '';
+      };
+
+      settings = lib.mkOption {
+        type = tomlFormat.type;
+        default = { };
+        description = "Per-host bcode git settings merged over settingsFile (same schema).";
+      };
     };
 
     extraSettings = lib.mkOption {

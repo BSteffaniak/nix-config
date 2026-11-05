@@ -1,0 +1,105 @@
+# bcode git settings matching configs/lazygit/config.yml.
+#
+# Same schema as ~/.config/bcode-git/config.toml; home/modules/development/bcode.nix nests it
+# under [plugins.config."bcode.git".ui] in the generated bcode.toml. Values equal to bcode git's
+# defaults (diff line wrapping, 72-column commit body wrap, 33% side panel, flexible main split)
+# are omitted.
+#
+# Regenerate the base with:
+#   bcode-git --import-lazygit configs/lazygit/config.yml
+# then reapply the commented edits below. Validate with scripts/check-bcode-git-config.sh.
+#
+# lazygit settings with no bcode git equivalent: scroll height/margins, tab width, list footer,
+# numstat in files view, random tips, nerd fonts and icons, author/hash display lengths, branch
+# divergence display, time formats, border style, spinner, explosion animation, filter mode,
+# status panel view, switch-to-files after stash, sign-off, merge args, main branches, log
+# order and whole-graph, branch sort orders, copied hash truncation, auto-forward branches,
+# fetch-all, rename threshold, whitespace toggle, update checks, quit/return/subprocess prompts,
+# and the keys listed in the importer's notes (pull requests, git-flow, bisect variants, ...).
+
+[commit]
+skip_hook_prefix = "WIP"
+
+[files]
+tree = false
+
+[keybindings."git.branches"]
+"shift+n" = "bcode.git.branches.new"
+
+[keybindings."git.commits"]
+# lazygit moved "new" to N, which moveUpCommit also uses there, so "n" falls through to
+# navigation. Unbind bcode's new-branch "n" so it does here too. "t" stays revert, as in lazygit.
+n = "none"
+"ctrl+t" = "bcode.git.commits.tag"
+"shift+n" = "bcode.git.commits.move-up"
+"shift+s" = "bcode.git.commits.squash"
+"shift+t" = "bcode.git.commits.move-down"
+
+[keybindings."git.files"]
+"ctrl+s" = "bcode.git.files.stash-menu"
+"shift+s" = "bcode.git.files.stash"
+
+[keybindings."git.global"]
+"ctrl+d" = "bcode.git.global.scroll-main-down"
+"ctrl+e" = "bcode.git.global.diffing-menu"
+"ctrl+u" = "bcode.git.global.scroll-main-up"
+pagedown = "bcode.git.global.scroll-main-down"
+pageup = "bcode.git.global.scroll-main-up"
+right = "bcode.git.global.next-panel"
+s = "bcode.git.global.next-panel"
+"shift+j" = "bcode.git.global.scroll-main-down"
+"shift+k" = "bcode.git.global.scroll-main-up"
+"shift+w" = "bcode.git.global.diffing-menu"
+"shift+z" = "bcode.git.global.redo"
+tab = "bcode.git.global.next-panel"
+
+[keybindings."git.list"]
+down = "bcode.git.list.down"
+n = "bcode.git.list.up"
+t = "bcode.git.list.down"
+up = "bcode.git.list.up"
+
+[keybindings."git.main"]
+down = "bcode.git.main.line-down"
+n = "bcode.git.main.line-up"
+t = "bcode.git.main.line-down"
+up = "bcode.git.main.line-up"
+
+[keybindings."git.menu"]
+down = "bcode.git.menu.down"
+n = "bcode.git.menu.up"
+t = "bcode.git.menu.down"
+up = "bcode.git.menu.up"
+
+[keybindings."git.remotes"]
+"shift+n" = "bcode.git.remotes.new"
+
+[keybindings."git.staging"]
+down = "bcode.git.staging.line-down"
+n = "bcode.git.staging.line-up"
+t = "bcode.git.staging.line-down"
+up = "bcode.git.staging.line-up"
+
+[keybindings."git.stash"]
+"shift+n" = "bcode.git.stash.branch"
+
+[keybindings."git.tags"]
+"shift+n" = "bcode.git.tags.new"
+
+[keybindings."git.worktrees"]
+"shift+n" = "bcode.git.worktrees.new"
+
+[layout]
+expand_focused = false
+expanded_weight = 2
+screen_mode = "half"
+
+[layout.command_log]
+show = true
+
+[refresh]
+auto_fetch_seconds = 60
+poll_seconds = 0
+
+[staging]
+hunk_mode = true
