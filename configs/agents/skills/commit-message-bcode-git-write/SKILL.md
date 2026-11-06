@@ -1,6 +1,6 @@
 ---
-name: commit-message-lazygit-write
-description: Generate a git commit message and write it so it's pre-filled when you press `c` in lazygit.
+name: commit-message-bcode-git-write
+description: Generate a git commit message and write it so it's pre-filled when you press `c` in bcode-git.
 allowed-tools: Bash(git:*)
 ---
 
@@ -21,18 +21,18 @@ Follow the [non-interactive Git and GitHub command rules](../_shared/non-interac
 ## Purpose
 
 Generate a commit message for the current staged or unstaged changes, and write
-it to the repo so it's automatically pre-filled for lazygit's commit panel via
-`LAZYGIT_PENDING_COMMIT`.
+it to the repo so it's automatically pre-filled for bcode-git's commit panel via
+`BCODE_GIT_COMMIT_MSG`.
 
 ## Steps
 
 Follow the [Gathering Changes](../_shared/commit-rules.md#gathering-changes) steps, then:
 
 4. Compose the commit message following the [Commit Message Rules](../_shared/commit-rules.md#commit-message-rules)
-5. Write the message to the lazygit pending commit file:
+5. Write the message to the bcode-git pending commit file:
    ```bash
    git_dir=$(git --no-pager rev-parse --git-dir)
    # Write the commit message to:
-   # - $git_dir/LAZYGIT_PENDING_COMMIT (for lazygit's commit panel pre-fill)
+   # - $git_dir/BCODE_GIT_COMMIT_MSG (for bcode-git's commit panel pre-fill)
    ```
 6. Respond tersely that the file was written. Do not display the generated commit message. Do not include extra explanation unless there is an error.

@@ -11,7 +11,6 @@
     ./dotnet.nix
     ./android.nix
     ./openssl.nix
-    ./lazygit.nix
     ./act.nix
     ./brouter.nix
     ./brouter-proxy.nix

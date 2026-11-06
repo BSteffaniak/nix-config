@@ -90,7 +90,6 @@
     editors.neovim.useNightly = true;
 
     # Development tool configs
-    development.lazygit.enable = true;
     development.act.enable = true;
     development.bcode.enable = true;
     development.bcodeGit.enable = true;

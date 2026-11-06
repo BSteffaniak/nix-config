@@ -1,21 +1,11 @@
-# bcode git settings matching configs/lazygit/config.yml.
+# Shared bcode git settings.
 #
 # Same schema as ~/.config/bcode-git/config.toml; home/modules/development/bcode.nix nests it
 # under [plugins.config."bcode.git".ui] in the generated bcode.toml. Values equal to bcode git's
 # defaults (diff line wrapping, 72-column commit body wrap, 33% side panel, flexible main split)
 # are omitted.
 #
-# Regenerate the base with:
-#   bcode-git --import-lazygit configs/lazygit/config.yml
-# then reapply the commented edits below. Validate with scripts/check-bcode-git-config.sh.
-#
-# lazygit settings with no bcode git equivalent: scroll height/margins, tab width, list footer,
-# numstat in files view, random tips, nerd fonts and icons, author/hash display lengths, branch
-# divergence display, time formats, border style, spinner, explosion animation, filter mode,
-# status panel view, switch-to-files after stash, sign-off, merge args, main branches, log
-# order and whole-graph, branch sort orders, copied hash truncation, auto-forward branches,
-# fetch-all, rename threshold, whitespace toggle, update checks, quit/return/subprocess prompts,
-# and the keys listed in the importer's notes (pull requests, git-flow, bisect variants, ...).
+# Validate with scripts/check-bcode-git-config.sh.
 
 [commit]
 skip_hook_prefix = "WIP"
@@ -27,8 +17,7 @@ tree = false
 "shift+n" = "bcode.git.branches.new"
 
 [keybindings."git.commits"]
-# lazygit moved "new" to N, which moveUpCommit also uses there, so "n" falls through to
-# navigation. Unbind bcode's new-branch "n" so it does here too. "t" stays revert, as in lazygit.
+# Keep "n" for navigation rather than new-branch; "t" remains revert in this panel.
 n = "none"
 "ctrl+t" = "bcode.git.commits.tag"
 "shift+n" = "bcode.git.commits.move-up"

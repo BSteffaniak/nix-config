@@ -132,7 +132,6 @@ in
     development.bcode.enable = true;
     development.bcodeGit.enable = true;
     development.bdata.enable = true;
-    development.lazygit.enable = true;
     development.act.enable = true;
     development.opencode.enable = true;
     development.opencode.aliases.openai-api = {

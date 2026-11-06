@@ -113,8 +113,7 @@ in
       hooks = {
         post-commit = pkgs.writeShellScript "post-commit" ''
           # Clean up any leftover PREPARED_MSG after successful commit
-          # (e.g. when committing via lazygit, the prepare-commit-msg hook
-          # doesn't consume it because SOURCE="message")
+          # when prepare-commit-msg did not consume it (e.g. git commit -m).
           GIT_DIR="$(git rev-parse --git-dir)"
           rm -f "$GIT_DIR/PREPARED_MSG"
 
@@ -132,7 +131,6 @@ in
             EXISTING=$(cat "$MSGFILE")
             printf '%s\n\n%s\n' "$(cat "$PREPARED")" "$EXISTING" > "$MSGFILE"
             rm "$PREPARED"
-            rm -f "$GIT_DIR/LAZYGIT_PENDING_COMMIT"
           fi
         '';
       };
