@@ -1,0 +1,8 @@
+# bdata settings (see bdata's docs/configuration.md). Deployed to
+# ~/.config/bdata/config.toml by home/modules/development/bdata.nix; bdata
+# writes connections.toml and snippets.toml itself, so they are not managed.
+
+[statistics]
+# Refresh missing or stale planner statistics (ANALYZE) when a read-write
+# connection opens.
+analyze-on-connect = true

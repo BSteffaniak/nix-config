@@ -353,6 +353,23 @@ errors
 also fail Nix evaluation, since the module reads the file with
 `builtins.fromTOML`.
 
+### `check-bdata-config.sh` (bdata Settings Check)
+
+Validates `configs/bdata/config.toml` with `bdata config check`. The bdata Home
+Manager module installs this config at `~/.config/bdata/config.toml` (bdata
+writes `connections.toml` and `snippets.toml` itself, so those stay unmanaged).
+bdata isn't packaged here yet, so pass a build from the bdata checkout:
+
+```bash
+./scripts/check-bdata-config.sh ~/GitHub/bdata/target/nix/<toolchain>/debug/bdata
+BDATA=... ./scripts/check-bdata-config.sh
+```
+
+The file is checked in isolation (no user, project or environment
+configuration); problems are printed and the script exits non-zero. TOML syntax
+errors also fail Nix evaluation, since the module reads the file with
+`builtins.fromTOML`.
+
 ### `github-release.sh` (GitHub Release Manager)
 
 Manages pre-built binary packages from GitHub releases. Supports both
