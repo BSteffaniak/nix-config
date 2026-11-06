@@ -1,0 +1,19 @@
+{
+    "owner": "DataDog",
+    "repo": "pup",
+    "pname": "datadog-pup",
+    "binaryName": "pup",
+    "installedBinaryName": "pup",
+    "stripVersionPrefix": "v",
+    "platforms": {
+        "aarch64-darwin": "pup_{version}_Darwin_arm64.tar.gz",
+        "x86_64-darwin": "pup_{version}_Darwin_x86_64.tar.gz",
+        "aarch64-linux": "pup_{version}_Linux_arm64.tar.gz",
+        "x86_64-linux": "pup_{version}_Linux_x86_64.tar.gz"
+    },
+    "meta": {
+        "description": "Datadog CLI for observability APIs",
+        "homepage": "https://github.com/DataDog/pup",
+        "license": "asl20"
+    }
+}
