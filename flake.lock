@@ -4,10 +4,10 @@
       "flake": false,
       "locked": {
         "lastModified": 1793968200,
-        "narHash": "sha256-0S5ABRYmSxYu0TAfxpPeRmtPgtjtvp5uORvJNw29i/Y=",
+        "narHash": "sha256-U95WYBaKDHA0j6tI8/m3HwuPCzPY91F/J95FfiGxBJU=",
         "ref": "refs/heads/master",
-        "rev": "222c9379caf9040049d5f9608b094722ea15ac7f",
-        "revCount": 4466,
+        "rev": "eee7781c0af3391d2070307e38620ba24d62962f",
+        "revCount": 4471,
         "type": "git",
         "url": "ssh://git@github.com/BSteffaniak/bcode"
       },
