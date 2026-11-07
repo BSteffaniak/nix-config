@@ -13,6 +13,9 @@ skip_hook_prefix = "WIP"
 [files]
 tree = false
 
+[files.line_counts]
+floating = true
+
 [keybindings."git.branches"]
 "shift+n" = "bcode.git.branches.new"
 
