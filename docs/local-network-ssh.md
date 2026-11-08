@@ -15,6 +15,63 @@ This table illustrates the current inventory; configuration is generated from
 host discovery, not this table. No IP reservations or router DNS entries are
 needed.
 
+## Minimal Macs and first-time setup
+
+`es-mb-air` is an Apple Silicon Mac managed for the existing macOS account
+`elise`. It enables Zsh, Remote Login, and two-way SSH fleet participation only.
+Homebrew, Rosetta, developer environments, and personal macOS defaults are off.
+Management dependencies (Nix, Home Manager, nvd, and fleet activation tools)
+remain necessary; this does not remove pre-existing software from a Mac.
+
+For a new machine, run `./bootstrap.sh` and choose the default minimal path.
+Use `./bootstrap.sh --custom` for the full questionnaire. Standalone generation
+also defaults to minimal (Darwin or standalone Home Manager):
+
+```sh
+bash scripts/new-host-template.sh --platform darwin --arch aarch64-darwin \
+  --hostname es-mb-air --username elise --fullname Elise
+```
+
+Do not run that generator for an already-configured host: existing files are
+never overwritten. Custom templates require `--custom`. Minimal templates
+include `meta.nix`; custom bootstrap writes metadata after generation.
+
+On a Mac whose current hostname is unknown, `./rebuild.sh` lists hosts and
+allows explicit selection of a compatible configuration, or launching bootstrap.
+Selecting an existing Mac requires the configured account to already exist and
+confirmation before changing HostName and Bonjour LocalHostName. ComputerName
+is left alone. After renaming, rebuild builds a diff only, never switches.
+Noninteractive calls and `--diff`/`--compare` never prompt for a rename or
+launch
+bootstrap. First-time Darwin diff builds using pinned nix-darwin without
+activation; Nix must already be installed. A subsequent normal rebuild offers
+first-time installation/activation explicitly. Rebuild uses a `path:` flake so
+new host files are visible before staging them in Git.
+
+For `es-mb-air`, first build with `./rebuild.sh --diff`, then activate with
+`./rebuild.sh`. Confirm Remote Login allows `elise` in macOS settings. Verify
+Bonjour resolves `es-mb-air.local`; sleep/firewall/network isolation can prevent
+reachability even with a valid configuration.
+
+Fleet enrollment is not complete until the real Mac has activated:
+
+1. Read `~/.ssh/id_ed25519_fleet.pub` on the Mac, never the private key.
+2. Verify `/etc/ssh/ssh_host_ed25519_key.pub` and its fingerprint on the Mac's
+   console (`ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub`).
+3. Add these values as `keys.es-mb-air.publicKey` and `keys.es-mb-air.hostKey`
+   in `configs/ssh-fleet.nix`; no placeholder keys are shipped.
+4. Rebuild the Mac and participating peers. Test fresh connections both ways
+   with `ssh -o BatchMode=yes -o ControlPath=none -o StrictHostKeyChecking=yes
+   es-mb-air true` (and a peer alias when testing from the Mac).
+
+Two-way fleet trust authorizes enrolled client keys on each participating
+account; it is not restricted to administration of this Mac. The Darwin server
+module only enables macOS sshd; shared SSH authentication/allowed-user options
+are not applied to macOS.
+
+Regression checks: `python3 scripts/test-host-onboarding.py` and
+`python3 scripts/test-ssh-fleet.py`.
+
 ## Managed hosts
 
 The host builder sets Bonjour's `networking.localHostName` on Darwin and

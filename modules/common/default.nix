@@ -44,13 +44,7 @@
       "flakes"
     ];
 
-    # Baseline packages for all platforms
-    environment.systemPackages = with pkgs; [
-      vim
-      wget
-      clang
-      glib
-      nvd
-    ];
+    # Rebuild/diff infrastructure; user tools belong in Home Manager.
+    environment.systemPackages = [ pkgs.nvd ];
   };
 }

@@ -10,9 +10,19 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$REPO_DIR/scripts/host-common.sh"
+MINIMAL=true
 
 while [[ $# -gt 0 ]]; do
 	case $1 in
+	--minimal)
+		MINIMAL=true
+		shift
+		;;
+	--custom)
+		MINIMAL=false
+		shift
+		;;
 	--platform)
 		PLATFORM="$2"
 		shift 2
@@ -272,7 +282,79 @@ if [ -z "${PLATFORM:-}" ] || [ -z "${HOSTNAME:-}" ] || [ -z "${USERNAME:-}" ] ||
 	exit 1
 fi
 
-# Defaults
+if ! valid_host_name "$HOSTNAME" || ! [[ "$USERNAME" =~ ^[a-zA-Z_][a-zA-Z0-9_-]*$ ]]; then
+	echo "Invalid hostname or username" >&2
+	exit 1
+fi
+HOST_DIR="$REPO_DIR/hosts/$HOSTNAME"
+if [ -L "$HOST_DIR" ] || [ -e "$HOST_DIR/home.nix" ] || [ -e "$HOST_DIR/default.nix" ] || [ -e "$HOST_DIR/meta.nix" ]; then
+	echo "Refusing to overwrite existing host: $HOSTNAME" >&2
+	exit 1
+fi
+FULLNAME="$(nix_escape "$FULLNAME")"
+COMPUTER_NAME="$(nix_escape "${COMPUTER_NAME:-}")"
+
+if [ "$MINIMAL" = true ]; then
+	case "$PLATFORM" in
+	darwin)
+		META_TYPE=darwin
+		DEFAULT_ARCH="$(machine_system)"
+		;;
+	linux)
+		META_TYPE=home-manager
+		DEFAULT_ARCH="$(machine_system)"
+		;;
+	*)
+		echo "Minimal generation currently supports Darwin and standalone Home Manager; use --custom for NixOS." >&2
+		exit 1
+		;;
+	esac
+	ARCH="${ARCH:-$DEFAULT_ARCH}"
+	case "$META_TYPE:$ARCH" in
+	darwin:aarch64-darwin | darwin:x86_64-darwin | home-manager:aarch64-linux | home-manager:x86_64-linux) ;;
+	*)
+		echo "Incompatible platform/architecture" >&2
+		exit 1
+		;;
+	esac
+	mkdir -p "$HOST_DIR"
+	cat >"$HOST_DIR/meta.nix" <<EOF
+{
+  type = "$META_TYPE";
+  system = "$ARCH";
+  hostname = "$HOSTNAME";
+  username = "$USERNAME";
+$(if [ "$PLATFORM" = darwin ]; then echo '  stateVersion = 6;'; fi)
+  homeStateVersion = "25.05";
+}
+EOF
+	cat >"$HOST_DIR/home.nix" <<'EOF'
+{
+  myConfig.shell = {
+    default = "zsh";
+    ssh.enable = true;
+    ssh.fleet.enable = true;
+    shared.completions.useCarapace = false;
+  };
+}
+EOF
+	if [ "$PLATFORM" = darwin ]; then
+		cat >"$HOST_DIR/default.nix" <<'EOF'
+{
+  imports = [ ../../modules/common ../../modules/darwin ];
+  myConfig = {
+    shell.default = "zsh";
+    services.sshd.enable = true;
+  };
+}
+EOF
+	fi
+	echo "Generated minimal host: $HOST_DIR"
+	echo "Fleet access is two-way. Enroll public keys after activation; see docs/local-network-ssh.md."
+	exit 0
+fi
+
+# Defaults for the custom questionnaire/template.
 ENABLE_RUST="${ENABLE_RUST:-true}"
 ENABLE_NODEJS="${ENABLE_NODEJS:-true}"
 ENABLE_GO="${ENABLE_GO:-true}"

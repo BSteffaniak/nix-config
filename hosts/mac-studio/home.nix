@@ -55,6 +55,7 @@ in
   };
 
   myConfig = {
+    cliTools.utilities.sendsafely.enable = true;
     # Desktop - AeroSpace tiling window manager
     desktop.aerospace.enable = true;
     desktop.sketchybar.enable = true;
@@ -205,6 +206,10 @@ in
   };
 
   home.packages = with pkgs; [
+    vim
+    wget
+    clang
+    glib
     discord
   ];
 }

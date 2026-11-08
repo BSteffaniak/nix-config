@@ -11,8 +11,8 @@
 }:
 {
   nix-homebrew = {
-    enable = true;
-    enableRosetta = true;
+    enable = config.myConfig.darwin.homebrew.enable;
+    enableRosetta = config.myConfig.darwin.homebrew.rosetta.enable;
     user = config.myConfig.username;
     mutableTaps = false;
     taps = {
@@ -25,5 +25,7 @@
     };
   };
 
-  homebrew.taps = builtins.attrNames config.nix-homebrew.taps;
+  homebrew.taps = lib.mkIf config.myConfig.darwin.homebrew.enable (
+    builtins.attrNames config.nix-homebrew.taps
+  );
 }

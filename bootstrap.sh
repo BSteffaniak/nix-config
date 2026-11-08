@@ -98,6 +98,35 @@ detect_arch() {
 	esac
 }
 
+source "$SCRIPT_DIR/scripts/host-common.sh"
+
+# Default to minimal; keep the existing questionnaire as an explicit custom path.
+if [ "${1:-}" != --custom ]; then
+	[ -t 0 ] || {
+		echo "Run bootstrap interactively (or use scripts/new-host-template.sh with explicit arguments)." >&2
+		exit 1
+	}
+	print_header "Host setup"
+	if prompt_yes_no "Create a minimal managed host (Zsh and two-way SSH fleet only)?" y; then
+		TYPE="$(machine_type)"
+		if [ "$TYPE" = nixos ]; then
+			echo "NixOS needs hardware/boot configuration; continuing with custom setup."
+		else
+			HOSTNAME=$(prompt_input "Hostname" "$(hostname)")
+			USERNAME=$(prompt_input "Username" "$(id -un)")
+			FULL_NAME=$(prompt_input "Full name" "$USERNAME")
+			PLATFORM="$TYPE"
+			[ "$TYPE" != home-manager ] || PLATFORM=linux
+			echo "Create $HOSTNAME for $USERNAME ($(machine_system)), with two-way fleet trust?"
+			prompt_yes_no "Continue?" n || exit 1
+			bash "$SCRIPT_DIR/scripts/new-host-template.sh" --minimal --platform "$PLATFORM" \
+				--hostname "$HOSTNAME" --username "$USERNAME" --fullname "$FULL_NAME" --arch "$(machine_system)"
+			echo "Review the new files, add them to Git, then run ./rebuild.sh --diff before switching."
+			exit 0
+		fi
+	fi
+fi
+
 # Main bootstrap process
 print_header "NixOS/Darwin Host Bootstrap"
 
@@ -195,12 +224,13 @@ CURRENT_HOSTNAME=$(hostname)
 HOSTNAME=$(prompt_input "Enter hostname for this configuration" "$CURRENT_HOSTNAME")
 
 # Check if hostname already exists
-if [ -d "$SCRIPT_DIR/hosts/$HOSTNAME" ]; then
-	print_error "Host '$HOSTNAME' already exists!"
-	if ! prompt_yes_no "Overwrite existing configuration?" "n"; then
-		print_error "Aborting."
-		exit 1
-	fi
+if ! valid_host_name "$HOSTNAME"; then
+	print_error "Invalid hostname (use a DNS label, at most 63 characters)."
+	exit 1
+fi
+if [ -e "$SCRIPT_DIR/hosts/$HOSTNAME" ]; then
+	print_error "Host '$HOSTNAME' already exists; refusing to overwrite it."
+	exit 1
 fi
 
 print_success "Hostname: $HOSTNAME"
@@ -211,6 +241,10 @@ print_header "Step 4: User Information"
 CURRENT_USER=$(whoami)
 USERNAME=$(prompt_input "Enter username" "$CURRENT_USER")
 FULL_NAME=$(prompt_input "Enter full name" "")
+if ! [[ "$USERNAME" =~ ^[a-zA-Z_][a-zA-Z0-9_-]*$ ]]; then
+	print_error "Invalid username"
+	exit 1
+fi
 
 print_success "Username: $USERNAME"
 print_success "Full name: $FULL_NAME"
@@ -437,7 +471,7 @@ echo "Generating host configuration..."
 mkdir -p "$SCRIPT_DIR/hosts/$HOSTNAME"
 
 # Call template generator
-"$SCRIPT_DIR/scripts/new-host-template.sh" \
+"$SCRIPT_DIR/scripts/new-host-template.sh" --custom \
 	--platform "$PLATFORM" \
 	--hostname "$HOSTNAME" \
 	--username "$USERNAME" \

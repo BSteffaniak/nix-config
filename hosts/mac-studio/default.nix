@@ -24,6 +24,7 @@
 
     # Darwin-specific
     darwin.homebrew.enable = true;
+    darwin.homebrew.rosetta.enable = true;
     darwin.androidStudio.enable = true;
     darwin.systemDefaults.enable = true;
     darwin.systemDefaults.darkMode = true;

@@ -8,6 +8,7 @@
 }:
 
 {
+
   # Enable GTK theming with personal preferences
   myConfig.desktop.gtk = {
     enable = true;
@@ -54,6 +55,7 @@
 
   # Enable standalone config modules
   myConfig = {
+    cliTools.utilities.sendsafely.enable = true;
     desktop.sledge.enable = true;
     desktop.hex = {
       enable = true;
@@ -217,6 +219,10 @@
 
   # Personal packages
   home.packages = with pkgs; [
+    vim
+    wget
+    clang
+    glib
     steam
   ];
 }

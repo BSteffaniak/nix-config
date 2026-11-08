@@ -9,6 +9,16 @@ Helper scripts for creating and managing NixOS/Darwin host configurations.
 Interactive bootstrap script that guides you through creating a new host
 configuration.
 
+The default path creates a minimal Darwin or standalone Home Manager host:
+Zsh and two-way SSH fleet only, with no developer tools, Homebrew, Rosetta, or
+personal macOS defaults. It generates metadata too. NixOS still uses custom
+setup because boot and hardware configuration are machine-specific. Existing
+hosts are never overwritten. See [minimal Mac setup](../docs/local-network-ssh.md#minimal-macs-and-first-time-setup)
+for hostname recovery and enrollment.
+
+Use `./bootstrap.sh --custom` for the full questionnaire below. Pass `--custom`
+to standalone template generation to retain developer-oriented defaults.
+
 **Features:**
 
 - Auto-detects platform (NixOS/Darwin) and architecture

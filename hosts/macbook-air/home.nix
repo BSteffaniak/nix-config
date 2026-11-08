@@ -8,6 +8,14 @@
 }:
 
 {
+  # Previously inherited system-wide; keep user tools explicit here.
+  home.packages = [
+    pkgs.vim
+    pkgs.wget
+    pkgs.clang
+    pkgs.glib
+  ];
+
   # Fish shell - feature-based configuration
   myConfig.shell.fish = {
     # Zellij
@@ -18,6 +26,7 @@
   };
 
   myConfig = {
+    cliTools.utilities.sendsafely.enable = true;
     # Desktop
     desktop.hex.enable = true;
     desktop.aerospace.enable = true;

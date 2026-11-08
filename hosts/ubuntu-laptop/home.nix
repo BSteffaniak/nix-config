@@ -16,6 +16,7 @@
 
   # Enable all the development tools and features
   myConfig = {
+    cliTools.utilities.sendsafely.enable = true;
     # Development environments
     development.rust.enable = true;
     development.rust.includeNightly = true;

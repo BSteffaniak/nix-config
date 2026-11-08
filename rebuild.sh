@@ -11,6 +11,14 @@ set -euo pipefail
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+source "$SCRIPT_DIR/scripts/host-common.sh"
+source "$SCRIPT_DIR/scripts/rebuild-onboarding.sh"
+PREFLIGHT_DIFF=false
+FORCE_DIFF=false
+for arg in "$@"; do
+	case "$arg" in --diff | --compare) PREFLIGHT_DIFF=true ;; esac
+done
+
 # ── Host Discovery ─────────────────────────────────────────────────
 # Parse meta.nix files to build a hostname -> (host_dir, type) mapping.
 # This replaces the old hardcoded case statement.
@@ -47,39 +55,27 @@ discover_host() {
 CURRENT_HOSTNAME=$(hostname)
 
 if ! discover_host "$CURRENT_HOSTNAME"; then
-	echo "Unknown host: $CURRENT_HOSTNAME"
-	echo ""
-	echo "No hosts/*/meta.nix matched hostname \"$CURRENT_HOSTNAME\"."
-	echo ""
-	echo "Available hosts:"
-	for meta_file in "$SCRIPT_DIR"/hosts/*/meta.nix; do
-		[ -f "$meta_file" ] || continue
-		local_name="$(basename "$(dirname "$meta_file")")"
-		local_hostname="$(sed -n 's/.*hostname *= *"\([^"]*\)".*/\1/p' "$meta_file" | head -1)"
-		local_type="$(sed -n 's/.*type *= *"\([^"]*\)".*/\1/p' "$meta_file" | head -1)"
-		echo "  $local_name ($local_type) -> hostname: $local_hostname"
-	done
-	exit 1
+	recover_unknown_host || exit 1
 fi
 
 # Derive rebuild command and flake path from host type
 case "$HOST_TYPE" in
 "nixos")
-	FLAKE_PATH="$SCRIPT_DIR#$HOST_NAME"
+	FLAKE_PATH="path:$SCRIPT_DIR#$HOST_NAME"
 	BASE_REBUILD_CMD="nixos-rebuild"
 	NEEDS_SUDO=true
 	PLATFORM="NixOS"
 	CURRENT_SYSTEM="/run/current-system"
 	;;
 "darwin")
-	FLAKE_PATH="$SCRIPT_DIR#$HOST_NAME"
+	FLAKE_PATH="path:$SCRIPT_DIR#$HOST_NAME"
 	BASE_REBUILD_CMD="darwin-rebuild"
 	NEEDS_SUDO=true
 	PLATFORM="Darwin"
 	CURRENT_SYSTEM="/run/current-system"
 	;;
 "home-manager")
-	FLAKE_PATH="$SCRIPT_DIR#${HOST_USERNAME}@${HOST_NAME}"
+	FLAKE_PATH="path:$SCRIPT_DIR#${HOST_USERNAME}@${HOST_NAME}"
 	BASE_REBUILD_CMD="home-manager"
 	NEEDS_SUDO=false
 	PLATFORM="Home-Manager"
@@ -93,7 +89,7 @@ esac
 
 # ── Argument Handling ──────────────────────────────────────────────
 ACTION="switch"
-DIFF_MODE=false
+DIFF_MODE="$FORCE_DIFF"
 EXTRA_ARGS=()
 # Bash 3.2 treats empty arrays as unset under nounset; guard expansions below.
 
@@ -123,6 +119,24 @@ fi
 
 # ── First-time nix-darwin setup ────────────────────────────────────
 if [[ "$PLATFORM" == "Darwin" ]] && ! command -v darwin-rebuild &>/dev/null; then
+	if [[ "$DIFF_MODE" == true ]]; then
+		command -v nix &>/dev/null || {
+			echo "Install Nix first; diff mode does not install or activate anything."
+			exit 1
+		}
+		nix --extra-experimental-features 'nix-command flakes' run --inputs-from "$SCRIPT_DIR" nix-darwin -- build --flake "$FLAKE_PATH" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
+		if [ -e "$CURRENT_SYSTEM" ] && command -v nvd &>/dev/null; then
+			nvd diff "$CURRENT_SYSTEM" ./result
+		else
+			echo "Build complete at ./result; no running nix-darwin system/nvd available to compare."
+		fi
+		echo "No activation performed. Run ./rebuild.sh to apply after review."
+		exit 0
+	fi
+	[ -t 0 ] || {
+		echo "First-time setup requires an interactive terminal."
+		exit 1
+	}
 	if ! command -v nix &>/dev/null; then
 		echo "Nix was not found in PATH or its standard installation locations."
 		echo "Setup can download and run the official installer from https://nixos.org/nix/install."
@@ -162,7 +176,7 @@ if [[ "$PLATFORM" == "Darwin" ]] && ! command -v darwin-rebuild &>/dev/null; the
 
 	echo "darwin-rebuild was not found in PATH."
 	echo "First-time setup will build using this flake's pinned nix-darwin, then activate $HOST_NAME with sudo."
-	echo "This applies the full system configuration, even when --diff or --compare was requested."
+	echo "Review a build first with ./rebuild.sh --diff if you have not already done so."
 	echo "If nix-darwin is already installed, cancel and load its shell environment instead."
 	printf 'Install and activate nix-darwin now? [y/N] '
 	if ! read -r REPLY; then

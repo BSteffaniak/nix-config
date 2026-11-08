@@ -10,6 +10,7 @@ in
 {
   options.myConfig.darwin.homebrew = {
     enable = lib.mkEnableOption "Homebrew package manager";
+    rosetta.enable = lib.mkEnableOption "Rosetta and Intel Homebrew support";
   };
 
   options.myConfig.darwin.androidStudio = {
