@@ -17,6 +17,7 @@
     ./agents.nix
     ./bcode.nix
     ./bcode-git.nix
+    ./bclean.nix
     ./bdata.nix
     ./opencode.nix
     ./pi.nix

@@ -1,0 +1,18 @@
+# bclean (disk usage analyzer, cleaner, and monitor), shared by every host.
+# Per-host additions go in `myConfig.development.bclean.settings`.
+
+# Rust build output counts as unused once its project has been idle for 12 hours
+# (bclean's built-in default is 30 days).
+[rules.cargo_target]
+stale = { project_idle = "12h" }
+
+# Main checkouts keep their runnable outputs when their target/ is cleaned: the
+# release executables and dylibs (cargo_target's `keep` patterns) stay, everything
+# else goes. Worktrees (wt-*) are cleaned completely.
+[trim]
+paths = [
+  "~/GitHub/bcode",
+  "~/GitHub/bmux",
+  "/Volumes/*/GitHub/bcode",
+  "/Volumes/*/GitHub/bmux",
+]
