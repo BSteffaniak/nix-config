@@ -1,18 +1,18 @@
 {
-    "version": "0.1.7-nightly.20261031.4004",
-    "tag": "v0.1.7-nightly.20261031.4004",
+    "version": "0.1.8-nightly.20261109.4433",
+    "tag": "v0.1.8-nightly.20261109.4433",
     "platforms": {
         "aarch64-darwin": {
-            "url": "https://github.com/pingdotgg/t3code/releases/download/v0.1.7-nightly.20261031.4004/t3-0.1.7-nightly.20261031.4004-darwin-arm64.tar.gz",
-            "sha256": "d9ef02ad08e145f081a4de15f9f94e24a5cd26f03a531ac051e1a03101219ca5"
+            "url": "https://github.com/pingdotgg/t3code/releases/download/v0.1.8-nightly.20261109.4433/t3-0.1.8-nightly.20261109.4433-darwin-arm64.tar.gz",
+            "sha256": "d4e6c870b15ea954f10bd43c5030e9868e6da799d69a1cfb2115d494dd275c65"
         },
         "aarch64-linux": {
-            "url": "https://github.com/pingdotgg/t3code/releases/download/v0.1.7-nightly.20261031.4004/t3-0.1.7-nightly.20261031.4004-linux-arm64.tar.gz",
-            "sha256": "ceb8cbe905349fec7ca0e678b71cc1c886cdf697e1175a0ed799d9a326cb71f1"
+            "url": "https://github.com/pingdotgg/t3code/releases/download/v0.1.8-nightly.20261109.4433/t3-0.1.8-nightly.20261109.4433-linux-arm64.tar.gz",
+            "sha256": "0438266d9f23d804388c65122853e33e3554e8c2fd491db0dad09518e3a44452"
         },
         "x86_64-linux": {
-            "url": "https://github.com/pingdotgg/t3code/releases/download/v0.1.7-nightly.20261031.4004/t3-0.1.7-nightly.20261031.4004-linux-x64.tar.gz",
-            "sha256": "97ed174cc4876e659c602f161275ce9329b78a9c3e7ca39674acf62547a9ba38"
+            "url": "https://github.com/pingdotgg/t3code/releases/download/v0.1.8-nightly.20261109.4433/t3-0.1.8-nightly.20261109.4433-linux-x64.tar.gz",
+            "sha256": "ed28dd2aed787ab397eee780f13d7f2b554d40c169a6e0ef7e64bbcd5270301a"
         }
     }
 }

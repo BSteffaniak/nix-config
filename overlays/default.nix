@@ -15,6 +15,8 @@ in
 ++ (overlay ./rust.nix)
 ++ [
   (overlay ./source-builds.nix)
+  (overlay ./bmux.nix)
+  (overlay ./bcode.nix)
   (overlay ./cronstrue.nix)
   (overlay ./sendsafely-java.nix)
   (overlay ./hex.nix)

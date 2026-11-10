@@ -3,6 +3,10 @@
     "buildSystem": "rust",
     "pname": "bmux",
     "hashField": "cargoHash",
+    "complex": true,
+    "additionalCargoLocks": {
+        "guestCargoHash": "packages/mermaid-render/guest/Cargo.lock.in"
+    },
     "rustToolchain": "stable",
     "doCheck": false,
     "cargoBuildFlags": ["--package", "bmux_cli"]

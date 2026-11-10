@@ -209,6 +209,13 @@ pkgs/source-builds/
 Nix reads at evaluation time. These files must be committed to git so all
 machines use the same hashes.
 
+For packages with a separate Cargo workspace, `additionalCargoLocks` maps extra
+hash fields to lockfile paths within the pinned source. For example, bmux maps
+`guestCargoHash` to `packages/mermaid-render/guest/Cargo.lock.in`. Updating bmux
+fetches and validates both dependency sets before writing either hash, even if
+the revision is unchanged but an additional hash is missing. These downloaded
+sources live only in the Nix store, never in this repository.
+
 For Rust repos that do not commit a `Cargo.lock`, set `cargoLockFile` in the
 package config and point it to a lock file in this repo (for example
 `pkgs/source-builds/locks/<name>-Cargo.lock`).

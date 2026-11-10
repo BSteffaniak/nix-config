@@ -104,10 +104,9 @@ get_locked_rev() {
 # Get the nix store path for a flake input
 get_input_store_path() {
 	local input_name="$1"
-	nix eval ".#darwinConfigurations" --apply "x: \"dummy\"" >/dev/null 2>&1 || true
-	# Use nix flake archive to get the store path
+	# Resolve through the pinned flake inputs without evaluating any host modules.
 	local path
-	path=$(nix eval --raw ".inputs.$input_name.outPath" 2>/dev/null) || {
+	path=$(nix eval --raw --impure --expr "(builtins.getFlake \"$REPO_ROOT\").inputs.\"$input_name\".outPath" 2>/dev/null) || {
 		# Fallback: reconstruct from flake.lock info
 		local input_type rev narHash
 		input_type=$(jq -r ".nodes[\"$input_name\"].locked.type // empty" "$FLAKE_LOCK")
@@ -173,6 +172,7 @@ compute_npm_hash() {
 # ── Rust cargoHash computation ──────────────────────────────────────
 compute_cargo_hash() {
 	local project="$1"
+	local source_lock_file="${2:-}"
 	local config_file="$CONFIGS_DIR/$project.json"
 	local flake_input
 	local cargo_lock_file
@@ -188,7 +188,17 @@ compute_cargo_hash() {
 	local cargo_lock_path=""
 	local vendor_src="$store_path"
 
-	if [ -n "$cargo_lock_file" ]; then
+	local vendor_tmpdir=""
+	if [ -n "$source_lock_file" ]; then
+		cargo_lock_path="$store_path/$source_lock_file"
+		if [ ! -f "$cargo_lock_path" ]; then
+			err "Additional Cargo lockfile not found: $cargo_lock_path"
+			return 1
+		fi
+		vendor_tmpdir=$(mktemp -d)
+		cp "$cargo_lock_path" "$vendor_tmpdir/Cargo.lock"
+		vendor_src="$vendor_tmpdir"
+	elif [ -n "$cargo_lock_file" ]; then
 		cargo_lock_path="$REPO_ROOT/$cargo_lock_file"
 		if [ ! -f "$cargo_lock_path" ]; then
 			err "Configured cargoLockFile not found: $cargo_lock_path"
@@ -283,6 +293,8 @@ EOF
 		return 1
 	fi
 
+	[ -z "$vendor_tmpdir" ] || rm "$vendor_tmpdir/Cargo.lock"
+	[ -z "$vendor_tmpdir" ] || rmdir "$vendor_tmpdir"
 	echo "$hash"
 }
 
@@ -378,7 +390,15 @@ update_project() {
 		current_rev=$(jq -r '.rev // "(none)"' "$hash_file")
 	fi
 
-	if [ "$current_rev" = "$locked_rev" ]; then
+	local missing_extra_hashes=false field lock_file
+	while IFS=$'\t' read -r field lock_file; do
+		[ -n "$field" ] || continue
+		if [ ! -f "$hash_file" ] || ! jq -e --arg field "$field" '.[$field] | strings | startswith("sha256-")' "$hash_file" >/dev/null; then
+			missing_extra_hashes=true
+		fi
+	done < <(jq -r '.additionalCargoLocks // {} | to_entries[] | [.key, .value] | @tsv' "$config_file")
+
+	if [ "$current_rev" = "$locked_rev" ] && [ "$missing_extra_hashes" = false ]; then
 		ok "$project: hash is current (rev ${DIM}${locked_rev:0:7}${NC})"
 		return 0
 	fi
@@ -408,12 +428,21 @@ update_project() {
 		;;
 	esac
 
+	# Compute all extra lockfile hashes before publishing any updated state.
+	local extra_hashes='{}' extra_hash
+	while IFS=$'\t' read -r field lock_file; do
+		[ -n "$field" ] || continue
+		extra_hash=$(compute_cargo_hash "$project" "$lock_file") || return 1
+		extra_hashes=$(jq --arg field "$field" --arg hash "$extra_hash" '. + {($field): $hash}' <<<"$extra_hashes")
+	done < <(jq -r '.additionalCargoLocks // {} | to_entries[] | [.key, .value] | @tsv' "$config_file")
+
 	# Write the hash file
 	jq -n \
 		--arg rev "$locked_rev" \
 		--arg hash "$new_hash" \
 		--arg field "$hash_field" \
-		'{ rev: $rev, ($field): $hash }' \
+		--argjson extra "$extra_hashes" \
+		'{ rev: $rev, ($field): $hash } + $extra' \
 		>"$hash_file"
 
 	ok "$project: hash updated (rev ${BOLD}${locked_rev:0:7}${NC})"
