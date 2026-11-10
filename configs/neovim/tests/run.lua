@@ -33,6 +33,7 @@ for _, mode in ipairs({ "light", "off" }) do
 		"gopls",
 		"go",
 		"typescript-language-server",
+		"pyright-langserver",
 		"biome",
 	}) do
 		local lines = vim.fn.readfile(source .. "/tests/fake-tool.py")
@@ -40,6 +41,22 @@ for _, mode in ipairs({ "light", "off" }) do
 		vim.fn.writefile(lines, base .. "/bin/" .. tool)
 		assert(vim.uv.fs_chmod(base .. "/bin/" .. tool, 493))
 	end
+	-- An environment outside each fixture's Git boundary must never be selected.
+	vim.fn.mkdir(base .. "/project/.venv/bin", "p")
+	assert(vim.uv.fs_symlink(vim.fn.exepath("python3"), base .. "/project/.venv/bin/python"))
+	for _, project in ipairs({ "python-a", "python-b", "python-missing", "python-broken" }) do
+		local path = base .. "/project/" .. project
+		vim.fn.mkdir(path .. "/pkg/nested", "p")
+		vim.fn.mkdir(path .. "/.git", "p")
+		write(path .. "/pkg/pyproject.toml", '[project]\nname="nested"\nversion="0.1.0"')
+		write(path .. "/pkg/nested/test.py", "import pydantic")
+		if project ~= "python-missing" then
+			vim.fn.mkdir(path .. "/.venv/bin", "p")
+			local target = project == "python-broken" and path .. "/nonexistent" or vim.fn.exepath("python3")
+			assert(vim.uv.fs_symlink(target, path .. "/.venv/bin/python"))
+		end
+	end
+	write(base .. "/project/python-a/pkg/nested/large.py", string.rep("# large file\n", 21000))
 	write(base .. "/project/Cargo.toml", '[package]\nname="fixture"\nversion="0.1.0"\nedition="2024"')
 	write(base .. "/project/src/main.rs", "fn main() {}")
 	write(base .. "/project/src/other.rs", "fn other() {}")

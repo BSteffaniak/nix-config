@@ -62,6 +62,22 @@ installers run there. Standalone users can explicitly install tools with
 integrations retain the host plugin flags. Supermaven starts only on insert;
 disable its host flag if you do not want its agent at all.
 
+## Python environments
+
+Pyright searches upward from each Python file for a usable `.venv/bin/python`,
+stopping at the nearest Git repository boundary. It uses that directory as the
+workspace root and that interpreter for dependency resolution, even when a
+nested
+package has its own `pyproject.toml` or Neovim was launched elsewhere. Separate
+roots get separate clients. Missing/broken environments retain normal Pyright
+root detection. Diagnostics are limited to open files; imported dependencies can
+still be analyzed.
+
+Create/sync environments explicitly (for example, `uv sync` in the workspace).
+Opening a file never installs dependencies or activates an environment globally.
+Restart Neovim after creating or replacing an environment. For DataCore, run
+`uv sync --locked --all-extras --dev` from `datacore/` first.
+
 ## Installation and updates
 
 The current pinned Tree-sitter requires **Neovim >= 0.12** and tree-sitter-cli

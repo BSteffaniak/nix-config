@@ -122,6 +122,32 @@ local ok, err = xpcall(function()
 			end
 		end, "language " .. server)
 	end
+	local python_clients = {}
+	local original_cwd = vim.fn.getcwd()
+	vim.cmd.cd(vim.env.NVIM_TEST_PROJECT .. "/python-b")
+	for _, project in ipairs({ "python-a", "python-b", "python-missing", "python-broken" }) do
+		local path = vim.env.NVIM_TEST_PROJECT .. "/" .. project
+		vim.cmd.edit(path .. "/pkg/nested/test.py")
+		local client
+		wait_for(function()
+			client = vim.lsp.get_clients({ bufnr = 0, name = "pyright" })[1]
+			return client and client.initialized
+		end, "Python " .. project)
+		local has_environment = project == "python-a" or project == "python-b"
+		assert(client.config.root_dir == (has_environment and path or path .. "/pkg"), "Wrong Python root")
+		assert(client.settings.python.analysis.diagnosticMode == "openFilesOnly")
+		if has_environment then
+			assert(client.settings.python.pythonPath == path .. "/.venv/bin/python", "Wrong Python interpreter")
+		else
+			assert(not client.settings.python.pythonPath, "Broken/missing environment was selected")
+		end
+		python_clients[project] = client.id
+	end
+	vim.cmd.cd(original_cwd)
+	assert(python_clients["python-a"] ~= python_clients["python-b"], "Python environments shared a client")
+	vim.cmd.edit(vim.env.NVIM_TEST_PROJECT .. "/python-a/pkg/nested/large.py")
+	vim.wait(100)
+	assert(#vim.lsp.get_clients({ bufnr = 0, name = "pyright" }) == 0, "Large Python file attached")
 	vim.cmd.edit(vim.env.NVIM_TEST_PROJECT .. "/test.astro")
 	assert(vim.bo.filetype == "astro")
 	vim.cmd.edit(vim.env.NVIM_TEST_PROJECT .. "/test.md")

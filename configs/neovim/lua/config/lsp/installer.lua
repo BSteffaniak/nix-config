@@ -1,5 +1,19 @@
 local M = {}
 
+local function python_environment(bufnr)
+	local dir = vim.fs.dirname(vim.api.nvim_buf_get_name(bufnr))
+	while dir do
+		if vim.fn.executable(dir .. "/.venv/bin/python") == 1 then
+			return dir
+		end
+		if vim.uv.fs_stat(dir .. "/.git") then
+			return
+		end
+		local parent = vim.fs.dirname(dir)
+		dir = parent ~= dir and parent or nil
+	end
+end
+
 function M.setup()
 	vim.lsp.config("*", {
 		capabilities = {
@@ -19,7 +33,7 @@ function M.setup()
 		gopls = {},
 		html = {},
 		jsonls = {},
-		pyright = {},
+		pyright = { settings = { python = { analysis = { diagnosticMode = "openFilesOnly" } } } },
 		lua_ls = { settings = { Lua = { diagnostics = { globals = { "vim" } } } } },
 		ts_ls = {},
 		kotlin_language_server = {},
@@ -46,6 +60,23 @@ function M.setup()
 		local base = vim.lsp.config[name]
 		if base then
 			local root = base.root_dir
+			if name == "pyright" then
+				local before_init = base.before_init
+				config.before_init = function(params, client_config)
+					if before_init then
+						before_init(params, client_config)
+					end
+					if client_config.root_dir then
+						local python = client_config.root_dir .. "/.venv/bin/python"
+						if vim.fn.executable(python) == 1 then
+							-- Keep the settings table shared with the already-created client.
+							client_config.settings = client_config.settings or {}
+							client_config.settings.python = client_config.settings.python or {}
+							client_config.settings.python.pythonPath = python
+						end
+					end
+				end
+			end
 			local function available(dir)
 				local command = ({
 					ts_ls = "typescript-language-server",
@@ -76,7 +107,10 @@ function M.setup()
 						on_dir(dir)
 					end
 				end
-				if type(root) == "function" then
+				local environment = name == "pyright" and python_environment(bufnr)
+				if environment then
+					attach(environment)
+				elseif type(root) == "function" then
 					root(bufnr, attach)
 				else
 					local dir = root or vim.fs.root(bufnr, base.root_markers or { ".git" })
