@@ -9,11 +9,7 @@ local function get_session_directory()
 
 	local session_directory = util.join_paths(sessions_home_directory, util.sanitize_location(util.cwd) .. "_session")
 
-	if util.is_windows then
-		os.execute("if not exist " .. session_directory .. " mkdir " .. session_directory)
-	else
-		os.execute("mkdir -p " .. session_directory)
-	end
+	vim.fn.mkdir(session_directory, "p")
 
 	return session_directory
 end
@@ -75,7 +71,7 @@ end
 function Handle_save_session()
 	local focused_buf = vim.fn.bufnr("%")
 
-	vim.cmd("mksession! " .. get_session_file())
+	vim.cmd("mksession! " .. vim.fn.fnameescape(get_session_file()))
 	write_props({
 		focused_buf = focused_buf,
 	})
@@ -92,7 +88,7 @@ function Handle_load_session()
 		return
 	end
 
-	vim.cmd("source " .. session_file)
+	vim.cmd("source " .. vim.fn.fnameescape(session_file))
 
 	local props = read_props()
 
@@ -109,7 +105,7 @@ function Handle_save_and_quit()
 	local unsaved = ""
 
 	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-		if vim.api.nvim_buf_get_option(buf, "modified") then
+		if vim.bo[buf].modified then
 			if #unsaved > 0 then
 				unsaved = unsaved .. ", "
 			end

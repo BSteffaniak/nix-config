@@ -1,34 +1,25 @@
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
-	vim.fn.system({
-		"git",
-		"clone",
-		"--filter=blob:none",
-		"https://github.com/folke/lazy.nvim.git",
-		"--branch=stable", -- latest stable release
-		lazypath,
-	})
-end
-vim.opt.rtp:prepend(lazypath)
-
 vim.g.mapleader = " "
-vim.keymap.set("n", "<Space>", "<Nop>", { silent = true, remap = false })
-
--- disable netrw at the very start of your init.lua (strongly advised)
+vim.keymap.set("n", "<Space>", "<Nop>", { silent = true })
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 
--- set termguicolors to enable highlight groups
-vim.opt.termguicolors = true
-
-function OpenMarkdownPreview(url)
-	vim.cmd("silent ! firefox --new-window " .. url)
-end
-
--- vim.g.mkdp_browserfunc = "OpenMarkdownPreview"
-vim.g.mkdp_echo_preview_url = 1
-
-vim.g.astro_typescript = "enable"
-
-require("bsteffaniak.lazy")
+require("bsteffaniak.performance").setup()
+require("bsteffaniak.lsp").setup()
+require("bsteffaniak.rust").setup_commands()
 require("bsteffaniak.set")
+
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.uv.fs_stat(lazypath) then
+	vim.notify("lazy.nvim is not installed. See the Neovim README bootstrap instructions.", vim.log.levels.WARN)
+	return
+end
+vim.opt.rtp:prepend(lazypath)
+
+-- Seed the writable state lock from the versioned, Nix-managed lockfile.
+local seed = vim.fn.stdpath("config") .. "/lazy-lock.json"
+local lock = vim.fn.stdpath("state") .. "/lazy-lock.json"
+vim.fn.mkdir(vim.fn.stdpath("state"), "p")
+if vim.uv.fs_stat(seed) and not vim.uv.fs_stat(lock) then
+	vim.fn.writefile(vim.fn.readfile(seed), lock)
+end
+require("bsteffaniak.lazy")

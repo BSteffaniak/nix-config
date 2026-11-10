@@ -1,1 +1,4 @@
-vim.cmd("runtime! ftplugin/typescriptreact.lua")
+-- Standard .tsx files use Neovim's typescriptreact filetype.
+vim.opt_local.tabstop = 4
+vim.opt_local.softtabstop = 4
+vim.opt_local.shiftwidth = 4

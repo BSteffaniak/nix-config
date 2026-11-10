@@ -19,6 +19,16 @@ in
       description = "Use nightly Neovim build";
     };
 
+    rust.mode = lib.mkOption {
+      type = lib.types.enum [
+        "off"
+        "light"
+        "full"
+      ];
+      default = "light";
+      description = "Rust analysis policy. Cargo check and Clippy are always manual.";
+    };
+
     # Plugin toggles
     plugins = {
       supermaven = lib.mkOption {
@@ -72,30 +82,20 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages =
-      with pkgs;
-      [
-        # Lua runtime and development tools
-        # Note: Using luajit only (what Neovim uses) to avoid collision with lua package
-        luajit
-        luajitPackages.luarocks
-
-        # Neovim configuration editing tools
-        stylua
-        lua-language-server
-        tree-sitter
-
-        # Universal language servers
-        nil # Nix LSP
-        bash-language-server
-      ]
-      ++ (
-        # Neovim editor (conditional: nightly or stable)
-        if cfg.useNightly && inputs ? neovim-nightly-overlay then
-          [ inputs.neovim-nightly-overlay.packages."${pkgs.stdenv.hostPlatform.system}".default ]
-        else
-          [ pkgs.neovim ]
-      );
+    home.packages = [
+      pkgs.stylua
+      pkgs.lua-language-server
+      pkgs.tree-sitter
+      pkgs.nil
+      pkgs.bash-language-server
+    ]
+    ++ (
+      # Neovim editor (conditional: nightly or stable)
+      if cfg.useNightly && inputs ? neovim-nightly-overlay then
+        [ inputs.neovim-nightly-overlay.packages."${pkgs.stdenv.hostPlatform.system}".default ]
+      else
+        [ pkgs.neovim ]
+    );
 
     # Set neovim as default editor
     home.sessionVariables = {
@@ -114,6 +114,8 @@ in
       -- Auto-generated host-specific configuration
       -- Do not edit manually - this file is managed by Nix
       return {
+        tool_provider = "nix",
+        rust_mode = "${cfg.rust.mode}",
         plugins = {
           supermaven = ${if cfg.plugins.supermaven then "true" else "false"},
           copilot = ${if cfg.plugins.copilot then "true" else "false"},
