@@ -6,13 +6,8 @@
 [rules.cargo_target]
 stale = { project_idle = "12h" }
 
-# Main checkouts keep their runnable outputs when their target/ is cleaned: the
-# release executables and dylibs (cargo_target's `keep` patterns) stay, everything
-# else goes. Worktrees (wt-*) are cleaned completely.
+# Trim every Rust project instead of running `cargo clean`: cargo_target's built-in keep
+# patterns keep the release executables and dynamic libraries (also under target-triple
+# folders such as aarch64-apple-darwin/release); everything else goes, debug builds included.
 [trim]
-paths = [
-  "~/GitHub/bcode",
-  "~/GitHub/bmux",
-  "/Volumes/*/GitHub/bcode",
-  "/Volumes/*/GitHub/bmux",
-]
+paths = ["**"]
