@@ -37,7 +37,19 @@ in
 
   config = lib.mkIf cfg.enable {
     myConfig.desktop.hyprland.configText =
-      builtins.readFile ../../../configs/hyprland/hyprland.conf
+      (
+        if config.myConfig.desktop.wallpaper.enable then
+          builtins.replaceStrings
+            [
+              "exec-once = hyprpaper &"
+              "exec-once = waypaper --restore"
+              "exec-once = ~/.config/waypaper/random-wallpaper.sh &"
+            ]
+            [ "" "" "exec-once = start-wallpaper-session" ]
+            (builtins.readFile ../../../configs/hyprland/hyprland.conf)
+        else
+          builtins.readFile ../../../configs/hyprland/hyprland.conf
+      )
       +
         lib.optionalString
           (

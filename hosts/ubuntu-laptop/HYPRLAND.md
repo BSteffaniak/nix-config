@@ -71,9 +71,15 @@ audio. Shared appearance, keybindings, window rules, wallpaper controls, and
 Waybar now apply here too. Brightness and volume keys are configured.
 Notifications and a Polkit authentication agent start with the session.
 
-Wallpaper images themselves are not copied from the desktop. Put images in
-`~/Pictures/wallpapers`, then run `waypaper` to select one. The swww backend
-starts at login and the shared random-wallpaper script changes it periodically.
+The shared wallpaper module downloads fresh nature images daily into
+`~/Pictures/wallpapers` and shuffles cached images every 90 minutes, even
+offline.
+You can add your own JPEG/PNG images to that folder; they are never pruned.
+The swww backend starts at Hyprland login; GNOME uses its native background
+settings. Rotation runs through a user systemd timer rather than the old shell
+loop. Run `inspiring-wallpaper --rotate` to advance manually, `--apply-current`
+to restore without advancing, or `--refresh` to replenish without changing the
+background. Log out/in after rebuilding to replace old wallpaper processes.
 Waybar is started by the shared Hyprland config, not a second user service.
 Existing sessions need a logout/login to replace the old systemd-started bar
 and run the shared startup commands.

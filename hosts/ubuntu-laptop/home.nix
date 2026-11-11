@@ -77,6 +77,8 @@
     tools.encryption.enable = true;
     tools.tts.piper.enable = true;
 
+    desktop.wallpaper.enable = true;
+
     # Optional extra login session; GNOME remains the fallback.
     desktop.hyprland.standalone.enable = true;
     desktop.hyprland.monitorsConfig = ./monitors.conf;

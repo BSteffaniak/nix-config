@@ -4,310 +4,147 @@
   pkgs,
   ...
 }:
-
 let
   cfg = config.myConfig.desktop.wallpaper;
-
+  isDarwin = pkgs.stdenv.isDarwin;
+  settings = pkgs.writeText "wallpaper-settings.json" (
+    builtins.toJSON {
+      inherit (cfg)
+        source
+        directory
+        wallhaven
+        bing
+        retentionDays
+        maxImages
+        setDesktop
+        ;
+      platform = if isDarwin then "darwin" else "linux";
+      stateDirectory =
+        if isDarwin then
+          "${config.home.homeDirectory}/Library/Application Support/inspiring-wallpaper"
+        else
+          "${config.xdg.stateHome}/inspiring-wallpaper";
+    }
+  );
   inspiringWallpaper = pkgs.writeShellApplication {
     name = "inspiring-wallpaper";
-    runtimeInputs = with pkgs; [
-      coreutils
-      curl
-      findutils
-      gnused
-      jq
+    runtimeInputs = [
+      pkgs.python3
+      pkgs.curl
+    ]
+    ++ lib.optionals (!isDarwin) [
+      pkgs.waypaper
+      pkgs.swww
     ];
     text = ''
-      set -euo pipefail
-
-      wallpaper_source=${lib.escapeShellArg cfg.source}
-      wallpaper_dir=${lib.escapeShellArg cfg.directory}
-      market=${lib.escapeShellArg cfg.bing.market}
-      resolution=${lib.escapeShellArg cfg.bing.resolution}
-      wallhaven_query=${lib.escapeShellArg cfg.wallhaven.query}
-      wallhaven_categories=${lib.escapeShellArg cfg.wallhaven.categories}
-      wallhaven_purity=${lib.escapeShellArg cfg.wallhaven.purity}
-      wallhaven_ratios=${lib.escapeShellArg (lib.concatStringsSep "," cfg.wallhaven.ratios)}
-      wallhaven_atleast=${lib.escapeShellArg cfg.wallhaven.atleast}
-      wallhaven_sorting=${lib.escapeShellArg cfg.wallhaven.sorting}
-      retention_days=${toString cfg.retentionDays}
-      set_desktop=${if cfg.setDesktop then "1" else "0"}
-      state_dir=${lib.escapeShellArg "${config.home.homeDirectory}/Library/Application Support/inspiring-wallpaper"}
-      state_file="$state_dir/current"
-      mode="refresh"
-
-      case "''${1:-}" in
-        "" | --refresh)
-          mode="refresh"
-          ;;
-        --apply-current)
-          mode="apply-current"
-          ;;
-        -h | --help)
-          echo "Usage: inspiring-wallpaper [--refresh|--apply-current]"
-          exit 0
-          ;;
-        *)
-          echo "Unknown argument: $1" >&2
-          exit 2
-          ;;
-      esac
-
-      mkdir -p "$wallpaper_dir" "$state_dir"
-
-      apply_wallpaper() {
-        local image_path=$1
-
-        if [[ ! -s "$image_path" ]]; then
-          echo "Wallpaper image does not exist or is empty: $image_path" >&2
-          exit 1
-        fi
-
-        /usr/bin/osascript - "$image_path" <<'APPLESCRIPT'
-      on run argv
-        set imagePath to item 1 of argv
-        tell application "System Events"
-          repeat with aDesktop in desktops
-            set picture of aDesktop to imagePath
-          end repeat
-        end tell
-      end run
-      APPLESCRIPT
-      }
-
-      if [[ "$mode" == "apply-current" ]]; then
-        if [[ ! -s "$state_file" ]]; then
-          echo "No current wallpaper state found; refreshing instead." >&2
-          mode="refresh"
-        else
-          image_path="$(cat "$state_file")"
-          if [[ "$set_desktop" == "1" ]]; then
-            apply_wallpaper "$image_path"
-          fi
-          echo "$image_path"
-          exit 0
-        fi
-      fi
-
-      curl_common=(
-        --fail
-        --location
-        --silent
-        --show-error
-        --retry 3
-        --connect-timeout 10
-      )
-
-      image_path=""
-
-      fetch_wallhaven() {
-        local metadata_file metadata_tmp encoded_query api_url count selected_index
-        local wallhaven_id image_url extension image_tmp
-
-        metadata_file="$wallpaper_dir/.wallhaven.json"
-        metadata_tmp="$metadata_file.tmp"
-        encoded_query="$(printf '%s' "$wallhaven_query" | jq -sRr @uri)"
-        api_url="https://wallhaven.cc/api/v1/search?q=$encoded_query&categories=$wallhaven_categories&purity=$wallhaven_purity&sorting=$wallhaven_sorting&ratios=$wallhaven_ratios&atleast=$wallhaven_atleast"
-
-        curl "''${curl_common[@]}" "$api_url" --output "$metadata_tmp"
-        mv "$metadata_tmp" "$metadata_file"
-
-        count="$(jq '.data | length' "$metadata_file")"
-        if [[ "$count" -lt 1 ]]; then
-          echo "Wallhaven returned no wallpapers for query: $wallhaven_query" >&2
-          exit 1
-        fi
-
-        selected_index=0
-        if [[ "$count" -gt 1 ]]; then
-          selected_index="$((RANDOM % count))"
-        fi
-
-        wallhaven_id="$(jq -r --argjson index "$selected_index" '.data[$index].id // empty' "$metadata_file")"
-        image_url="$(jq -r --argjson index "$selected_index" '.data[$index].path // empty' "$metadata_file")"
-
-        if [[ -z "$wallhaven_id" || -z "$image_url" ]]; then
-          echo "Wallhaven metadata did not include an image URL." >&2
-          exit 1
-        fi
-
-        extension="''${image_url##*.}"
-        extension="$(printf '%s' "$extension" | tr '[:upper:]' '[:lower:]')"
-        case "$extension" in
-          jpg | jpeg | png) ;;
-          *) extension="jpg" ;;
-        esac
-
-        image_path="$wallpaper_dir/wallhaven-$wallhaven_id.$extension"
-        image_tmp="$image_path.tmp"
-
-        if [[ ! -s "$image_path" ]]; then
-          curl "''${curl_common[@]}" "$image_url" --output "$image_tmp"
-          mv "$image_tmp" "$image_path"
-        fi
-      }
-
-      fetch_bing_daily() {
-        local metadata_file metadata_tmp startdate title urlbase fallback_url safe_title
-        local image_tmp image_url fallback_image_url
-
-        metadata_file="$wallpaper_dir/.bing-daily.json"
-        metadata_tmp="$metadata_file.tmp"
-
-        curl \
-          "''${curl_common[@]}" \
-          "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=$market" \
-          --output "$metadata_tmp"
-        mv "$metadata_tmp" "$metadata_file"
-
-        startdate="$(jq -r '.images[0].startdate // empty' "$metadata_file")"
-        title="$(jq -r '.images[0].title // .images[0].copyright // "bing daily"' "$metadata_file")"
-        urlbase="$(jq -r '.images[0].urlbase // empty' "$metadata_file")"
-        fallback_url="$(jq -r '.images[0].url // empty' "$metadata_file")"
-
-        if [[ -z "$startdate" ]]; then
-          startdate="$(date +%Y%m%d)"
-        fi
-
-        safe_title="$(printf '%s' "$title" \
-          | tr -cs '[:alnum:]._-' '-' \
-          | sed 's/^-//; s/-$//; s/--*/-/g' \
-          | cut -c1-80)"
-        if [[ -z "$safe_title" ]]; then
-          safe_title="bing-daily"
-        fi
-
-        image_path="$wallpaper_dir/bing-$startdate-$safe_title.jpg"
-        image_tmp="$image_path.tmp"
-
-        if [[ ! -s "$image_path" ]]; then
-          if [[ -n "$urlbase" ]]; then
-            image_url="https://www.bing.com''${urlbase}_''${resolution}.jpg"
-          elif [[ "$fallback_url" == http* ]]; then
-            image_url="$fallback_url"
-          else
-            image_url="https://www.bing.com$fallback_url"
-          fi
-
-          if ! curl "''${curl_common[@]}" "$image_url" --output "$image_tmp"; then
-            rm -f "$image_tmp"
-
-            if [[ -z "$fallback_url" ]]; then
-              echo "Bing metadata did not include a fallback image URL." >&2
-              exit 1
-            fi
-
-            if [[ "$fallback_url" == http* ]]; then
-              fallback_image_url="$fallback_url"
-            else
-              fallback_image_url="https://www.bing.com$fallback_url"
-            fi
-
-            curl "''${curl_common[@]}" "$fallback_image_url" --output "$image_tmp"
-          fi
-
-          mv "$image_tmp" "$image_path"
-        fi
-      }
-
-      case "$wallpaper_source" in
-        wallhaven)
-          fetch_wallhaven
-          ;;
-        bing-daily)
-          fetch_bing_daily
-          ;;
-        *)
-          echo "Unsupported wallpaper source: $wallpaper_source" >&2
-          exit 1
-          ;;
-      esac
-
-      printf '%s\n' "$image_path" > "$state_file"
-
-      if [[ "$set_desktop" == "1" ]]; then
-        apply_wallpaper "$image_path"
-      fi
-
-      if [[ "$retention_days" -gt 0 ]]; then
-        find "$wallpaper_dir" \
-          -maxdepth 1 \
-          -type f \
-          \( -name 'wallhaven-*' -o -name 'bing-*.jpg' \) \
-          -mtime +"$retention_days" \
-          -delete
-      fi
-
-      echo "$image_path"
+      exec python3 ${../../../configs/waypaper/wallpaper.py} --config ${settings} "$@"
     '';
   };
-
+  command = "${inspiringWallpaper}/bin/inspiring-wallpaper";
   displayWatcher = pkgs.writeShellApplication {
     name = "inspiring-wallpaper-display-watcher";
-    runtimeInputs = with pkgs; [ coreutils ];
+    runtimeInputs = [ pkgs.coreutils ];
     text = ''
-      set -euo pipefail
-
-      poll_seconds=${toString cfg.monitorWatcher.pollSeconds}
-      wallpaper_bin=${inspiringWallpaper}/bin/inspiring-wallpaper
-
       fingerprint_displays() {
         /usr/sbin/ioreg -r -c AppleDisplayConnectionManager -l -w0 2>/dev/null | cksum || true
       }
-
-      apply_current_wallpaper() {
-        # macOS can take a few seconds to create Spaces/desktops for a newly
-        # attached display, especially through docks. Retry so the new monitor
-        # is present when System Events enumerates desktops.
-        sleep 2
-        "$wallpaper_bin" --apply-current || true
-        sleep 8
-        "$wallpaper_bin" --apply-current || true
-        sleep 20
-        "$wallpaper_bin" --apply-current || true
-      }
-
       previous_fingerprint="$(fingerprint_displays)"
-
       while true; do
-        sleep "$poll_seconds"
+        sleep ${toString cfg.monitorWatcher.pollSeconds}
         current_fingerprint="$(fingerprint_displays)"
-
         if [[ -n "$current_fingerprint" && "$current_fingerprint" != "$previous_fingerprint" ]]; then
           previous_fingerprint="$current_fingerprint"
-          echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') display topology changed; applying current wallpaper"
-          apply_current_wallpaper
+          # Spaces for newly connected displays may take a few seconds to appear.
+          for delay in 2 8 20; do
+            sleep "$delay"
+            ${command} --apply-current || true
+          done
         fi
       done
     '';
   };
+  sessionStartup = pkgs.writeShellApplication {
+    name = "start-wallpaper-session";
+    runtimeInputs = [
+      pkgs.systemd
+      pkgs.swww
+      pkgs.coreutils
+    ];
+    text = ''
+      systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP
+      if ! swww query >/dev/null 2>&1; then
+        swww-daemon &
+      fi
+      for attempt in {1..50}; do
+        if swww query >/dev/null 2>&1; then
+          systemctl --user restart inspiring-wallpaper.timer
+          exit 0
+        fi
+        sleep 0.2
+      done
+      echo "swww did not become ready" >&2
+      exit 1
+    '';
+  };
+  launchAgent = name: args: schedule: {
+    enable = true;
+    config = {
+      Label = "com.braden.${name}";
+      ProgramArguments = [ command ] ++ args;
+      RunAtLoad = true;
+      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/${name}.err.log";
+    }
+    // schedule;
+  };
 in
 {
   options.myConfig.desktop.wallpaper = {
-    enable = lib.mkEnableOption "inspiring macOS wallpapers";
-
+    enable = lib.mkEnableOption "cached wallpaper downloads and shuffle rotation";
     source = lib.mkOption {
       type = lib.types.enum [
         "wallhaven"
         "bing-daily"
       ];
       default = "wallhaven";
-      description = "Wallpaper source to use.";
+      description = "Source used to replenish the local wallpaper collection.";
     };
-
     directory = lib.mkOption {
       type = lib.types.str;
-      default = "${config.home.homeDirectory}/Pictures/Wallpapers/Wallhaven";
-      description = "Directory where downloaded wallpapers are cached.";
+      default =
+        if isDarwin then
+          "${config.home.homeDirectory}/Pictures/Wallpapers/Wallhaven"
+        else
+          "${config.home.homeDirectory}/Pictures/wallpapers";
+      description = "Local wallpaper collection, including any user-supplied JPEG/PNG images.";
     };
-
+    rotationMinutes = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 90;
+      description = "Minutes between local wallpaper changes; downloading is scheduled separately.";
+    };
     wallhaven = {
       query = lib.mkOption {
         type = lib.types.str;
-        default = "nature landscape mountains forest ocean -flag -flags -politics -political -logo -text -weapon -war";
-        description = "Wallhaven search query. Negative terms are used to avoid noisy or political imagery.";
+        default = "";
+        description = "Optional single search overriding queries (compatibility with existing host overrides).";
       };
-
+      queries = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = map (topic: "${topic} -flag -flags -politics -political -logo -text -weapon -war") [
+          "landscape"
+          "mountains"
+          "forest"
+          "ocean"
+          "nature"
+        ];
+        description = "Independent searches for a varied nature collection, rather than one restrictive combined search.";
+      };
+      imagesPerQuery = lib.mkOption {
+        type = lib.types.ints.between 1 24;
+        default = 4;
+        description = "Maximum images downloaded per search during the daily replenishment.";
+      };
       categories = lib.mkOption {
         type = lib.types.enum [
           "100"
@@ -316,18 +153,16 @@ in
           "111"
         ];
         default = "100";
-        description = "Wallhaven category mask. Default is general wallpapers only.";
+        description = "Wallhaven category mask (general wallpapers by default).";
       };
-
       purity = lib.mkOption {
         type = lib.types.enum [
           "100"
           "110"
         ];
         default = "100";
-        description = "Wallhaven purity mask. Default is SFW only.";
+        description = "Wallhaven purity mask (SFW by default).";
       };
-
       ratios = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [
@@ -336,13 +171,11 @@ in
         ];
         description = "Preferred Wallhaven aspect ratios.";
       };
-
       atleast = lib.mkOption {
         type = lib.types.str;
         default = "3840x2160";
         description = "Minimum Wallhaven image resolution.";
       };
-
       sorting = lib.mkOption {
         type = lib.types.enum [
           "random"
@@ -356,14 +189,12 @@ in
         description = "Wallhaven result sorting mode.";
       };
     };
-
     bing = {
       market = lib.mkOption {
         type = lib.types.str;
         default = "en-US";
-        description = "Bing image market/locale used for the daily wallpaper feed.";
+        description = "Bing daily image market/locale.";
       };
-
       resolution = lib.mkOption {
         type = lib.types.enum [
           "UHD"
@@ -371,90 +202,127 @@ in
           "1366x768"
         ];
         default = "UHD";
-        description = "Preferred Bing image resolution. Falls back to Bing's default URL if unavailable.";
+        description = "Preferred Bing image resolution, with fallback to its default URL.";
       };
     };
-
     refreshHour = lib.mkOption {
       type = lib.types.ints.between 0 23;
       default = 7;
-      description = "Hour of day when launchd refreshes the wallpaper.";
+      description = "Hour of daily cache replenishment.";
     };
-
     refreshMinute = lib.mkOption {
       type = lib.types.ints.between 0 59;
       default = 15;
-      description = "Minute of the hour when launchd refreshes the wallpaper.";
+      description = "Minute of daily cache replenishment.";
     };
-
     retentionDays = lib.mkOption {
       type = lib.types.ints.unsigned;
       default = 90;
-      description = "Delete cached wallpapers older than this many days. Set to 0 to keep all.";
+      description = "Age limit for downloaded images; 0 disables age-based cleanup.";
     };
-
+    maxImages = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 200;
+      description = "Maximum downloaded images retained (user-supplied images are never pruned).";
+    };
     setDesktop = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "Set the downloaded image as the desktop wallpaper.";
+      description = "Apply the selected wallpaper to the desktop.";
     };
-
     monitorWatcher = {
       enable = lib.mkOption {
         type = lib.types.bool;
         default = true;
         description = "Reapply the current wallpaper when macOS display topology changes.";
       };
-
       pollSeconds = lib.mkOption {
         type = lib.types.ints.between 1 3600;
         default = 15;
-        description = "Seconds between display topology checks.";
+        description = "Seconds between macOS display topology checks.";
       };
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    assertions = [
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
       {
-        assertion = pkgs.stdenv.isDarwin;
-        message = "myConfig.desktop.wallpaper is currently only supported on macOS.";
+        assertions = [
+          {
+            assertion = cfg.wallhaven.query != "" || cfg.wallhaven.queries != [ ];
+            message = "Wallpaper replenishment requires at least one search query.";
+          }
+        ];
+        home.packages = [ inspiringWallpaper ] ++ lib.optional (!isDarwin) sessionStartup;
       }
-    ];
-
-    home.packages = [
-      inspiringWallpaper
-      displayWatcher
-    ];
-
-    launchd.agents.inspiring-wallpaper = {
-      enable = true;
-      config = {
-        Label = "com.braden.inspiring-wallpaper";
-        ProgramArguments = [ "${inspiringWallpaper}/bin/inspiring-wallpaper" ];
-        RunAtLoad = true;
-        StartCalendarInterval = {
-          Hour = cfg.refreshHour;
-          Minute = cfg.refreshMinute;
+      (lib.mkIf isDarwin {
+        launchd.agents.inspiring-wallpaper = launchAgent "inspiring-wallpaper" [ "--rotate" ] {
+          StartInterval = cfg.rotationMinutes * 60;
         };
-        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/inspiring-wallpaper.log";
-        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/inspiring-wallpaper.err.log";
-      };
-    };
-
-    launchd.agents.inspiring-wallpaper-display-watcher = lib.mkIf cfg.monitorWatcher.enable {
-      enable = true;
-      config = {
-        Label = "com.braden.inspiring-wallpaper-display-watcher";
-        ProgramArguments = [ "${displayWatcher}/bin/inspiring-wallpaper-display-watcher" ];
-        RunAtLoad = true;
-        KeepAlive = {
-          Crashed = true;
-          SuccessfulExit = false;
+        launchd.agents.inspiring-wallpaper-download =
+          launchAgent "inspiring-wallpaper-download" [ "--refresh" ]
+            {
+              StartCalendarInterval = {
+                Hour = cfg.refreshHour;
+                Minute = cfg.refreshMinute;
+              };
+            };
+        launchd.agents.inspiring-wallpaper-display-watcher = lib.mkIf cfg.monitorWatcher.enable {
+          enable = true;
+          config = {
+            Label = "com.braden.inspiring-wallpaper-display-watcher";
+            ProgramArguments = [ "${displayWatcher}/bin/inspiring-wallpaper-display-watcher" ];
+            RunAtLoad = true;
+            KeepAlive = {
+              Crashed = true;
+              SuccessfulExit = false;
+            };
+            StandardOutPath = "${config.home.homeDirectory}/Library/Logs/inspiring-wallpaper-display-watcher.log";
+            StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/inspiring-wallpaper-display-watcher.err.log";
+          };
         };
-        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/inspiring-wallpaper-display-watcher.log";
-        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/inspiring-wallpaper-display-watcher.err.log";
-      };
-    };
-  };
+      })
+      (lib.mkIf (!isDarwin) {
+        systemd.user.services.inspiring-wallpaper = {
+          Unit = {
+            Description = "Rotate cached desktop wallpaper";
+            PartOf = [ "graphical-session.target" ];
+            After = [ "graphical-session.target" ];
+          };
+          Service = {
+            Type = "oneshot";
+            ExecStart = "${command} --rotate";
+          };
+        };
+        systemd.user.timers.inspiring-wallpaper = {
+          Unit = {
+            Description = "Shuffle cached wallpapers every ${toString cfg.rotationMinutes} minutes";
+            PartOf = [ "graphical-session.target" ];
+          };
+          Timer = {
+            OnActiveSec = "30s";
+            OnUnitActiveSec = "${toString cfg.rotationMinutes}min";
+            Unit = "inspiring-wallpaper.service";
+          };
+          Install.WantedBy = [ "graphical-session.target" ];
+        };
+        systemd.user.services.inspiring-wallpaper-download = {
+          Unit.Description = "Replenish wallpaper collection";
+          Service = {
+            Type = "oneshot";
+            ExecStart = "${command} --refresh";
+          };
+        };
+        systemd.user.timers.inspiring-wallpaper-download = {
+          Unit.Description = "Download fresh wallpapers daily";
+          Timer = {
+            OnCalendar = "*-*-* ${lib.fixedWidthNumber 2 cfg.refreshHour}:${lib.fixedWidthNumber 2 cfg.refreshMinute}:00";
+            OnActiveSec = "10s";
+            Persistent = true;
+          };
+          Install.WantedBy = [ "timers.target" ];
+        };
+      })
+    ]
+  );
 }

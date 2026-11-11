@@ -173,6 +173,11 @@
     # DevOps tool configs
     devops.github.enable = true;
 
+    desktop.wallpaper = {
+      enable = true;
+      directory = "/hdd/wallpapers";
+    };
+
     # Desktop utility configs
     desktop.utilities = {
       enable = true;

@@ -12,7 +12,11 @@ let
   waypaperConfig = {
     Settings = {
       language = "en";
-      folder = cfg.wallpaperFolder;
+      folder =
+        if config.myConfig.desktop.wallpaper.enable then
+          config.myConfig.desktop.wallpaper.directory
+        else
+          cfg.wallpaperFolder;
       backend = "swww";
       monitors = "All";
       fill = "fill";
@@ -99,10 +103,12 @@ in
           text = lib.generators.toINI { } waypaperConfig;
         };
 
-        "waypaper/random-wallpaper.sh" = lib.mkIf cfg.waypaper {
-          source = ../../../configs/waypaper/random-wallpaper.sh;
-          executable = true;
-        };
+        "waypaper/random-wallpaper.sh" =
+          lib.mkIf (cfg.waypaper && !config.myConfig.desktop.wallpaper.enable)
+            {
+              source = ../../../configs/waypaper/random-wallpaper.sh;
+              executable = true;
+            };
       };
     })
   ];

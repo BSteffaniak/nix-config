@@ -184,7 +184,9 @@ in
         bind = SUPER, L, exec, ${lockCommand}
         bind = SUPER SHIFT, E, exit,
         input:touchpad:tap-to-click = true
-        exec-once = ${lib.getExe wallpaperStartup}
+        ${lib.optionalString (
+          !config.myConfig.desktop.wallpaper.enable
+        ) "exec-once = ${lib.getExe wallpaperStartup}"}
       '';
     };
 
