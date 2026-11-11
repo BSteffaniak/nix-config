@@ -13,7 +13,7 @@ def record(value):
         stream.write(json.dumps(value) + "\n")
 
 
-record({"process": name, "args": sys.argv[1:]})
+record({"process": name, "path": sys.argv[0], "args": sys.argv[1:]})
 if name == "go":
     print("/tmp/nvim-test-go")
     sys.exit(0)

@@ -33,7 +33,6 @@ function M.setup()
 		gopls = {},
 		html = {},
 		jsonls = {},
-		pyright = { settings = { python = { analysis = { diagnosticMode = "openFilesOnly" } } } },
 		lua_ls = { settings = { Lua = { diagnostics = { globals = { "vim" } } } } },
 		ts_ls = {},
 		kotlin_language_server = {},
@@ -47,6 +46,19 @@ function M.setup()
 		terraformls = {},
 		biome = {},
 	}
+	local python_lsp = host.python_lsp
+	if python_lsp == "ty" then
+		-- A project's own ty (e.g. a uv dev dependency) matches the version its CI runs.
+		servers.ty = {
+			cmd = function(dispatchers, config)
+				local local_ty = config.root_dir and config.root_dir .. "/.venv/bin/ty"
+				local command = local_ty and vim.fn.executable(local_ty) == 1 and local_ty or "ty"
+				return vim.lsp.rpc.start({ command, "server" }, dispatchers, { cwd = config.root_dir })
+			end,
+		}
+	else
+		servers.pyright = { settings = { python = { analysis = { diagnosticMode = "openFilesOnly" } } } }
+	end
 	if host.plugins.elixir then
 		servers.elixirls = {
 			settings = { elixirLS = {
@@ -89,6 +101,9 @@ function M.setup()
 					csharp_ls = "csharp-ls",
 					elixirls = "elixir-ls",
 				})[name]
+				if name == "ty" then
+					return vim.fn.executable("ty") == 1 or (dir and vim.fn.executable(dir .. "/.venv/bin/ty") == 1)
+				end
 				if not command then
 					return true
 				end
@@ -107,7 +122,7 @@ function M.setup()
 						on_dir(dir)
 					end
 				end
-				local environment = name == "pyright" and python_environment(bufnr)
+				local environment = name == python_lsp and python_environment(bufnr)
 				if environment then
 					attach(environment)
 				elseif type(root) == "function" then

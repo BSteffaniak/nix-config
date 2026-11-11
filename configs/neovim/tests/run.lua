@@ -34,6 +34,7 @@ for _, mode in ipairs({ "light", "off" }) do
 		"go",
 		"typescript-language-server",
 		"pyright-langserver",
+		"ty",
 		"biome",
 	}) do
 		local lines = vim.fn.readfile(source .. "/tests/fake-tool.py")
@@ -54,6 +55,10 @@ for _, mode in ipairs({ "light", "off" }) do
 			vim.fn.mkdir(path .. "/.venv/bin", "p")
 			local target = project == "python-broken" and path .. "/nonexistent" or vim.fn.exepath("python3")
 			assert(vim.uv.fs_symlink(target, path .. "/.venv/bin/python"))
+			if project == "python-a" then
+				-- The project's own ty must win over the one on PATH.
+				command({ "cp", base .. "/bin/ty", path .. "/.venv/bin/ty" })
+			end
 		end
 	end
 	write(base .. "/project/python-a/pkg/nested/large.py", string.rep("# large file\n", 21000))
@@ -85,6 +90,7 @@ for _, mode in ipairs({ "light", "off" }) do
 			XDG_CACHE_HOME = base .. "/cache",
 			PATH = base .. "/bin:/usr/bin:/bin",
 			NVIM_RUST_MODE = mode,
+			NVIM_PYTHON_LSP = mode == "off" and "pyright" or "ty",
 			NVIM_TEST_EVENTS = base .. "/events.jsonl",
 			NVIM_TEST_PROJECT = base .. "/project",
 			NVIM_SESSIONS_HOME_DIRECTORY = base .. "/state/sessions",

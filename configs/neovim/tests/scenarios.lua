@@ -122,6 +122,7 @@ local ok, err = xpcall(function()
 			end
 		end, "language " .. server)
 	end
+	local python_lsp = vim.env.NVIM_PYTHON_LSP
 	local python_clients = {}
 	local original_cwd = vim.fn.getcwd()
 	vim.cmd.cd(vim.env.NVIM_TEST_PROJECT .. "/python-b")
@@ -130,24 +131,40 @@ local ok, err = xpcall(function()
 		vim.cmd.edit(path .. "/pkg/nested/test.py")
 		local client
 		wait_for(function()
-			client = vim.lsp.get_clients({ bufnr = 0, name = "pyright" })[1]
+			client = vim.lsp.get_clients({ bufnr = 0, name = python_lsp })[1]
 			return client and client.initialized
 		end, "Python " .. project)
+		local other = python_lsp == "ty" and "pyright" or "ty"
+		assert(#vim.lsp.get_clients({ bufnr = 0, name = other }) == 0, "Both Python servers attached")
 		local has_environment = project == "python-a" or project == "python-b"
 		assert(client.config.root_dir == (has_environment and path or path .. "/pkg"), "Wrong Python root")
-		assert(client.settings.python.analysis.diagnosticMode == "openFilesOnly")
-		if has_environment then
-			assert(client.settings.python.pythonPath == path .. "/.venv/bin/python", "Wrong Python interpreter")
-		else
-			assert(not client.settings.python.pythonPath, "Broken/missing environment was selected")
+		if python_lsp == "pyright" then
+			assert(client.settings.python.analysis.diagnosticMode == "openFilesOnly")
+			if has_environment then
+				assert(client.settings.python.pythonPath == path .. "/.venv/bin/python", "Wrong Python interpreter")
+			else
+				assert(not client.settings.python.pythonPath, "Broken/missing environment was selected")
+			end
 		end
 		python_clients[project] = client.id
 	end
 	vim.cmd.cd(original_cwd)
 	assert(python_clients["python-a"] ~= python_clients["python-b"], "Python environments shared a client")
+	if python_lsp == "ty" then
+		local paths = {}
+		for _, event in ipairs(events()) do
+			if event.process == "ty" then
+				assert(vim.deep_equal(event.args, { "server" }), "ty started without server")
+				table.insert(paths, event.path)
+			end
+		end
+		local project_ty = vim.env.NVIM_TEST_PROJECT .. "/python-a/.venv/bin/ty"
+		assert(vim.tbl_contains(paths, project_ty), "Project ty not used: " .. vim.inspect(paths))
+		assert(#paths == 4, "Expected one ty per Python root: " .. vim.inspect(paths))
+	end
 	vim.cmd.edit(vim.env.NVIM_TEST_PROJECT .. "/python-a/pkg/nested/large.py")
 	vim.wait(100)
-	assert(#vim.lsp.get_clients({ bufnr = 0, name = "pyright" }) == 0, "Large Python file attached")
+	assert(#vim.lsp.get_clients({ bufnr = 0, name = python_lsp }) == 0, "Large Python file attached")
 	vim.cmd.edit(vim.env.NVIM_TEST_PROJECT .. "/test.astro")
 	assert(vim.bo.filetype == "astro")
 	vim.cmd.edit(vim.env.NVIM_TEST_PROJECT .. "/test.md")
@@ -170,6 +187,6 @@ if not ok then
 	io.stderr:write(err .. "\n")
 	vim.cmd("cquit 1")
 else
-	print("PASS: startup, Rust modes/checks, buffers, large files, optional plugins, completion, pickers")
+	print("PASS: startup, Rust modes/checks, Python LSP, buffers, large files, optional plugins, completion, pickers")
 	vim.cmd("qa!")
 end

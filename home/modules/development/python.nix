@@ -15,7 +15,7 @@ in
     includeTools = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "Include black, isort, and pyright";
+      description = "Include black, isort, ty, and pyright";
     };
   };
 
@@ -28,7 +28,8 @@ in
       ++ (lib.optionals cfg.includeTools [
         black # Python code formatter
         isort # Python import sorter
-        pyright # Python type checker/LSP
+        unstable.ty # Default Python type checker/LSP (stable nixpkgs lags far behind)
+        pyright # Alternative LSP: NVIM_PYTHON_LSP=pyright
       ]);
 
     # Python user site packages
