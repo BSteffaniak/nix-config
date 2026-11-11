@@ -10,7 +10,7 @@ in
     lib.mkEnableOption "Hex via Homebrew (prefer myConfig.desktop.hex.enable in home.nix)";
 
   config = lib.mkIf (enabled || config.myConfig.darwin.hex.enable) {
-    homebrew.casks = [ "kitlangton-hex" ];
+    homebrew.casks = [ "anomaly-hex" ];
     myConfig.darwin.homebrew.enable = true;
   };
 }
