@@ -120,7 +120,7 @@ in
     };
     rotationMinutes = lib.mkOption {
       type = lib.types.ints.positive;
-      default = 90;
+      default = 180;
       description = "Minutes between local wallpaper changes; downloading is scheduled separately.";
     };
     wallhaven = {

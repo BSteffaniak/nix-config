@@ -72,7 +72,7 @@ Waybar now apply here too. Brightness and volume keys are configured.
 Notifications and a Polkit authentication agent start with the session.
 
 The shared wallpaper module downloads fresh nature images daily into
-`~/Pictures/wallpapers` and shuffles cached images every 90 minutes, even
+`~/Pictures/wallpapers` and shuffles cached images every 180 minutes, even
 offline.
 You can add your own JPEG/PNG images to that folder; they are never pruned.
 The swww backend starts at Hyprland login; GNOME uses its native background
