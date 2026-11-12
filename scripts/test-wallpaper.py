@@ -33,6 +33,18 @@ class WallpaperTests(unittest.TestCase):
                 "ratios": ["16x9"],
                 "atleast": "3840x2160",
                 "imagesPerQuery": 2,
+                "requiredTagGroups": [
+                    ["photography"],
+                    ["nature", "landscape", "ocean"],
+                ],
+                "excludedTags": [
+                    "anime",
+                    "video game",
+                    "women",
+                    "digital art",
+                    "people",
+                ],
+                "excludedTagCategories": ["People", "Games", "Fictional Characters"],
             },
             "retentionDays": 90,
             "maxImages": 200,
@@ -44,7 +56,23 @@ class WallpaperTests(unittest.TestCase):
     def image(self, name):
         path = self.app.directory / name
         path.write_bytes(b"\xff\xd8\xffimage")
+        if name.startswith("wallhaven-"):
+            image_id = path.stem.removeprefix("wallhaven-")
+            self.app.metadata_path(image_id).write_text(
+                json.dumps(self.approved(image_id))
+            )
         return str(path)
+
+    def approved(self, image_id="abc123"):
+        return {
+            "id": image_id,
+            "category": "general",
+            "purity": "sfw",
+            "tags": [
+                {"name": "photography", "category": "Photography"},
+                {"name": "nature", "category": "Nature"},
+            ],
+        }
 
     def test_shuffle_persists_and_does_not_repeat_across_cycles(self):
         images = {self.image(f"image-{i}.jpg") for i in range(5)}
@@ -103,6 +131,8 @@ class WallpaperTests(unittest.TestCase):
 
     def test_refresh_independent_queries_and_partial_failure(self):
         def metadata(url):
+            if "/api/v1/w/" in url:
+                return {"data": self.approved()}
             if "mountains" in url:
                 raise ValueError("offline query")
             return {
@@ -111,14 +141,14 @@ class WallpaperTests(unittest.TestCase):
 
         with patch.object(
             self.app, "metadata", side_effect=metadata
-        ) as fetch, patch.object(
+        ) as fetch, patch.object(wallpaper.time, "sleep"), patch.object(
             self.app,
             "download",
             side_effect=lambda url, path: path.write_bytes(b"\xff\xd8\xffimage"),
         ):
             with self.assertRaises(RuntimeError):
                 self.app.replenish()
-            self.assertEqual(fetch.call_count, 2)
+            self.assertEqual(fetch.call_count, 3)
         self.assertEqual(len(self.app.images()), 1)
         # Refresh does not select a wallpaper; the cache is usable despite failure.
         self.assertEqual(self.app.current(), "")
@@ -178,6 +208,60 @@ class WallpaperTests(unittest.TestCase):
         self.app.prune()
         self.assertTrue(Path(current).exists())
         self.assertFalse(Path(expired).exists())
+
+    def test_content_policy(self):
+        photo = self.approved()
+        self.assertTrue(self.app.allowed(photo))
+        for tag in ("anime", "video game characters", "women", "digital art", "people"):
+            rejected = self.approved()
+            rejected["tags"].append({"name": tag})
+            self.assertFalse(self.app.allowed(rejected), tag)
+        for category in ("Games", "People", "Fictional Characters"):
+            rejected = self.approved()
+            rejected["tags"].append(
+                {"name": "Elena (Star Ocean)", "category": category}
+            )
+            self.assertFalse(self.app.allowed(rejected))
+        for names in (["photography"], ["ocean"], []):
+            rejected = self.approved()
+            rejected["tags"] = [{"name": name} for name in names]
+            self.assertFalse(self.app.allowed(rejected))
+        photo["tags"].append({"name": "mangrove"})
+        self.config["wallhaven"]["excludedTags"].append("man")
+        self.assertTrue(self.app.allowed(photo))
+
+    def test_legacy_unverified_is_not_rotated_and_rejected_is_quarantined(self):
+        bad = self.app.directory / "wallhaven-y8kj8g.jpg"
+        bad.write_bytes(b"\xff\xd8\xfflegacy")
+        personal = self.image("personal.jpg")
+        self.assertEqual(self.app.images(), [personal])
+        metadata = self.approved("y8kj8g")
+        metadata["tags"].append({"name": "Star Ocean", "category": "Games"})
+        with patch.object(
+            self.app, "metadata", return_value={"data": metadata}
+        ), patch.object(wallpaper.time, "sleep"):
+            self.assertEqual(self.app.audit_cache(), [])
+        self.assertFalse(bad.exists())
+        self.assertTrue((self.app.directory / "quarantine" / bad.name).exists())
+        self.assertEqual(self.app.rotate(), personal)
+
+    def test_verified_cache_rechecked_after_policy_changes_offline(self):
+        image = self.image("wallhaven-abc123.jpg")
+        self.assertIn(image, self.app.images())
+        self.config["wallhaven"]["excludedTags"].append("nature")
+        with patch.object(self.app, "metadata", side_effect=AssertionError("network")):
+            self.assertNotIn(image, self.app.images())
+            self.assertEqual(self.app.audit_cache(), [])
+
+    def test_audit_network_failure_fails_closed_without_deleting_image(self):
+        image = self.app.directory / "wallhaven-abc123.jpg"
+        image.write_bytes(b"\xff\xd8\xfflegacy")
+        with patch.object(
+            self.app, "metadata", side_effect=ValueError("offline")
+        ), patch.object(wallpaper.time, "sleep"):
+            self.assertTrue(self.app.audit_cache())
+        self.assertTrue(image.exists())
+        self.assertEqual(self.app.images(), [])
 
     def test_cli_offline(self):
         self.image("local.jpg")

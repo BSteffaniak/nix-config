@@ -124,6 +124,76 @@ in
       description = "Minutes between local wallpaper changes; downloading is scheduled separately.";
     };
     wallhaven = {
+      requiredTagGroups = lib.mkOption {
+        type = lib.types.listOf (lib.types.listOf lib.types.str);
+        default = [
+          [
+            "photography"
+            "landscape photography"
+            "nature photography"
+          ]
+          [
+            "nature"
+            "landscape"
+            "landscapes"
+            "mountains"
+            "forest"
+            "forests"
+            "ocean"
+            "sea"
+            "beach"
+            "lake"
+            "waterfall"
+          ]
+        ];
+        description = "Require at least one exact tag from each group before a downloaded image can rotate. Metadata must be verified, even for existing downloads.";
+      };
+      excludedTags = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [
+          "anime"
+          "manga"
+          "illustration"
+          "digital art"
+          "digital painting"
+          "artwork"
+          "drawing"
+          "painting"
+          "concept art"
+          "fantasy art"
+          "3d"
+          "cgi"
+          "render"
+          "ai art"
+          "ai generated"
+          "ai-generated"
+          "generative art"
+          "video game"
+          "videogame"
+          "character"
+          "people"
+          "person"
+          "portrait"
+          "women"
+          "woman"
+          "girls"
+          "girl"
+          "men"
+          "man"
+          "boy"
+        ];
+        description = "Reject tags containing these words/phrases (word-boundary matching). Tagging is not a visual guarantee.";
+      };
+      excludedTagCategories = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [
+          "Anime & Manga"
+          "People"
+          "Fictional Characters"
+          "Games"
+        ];
+        description = "Reject images with any tag belonging to these Wallhaven tag categories.";
+      };
       query = lib.mkOption {
         type = lib.types.str;
         default = "";
@@ -131,13 +201,19 @@ in
       };
       queries = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = map (topic: "${topic} -flag -flags -politics -political -logo -text -weapon -war") [
-          "landscape"
-          "mountains"
-          "forest"
-          "ocean"
-          "nature"
-        ];
+        default =
+          map
+            (
+              topic:
+              "${topic} photography -anime -people -illustration -\"digital art\" -\"video games\" -flag -flags -politics -political -logo -text -weapon -war"
+            )
+            [
+              "landscape"
+              "mountains"
+              "forest"
+              "ocean"
+              "nature"
+            ];
         description = "Independent searches for a varied nature collection, rather than one restrictive combined search.";
       };
       imagesPerQuery = lib.mkOption {

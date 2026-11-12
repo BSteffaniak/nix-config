@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import random
+import re
 import subprocess
 import sys
 import time
@@ -37,7 +38,7 @@ class Wallpaper:
         path = self.state / "current"
         return path.read_text().strip() if path.exists() else ""
 
-    def images(self):
+    def raw_images(self):
         return sorted(
             str(path)
             for path in self.directory.iterdir()
@@ -45,6 +46,89 @@ class Wallpaper:
             and path.suffix.lower() in (".jpg", ".jpeg", ".png")
             and path.stat().st_size > 0
         )
+
+    def metadata_path(self, image_id):
+        directory = self.state / "wallhaven-metadata"
+        directory.mkdir(exist_ok=True)
+        return directory / (image_id + ".json")
+
+    def allowed(self, metadata):
+        policy = self.config["wallhaven"]
+        tags = metadata.get("tags", [])
+        names = {tag["name"].casefold() for tag in tags}
+        if metadata.get("category") != "general" or metadata.get("purity") != "sfw":
+            return False
+        for group in policy.get("requiredTagGroups", []):
+            if not names.intersection(tag.casefold() for tag in group):
+                return False
+        categories = {tag.get("category", "").casefold() for tag in tags}
+        if categories.intersection(
+            tag.casefold() for tag in policy.get("excludedTagCategories", [])
+        ):
+            return False
+        return not any(
+            re.search(r"(?<!\w)" + re.escape(blocked.casefold()) + r"(?!\w)", name)
+            for blocked in policy.get("excludedTags", [])
+            for name in names
+        )
+
+    def images(self):
+        result = []
+        for image in self.raw_images():
+            name = Path(image).name
+            if name.startswith("wallhaven-"):
+                image_id = Path(image).stem.removeprefix("wallhaven-")
+                if not image_id.isalnum():
+                    continue
+                try:
+                    metadata = json.loads(self.metadata_path(image_id).read_text())
+                    if metadata.get("id") != image_id or not self.allowed(metadata):
+                        continue
+                except (OSError, ValueError, KeyError, TypeError):
+                    # Fail closed offline; never rotate unverified old downloads.
+                    continue
+            result.append(image)
+        return result
+
+    def verify(self, image_id):
+        path = self.metadata_path(image_id)
+        if path.exists():
+            data = json.loads(path.read_text())
+        else:
+            # Detail requests have full tags; search results do not. Stay below
+            # Wallhaven's public API rate limit during cache migration.
+            time.sleep(1.5)
+            data = self.metadata("https://wallhaven.cc/api/v1/w/" + image_id)["data"]
+            if data.get("id") != image_id or not isinstance(data.get("tags"), list):
+                raise ValueError("Invalid Wallhaven detail metadata")
+            atomic_write(path, json.dumps(data))
+        return self.allowed(data)
+
+    def audit_cache(self):
+        failures = []
+        for image in self.raw_images():
+            path = Path(image)
+            if not path.name.startswith("wallhaven-"):
+                continue
+            image_id = path.stem.removeprefix("wallhaven-")
+            if not image_id.isalnum():
+                continue
+            try:
+                if not self.verify(image_id):
+                    with self.lock("rotation"):
+                        quarantine = self.directory / "quarantine"
+                        quarantine.mkdir(exist_ok=True)
+                        path.replace(quarantine / path.name)
+                    print("Quarantined " + path.name, flush=True)
+            except (
+                OSError,
+                ValueError,
+                KeyError,
+                TypeError,
+                subprocess.CalledProcessError,
+            ) as error:
+                failures.append(str(error))
+        return failures
 
     def download(self, url, destination):
         # curl uses the same Nix-provided CA configuration as the old downloader.
@@ -93,7 +177,7 @@ class Wallpaper:
 
     def replenish(self):
         with self.lock("download"):
-            failures = []
+            failures = self.audit_cache()
             if self.config["source"] == "wallhaven":
                 wallhaven = self.config["wallhaven"]
                 queries = (
@@ -114,11 +198,16 @@ class Wallpaper:
                         )
                         if not data["data"]:
                             raise ValueError(f"No results for {query!r}")
-                        for image in data["data"][: wallhaven["imagesPerQuery"]]:
+                        accepted = 0
+                        for image in data["data"]:
+                            if accepted >= wallhaven["imagesPerQuery"]:
+                                break
                             try:
                                 image_id = image["id"]
                                 if not image_id.isalnum():
                                     raise ValueError("Invalid Wallhaven image ID")
+                                if not self.verify(image_id):
+                                    continue
                                 extension = Path(
                                     urlparse(image["path"]).path
                                 ).suffix.lower()
@@ -129,6 +218,7 @@ class Wallpaper:
                                 self.cache_image(
                                     image["path"], f"wallhaven-{image_id}{extension}"
                                 )
+                                accepted += 1
                             except (
                                 OSError,
                                 ValueError,
@@ -192,7 +282,7 @@ class Wallpaper:
             generated = sorted(
                 (
                     Path(path)
-                    for path in self.images()
+                    for path in self.raw_images()
                     if Path(path).name.startswith(("wallhaven-", "bing-"))
                 ),
                 key=lambda path: path.stat().st_mtime,
