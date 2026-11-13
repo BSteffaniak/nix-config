@@ -102,6 +102,7 @@
     development.act.enable = true;
     development.bcode.enable = true;
     development.bcodeGit.enable = true;
+    development.bclean.enable = true;
     development.bdata.enable = true;
     development.bcode.extraSettings.invariants.mode = "relevant";
     development.opencode.enable = true;
