@@ -1,0 +1,9 @@
+{
+    "flakeInput": "bclean-src",
+    "buildSystem": "rust",
+    "pname": "bclean",
+    "hashField": "cargoHash",
+    "nativeBuildInputs": ["git"],
+    "cargoBuildFlags": ["--package", "bclean"],
+    "rustToolchain": "stable"
+}

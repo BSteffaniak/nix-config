@@ -123,6 +123,10 @@
       url = "github:BSteffaniak/sledge";
       flake = false;
     };
+    bclean-src = {
+      url = "github:BSteffaniak/bclean";
+      flake = false;
+    };
     brouter-src = {
       url = "github:BSteffaniak/brouter";
       flake = false;
