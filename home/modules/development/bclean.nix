@@ -27,6 +27,8 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    home.packages = [ pkgs.bclean ];
+
     xdg.configFile."bclean/config.toml".source = tomlFormat.generate "bclean-config.toml" settings;
   };
 }
