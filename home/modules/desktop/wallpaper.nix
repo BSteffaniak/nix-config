@@ -75,7 +75,7 @@ let
       if ! swww query >/dev/null 2>&1; then
         swww-daemon &
       fi
-      for attempt in {1..50}; do
+      for _ in {1..50}; do
         if swww query >/dev/null 2>&1; then
           systemctl --user restart inspiring-wallpaper.timer
           exit 0
