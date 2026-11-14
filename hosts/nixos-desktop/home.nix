@@ -57,31 +57,10 @@
   myConfig = {
     cliTools.utilities.sendsafely.enable = true;
     desktop.sledge.enable = true;
-    desktop.hex = {
-      enable = true;
-      settings = {
-        dictation_hotkey = {
-          control = false;
-          alt = false;
-          shift = false;
-          super_key = false;
-          key = "right_alt";
-        };
-        double_tap_lock = false;
-        paste_with_shift = true;
-        sound_effect_volume = 0.5;
-        transcription = {
-          model = "parakeet_unified_en";
-          language = "en";
-          recognition_hints = "";
-        };
-      };
-    };
 
     # CLI tools - now configured directly in home-manager
     cliTools = {
       terminals.bmux.enable = true;
-      terminals.zellij.enable = true;
       terminals.tmux.enable = true;
       terminals.ghostty.enable = true;
 
@@ -217,7 +196,6 @@
       encryption.enable = true;
       ai.claudeCode.enable = true;
       ai.t3code.enable = true;
-      ai.gemini.enable = true;
       ai.ollama.enable = true;
       tts.piper.enable = true;
     };

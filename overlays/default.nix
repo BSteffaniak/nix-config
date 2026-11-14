@@ -21,5 +21,6 @@ in
   (overlay ./sendsafely-java.nix)
   (overlay ./hex.nix)
   (overlay ./github-releases.nix)
+  (overlay ./t3code-linux.nix)
   (overlay ./minecraft-plugins.nix)
 ]
