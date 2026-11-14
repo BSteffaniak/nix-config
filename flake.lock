@@ -4,10 +4,10 @@
       "flake": false,
       "locked": {
         "lastModified": 1794573000,
-        "narHash": "sha256-DdNFkyNY1f/Qp5G1zo+ptcgW13asyGxM2dqOIWI3YM8=",
+        "narHash": "sha256-Fxim2cubiPHZCoWSpNBdXatuXMlfH10cOPmeJeTnFIw=",
         "owner": "BSteffaniak",
         "repo": "bclean",
-        "rev": "cccb81784835db7450a9af1ad618f9e25b19a385",
+        "rev": "d0d5209a0ee75f4ee5644a5f367cfc3d2a550219",
         "type": "github"
       },
       "original": {
