@@ -32,6 +32,10 @@ let
       cask = "signal";
       description = "Signal Desktop messenger";
     };
+    telegram = {
+      cask = "telegram";
+      description = "Telegram messenger";
+    };
   };
 in
 {
