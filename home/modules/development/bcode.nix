@@ -134,6 +134,8 @@ let
   ];
 
   openAiLongContextModels = [
+    "gpt-6.2-astra"
+    "gpt-6.2-sol"
     "gpt-6-astra"
     "gpt-6.1-sol"
     "gpt-6-sol"
@@ -241,6 +243,8 @@ let
       compaction = compactionSettings;
 
       # Set reasoning default to "medium" for all GPT models
+      metadata."gpt-6.2-sol".reasoning.default_effort = "medium";
+      metadata."gpt-6.2-astra".reasoning.default_effort = "medium";
       metadata."gpt-6-sol".reasoning.default_effort = "medium";
       metadata."gpt-6-luna".reasoning.default_effort = "medium";
       metadata."gpt-6-astra".reasoning.default_effort = "medium";
@@ -286,6 +290,8 @@ let
 
   # Only generate fast variants for models with documented Fast/priority support.
   openAiFastModels = [
+    "gpt-6.2-astra"
+    "gpt-6.2-sol"
     "gpt-6-astra"
     "gpt-6.1-sol"
     "gpt-6-sol"
@@ -1025,13 +1031,13 @@ in
 
         model = lib.mkOption {
           type = lib.types.str;
-          default = "gpt-6-sol";
+          default = "gpt-6.2-sol";
           description = "OpenAI/ChatGPT model used by bcode-openai.";
         };
 
         fastModel = lib.mkOption {
           type = lib.types.str;
-          default = "gpt-6-sol-fast";
+          default = "gpt-6.2-sol-fast";
           description = "Priority-tier OpenAI/ChatGPT model alias used by bcode-openai-fast.";
         };
 
@@ -1055,8 +1061,8 @@ in
       astra = {
         model = lib.mkOption {
           type = lib.types.str;
-          default = "gpt-6-astra";
-          description = "GPT-6 Astra model used by bcode-astra.";
+          default = "gpt-6.2-astra";
+          description = "GPT-6.2 Astra model used by bcode-astra.";
         };
 
         authProfile = lib.mkOption {
@@ -1103,8 +1109,8 @@ in
       sol = {
         model = lib.mkOption {
           type = lib.types.str;
-          default = "gpt-6.1-sol";
-          description = "GPT-6.1 Sol model used by bcode-sol.";
+          default = "gpt-6.2-sol";
+          description = "GPT-6.2 Sol model used by bcode-sol.";
         };
 
         authProfile = lib.mkOption {
