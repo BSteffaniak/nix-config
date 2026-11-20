@@ -37,6 +37,13 @@
     darwin.scrollReverser.enable = true;
     darwin.scrollReverser.reverseVertical = false;
     darwin.security.touchId.enable = true;
+    darwin.security.developerTools = {
+      enable = true;
+      apps = [
+        "com.mitchellh.ghostty"
+        "dev.bmux.bterm"
+      ];
+    };
     darwin.ollama.enable = true;
 
     # Desktop environment

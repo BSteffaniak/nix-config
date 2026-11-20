@@ -36,6 +36,13 @@
     darwin.signal.enable = true;
     darwin.scrollReverser.enable = true;
     darwin.security.touchId.enable = true;
+    darwin.security.developerTools = {
+      enable = true;
+      apps = [
+        "com.mitchellh.ghostty"
+        "dev.bmux.bterm"
+      ];
+    };
     darwin.minecraft.enable = true;
 
     # Desktop environment
