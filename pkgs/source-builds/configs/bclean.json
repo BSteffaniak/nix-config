@@ -3,6 +3,7 @@
     "buildSystem": "rust",
     "pname": "bclean",
     "hashField": "cargoHash",
+    "doCheck": false,
     "nativeBuildInputs": ["git"],
     "cargoBuildFlags": ["--package", "bclean"],
     "rustToolchain": "stable"

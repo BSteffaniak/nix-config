@@ -39,6 +39,7 @@
   };
 
   config = {
+    nix.settings.download-buffer-size = 256 * 1024 * 1024;
     nix.settings.experimental-features = [
       "nix-command"
       "flakes"
