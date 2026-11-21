@@ -298,6 +298,74 @@ EOF
 	echo "$hash"
 }
 
+# ── BMUX Mermaid guest hash computation ─────────────────────────────
+# Packages with "bmuxMermaidGuest": true build the guest from the
+# bmux_mermaid_render crate they vendor; hash that guest's own Cargo.lock.
+compute_bmux_mermaid_guest_hash() {
+	local project="$1"
+	local cargo_hash="$2"
+	local config_file="$CONFIGS_DIR/$project.json"
+	local flake_input pname store_path
+	flake_input=$(jq -r '.flakeInput' "$config_file")
+	pname=$(jq -r '.pname' "$config_file")
+
+	if jq -e '.cargoLockFile' "$config_file" >/dev/null; then
+		err "$project: bmuxMermaidGuest does not support cargoLockFile."
+		return 1
+	fi
+	store_path=$(get_input_store_path "$flake_input") || return 1
+
+	local current_system nixpkgs_input nixpkgs_path
+	current_system=$(nix eval --raw --impure --expr builtins.currentSystem)
+	if [[ "$current_system" == *-darwin ]]; then
+		nixpkgs_input="nixpkgs-darwin"
+	else
+		nixpkgs_input="nixpkgs"
+	fi
+	nixpkgs_path=$(get_input_store_path "$nixpkgs_input") || return 1
+
+	local nix_expr
+	nix_expr=$(
+		cat <<EOF
+let
+  pkgs = import $nixpkgs_path { system = builtins.currentSystem; };
+  fetchCargoVendor = import $REPO_ROOT/pkgs/source-builds/fetch-cargo-vendor.nix { inherit pkgs; };
+  mermaidGuest = import $REPO_ROOT/pkgs/source-builds/bmux-mermaid-guest.nix { inherit pkgs fetchCargoVendor; };
+  cargoDeps = fetchCargoVendor {
+    src = $store_path;
+    name = "${pname}-vendor";
+    hash = "$cargo_hash";
+    env.PYTHONPATH = builtins.toString $CARGO_VENDOR_PYTHONPATH;
+  };
+in
+mermaidGuest.vendor {
+  name = "${pname}-mermaid-guest";
+  source = mermaidGuest.vendoredSource cargoDeps;
+  hash = "";
+}
+EOF
+	)
+
+	info "Fetching ${BOLD}$project${NC}'s Mermaid guest dependencies..." >&2
+	local build_output hash
+	build_output=$(nix build --impure --no-link --expr "$nix_expr" 2>&1) || true
+	hash=$(echo "$build_output" |
+		sed -n 's/.*got:[[:space:]]*\(sha256-[A-Za-z0-9+/=]*\).*/\1/p' |
+		head -1)
+	if [ -z "$hash" ]; then
+		err "Could not extract the Mermaid guest hash from nix build output."
+		echo "$build_output" | tail -20 >&2
+		return 1
+	fi
+
+	info "Validating assembled Mermaid guest dependencies..." >&2
+	if ! nix build --impure --no-link --expr "${nix_expr/hash = \"\";/hash = \"$hash\";}" >&2; then
+		err "Mermaid guest vendor assembly failed; leaving saved hash unchanged."
+		return 1
+	fi
+	echo "$hash"
+}
+
 # ── Maven hash computation ──
 compute_maven_hash() {
 	local project="$1"
@@ -398,6 +466,12 @@ update_project() {
 		fi
 	done < <(jq -r '.additionalCargoLocks // {} | to_entries[] | [.key, .value] | @tsv' "$config_file")
 
+	local mermaid_guest
+	mermaid_guest=$(jq -r '.bmuxMermaidGuest // false' "$config_file")
+	if [ "$mermaid_guest" = true ] && { [ ! -f "$hash_file" ] || ! jq -e '.mermaidGuestCargoHash | strings | startswith("sha256-")' "$hash_file" >/dev/null; }; then
+		missing_extra_hashes=true
+	fi
+
 	if [ "$current_rev" = "$locked_rev" ] && [ "$missing_extra_hashes" = false ]; then
 		ok "$project: hash is current (rev ${DIM}${locked_rev:0:7}${NC})"
 		return 0
@@ -435,6 +509,11 @@ update_project() {
 		extra_hash=$(compute_cargo_hash "$project" "$lock_file") || return 1
 		extra_hashes=$(jq --arg field "$field" --arg hash "$extra_hash" '. + {($field): $hash}' <<<"$extra_hashes")
 	done < <(jq -r '.additionalCargoLocks // {} | to_entries[] | [.key, .value] | @tsv' "$config_file")
+
+	if [ "$mermaid_guest" = true ]; then
+		extra_hash=$(compute_bmux_mermaid_guest_hash "$project" "$new_hash") || return 1
+		extra_hashes=$(jq --arg hash "$extra_hash" '. + {mermaidGuestCargoHash: $hash}' <<<"$extra_hashes")
+	fi
 
 	# Write the hash file
 	jq -n \

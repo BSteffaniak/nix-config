@@ -216,6 +216,14 @@ fetches and validates both dependency sets before writing either hash, even if
 the revision is unchanged but an additional hash is missing. These downloaded
 sources live only in the Nix store, never in this repository.
 
+Packages that embed BMUX's Mermaid renderer (`bmux_mermaid_render`) set
+`"bmuxMermaidGuest": true`. Its `build.rs` would otherwise run a nested,
+networked Cargo build of a wasm guest, which fails in the sandbox. With the
+flag, the guest is built from the renderer crate the package itself vendors and
+passed in via `BMUX_MERMAID_WASM_PATH`, and `update` also records
+`mermaidGuestCargoHash`. Because each package uses its own locked renderer, the
+`bmux-src`, `bcode-src`, and `bcode-git-src` pins never need to agree.
+
 For Rust repos that do not commit a `Cargo.lock`, set `cargoLockFile` in the
 package config and point it to a lock file in this repo (for example
 `pkgs/source-builds/locks/<name>-Cargo.lock`).

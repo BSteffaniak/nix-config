@@ -5,5 +5,6 @@
     "hashField": "cargoHash",
     "doCheck": false,
     "rustToolchain": "stable",
-    "cargoBuildFlags": ["--package", "bcode_git_ui_cli", "--bin", "bcode-git"]
+    "cargoBuildFlags": ["--package", "bcode_git_ui_cli", "--bin", "bcode-git"],
+    "bmuxMermaidGuest": true
 }

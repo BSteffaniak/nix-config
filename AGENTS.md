@@ -206,7 +206,14 @@ Simple Rust packages require only:
 
 `overlays/source-builds.nix` picks up configs automatically. Optional fields:
 `doCheck`, `cargoBuildFlags`, `nativeBuildInputs`, `buildInputs`,
-`rustToolchain` (`"stable"`/`"nightly"`), `env`, `postInstallFile`.
+`rustToolchain` (`"stable"`/`"nightly"`), `env`, `postInstallFile`,
+`bmuxMermaidGuest`.
+
+Any package that depends on BMUX's `bmux_mermaid_render` crate **must** set
+`"bmuxMermaidGuest": true` (the build fails with "could not build embedded
+Mermaid guest" otherwise). The guest is then built from that package's own
+vendored renderer, so its pin never needs to match `bmux-src`. Don't add
+per-package `BMUX_MERMAID_WASM_PATH` overrides or rev-matching checks.
 
 **Complex builds** set `"complex": true` and get a standalone file in
 `overlays/` (see `cronstrue.nix`, `sendsafely-java.nix`). Use

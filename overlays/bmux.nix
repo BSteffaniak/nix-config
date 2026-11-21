@@ -1,4 +1,5 @@
-# The portable Mermaid guest is an explicit, offline build dependency.
+# bmux builds its Mermaid guest from its own tree; see
+# pkgs/source-builds/bmux-mermaid-guest.nix.
 { inputs }:
 final: prev:
 let
@@ -15,52 +16,24 @@ let
       rustc = final.rustStable;
     };
   };
+  mermaidGuest = import ../pkgs/source-builds/bmux-mermaid-guest.nix {
+    pkgs = final;
+    inherit fetchCargoVendor;
+  };
 in
 if source == null then
   { }
 else
   let
-    guestToolchain = final.rustStable.override {
-      targets = [ "wasm32-unknown-unknown" ];
-    };
-    guestPlatform = final.makeRustPlatform {
-      cargo = guestToolchain;
-      rustc = guestToolchain;
-    };
     hostPlatform = final.makeRustPlatform {
       cargo = final.rustStable;
       rustc = final.rustStable;
     };
-    guestSource = final.runCommand "bmux-mermaid-guest-source" { } ''
-      mkdir -p "$out/src"
-      cp ${source.src}/packages/mermaid-render/guest/Cargo.toml.in "$out/Cargo.toml"
-      cp ${source.src}/packages/mermaid-render/guest/Cargo.lock.in "$out/Cargo.lock"
-      cp ${source.src}/packages/mermaid-render/guest/src/lib.rs "$out/src/lib.rs"
-      cp ${source.src}/packages/fonts/assets/diagram/BmuxDiagram-Regular.ttf "$out/BmuxDiagram-Regular.ttf"
-    '';
-    guest = guestPlatform.buildRustPackage {
-      pname = "bmux-mermaid-guest";
-      version = "unstable";
-      src = guestSource;
-      cargoDeps = fetchCargoVendor {
-        name = "bmux-mermaid-guest";
-        src = guestSource;
-        hash = source.hashes.guestCargoHash;
-        env.PYTHONPATH = "${../pkgs/source-builds/cargo-vendor-sitecustomize}";
-      };
-      # The derivation runs native Cargo but deliberately emits a portable module.
-      buildPhase = ''
-        runHook preBuild
-        # Keep panic locations independent of Darwin's randomized build root.
-        export RUSTFLAGS="''${RUSTFLAGS-} --remap-path-prefix=$NIX_BUILD_TOP=/build"
-        cargo build --frozen --release --target wasm32-unknown-unknown
-        runHook postBuild
-      '';
-      doCheck = false;
-      installPhase = ''
-        mkdir -p "$out/lib"
-        cp target/wasm32-unknown-unknown/release/bmux_mermaid_guest.wasm "$out/lib/mermaid.wasm"
-      '';
+    guest = mermaidGuest.build {
+      name = "bmux-mermaid-guest";
+      source = mermaidGuest.treeSource source.src;
+      hash = source.hashes.guestCargoHash;
+      toolchain = final.rustStable;
     };
   in
   {

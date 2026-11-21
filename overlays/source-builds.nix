@@ -9,6 +9,10 @@
 #   3. Run: nix flake lock && ./scripts/source-build.sh update <name>
 #
 # Complex builds set "complex": true and get their own overlay file.
+#
+# Packages that embed BMUX's Mermaid renderer set "bmuxMermaidGuest": true.
+# Their guest is built from the renderer they vendor themselves and pinned by
+# `mermaidGuestCargoHash` (see pkgs/source-builds/bmux-mermaid-guest.nix).
 { inputs }:
 final: prev:
 let
@@ -56,6 +60,31 @@ let
         fetchCargoVendor = fetchCargoVendorFor rustPlatform;
       };
       pkgsByName = names: map (n: final.${n}) names;
+      mermaidGuest = import ../pkgs/source-builds/bmux-mermaid-guest.nix {
+        pkgs = final;
+        fetchCargoVendor = fetchCargoVendorFor rustPlatform;
+      };
+      withMermaidGuest =
+        pkg:
+        if !(config.bmuxMermaidGuest or false) then
+          pkg
+        else if !(source.hashes ? mermaidGuestCargoHash) then
+          throw "${name}: mermaidGuestCargoHash is missing. Run: ./scripts/source-build.sh update ${name}"
+        else
+          let
+            guest = mermaidGuest.build {
+              name = "${config.pname}-mermaid-guest";
+              source = mermaidGuest.vendoredSource pkg.cargoDeps;
+              hash = source.hashes.mermaidGuestCargoHash;
+              toolchain = final.rustStable;
+            };
+          in
+          pkg.overrideAttrs (old: {
+            BMUX_MERMAID_WASM_PATH = "${guest}/lib/mermaid.wasm";
+            passthru = (old.passthru or { }) // {
+              mermaidGuest = guest;
+            };
+          });
       cargoBuildFlags = config.cargoBuildFlags or [ ];
       nativeBuildInputs = pkgsByName (config.nativeBuildInputs or [ ]);
       buildInputs = pkgsByName (config.buildInputs or [ ]);
@@ -64,22 +93,24 @@ let
       { }
     else
       {
-        ${config.pname} = buildRustPackage (
-          {
-            inherit (config) pname;
-            version = "unstable";
-            inherit (source) src;
-            ${config.hashField} = source.hashes.${config.hashField};
-            depsExtraArgs.env.PYTHONPATH = "${../pkgs/source-builds/cargo-vendor-sitecustomize}";
-            doCheck = config.doCheck or true;
-          }
-          // prev.lib.optionalAttrs (cargoBuildFlags != [ ]) { inherit cargoBuildFlags; }
-          // prev.lib.optionalAttrs (nativeBuildInputs != [ ]) { inherit nativeBuildInputs; }
-          // prev.lib.optionalAttrs (buildInputs != [ ]) { inherit buildInputs; }
-          // prev.lib.optionalAttrs (config ? postInstallFile) {
-            postInstall = builtins.readFile (hooksDir + "/${config.postInstallFile}");
-          }
-          // (config.env or { })
+        ${config.pname} = withMermaidGuest (
+          buildRustPackage (
+            {
+              inherit (config) pname;
+              version = "unstable";
+              inherit (source) src;
+              ${config.hashField} = source.hashes.${config.hashField};
+              depsExtraArgs.env.PYTHONPATH = "${../pkgs/source-builds/cargo-vendor-sitecustomize}";
+              doCheck = config.doCheck or true;
+            }
+            // prev.lib.optionalAttrs (cargoBuildFlags != [ ]) { inherit cargoBuildFlags; }
+            // prev.lib.optionalAttrs (nativeBuildInputs != [ ]) { inherit nativeBuildInputs; }
+            // prev.lib.optionalAttrs (buildInputs != [ ]) { inherit buildInputs; }
+            // prev.lib.optionalAttrs (config ? postInstallFile) {
+              postInstall = builtins.readFile (hooksDir + "/${config.postInstallFile}");
+            }
+            // (config.env or { })
+          )
         );
       };
 in

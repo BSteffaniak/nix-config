@@ -107,5 +107,85 @@ update_project example
         self.assertEqual(record["guestCargoHash"], "sha256-guest")
 
 
+class MermaidGuestTests(unittest.TestCase):
+    """bmuxMermaidGuest packages pin their own guest hash alongside cargoHash."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        root = Path(self.tmp.name)
+        (root / "pkgs/source-builds/configs").mkdir(parents=True)
+        (root / "pkgs/source-builds/hashes").mkdir(parents=True)
+        (root / "scripts").mkdir()
+        script = (REPO / "scripts/source-build.sh").read_text()
+        self.script = root / "scripts/source-build.sh"
+        self.script.write_text(script.removesuffix('main "$@"\n'))
+        (root / "pkgs/source-builds/configs/example.json").write_text(
+            json.dumps(
+                {
+                    "flakeInput": "example-src",
+                    "pname": "example",
+                    "buildSystem": "rust",
+                    "hashField": "cargoHash",
+                    "bmuxMermaidGuest": True,
+                }
+            )
+        )
+        self.hash_file = root / "pkgs/source-builds/hashes/example.json"
+
+    def update(self, initial, fail_guest=False):
+        self.hash_file.write_text(json.dumps(initial))
+        guest = (
+            "return 1" if fail_guest else '[ "$2" = sha256-host ] && echo sha256-guest'
+        )
+        return subprocess.run(
+            [
+                "bash",
+                "-c",
+                f"""
+source "{self.script}"
+get_locked_rev() {{ echo current; }}
+compute_cargo_hash() {{ echo sha256-host; }}
+compute_bmux_mermaid_guest_hash() {{ {guest}; }}
+update_project example
+""",
+            ],
+            text=True,
+            capture_output=True,
+        )
+
+    def test_missing_guest_hash_updates_at_same_revision(self):
+        result = self.update({"rev": "current", "cargoHash": "sha256-old"})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            json.loads(self.hash_file.read_text()),
+            {
+                "rev": "current",
+                "cargoHash": "sha256-host",
+                "mermaidGuestCargoHash": "sha256-guest",
+            },
+        )
+
+    def test_guest_failure_preserves_previous_record(self):
+        old = {
+            "rev": "old",
+            "cargoHash": "sha256-old",
+            "mermaidGuestCargoHash": "sha256-g",
+        }
+        result = self.update(old, fail_guest=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(json.loads(self.hash_file.read_text()), old)
+
+    def test_current_complete_record_does_not_fetch(self):
+        old = {
+            "rev": "current",
+            "cargoHash": "sha256-old",
+            "mermaidGuestCargoHash": "sha256-g",
+        }
+        result = self.update(old, fail_guest=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(self.hash_file.read_text()), old)
+
+
 if __name__ == "__main__":
     unittest.main()
