@@ -35,11 +35,11 @@
     "bcode-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1794278146,
-        "narHash": "sha256-9RTXpbbC98b8EwpXU/AqCuwDgXJ0OrbbIdh3oOmai6s=",
+        "lastModified": 1795437000,
+        "narHash": "sha256-ES5kKp5AbRHnc0R4wzyYJP9y2r/rzCTC9GQBncKO4WY=",
         "ref": "refs/heads/master",
-        "rev": "32c17b54596d45f09315726508c3e3ffa75608d1",
-        "revCount": 4509,
+        "rev": "ef21b95d624c063909246cd7c2e8b3e6e062b1c3",
+        "revCount": 5036,
         "type": "git",
         "url": "ssh://git@github.com/BSteffaniak/bcode"
       },
