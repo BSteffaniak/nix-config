@@ -38,6 +38,7 @@
     darwin.security.touchId.enable = true;
     darwin.security.developerTools = {
       enable = true;
+      sshSessions = true;
       apps = [
         "com.mitchellh.ghostty"
         "dev.bmux.bterm"

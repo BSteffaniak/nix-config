@@ -9,9 +9,11 @@ let
   devTools = cfg.developerTools;
   user = config.system.primaryUser;
   settingsUrl = "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_DevTools";
-  # Remembers which installed apps the user was already sent to Settings for,
+  # Remembers which installed entries the user was already sent to Settings for,
   # so a rebuild only reopens Settings when that set changes.
   stampFile = "/var/db/myconfig-developer-tools";
+  executables =
+    devTools.executables ++ lib.optional devTools.sshSessions "/usr/libexec/sshd-keygen-wrapper";
 in
 {
   options.myConfig.darwin.security = {
@@ -32,6 +34,18 @@ in
         example = [ "com.mitchellh.ghostty" ];
         description = "Bundle identifiers to mark as Developer Tools. Apps that are not installed are skipped.";
       };
+
+      executables = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        example = [ "/usr/libexec/sshd-keygen-wrapper" ];
+        description = "Absolute paths of executables (not app bundles) to mark as Developer Tools. Missing paths are skipped.";
+      };
+
+      sshSessions = lib.mkEnableOption ''
+        exempting commands run over SSH (including bmux servers started over
+        SSH). macOS attributes SSH sessions to sshd-keygen-wrapper, so this adds
+        it to `executables`'';
     };
   };
 
@@ -40,12 +54,12 @@ in
       security.pam.services.sudo_local.touchIdAuth = true;
     })
 
-    (lib.mkIf (devTools.enable && devTools.apps != [ ]) {
+    (lib.mkIf (devTools.enable && (devTools.apps != [ ] || executables != [ ])) {
       system.activationScripts.postActivation.text = lib.mkAfter ''
         # Make the Developer Tools pane visible in System Settings.
         /usr/sbin/spctl developer-mode enable-terminal >/dev/null 2>&1 || true
 
-        # Reading TCC.db needs Full Disk Access; without it every installed app
+        # Reading TCC.db needs Full Disk Access; without it every installed entry
         # counts as pending and the stamp file stops repeat prompts.
         devtools_granted=""
         devtools_readable=0
@@ -55,7 +69,8 @@ in
         fi
 
         devtools_pending=""
-        for devtools_id in ${lib.escapeShellArgs devTools.apps}; do
+        devtools_ids=(${lib.escapeShellArgs devTools.apps})
+        for devtools_id in "''${devtools_ids[@]}"; do
           devtools_app=$(/usr/bin/mdfind "kMDItemCFBundleIdentifier == '$devtools_id'" 2>/dev/null | head -n 1)
           [ -n "$devtools_app" ] || continue
           if [ "$devtools_readable" = 1 ] && printf '%s\n' "$devtools_granted" | grep -qxF "$devtools_id"; then
@@ -63,6 +78,16 @@ in
           fi
           echo "developer tools: enable $devtools_app in Privacy & Security > Developer Tools" >&2
           devtools_pending="$devtools_pending $devtools_id"
+        done
+
+        devtools_paths=(${lib.escapeShellArgs executables})
+        for devtools_path in "''${devtools_paths[@]}"; do
+          [ -x "$devtools_path" ] || continue
+          if [ "$devtools_readable" = 1 ] && printf '%s\n' "$devtools_granted" | grep -qxF "$devtools_path"; then
+            continue
+          fi
+          echo "developer tools: click + in Privacy & Security > Developer Tools, press Cmd-Shift-G and add $devtools_path" >&2
+          devtools_pending="$devtools_pending $devtools_path"
         done
 
         if [ -n "$devtools_pending" ]; then
