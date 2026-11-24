@@ -24,6 +24,11 @@ mode = "frozen"
 # Tabs under a collapsible header per workspace.
 grouping = "workspace"
 
+[plugins.settings."bmux.agents".notify]
+# Ring and notify both when an agent needs input and when it finishes. The
+# tab on screen stays quiet only while the terminal window has focus.
+via = ["bell", "notification"]
+
 # ---------------------------------------------------------------------------
 # Theme
 # ---------------------------------------------------------------------------

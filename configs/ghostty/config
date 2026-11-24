@@ -13,3 +13,6 @@ keybind = ctrl+enter=unbind
 
 keybind = ctrl+slash=increase_font_size:1
 keybind = ctrl+minus=decrease_font_size:1
+
+# Play the system bell sound on BEL (plus the default dock bounce and title mark).
+bell-features = system,attention,title
