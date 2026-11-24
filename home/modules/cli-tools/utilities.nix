@@ -10,6 +10,15 @@
 let
   cfg = config.myConfig.cliTools.utilities;
 
+  codexLauncher = pkgs.writeShellScriptBin "codex" ''
+    set -eu
+    project=$(${pkgs.jq}/bin/jq -n --arg path "$(pwd -P)" '$path')
+    exec ${pkgs.codex-dev}/bin/codex \
+      -c 'sandbox_mode="danger-full-access"' \
+      -c 'approval_policy="never"' \
+      -c "projects={ $project = { trust_level = \"trusted\" } }" "$@"
+  '';
+
   mkEnable = myLib.mkEnableOption' cfg.enableAll;
   mkMediaEnable = myLib.mkEnableOption' cfg.media.enableAll;
   useMacOSKeychainTrustStore =
@@ -220,7 +229,7 @@ in
       (lib.mkIf cfg.opencodeUpstream.enable [
         pkgs.unstable.opencode
       ])
-      (lib.mkIf cfg.codexUpstream.enable [ pkgs.codex-dev ])
+      (lib.mkIf cfg.codexUpstream.enable [ codexLauncher ])
       (lib.mkIf cfg.antigravity.enable [ pkgs.antigravity-cli ])
       (lib.mkIf cfg.pi.enable [ pkgs.pi ])
       (lib.mkIf cfg.sshenv.enable [ pkgs.sshenv ])
