@@ -106,6 +106,7 @@ in
 
     opencodeUpstream.enable = mkEnable "upstream OpenCode CLI";
     codexUpstream.enable = mkEnable "upstream Codex CLI";
+    antigravity.enable = mkEnable "Google Antigravity CLI (agy)";
     pi.enable = mkEnable "Pi coding agent CLI without managed config";
     sshenv = {
       enable = mkEnable "sshenv SSH-key-backed env vault";
@@ -220,6 +221,7 @@ in
         pkgs.unstable.opencode
       ])
       (lib.mkIf cfg.codexUpstream.enable [ pkgs.codex-dev ])
+      (lib.mkIf cfg.antigravity.enable [ pkgs.unstable.antigravity-cli ])
       (lib.mkIf cfg.pi.enable [ pkgs.pi ])
       (lib.mkIf cfg.sshenv.enable [ pkgs.sshenv ])
       (lib.mkIf cfg.worktreeSetup.enable [ pkgs.worktree-setup ])

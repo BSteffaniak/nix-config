@@ -104,6 +104,7 @@ in
       utilities.media.mediainfo.enable = true;
       utilities.opencodeUpstream.enable = true;
       utilities.codexUpstream.enable = true;
+      utilities.antigravity.enable = true;
       utilities.sshenv.enable = true;
       utilities.clippier.enable = true;
       utilities.worktreeSetup.enable = true;
