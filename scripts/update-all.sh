@@ -10,6 +10,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 RUN_FLAKE=true
 RUN_SOURCE=true
 RUN_GITHUB=true
+RUN_ANTIGRAVITY=true
 ASSUME_YES=false
 
 usage() {
@@ -20,11 +21,13 @@ Update everything in one run:
   1. flake inputs
   2. source-build hashes
   3. GitHub release versions
+  4. Antigravity CLI version
 
 Options:
       --no-flake     Skip 'nix flake update'
       --no-source    Skip source-build hash updates
       --no-github    Skip GitHub release updates
+      --no-antigravity  Skip Antigravity CLI update
   -y, --yes          Skip confirmation prompt
   -h, --help         Show this help message
 
@@ -55,6 +58,10 @@ while [[ $# -gt 0 ]]; do
 		RUN_GITHUB=false
 		shift
 		;;
+	--no-antigravity)
+		RUN_ANTIGRAVITY=false
+		shift
+		;;
 	-y | --yes)
 		ASSUME_YES=true
 		shift
@@ -71,7 +78,7 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-if [[ "$RUN_FLAKE" == false && "$RUN_SOURCE" == false && "$RUN_GITHUB" == false ]]; then
+if [[ "$RUN_FLAKE" == false && "$RUN_SOURCE" == false && "$RUN_GITHUB" == false && "$RUN_ANTIGRAVITY" == false ]]; then
 	echo "Error: nothing to do (all update steps are disabled)." >&2
 	echo "Use '$DISPLAY_PATH --help' for options." >&2
 	exit 1
@@ -96,6 +103,12 @@ else
 	echo "- GitHub releases: skipped (--no-github)"
 fi
 
+if [[ "$RUN_ANTIGRAVITY" == true ]]; then
+	echo "- Antigravity CLI: ./scripts/antigravity-cli.sh update"
+else
+	echo "- Antigravity CLI: skipped (--no-antigravity)"
+fi
+
 if [[ "$ASSUME_YES" == false ]]; then
 	if ! prompt_confirm; then
 		echo "Cancelled."
@@ -105,26 +118,34 @@ fi
 
 echo
 if [[ "$RUN_FLAKE" == true ]]; then
-	echo "[1/3] Updating flake inputs..."
+	echo "[1/4] Updating flake inputs..."
 	nix flake update --flake "$REPO_ROOT"
 else
-	echo "[1/3] Skipped flake input update."
+	echo "[1/4] Skipped flake input update."
 fi
 
 echo
 if [[ "$RUN_SOURCE" == true ]]; then
-	echo "[2/3] Updating source-build hashes..."
+	echo "[2/4] Updating source-build hashes..."
 	"$REPO_ROOT/scripts/source-build.sh" update --all
 else
-	echo "[2/3] Skipped source-build hash updates."
+	echo "[2/4] Skipped source-build hash updates."
 fi
 
 echo
 if [[ "$RUN_GITHUB" == true ]]; then
-	echo "[3/3] Updating GitHub release versions..."
+	echo "[3/4] Updating GitHub release versions..."
 	"$REPO_ROOT/scripts/github-release.sh" update --all
 else
-	echo "[3/3] Skipped GitHub release updates."
+	echo "[3/4] Skipped GitHub release updates."
+fi
+
+echo
+if [[ "$RUN_ANTIGRAVITY" == true ]]; then
+	echo "[4/4] Updating Antigravity CLI version..."
+	"$REPO_ROOT/scripts/antigravity-cli.sh" update
+else
+	echo "[4/4] Skipped Antigravity CLI update."
 fi
 
 echo

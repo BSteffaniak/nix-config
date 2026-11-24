@@ -273,6 +273,21 @@ Runs common Nix cleanup commands so you do not need to remember them.
 - `-y, --yes` - Skip confirmation prompt
 - `-h, --help` - Show help text
 
+### `antigravity-cli.sh` (Antigravity CLI Version Tracker)
+
+Google publishes the Antigravity CLI (`agy`) outside GitHub, via per-platform
+JSON manifests (`version`, `url`, `sha512`) served by its auto-updater. This
+script reads those manifests and writes `pkgs/antigravity-cli/version.json`,
+which `overlays/antigravity-cli.nix` uses to override the nixpkgs-unstable
+package's version and source. No files are downloaded; the manifests carry the
+hashes. It refuses to write if platforms disagree on the version (mid-rollout).
+
+```bash
+./scripts/antigravity-cli.sh check            # Is a newer version available?
+./scripts/antigravity-cli.sh update           # Write version.json if so
+./scripts/antigravity-cli.sh update --force   # Rewrite even if unchanged
+```
+
 ### `update-all.sh` (Unified Update Helper)
 
 Runs all update steps in one command so you do not need to remember each script.
@@ -282,6 +297,7 @@ Runs all update steps in one command so you do not need to remember each script.
 1. `nix flake update`
 2. `./scripts/source-build.sh update --all`
 3. `./scripts/github-release.sh update --all`
+4. `./scripts/antigravity-cli.sh update`
 
 If any step fails, the script exits immediately so you can fix the issue before
 continuing.
@@ -298,6 +314,7 @@ continuing.
 
 - `--no-flake` - Skip flake input updates
 - `--no-source` - Skip source-build hash updates
+- `--no-antigravity` - Skip the Antigravity CLI update
 - `--no-github` - Skip GitHub release updates
 - `-y, --yes` - Skip confirmation prompt
 - `-h, --help` - Show help text

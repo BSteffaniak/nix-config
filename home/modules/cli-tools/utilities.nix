@@ -221,7 +221,7 @@ in
         pkgs.unstable.opencode
       ])
       (lib.mkIf cfg.codexUpstream.enable [ pkgs.codex-dev ])
-      (lib.mkIf cfg.antigravity.enable [ pkgs.unstable.antigravity-cli ])
+      (lib.mkIf cfg.antigravity.enable [ pkgs.antigravity-cli ])
       (lib.mkIf cfg.pi.enable [ pkgs.pi ])
       (lib.mkIf cfg.sshenv.enable [ pkgs.sshenv ])
       (lib.mkIf cfg.worktreeSetup.enable [ pkgs.worktree-setup ])
