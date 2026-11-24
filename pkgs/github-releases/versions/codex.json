@@ -1,22 +1,22 @@
 {
-    "version": "0.167.0",
-    "tag": "rust-v0.167.0",
+    "version": "0.172.0",
+    "tag": "rust-v0.172.0",
     "platforms": {
         "aarch64-darwin": {
-            "url": "https://github.com/openai/codex/releases/download/rust-v0.167.0/codex-package-aarch64-apple-darwin.tar.gz",
-            "sha256": "af45ed45d940d7998809622c1c0296d3098ed7d7fad695284422c228bd454517"
+            "url": "https://github.com/openai/codex/releases/download/rust-v0.172.0/codex-package-aarch64-apple-darwin.tar.gz",
+            "sha256": "0970016d48209a09c4039139629ed79b4a31c5e3d864e792c043419d98fa6466"
         },
         "aarch64-linux": {
-            "url": "https://github.com/openai/codex/releases/download/rust-v0.167.0/codex-package-aarch64-unknown-linux-musl.tar.gz",
-            "sha256": "0de261ecf1e7f3028a7952f03fca2093f749277d38590b78bb32f8567756bbb7"
+            "url": "https://github.com/openai/codex/releases/download/rust-v0.172.0/codex-package-aarch64-unknown-linux-musl.tar.gz",
+            "sha256": "faf17b8071927f33346a805dc8cb45de4e08c0d75cf0e5e68cecddca28b8861e"
         },
         "x86_64-darwin": {
-            "url": "https://github.com/openai/codex/releases/download/rust-v0.167.0/codex-package-x86_64-apple-darwin.tar.gz",
-            "sha256": "3d7c4c83296db63b5108e13612c77f3e5020b6c5f2fc004bee413a5cc92de899"
+            "url": "https://github.com/openai/codex/releases/download/rust-v0.172.0/codex-package-x86_64-apple-darwin.tar.gz",
+            "sha256": "b5e94828f45171f13d81de2b96cae05c0b7e6a7f2f7d3c9d4e748be3d3906c02"
         },
         "x86_64-linux": {
-            "url": "https://github.com/openai/codex/releases/download/rust-v0.167.0/codex-package-x86_64-unknown-linux-musl.tar.gz",
-            "sha256": "3bbf75e83de6b58aed28f2cf6e33ad423ec31fd4700a1457b94be557ea5a7c6e"
+            "url": "https://github.com/openai/codex/releases/download/rust-v0.172.0/codex-package-x86_64-unknown-linux-musl.tar.gz",
+            "sha256": "63e3b00065ed7f62166d0522e17f663cb866a31d80d03e63365482ed34a1d991"
         }
     }
 }
