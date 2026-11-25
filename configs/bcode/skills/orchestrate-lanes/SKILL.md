@@ -12,6 +12,12 @@ actual target, choose the smallest useful action, then use its result to decide
 what comes next. Parallelize only genuinely independent work. This is an
 authorable strategy, not a runtime framework or auto-restart policy.
 
+You own the outcome until it is delivered. Do not end your turn to wait for
+workers, to report interim status, or to ask whether to keep going on work the
+user already requested: block on `harness.wait` and continue. End a turn only
+when the requested outcomes are delivered, the user must decide or act, or a
+concrete external blocker leaves no other authorized work.
+
 Follow the [user override contract](../_shared/user-overrides.md) and
 [non-interactive Git rules](../_shared/non-interactive-git.md). Implementation
 requests authorize in-scope edits, delegation, feedback, and relevant
@@ -37,13 +43,20 @@ behavior from a lookalike: for example, typing versus paste, one versus
 multiple choices, or normal startup versus a specially prepared harness.
 Compilation and component tests can support acceptance without proving the
 user-facing path. Fake-provider tests prove only the behavior they exercise,
-not an LLM's decisions or the quality of this skill.
+not an LLM's decisions or the quality of this skill. For visual or interactive
+UI work, acceptance includes inspecting the rendered result (screenshots or
+terminal captures) against the project's existing UI components and
+conventions; passing tests do not show that it looks or feels right. Prefer
+deterministic checks over arbitrary timeouts.
 
 Keep a concise conversation checkpoint at meaningful changes or before context
 compaction: original and refined outcomes, explicit scope changes, child session
 IDs with their lane and ownership, evidence gaps, and the next useful action.
 No status files or duplicate transcript are needed unless explicitly requested
-or required by the repository.
+or required by the repository. Restate the original objective in every
+checkpoint. Do not ask the user to re-narrow scope they already set: a new
+symptom found along the way becomes a lane or a noted follow-up, not a
+replacement goal.
 
 ## Delegation tools
 
@@ -72,9 +85,12 @@ user.
   never capture a lane.
 - `title`: the lane name, so the user can tell children apart.
 - `agent` and `model`: omit them by default; the child uses the session's
-  default profile and this session's model. Choose another only on the user's
-  request or a verified need, using names from `harness.context`. Discovery is
-  not permission to change providers or spend.
+  default agent profile and this session's provider, model, and credentials,
+  even when no client is attached. Choose another only on the user's request or
+  a verified need, using names from `harness.context`. When the user names a
+  provider, profile, or model for workers, confirm the first child's model in
+  `harness.context` before delegating the rest of the wave. Discovery is not
+  permission to change providers or spend.
 - `cwd`: absolute working directory, default this session's workspace. Set
   `worktree: true` only for an existing registered worktree of this repository.
 - `permissions`: `inherit` (default) never exceeds this session's permissions,
@@ -111,7 +127,9 @@ than asking consumers to guess changing APIs.
 Reserve constrained resources too: build capacity/directories, ports, services,
 fixtures, databases, and acceptance environments. Only the assigned owner runs
 conflicting validation or restarts a shared service. Separate sessions are not
-filesystem isolation or enforced path locks.
+filesystem isolation or enforced path locks. Follow the user's stated phasing:
+if they ask for a shape-first wave without compilation or verification, do not
+add premature builds; verify in the later phase they described.
 
 Revise lanes as evidence changes. Transfer ownership only after inspecting the
 handoff and confirming the old writer's turn has settled and its commands have
@@ -175,6 +193,12 @@ recreate workers automatically or retry ambiguous side effects blindly. A daemon
 restart ends running turns; a child left `unknown`, `failed`, or `interrupted`
 needs inspection and an explicit `harness.continue`, not a new child. Stale or
 unverifiable ownership fails closed.
+
+Name blockers concretely: what failed, the evidence, and what would unblock it.
+Never report only "blocked" or "settlement not claimed". A child that cannot be
+settled (for example, stuck interrupting) is reported once with its ID and
+state; it does not block continuing other work or reporting the outcomes that
+were delivered.
 
 On user stop, stop delegating, `harness.interrupt` every running lane, and
 confirm with `harness.wait` that they are no longer running. If interrupted by
