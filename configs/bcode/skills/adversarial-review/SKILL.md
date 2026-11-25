@@ -1,7 +1,6 @@
 ---
 name: adversarial-review
 description: Harden PRs, branches, commits, or local changes through independent adversarial reviews, review adjudication, and autonomous fix-and-verify loops until ready.
-allowed-tools: Bash(bcode:*), Bash(git:*), Bash(gh:*), Bash(python3:*), Read(*), Write(*), Edit(*), Question(*)
 ---
 
 ## Command execution
@@ -39,24 +38,18 @@ provider spending authority.
 ## Orchestration dependency
 
 Load [orchestrate-lanes](../orchestrate-lanes/SKILL.md) before delegating and use it
-for actual session creation, execution selection, ownership, observation,
+for child creation through the native `harness.*` tools, ownership, observation,
 integration, cancellation, and recovery. This skill adds review policy, not a
-second orchestration framework. If that dependency or supported delegation is
-unavailable, report the limitation; do not pretend a solo inspection was an
-independent multi-agent review.
+second orchestration framework. If native delegation is unavailable, report the
+limitation; do not pretend a solo inspection was an independent multi-agent
+review.
 
-Use its canonical-runtime and configuration-provenance checks. Default workers
-to
-the initiating provider/model/profile and verify selection before admitting
-work.
-Independent contexts do not require different providers. Do not silently select
-models or hardcode runtime paths, CLI flags, or session identities into this
-skill.
-Use current supported help/APIs for operational commands.
+Workers default to this session's model. Independent contexts do not require
+different providers; do not silently select models.
 
-Worker reports belong in their own session history. Inspect bounded history and
-runtime evidence; dispatch acceptance, idle, or a final message alone does not
-prove completion. Keep concise conversation checkpoints, not mandatory on-disk
+Each worker's report is its final message (`latest_result`). Settled status,
+an idle child, or a final message alone does not prove completion: inspect the
+evidence it cites. Keep concise conversation checkpoints, not mandatory on-disk
 ledgers. Use the [assignment contracts](references/review-contracts.md) as prompt
 aids, supplying actual scope, guidance locators, and evidence requirements.
 
@@ -164,9 +157,15 @@ solely to obtain a clean report.
 Reviewers inspect the diff, surrounding implementation, relevant callers, and
 tests.
 They cannot edit, format, stage, install, or execute mutating tests/services.
-Use a read-only execution profile and restrictions where supported; a prompt or
-tool allowlist alone is not filesystem isolation. Do not claim enforcement that
-has not been verified. If an essential experiment may write files or affect
+Delegate reviewers and adjudicators with `agent: "plan"` and
+`permissions: "agent_profile"`: that profile disables file writes, edits, and
+further delegation, and a bypassing coordinator does not pass bypass on.
+Configuration may also deny the plan profile's shell commands, so reviewers may
+be unable to run `git`. For any target other than the current working tree,
+materialize the pinned inputs (diff, base and head file contents) as files in a
+scratch directory and give reviewers those absolute paths. Do not claim
+enforcement that has not been verified. If an essential experiment may write
+files or affect
 shared
 resources, request coordinator-owned validation in a permitted environment
 rather
@@ -278,7 +277,7 @@ Autofix succeeds only when all of the following hold on the final candidate:
   threshold; every rejection/deferral has an evidence-based disposition.
 - Accepted fixes have been independently rechecked and required validation passes.
 - A complete final whole-scope pass produces no new accepted actionable findings.
-- All lanes, pending admissions, and relevant commands are reconciled; no worker
+- All lanes, queued turns, and relevant commands are reconciled; no worker
   can still invalidate the result.
 
 Detect repeated findings, alternating fixes, diminishing returns, and expanding

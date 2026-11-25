@@ -17,11 +17,11 @@ changes, not the last assignments or a green test suite.
   required formatting, lint, tests, architecture/plugin checks, and product
   acceptance covered as applicable? State exact commands/results and unavailable
   checks; relevant later edits may require revalidation.
-- Has a fresh supported observation of every worker's own history and runtime
-  work accounted for active writers, commands, interactions, queued work,
-  uncertain admissions, and ownership transfers? Follow bounded cursors and
-  disclose incomplete coverage. Requested steering mode, cancellation requests,
-  idle sessions, and worker reports alone do not establish settlement.
+- Has a fresh `harness.wait` or `harness.result` on every child (status,
+  `latest_result`, pending approvals/questions) accounted for active writers,
+  commands, queued turns, and ownership transfers? Reconcile against
+  `harness.context` so no child is missed. Interrupt requests, `settled` status,
+  and worker reports alone do not establish acceptance.
 - Is useful authorized work still actionable? Continue it. Review the acceptance
   scenario before adding workers; do not create generic polish work or silently
   narrow the goal to match what was delivered.

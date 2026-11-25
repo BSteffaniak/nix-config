@@ -15,6 +15,13 @@ let
 
   permissionsDir = ../../../configs/agents/permissions;
   skillsDir = ../../../configs/agents/skills;
+  # Bcode gets the shared skills plus Bcode-only skills (which may use ../_shared).
+  bcodeSkills = pkgs.runCommand "bcode-skills" { } ''
+    mkdir -p "$out"
+    cp -R ${skillsDir}/. "$out/"
+    chmod -R u+w "$out"
+    cp -R ${../../../configs/bcode/skills}/. "$out/"
+  '';
 
   bcodeBasePermissionConfig = {
     agent = {
@@ -1264,7 +1271,7 @@ in
         home.packages = lib.optional (cfg.package != null) cfg.package;
 
         xdg.configFile."bcode/bcode.toml".source = tomlFormat.generate "bcode.toml" finalSettings;
-        xdg.configFile."bcode/skills".source = skillsDir;
+        xdg.configFile."bcode/skills".source = bcodeSkills;
 
         myConfig.shell.contrib.functions = providerWrapperCommands;
       }

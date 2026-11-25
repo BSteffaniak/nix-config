@@ -24,11 +24,13 @@ correctly deployed.
 ## Repo Structure
 
 Skills are managed as part of a nix configuration repo and deployed by
-home-manager. There are two skill roots with different purposes:
+home-manager. There are three skill roots with different purposes:
 
 - **Shared agent skills source of truth**: `configs/agents/skills/<skill-name>/SKILL.md` in the nix config repo
 - **Shared agent skills deploy to OpenCode**: `~/.config/opencode/skills/<skill-name>/SKILL.md` by nix (via `xdg.configFile`)
 - **Shared agent skills import into Pi**: copied into Pi's shared `agent-skills` root and loaded alongside Pi-native skills
+- **Shared agent skills deploy to Bcode**: merged into `~/.config/bcode/skills/` together with the Bcode-only skills
+- **Bcode-only skills source of truth**: `configs/bcode/skills/<skill-name>/SKILL.md`; they may link `../_shared/` resources and replace a shared skill of the same name in Bcode
 - **Pi-only skills source of truth**: `configs/pi/skills/<skill-name>/SKILL.md`
 - **Pi-only skills deploy to Pi**: `~/.pi/agent/skills/<skill-name>/SKILL.md`
 - **Default choice**: create shared skills under `configs/agents/skills/` unless the workflow is genuinely Pi-specific and should not be shared with OpenCode
@@ -37,7 +39,12 @@ home-manager. There are two skill roots with different purposes:
 
 Use `configs/pi/skills/` only for skills that depend on Pi-specific behavior,
 such as Pi's JSONL session layout, Pi-only tools/extensions, or Pi workflows
-that do not apply to OpenCode. For general agent workflows, Git/GitHub
+that do not apply to OpenCode. Use `configs/bcode/skills/` only for skills
+built on Bcode-native tools (for example `harness.*` delegation) that cannot
+work in OpenCode or Pi. Bcode-only skills should omit Claude-style
+`allowed-tools` such as `Bash(git:*)`: Bcode cannot resolve them and then asks
+before every tool call while the skill is active. For general agent workflows,
+Git/GitHub
 workflows, writing helpers, reviews, planning, and reusable procedures, use
 `configs/agents/skills/` so both OpenCode and Pi can use the skill.
 
@@ -417,7 +424,7 @@ a design outline:
 ## Design: <skill-name>
 
 **Pattern**: <pattern name>
-**Target root**: <configs/agents/skills / configs/pi/skills>
+**Target root**: <configs/agents/skills / configs/pi/skills / configs/bcode/skills>
 **allowed-tools**: <tool list>
 **Shared resources**: <none / _shared/<name>.md>
 
@@ -545,13 +552,14 @@ After the final content bundle is approved, write the files:
    ls configs/agents/skills/<skill-name>/ 2>/dev/null
    ```
 
-   For an approved Pi-only skill, check `configs/pi/skills/<skill-name>/` instead.
+   For an approved Pi-only or Bcode-only skill, check `configs/pi/skills/<skill-name>/` or `configs/bcode/skills/<skill-name>/` instead.
 
    If it exists, warn the user and ask whether to overwrite.
 
 3. Write the SKILL.md:
    - Shared skill path: `<repo-root>/configs/agents/skills/<skill-name>/SKILL.md`
    - Pi-only skill path: `<repo-root>/configs/pi/skills/<skill-name>/SKILL.md`
+   - Bcode-only skill path: `<repo-root>/configs/bcode/skills/<skill-name>/SKILL.md`
 
 4. Write any shared resources:
    - Path: `<repo-root>/configs/agents/skills/_shared/<name>.md`
